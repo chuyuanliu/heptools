@@ -3,18 +3,21 @@ from functools import partial
 
 import awkward as ak
 
-from ... import behavior as all_behaviors
+import heptools
 
 
-def register_behavior(behavior: dict):
-    def _wrap(cls):
-        classname = cls.__name__
-        behavior[('__typestr__', classname)] = classname[0].lower() + classname[1:]
-        behavior[classname].__repr__ = lambda self: classname
-        global all_behaviors
-        all_behaviors |= behavior
-        return cls
-    return _wrap
+def register_behavior(cls = None, dependencies: dict = None):
+    if cls is None:
+        return partial(register_behavior, dependencies = dependencies)
+    _behavior = {}
+    ak.mixin_class(_behavior)(cls)
+    classname = cls.__name__
+    _behavior[('__typestr__', classname)] = classname[0].lower() + classname[1:]
+    _behavior[classname].__repr__ = lambda self: classname
+    if dependencies:
+        heptools.behavior |= dependencies
+    heptools.behavior |= _behavior
+    return cls
 
 def setup_lorentz_vector(target: str):
     def _wrap(cls):
