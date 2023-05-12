@@ -35,7 +35,7 @@ class Formula:
         if couplings is not None:
             return np.asarray(couplings)
         else:
-            return np.stack(np.meshgrid(*[kwargs.get(_c, 1) for _c in cls._diagram[0]]), axis=-1).reshape([-1,len(cls._diagram[0])])
+            return np.stack(np.meshgrid(*[kwargs.get(_c, 1) for _c in cls._diagram[0]]), axis=-1).reshape([-1, len(cls._diagram[0])])
 
     @classmethod
     def _parameter(cls, process: str):
@@ -52,8 +52,7 @@ class Formula:
     @classmethod
     def process(cls, couplings = None, **kwargs):
         couplings = cls._expand(couplings, **kwargs)
-        for coupling in couplings:
-            yield cls._format_pattern.format(**dict(zip(cls._diagram[0], [cls._parse_number(_c) for _c in coupling])))
+        return [cls._format_pattern.format(**dict(zip(cls._diagram[0], [cls._parse_number(_c) for _c in coupling]))) for coupling in couplings]
 
     def __init__(self, *basis, unit_basis_weight = True):
         assert self._pattern is not None and self._diagram is not None

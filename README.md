@@ -32,3 +32,6 @@ run script in singularity container
     singularity run \
     -B <script dir>:/analysis \
     <image>.sif python /analysis/<script>.py
+
+# TODO
+- plot
