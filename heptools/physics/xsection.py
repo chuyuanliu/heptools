@@ -17,20 +17,29 @@ class XSection:
         - PDG https://pdg.lbl.gov/
         - GenXsecAnalyzer https://twiki.cern.ch/twiki/bin/viewauth/CMS/HowToGenXSecAnalyzer
     '''
-    BRs : ClassVar[dict[str, float]] = {}
-    _all: ClassVar[list[ XSection ]] = []
+    BRs : ClassVar[dict[str, float | Formula]] = {}
+    _all: ClassVar[list[XSection]] = []
 
-    process: Formula | str
+    process: Formula | re.Pattern
     xs: float | str
     decay: str
     kfactors: dict[str, float]
 
     @classmethod
-    def _get_br(cls, decay: str) -> float:
+    def _get_br(cls, decay: str, process: str) -> float:
         if not decay:
             return 1
-        for k in cls.BRs:
-            decay = re.sub(rf'(?<!\w){k}(?!\w)', rf'cls.BRs["{k}"]', decay)
+        for k in set(re.findall(r'(?<!\w)[\w]+->[\w]+(?!\w)', decay)):
+            if k not in cls.BRs:
+                raise XSectionError(f'the branching fraction of "{k}" is not recorded')
+            if isinstance(cls.BRs[k], Formula):
+                if cls.BRs[k].search(process):
+                    br = rf'cls.BRs["{k}"]("{process}")'
+                else:
+                    raise XSectionError(f'the branching fraction of "{k}" is undefined in "{process}"')
+            else:
+                br = rf'cls.BRs["{k}"]'
+            decay = re.sub(rf'(?<!\w){k}(?!\w)', br, decay)
         return eval(decay)
 
     @classmethod
@@ -42,8 +51,10 @@ class XSection:
         return eval(xs)
 
     @classmethod
-    def add(cls, process: Formula | str, xs: float | str = None, decay: str = '', kfactors: dict[str, float] = None):
+    def add(cls, process: Formula | re.Pattern | str, xs: float | str = None, decay: str = '', kfactors: dict[str, float] = None):
         self = object.__new__(cls)
+        if isinstance(process, str):
+            process = re.compile(process)
         self.__init__(process = process, xs = xs, decay = decay, kfactors = kfactors)
         cls._all.append(self)
 
@@ -56,17 +67,15 @@ class XSection:
 
     def __call__(self, process: str, decay: str = None, kfactors: list[str] | str = None) -> float:
         xs = None
-        if isinstance(self.process, str):
-            match = re.match(self.process, process)
-            if match:
-                xs = self.xs
-                if isinstance(xs, str):
-                    xs = self._get_xs(xs.format(**match.groupdict()))
-        elif isinstance(self.process, Formula):
-            if self.process.match(process):
+        match = self.process.match(process)
+        if match:
+            xs = self.xs
+            if xs is None:
                 xs = self.process(process)
+            elif isinstance(xs, str):
+                xs = self._get_xs(xs.format(**match.groupdict()))                
         if xs:
-            xs *= XSection._get_br(self.decay if decay is None else decay)
+            xs *= XSection._get_br(decay = self.decay if decay is None else decay, process = process)
             if self.kfactors and kfactors:
                 for kfactor in kfactors:
                     xs *= self.kfactors.get(kfactor, 1)

@@ -9,18 +9,13 @@ class FormulaError(Exception):
     __module__ = Exception.__module__
 
 class Formula:
-    _pattern = None
-    _diagram = None
+    _pattern: str = None
+    _diagram      = None
 
     @classmethod
     @property
-    def _re_pattern(cls):
-        return re.compile(re.sub(r'\[(?P<coupling>[\w]+)\]', r'(?P<\g<coupling>>.+)', cls._pattern))
-
-    @classmethod
-    @property
-    def _format_pattern(cls):
-        return re.sub(r'\[(?P<coupling>[\w]+)\]', r'{\g<coupling>}', cls._pattern)
+    def _re_pattern(cls) -> re.Pattern:
+        return cls._pattern.format(**dict((_c, f'(?P<{_c}>.+)') for _c in cls._diagram[0]))
 
     @classmethod
     def _scale_xs_components(cls, couplings):
@@ -50,9 +45,13 @@ class Formula:
         return re.match(cls._re_pattern, process) is not None
 
     @classmethod
+    def search(cls, process: str):
+        return re.search(cls._re_pattern, process) is not None
+
+    @classmethod
     def process(cls, couplings = None, **kwargs):
         couplings = cls._expand(couplings, **kwargs)
-        return [cls._format_pattern.format(**dict(zip(cls._diagram[0], [cls._parse_number(_c) for _c in coupling]))) for coupling in couplings]
+        return [cls._pattern.format(**dict(zip(cls._diagram[0], [cls._parse_number(_c) for _c in coupling]))) for coupling in couplings]
 
     def __init__(self, *basis, unit_basis_weight = True):
         assert self._pattern is not None and self._diagram is not None
