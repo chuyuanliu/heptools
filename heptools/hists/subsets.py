@@ -11,7 +11,7 @@ from .hists import FieldLike, Label, LabelLike, Set, Subset, _default_field
 
 
 class Fourvector(Subset):
-    def __init__(self, name: LabelLike, fill: FieldLike = None, pt = (100, 0, 500), mass = (100, 0, 500), count = False, **fill_args: FieldLike):
+    def __init__(self, name: LabelLike, fill: FieldLike = None, pt = (100, 0, 500), mass = (100, 0, 500), pz = (150, 0, 1500), energy = (100, 0, 500), count = False, **fill_args: FieldLike):
         super().__init__(name, fill, **fill_args)
         if count:
             self.add('n', (1, 20, ('n', 'Number')), n = lambda x: ak.num(x[self._data]))
@@ -19,13 +19,13 @@ class Fourvector(Subset):
         self.add('mass'   , (             *mass,   ('mass', R'Mass [GeV]')))
         self.add('eta'    , (100,     -5,     5,    ('eta', R'$\eta$')))
         self.add('phi'    , ( 60, -np.pi, np.pi,    ('phi', R'$\phi$')))
-        self.add('pz'     , (150,      0,  1500,     ('pz', R'$p_{\mathrm{z}}$ [GeV]')))
-        self.add('energy' , (100,      0,   500, ('energy', R'Energy [GeV]')))
+        self.add('pz'     , (               *pz,     ('pz', R'$p_{\mathrm{z}}$ [GeV]')))
+        self.add('energy' , (           *energy, ('energy', R'Energy [GeV]')))
 
 class DiFourvector(Fourvector):
-    def __init__(self, name: LabelLike, fill: FieldLike = None, pt = (100, 0, 500), mass = (100, 0, 500), count = False, **fill_args: FieldLike):
-        super().__init__(name, fill, pt, mass, count, **fill_args)
-        self.add('dr' , (100, 0, 4, ('dr', R'$\Delta R(j,j)$')))
+    def __init__(self, name: LabelLike, fill: FieldLike = None, pt = (100, 0, 500), mass = (100, 0, 500), pz = (150, 0, 1500), energy = (100, 0, 500), dr = (100, 0, 4), count = False, **fill_args: FieldLike):
+        super().__init__(name, fill, pt, mass, pz, energy, count, **fill_args)
+        self.add('dr' , (*dr, ('dr', R'$\Delta R(j,j)$')))
 
 class Systematic(Subset):
     def __init__(self, name: str, systs: Iterable[LabelLike], *axes: AxesMixin | tuple[int, float, float, LabelLike], weight: FieldLike = 'weight', **fill_args: FieldLike):
