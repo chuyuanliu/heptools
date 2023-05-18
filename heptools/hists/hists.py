@@ -109,7 +109,7 @@ class Subset:
     def __init__(self, name: LabelLike, fill: FieldLike = None, **fill_args: FieldLike):
         self._fills = fs.Fill()
         self._name  = Label(name)
-        self._data  = astuple(self._name.code if fill is None else fill)
+        self._data  = astuple(_default_field(self._name.code) if fill is None else fill)
         self._fill_args = fill_args
 
     def add(self, name: str, *axes: AxesMixin | tuple, storage: str | Storage = 'weight', label: str = 'Events', **fill_args: FieldLike):
