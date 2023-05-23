@@ -66,7 +66,7 @@ class EventWeight:
         for wsk, wsv in self.weights.items():
             if wsk not in exclude:
                 ws[wsk] = dict((wk, _get_content(events, wv)) for wk, wv in wsv.items())
-        zeros   = {*filter(lambda x: np.any(ws[x][''] == 0), ws)}
+        zeros   = {wsk for wsk in ws if np.any(ws[wsk][''] == 0)}
         mul_ws  = partial(self._multiply_weights, ws, len(events))
         weights = ak.Array({'weight': mul_ws()})
         for wsk, wsv in ws.items():

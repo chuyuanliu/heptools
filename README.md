@@ -43,3 +43,4 @@ build singularity image from docker archive
 
 # TODO
 - plot
+- save skim

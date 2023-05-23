@@ -86,7 +86,7 @@ class Fill:
                         continue
             for name in self._fills:
                 fills = dict((k, f'{name}:{k}' if f'{name}:{k}' in category_args else k) for k in self._fills[name])
-                shape = {jagged_args[k] for k in filter(lambda x: x in jagged_args, fills.values())}
+                shape = {jagged_args[k] for k in fills.values() if k in jagged_args}
                 if len(shape) == 0:
                     shape = None
                 elif len(shape) == 1:

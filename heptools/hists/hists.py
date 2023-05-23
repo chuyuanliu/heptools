@@ -85,7 +85,7 @@ class Set:
             return [dict(zip(categories, comb)) for comb in combs]
 
     def auto_fill(self, name: str, **fill_args: fs.FillLike):
-        default_args = dict((k, _default_field(k)) for k in filter(lambda x: x not in fill_args, self._fills[name]))
+        default_args = dict((k, _default_field(k)) for k in self._fills[name] if k not in fill_args)
         fill_args = dict((f'{name}:{k}', v) for k, v in fill_args.items()) | default_args
         fills = {name: self._fills[name] + list(self._categories) + ['weight']}
         return fs.Fill(fills, **fill_args)
