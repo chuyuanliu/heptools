@@ -1,6 +1,12 @@
+'''
+    kappa-framework
+'''
+
 from __future__ import annotations
 
 import re
+from abc import ABC, abstractmethod
+from string import Formatter
 
 import numpy as np
 
@@ -8,37 +14,58 @@ import numpy as np
 class FormulaError(Exception):
     __module__ = Exception.__module__
 
-class Formula:
+class Coupling:
+    def __init__(self, kappas: list[str]):
+        self.kappas = kappas
+        self.couplings = np.empty([0, len(kappas)])
+
+    def append(self, couplings: np.ndarray):
+        if couplings.shape[-1] != len(self.kappas):
+            raise FormulaError(f'couplings shape {couplings.shape} does not match (, {len(self.kappas)})')
+        self.couplings = np.concatenate((self.couplings, couplings), axis = 0)
+        return self
+
+    def meshgrid(self, default: float = 1, **kwargs):
+        self.append(np.stack(np.meshgrid(*[kwargs.get(kappa, default) for kappa in self.kappas]), axis=-1).reshape([-1, len(self.kappas)]))
+        return self
+
+    def reshape(self, kappas: list[str], default: float = 1):
+        new = Coupling(kappas)
+        couplings = []
+        for kappa in kappas:
+            try:
+                idx = self.kappas.index(kappa)
+                couplings.append(self.couplings[:, idx: idx + 1])
+            except ValueError:
+                couplings.append(np.repeat(default, [self.couplings.shape[0], 1]))                
+        new.couplings = np.concatenate(couplings, axis = -1)
+        return new
+
+    def __iadd__(self, other: Coupling):
+        self.append(other.reshape(self.kappas).couplings)
+        return self
+
+    def __iter__(self):
+        return iter(self.couplings)
+
+    def __len__(self):
+        return len(self.couplings)
+
+    def __getitem__(self, idx):
+        return dict(zip(self.kappas, self.couplings[idx]))
+
+class Formula(ABC):
     _pattern: str = None
-    _diagram      = None
 
     @classmethod
     @property
-    def _re_pattern(cls) -> re.Pattern:
-        return cls._pattern.format(**dict((_c, f'(?P<{_c}>.+)') for _c in cls._diagram[0]))
+    def _kappas(cls) -> list[str]:
+        return [key[1] for key in Formatter().parse(cls._pattern)]
 
     @classmethod
-    def _scale_xs_components(cls, couplings):
-        couplings  = np.asarray(couplings) [:, :, np.newaxis]
-        diagrams   = np.asarray(cls._diagram[1]).T[np.newaxis, :, :]
-        idx_2 = np.stack(np.tril_indices(diagrams.shape[-1]), axis = -1)
-        diagrams_2 = np.unique(np.sum(diagrams[:, :, idx_2], axis = -1), axis = -1)
-        return np.product(np.power(couplings, diagrams_2), axis = 1)
-
-    @classmethod
-    def _expand(cls, couplings = None, **kwargs):
-        if couplings is not None:
-            return np.asarray(couplings)
-        else:
-            return np.stack(np.meshgrid(*[kwargs.get(_c, 1) for _c in cls._diagram[0]]), axis=-1).reshape([-1, len(cls._diagram[0])])
-
-    @classmethod
-    def _parameter(cls, process: str):
-        pars = re.search(cls._re_pattern, process)
-        if pars:
-            return dict((key, cls._parse_number(pars.groupdict()[key])) for key in cls._diagram[0])
-        else:
-            raise FormulaError(f'cannot extract parameters from "{process}" using "{cls._pattern}')
+    @property
+    def _re_pattern(cls) -> str:
+        return cls._pattern.format(**dict((kappa, f'(?P<{kappa}>.+)') for kappa in cls._kappas))
 
     @classmethod
     def match(cls, process: str):
@@ -49,51 +76,76 @@ class Formula:
         return re.search(cls._re_pattern, process) is not None
 
     @classmethod
-    def process(cls, couplings = None, **kwargs):
-        couplings = cls._expand(couplings, **kwargs)
-        return [cls._pattern.format(**dict(zip(cls._diagram[0], [cls._parse_number(_c) for _c in coupling]))) for coupling in couplings]
+    def couplings(cls, process: str) -> dict[str, float]:
+        pars = re.search(cls._re_pattern, process)
+        if pars:
+            return dict((k, cls._parse_number(v)) for k, v in pars.groupdict().items())
+        else:
+            raise FormulaError(f'cannot extract couplings from "{process}" using "{cls._pattern}')
+
+    _decimal_separator: str = None
+    _decimal_pattern  : str = None
+
+    @classmethod
+    def _parse_number(cls, value: str | float | int):
+        if isinstance(value, str):
+            return float(value.replace(cls._decimal_separator, '.'))
+        else:
+            return cls._decimal_pattern.format(value).replace('.', cls._decimal_separator)
+
+    @classmethod
+    def process(cls, couplings: Coupling):
+        return [cls._pattern.format(**dict(zip(cls._kappas, [cls._parse_number(_c) for _c in coupling]))) for coupling in couplings.reshape(cls._kappas)]
+
+    @abstractmethod
+    def __call__(self, process: str):
+        ...
+
+class FormulaXS(Formula):
+    _diagram      = None
+
+    @classmethod
+    def _scale_xs_components(cls, couplings):
+        couplings = np.asarray(couplings) [:, :, np.newaxis]
+        diagrams  = np.asarray(cls._diagram[1]).T[np.newaxis, :, :]
+        idx_2 = np.stack(np.tril_indices(diagrams.shape[-1]), axis = -1)
+        diagrams_2 = np.unique(np.sum(diagrams[:, :, idx_2], axis = -1), axis = -1)
+        return np.product(np.power(couplings, diagrams_2), axis = 1)
 
     def __init__(self, *basis, unit_basis_weight = True):
         assert self._pattern is not None and self._diagram is not None
         self.unit_basis_weight = unit_basis_weight
         basis = np.asarray(basis)
-        self.basis_coupling  = basis[:, :-1]
-        self.basis_xs        = basis[:,  -1]
-        self.transmat        = np.linalg.pinv(self._scale_xs_components(self.basis_coupling))
+        self.basis    = Coupling(self._diagram[0]).append(basis[:, :-1])
+        self.basis_xs = basis[:, -1]
+        self.transmat = np.linalg.pinv(self._scale_xs_components(self.basis.couplings))
         _s = self.transmat.shape
         if _s[1] < _s[0]:
             raise FormulaError(f'require at least {_s[0] - _s[1]} more coupling combinations')
 
     def __call__(self, process: str):
-        parameters = self._parameter(process)
+        parameters = self.couplings(process)
         if parameters:
-            return self.xs(**parameters)
+            return self.xs(Coupling(self._diagram[0]).meshgrid(**parameters))
 
-    @property
-    def basis_process(self):
-        return self.process(couplings = self.basis_coupling)
-
-    def weight(self, couplings = None, **kwargs):
-        couplings = self._expand(couplings, **kwargs)
+    def weight(self, couplings: Coupling):
+        couplings = couplings.reshape(self._diagram[0]).couplings
         weight = self._scale_xs_components(couplings) @ self.transmat
         if self.unit_basis_weight:
-            matched_basis = (couplings == self.basis_coupling[:, np.newaxis]).all(-1).T
+            matched_basis = (couplings == self.basis.couplings[:, np.newaxis]).all(-1).T
             is_basis = matched_basis.any(-1)
             weight[is_basis] = matched_basis[is_basis]
         return weight
 
-    def xs(self, couplings = None, **kwargs):
-        xs = self.weight(couplings, **kwargs) @ self.basis_xs
+    def xs(self, couplings: Coupling):
+        xs = self.weight(couplings) @ self.basis_xs
         if xs.shape[0] == 1:
             return xs[0]
         return xs
 
-    _decimal_separator = None
-    _decimal_pattern   = None
+    @property
+    def basis_process(self):
+        return self.process(self.basis)
 
-    @classmethod
-    def _parse_number(cls, value):
-        if isinstance(value, str):
-            return float(value.replace(cls._decimal_separator, '.'))
-        else:
-            return cls._decimal_pattern.format(value).replace('.', cls._decimal_separator)
+class FormulaBR(Formula):
+    ... #TODO
