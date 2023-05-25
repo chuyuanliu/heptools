@@ -6,12 +6,13 @@ from __future__ import annotations
 
 import re
 from abc import ABC, abstractmethod
+from functools import cached_property
 from string import Formatter
 
 import numpy as np
 
 
-class FormulaError(Exception):
+class CouplingError(Exception):
     __module__ = Exception.__module__
 
 class Coupling:
@@ -21,15 +22,17 @@ class Coupling:
 
     def append(self, couplings: np.ndarray):
         if couplings.shape[-1] != len(self.kappas):
-            raise FormulaError(f'couplings shape {couplings.shape} does not match (, {len(self.kappas)})')
+            raise CouplingError(f'coupling shape {couplings.shape} does not match (, {len(self.kappas)})')
         self.couplings = np.concatenate((self.couplings, couplings), axis = 0)
         return self
 
     def meshgrid(self, default: float = 1, **kwargs):
-        self.append(np.stack(np.meshgrid(*[kwargs.get(kappa, default) for kappa in self.kappas]), axis=-1).reshape([-1, len(self.kappas)]))
+        self.append(np.stack(np.meshgrid(*[kwargs.get(kappa, default) for kappa in self.kappas]), axis = -1).reshape([-1, len(self.kappas)]))
         return self
 
     def reshape(self, kappas: list[str], default: float = 1):
+        if kappas == self.kappas:
+            return self
         new = Coupling(kappas)
         couplings = []
         for kappa in kappas:
@@ -37,7 +40,7 @@ class Coupling:
                 idx = self.kappas.index(kappa)
                 couplings.append(self.couplings[:, idx: idx + 1])
             except ValueError:
-                couplings.append(np.repeat(default, [self.couplings.shape[0], 1]))                
+                couplings.append(np.tile(default, [self.couplings.shape[0], 1]))                
         new.couplings = np.concatenate(couplings, axis = -1)
         return new
 
@@ -45,107 +48,199 @@ class Coupling:
         self.append(other.reshape(self.kappas).couplings)
         return self
 
-    def __iter__(self):
-        return iter(self.couplings)
-
     def __len__(self):
         return len(self.couplings)
 
     def __getitem__(self, idx):
-        return dict(zip(self.kappas, self.couplings[idx]))
+        return dict(zip(self.kappas, self.couplings[idx].T))
+
+    def __iter__(self):
+        for i in range(len(self)):
+            yield self[i]
+
+class Diagram:
+    _diagram: tuple[list[str], list] = None
+
+    def __init__(self, basis, unit_basis_weight = True, diagram: tuple[list[str], list] = None):
+        if diagram is not None:
+            self._diagram = diagram
+        assert self._diagram is not None
+        self.unit_basis_weight = unit_basis_weight
+        basis = np.asarray(basis)
+        self._basis = Coupling(self._diagram[0]).append(basis[:, :-1])
+        self._int_m2 = basis[:, -1]
+        self._transmat = np.linalg.pinv(self.scale_m2(self._basis.couplings))
+        _s = self._transmat.shape
+        if _s[1] < _s[0]:
+            raise CouplingError(f'require at least {_s[0] - _s[1]} more coupling combinations')
+
+    def scale_m2(self, couplings):
+        couplings = np.asarray(couplings)[:, :, np.newaxis]
+        diagrams  = np.asarray(self._diagram[1]).T[np.newaxis, :, :]
+        idx2 = np.stack(np.tril_indices(diagrams.shape[-1]), axis = -1)
+        diagram2  = np.unique(np.sum(diagrams[:, :, idx2], axis = -1), axis = -1)
+        return np.product(np.power(couplings, diagram2), axis = 1)
+
+    def weight(self, couplings: Coupling):
+        couplings = couplings.reshape(self._diagram[0]).couplings
+        weight = self.scale_m2(couplings) @ self._transmat
+        if self.unit_basis_weight:
+            matched_basis = (couplings == self._basis.couplings[:, np.newaxis]).all(-1).T
+            is_basis = matched_basis.any(-1)
+            weight[is_basis] = matched_basis[is_basis]
+        return weight
+
+    def int_m2(self, couplings: Coupling):
+        int_m2 = self.weight(couplings) @ self._int_m2
+        if int_m2.shape[0] == 1:
+            return int_m2[0]
+        return int_m2
+
+class Decay:
+    _decays: dict[str, dict[str, FormulaBR | float]] = {}
+    _widths: dict[str, float] = {}
+
+    @staticmethod
+    def parent(decay: str):
+        return decay.split('->')[0]
+
+    @staticmethod
+    def width(particle: str, coupling: Coupling = None):
+        '''[GeV]'''
+        if coupling is None:
+            return Decay._widths[particle]
+        else:
+            decays = [decay for decay in Decay._decays[particle].values() if isinstance(decay, FormulaBR) and decay.total]
+            return (Decay._widths[particle] - np.sum([decay.width(Coupling(decay._diagram[0]).meshgrid()) for decay in decays])) + np.sum([decay.width(coupling) for decay in decays], axis = 0)
+
+    @classmethod
+    def add(cls, decay: FormulaBR | str, br: float = None, width: float = None):
+        if isinstance(decay, FormulaBR):
+            br    = decay
+            decay = decay.decay
+        else:
+            if '->' not in decay:
+                assert width is not None
+                br = None
+                cls._widths[decay] = width
+            else:
+                if br is None:
+                    if width is None:
+                        raise CouplingError(f'either BR or decay width of ({decay}) must be specified')
+                    br = width/cls.width(cls.parent(decay))
+        if br is not None:
+            cls._decays.setdefault(cls.parent(decay), {})[decay] = br
+
+    @classmethod
+    def br(cls, decay: str, process: str) -> float:
+        decay = Decay(decay)
+        if isinstance(decay, FormulaBR):
+            return decay(process)
+        else:
+            return decay
+
+    def __new__(cls, decay: str):
+        try:
+            return cls._decays[cls.parent(decay)][decay]
+        except:
+            raise CouplingError(f'BR({decay}) is not recorded')
 
 class Formula(ABC):
     _pattern: str = None
+    _parameters_pattern: str | re.Pattern = None
 
-    @classmethod
+    def __init__(self, pattern: str = None):
+        if pattern is not None:
+            self.pattern = pattern
+        assert self.pattern is not None
+
     @property
-    def _kappas(cls) -> list[str]:
-        return [key[1] for key in Formatter().parse(cls._pattern)]
+    def pattern(self):
+        return self._pattern
 
-    @classmethod
-    @property
-    def _re_pattern(cls) -> str:
-        return cls._pattern.format(**dict((kappa, f'(?P<{kappa}>.+)') for kappa in cls._kappas))
+    @pattern.setter
+    def pattern(self, pattern):
+        self._pattern = pattern
+        for k in ['_re_pattern', '_kappas']:
+            if k in self.__dict__:
+                del self.__dict__[k]
 
-    @classmethod
-    def match(cls, process: str):
-        return re.match(cls._re_pattern, process) is not None
+    @cached_property
+    def _re_pattern(self) -> re.Pattern:
+        return re.compile(self.pattern.format(**dict((kappa, f'(?P<{kappa}>.+)') for kappa in self._kappas)) )
 
-    @classmethod
-    def search(cls, process: str):
-        return re.search(cls._re_pattern, process) is not None
+    @cached_property
+    def _kappas(self):
+        return [key[1] for key in Formatter().parse(self.pattern)]
 
-    @classmethod
-    def couplings(cls, process: str) -> dict[str, float]:
-        pars = re.search(cls._re_pattern, process)
-        if pars:
-            return dict((k, cls._parse_number(v)) for k, v in pars.groupdict().items())
+    def match(self, process: str):
+        return re.match(self._re_pattern, process) is not None
+
+    def parameters(self, process: str) -> dict[str, float]:
+        if self._parameters_pattern is not None:
+            _pattern = self._parameters_pattern
         else:
-            raise FormulaError(f'cannot extract couplings from "{process}" using "{cls._pattern}')
+            _pattern = self._re_pattern
+        pars = {}
+        for group in re.finditer(_pattern, process):
+            for k, v in group.groupdict().items():
+                if v is not None:
+                    pars[k] = self._parse_number(v)
+        return pars
 
     _decimal_separator: str = None
     _decimal_pattern  : str = None
 
-    @classmethod
-    def _parse_number(cls, value: str | float | int):
+    def _parse_number(self, value: str | float | int):
         if isinstance(value, str):
-            return float(value.replace(cls._decimal_separator, '.'))
+            return float(value.replace(self._decimal_separator, '.'))
         else:
-            return cls._decimal_pattern.format(value).replace('.', cls._decimal_separator)
+            return self._decimal_pattern.format(value).replace('.', self._decimal_separator)
 
-    @classmethod
-    def process(cls, couplings: Coupling):
-        return [cls._pattern.format(**dict(zip(cls._kappas, [cls._parse_number(_c) for _c in coupling]))) for coupling in couplings.reshape(cls._kappas)]
+    def process(self, couplings: Coupling):
+        return [self.pattern.format(**coupling) for coupling in couplings.reshape(self._kappas)]
 
     @abstractmethod
     def __call__(self, process: str):
         ...
 
-class FormulaXS(Formula):
-    _diagram      = None
-
-    @classmethod
-    def _scale_xs_components(cls, couplings):
-        couplings = np.asarray(couplings) [:, :, np.newaxis]
-        diagrams  = np.asarray(cls._diagram[1]).T[np.newaxis, :, :]
-        idx_2 = np.stack(np.tril_indices(diagrams.shape[-1]), axis = -1)
-        diagrams_2 = np.unique(np.sum(diagrams[:, :, idx_2], axis = -1), axis = -1)
-        return np.product(np.power(couplings, diagrams_2), axis = 1)
-
-    def __init__(self, *basis, unit_basis_weight = True):
-        assert self._pattern is not None and self._diagram is not None
-        self.unit_basis_weight = unit_basis_weight
-        basis = np.asarray(basis)
-        self.basis    = Coupling(self._diagram[0]).append(basis[:, :-1])
-        self.basis_xs = basis[:, -1]
-        self.transmat = np.linalg.pinv(self._scale_xs_components(self.basis.couplings))
-        _s = self.transmat.shape
-        if _s[1] < _s[0]:
-            raise FormulaError(f'require at least {_s[0] - _s[1]} more coupling combinations')
-
-    def __call__(self, process: str):
-        parameters = self.couplings(process)
-        if parameters:
-            return self.xs(Coupling(self._diagram[0]).meshgrid(**parameters))
-
-    def weight(self, couplings: Coupling):
-        couplings = couplings.reshape(self._diagram[0]).couplings
-        weight = self._scale_xs_components(couplings) @ self.transmat
-        if self.unit_basis_weight:
-            matched_basis = (couplings == self.basis.couplings[:, np.newaxis]).all(-1).T
-            is_basis = matched_basis.any(-1)
-            weight[is_basis] = matched_basis[is_basis]
-        return weight
+class FormulaXS(Diagram, Formula):
+    def __init__(self, basis_xs, unit_basis_weight = True, diagram: tuple[list[str], list] = None, pattern: str = None):
+        Diagram.__init__(self, basis_xs, unit_basis_weight, diagram)
+        Formula.__init__(self, pattern)
 
     def xs(self, couplings: Coupling):
-        xs = self.weight(couplings) @ self.basis_xs
-        if xs.shape[0] == 1:
-            return xs[0]
-        return xs
+        '''[pb]'''
+        return self.int_m2(couplings)
 
-    @property
+    def __call__(self, process: str):
+        return self.xs(Coupling(self._diagram[0]).meshgrid(**self.parameters(process)))
+
+    @cached_property
     def basis_process(self):
-        return self.process(self.basis)
+        return self.process(self._basis)
 
-class FormulaBR(Formula):
-    ... #TODO
+class FormulaBR(Diagram, Formula):
+    def __init__(self, decay: str, basis_br = None, basis_width = None, total = False, unit_basis_weight = True, diagram: tuple[list[str], list] = None, pattern: str = None):
+        self.decay  = decay
+        self.parent = Decay.parent(decay)
+        self.total  = total
+        if basis_br is not None:
+            basis = np.asarray(basis_br)
+            basis[:, -1] = basis[:, -1] * Decay.width(self.parent)
+        elif basis_width is not None:
+            basis = np.asarray(basis_width)
+        else:
+            raise CouplingError(f'either BR or decay width of ({decay}) must be specified')
+        Diagram.__init__(self, basis, unit_basis_weight, diagram)
+        Formula.__init__(self, pattern)
+
+    def width(self, couplings: Coupling):
+        '''[GeV]'''
+        return self.int_m2(couplings)
+
+    def br(self, couplings: Coupling):
+        return self.width(couplings) / Decay.width(self.parent, couplings)
+
+    def __call__(self, process: str):
+        return self.br(Coupling(self._diagram[0]).meshgrid(**self.parameters(process)))

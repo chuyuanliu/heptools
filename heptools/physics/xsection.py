@@ -4,7 +4,7 @@ import re
 from dataclasses import dataclass
 from typing import ClassVar
 
-from .coupling import Formula
+from .coupling import Decay, Formula
 
 
 class XSectionError(Exception):
@@ -17,7 +17,6 @@ class XSection:
         - PDG https://pdg.lbl.gov/
         - GenXsecAnalyzer https://twiki.cern.ch/twiki/bin/viewauth/CMS/HowToGenXSecAnalyzer
     '''
-    BRs : ClassVar[dict[str, float | Formula]] = {}
     _all: ClassVar[list[XSection]] = []
 
     process: Formula | re.Pattern
@@ -25,29 +24,24 @@ class XSection:
     decay: str
     kfactors: dict[str, float]
 
+    _br_pattern = re.compile(r'\[(.+?->.+?)\]')
+    _xs_pattern = re.compile(r'\[(?P<process>[\w]+)\]')
+    _ar_pattern = re.compile(r'\[(?P<process>[\w",]+)\]')
+
     @classmethod
     def _get_br(cls, decay: str, process: str) -> float:
         if not decay:
             return 1
-        for k in set(re.findall(r'(?<!\w)[\w]+->[\w]+(?!\w)', decay)):
-            if k not in cls.BRs:
-                raise XSectionError(f'the branching fraction of "{k}" is not recorded')
-            if isinstance(cls.BRs[k], Formula):
-                if cls.BRs[k].search(process):
-                    br = rf'cls.BRs["{k}"]("{process}")'
-                else:
-                    raise XSectionError(f'the branching fraction of "{k}" is undefined in "{process}"')
-            else:
-                br = rf'cls.BRs["{k}"]'
-            decay = re.sub(rf'(?<!\w){k}(?!\w)', br, decay)
+        for k in set(re.findall(cls._br_pattern, decay)):
+            decay = re.sub(rf'\[{k}\]', rf'Decay.br("{k}","{process}")', decay)
         return eval(decay)
 
     @classmethod
     def _get_xs(cls, xs: str) -> float:
         if not xs:
             return 0
-        xs = re.sub(r'\[(?P<process>[\w]+)\]', r'cls("\g<process>")', xs)
-        xs = re.sub(r'\[(?P<process>[\w",]+)\]', r'cls(\g<process>)', xs)
+        xs = re.sub(cls._xs_pattern, r'cls("\g<process>")', xs)
+        xs = re.sub(cls._ar_pattern, r'cls(\g<process>)', xs)
         return eval(xs)
 
     @classmethod
