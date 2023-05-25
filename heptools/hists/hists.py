@@ -68,7 +68,7 @@ class Set:
         self._fills: dict[str, list[str]] = {}
         self._hists: dict[str,   Hist   ] = {}
         self._categories = deepcopy(categories)
-        self._axes:  dict[str, AxesMixin] = dict((k, _create_axis((v, (k, k.capitalize())))) for k, v in self._categories.items())
+        self._axes:  dict[str, AxesMixin] = {k: _create_axis((v, (k, k.capitalize()))) for k, v in self._categories.items()}
         self.focus()
 
     def add(self, name: str, *axes: AxesMixin | tuple, storage: str | Storage = 'weight', label: str = 'Events', **fill_args: fs.FillLike):
@@ -85,8 +85,8 @@ class Set:
             return [dict(zip(categories, comb)) for comb in combs]
 
     def auto_fill(self, name: str, **fill_args: fs.FillLike):
-        default_args = dict((k, _default_field(k)) for k in self._fills[name] if k not in fill_args)
-        fill_args = dict((f'{name}:{k}', v) for k, v in fill_args.items()) | default_args
+        default_args = {k: _default_field(k) for k in self._fills[name] if k not in fill_args}
+        fill_args = {f'{name}:{k}': v for k, v in fill_args.items()} | default_args
         fills = {name: self._fills[name] + list(self._categories) + ['weight']}
         return fs.Fill(fills, **fill_args)
 

@@ -44,7 +44,7 @@ class PileupWeight(_Variation, EventLevelCorrection):
 
     @property
     def _corrections(self):
-        return dict((k, self.evaluate(weights = self._names.get(k, k), NumTrueInteractions = ('Pileup', 'nTrueInt'))) for k in self.variations)
+        return {k: self.evaluate(weights = self._names.get(k, k), NumTrueInteractions = ('Pileup', 'nTrueInt')) for k in self.variations}
 
 class BTagSF_Shape(_Variation, ObjectLevelCorrection):
     '''
@@ -73,7 +73,7 @@ class BTagSF_Shape(_Variation, ObjectLevelCorrection):
                 groups.append((var, (flavor_gudsb, {}), (flavor_c, {'systematic': self._names.get(var, var)})))
             else:
                 groups.append((var, (flavor_gudsb, {'systematic': self._names.get(var, var)})))
-        return dict((group[0], self.evaluate('deepJet_shape', *group[1:], systematic = 'central', flavor = 'hadronFlavour', abseta = lambda x: np.abs(x.eta), discriminant = 'btagDeepFlavB')) for group in groups)
+        return {group[0]: self.evaluate('deepJet_shape', *group[1:], systematic = 'central', flavor = 'hadronFlavour', abseta = lambda x: np.abs(x.eta), discriminant = 'btagDeepFlavB') for group in groups}
 
 class PileupJetIDSF(_Variation, ObjectLevelCorrection):
     '''
@@ -105,5 +105,5 @@ class PileupJetIDSF(_Variation, ObjectLevelCorrection):
                     eff = MCEff(events)
                     return (1 - corrections * eff)/(1 - eff)
                 group.append((untagged, {'_transform': _transform}))
-            return dict((k, self.evaluate('PUJetID_eff', *group, workingpoint = wp, systematic = self._names.get(k, k))) for k in self.variations)
+            return {k: self.evaluate('PUJetID_eff', *group, workingpoint = wp, systematic = self._names.get(k, k)) for k in self.variations}
         return {'': 1}
