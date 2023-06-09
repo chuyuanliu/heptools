@@ -4,6 +4,7 @@ import re
 from dataclasses import dataclass
 from typing import ClassVar
 
+from .._utils import Eval
 from .coupling import Decay, Formula
 
 
@@ -24,25 +25,17 @@ class XSection:
     decay: str
     kfactors: dict[str, float]
 
-    _br_pattern = re.compile(r'\[(.+?->.+?)\]')
-    _xs_pattern = re.compile(r'\[(?P<process>[\w]+)\]')
-    _ar_pattern = re.compile(r'\[(?P<process>[\w",]+)\]')
-
     @classmethod
     def _get_br(cls, decay: str, process: str) -> float:
         if not decay:
             return 1
-        for k in set(re.findall(cls._br_pattern, decay)):
-            decay = re.sub(rf'\[{k}\]', rf'Decay.br("{k}","{process}")', decay)
-        return eval(decay)
+        return Eval(Decay.br, process)(decay)
 
     @classmethod
     def _get_xs(cls, xs: str) -> float:
         if not xs:
             return 0
-        xs = re.sub(cls._xs_pattern, r'cls("\g<process>")', xs)
-        xs = re.sub(cls._ar_pattern, r'cls(\g<process>)', xs)
-        return eval(xs)
+        return Eval(cls)(xs)
 
     @classmethod
     def add(cls, process: Formula | re.Pattern | str, xs: float | str = None, decay: str = '', kfactors: dict[str, float] = None):

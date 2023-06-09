@@ -23,9 +23,10 @@ class Fourvector(Subset):
         self.add('energy' , (           *energy, ('energy', R'Energy [GeV]')))
 
 class DiFourvector(Fourvector):
-    def __init__(self, name: LabelLike, fill: FieldLike = None, pt = (100, 0, 500), mass = (100, 0, 500), pz = (150, 0, 1500), energy = (100, 0, 500), dr = (100, 0, 4), count = False, **fill_args: FieldLike):
+    def __init__(self, name: LabelLike, fill: FieldLike = None, pt = (100, 0, 500), mass = (100, 0, 500), pz = (150, 0, 1500), energy = (100, 0, 500), dr = (100, 0, 4), ht = (100, 0 , 1000), count = False, **fill_args: FieldLike):
         super().__init__(name, fill, pt, mass, pz, energy, count, **fill_args)
         self.add('dr' , (*dr, ('dr', R'$\Delta R(p_1,p_2)$')))
+        self.add('ht' , (*ht, ('ht', R'$H_{\mathrm{T}}$ [GeV]')))
 
 class Systematic(Subset):
     def __init__(self, name: str, systs: Iterable[LabelLike], *axes: AxesMixin | tuple[int, float, float, LabelLike], weight: FieldLike = 'weight', **fill_args: FieldLike):
