@@ -28,7 +28,7 @@ class Fill:
             kwargs = other._kwargs | self._kwargs
             return Fill(fills, **kwargs)
         else:
-            raise NotImplemented
+            return NotImplemented
 
     def __call__(self, events: ak.Array, hists: hs.Set = None, **fill_args: FillLike):
         self.fill(events, hists, **fill_args)
@@ -112,6 +112,6 @@ class Fill:
                             else:
                                 tobroadcast = k
                     if not broadcasted and tobroadcast is not None:
-                        hist_args[tobroadcast] = np.repeat(hist_args[tobroadcast], len(masked))
+                        hist_args[tobroadcast] = np.full(len(masked), hist_args[tobroadcast])
                 ############################################################
                 hists._hists[name].fill(**hist_args, threads = self.threads)

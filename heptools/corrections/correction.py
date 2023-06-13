@@ -57,7 +57,7 @@ class ObjectLevelCorrection(_Correction):
     def _evaluate_events(self, events: ak.Array, **kwargs) -> ak.Array:
         return ak.prod(self._evaluate_objects(events, **kwargs), axis = 1)
 
-    def _evaluate_groups(self, events: ak.Array, groups: Iterable[tuple[Callable[[ak.Array], ak.Array]], dict[str, ContentLike]], **kwargs):
+    def _evaluate_groups(self, events: ak.Array, groups: Iterable[tuple[Callable[[ak.Array], ak.Array], dict[str, ContentLike]]], **kwargs):
         return mul_arrays(*[self._evaluate_events(events, **(kwargs | {'_selection': group[0]} | group[1])) for group in groups])
 
     def evaluate(self, _correction: str = None, *groups: tuple[Callable[[ak.Array], ak.Array], dict[str, ContentLike]], **inputs: ContentLike):

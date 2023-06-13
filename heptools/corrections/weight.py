@@ -55,7 +55,7 @@ class EventWeight:
             else:
                 _arrays.append(v)
         if len(_arrays) == 0:
-            return np.repeat(_numbers, size)
+            return np.full(size, _numbers)
         else:
             _array = mul_arrays(*_arrays)
             return _array * _numbers if _numbers != 1 else _array
