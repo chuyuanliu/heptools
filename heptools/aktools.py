@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import operator
+from functools import reduce
 from typing import Any, Callable, Union
 
 import awkward as ak
@@ -37,20 +38,15 @@ def update_fields(data: Array, new: Array, *fields: FieldLike):
 def sort_field(data: Array, field: FieldLike, axis: int = -1, ascending: bool = False):
     return data[ak.argsort(get_field(data, field), axis = axis, ascending = ascending)]
 
-def _operator_arrays(op: Callable[[Array, Array], Array], *arrays: Array) -> Array:
-    result = None
-    for array in arrays:
-        if result is None:
-            result = array
-        else:
-            result = op(result, array)
-    return result
+def _reduce(op: Callable[[Array, Array], Array], *arrays: Array) -> Array:
+    if arrays:
+        return reduce(op, arrays)
 
 def mul_arrays(*arrays: Array):
-    return _operator_arrays(operator.mul, *arrays)
+    return _reduce(operator.mul, *arrays)
 
 def _operator_fields(data: Array, op: Callable[[Array, Array], Array], *fields: FieldLike) -> Array:
-    return _operator_arrays(op, *[get_field(data, field) for field in fields])
+    return _reduce(op, *[get_field(data, field) for field in fields])
 
 def or_fields(data: Array, *fields: FieldLike):
     return _operator_fields(data, operator.or_, *fields)

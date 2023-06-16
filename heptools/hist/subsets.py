@@ -7,7 +7,7 @@ import numpy as np
 from hist.axis import AxesMixin
 
 from .._utils import astuple
-from .hists import FieldLike, Label, LabelLike, Set, Subset, _default_field
+from .hist import FieldLike, Label, LabelLike, Set, Subset, _default_field
 
 
 class Fourvector(Subset):

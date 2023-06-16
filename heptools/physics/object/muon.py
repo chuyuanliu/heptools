@@ -1,8 +1,6 @@
 from functools import partial
 
-from coffea.nanoevents.methods import nanoaod
-
-from . import lepton as lep, vector as vec
+from . import lepton as lep
 from ._utils import register_behavior
 
 __all__ = ['pair']
@@ -11,4 +9,4 @@ __all__ = ['pair']
 class DiMuon(lep.DiLepton):
     ...
 
-pair = partial(vec.pair, name = 'DiMuon')
+pair = partial(lep.pair, name = 'DiMuon')

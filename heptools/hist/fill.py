@@ -9,7 +9,7 @@ from hist.axis import Boolean, IntCategory, StrCategory
 
 from .._utils import isinstance_
 from ..aktools import FieldLike, Sliceable, and_fields, get_field
-from . import hists as hs
+from . import hist as hs
 
 FillLike  = Union[FieldLike, Sliceable, Number, bool, Callable]
 

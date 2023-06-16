@@ -15,6 +15,4 @@ class Dijet(vec.DiLorentzVector):
 class Quadjet(vec.QuadLorentzVector, Dijet):
     ...
 
-_multiple_jet_check = partial(vec._di_quad_check, di = 'Dijet', quad = 'Quadjet')
-
-pair = partial(vec.pair, name = _multiple_jet_check)
+pair = partial(vec.pair, name = partial(vec._di_quad_check, di = 'Dijet', quad = 'Quadjet'))
