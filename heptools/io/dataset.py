@@ -63,7 +63,7 @@ class Dataset:
                source: Literal['Data', 'MC'], dataset: str,
                year: str, era: str,
                level: Literal['PicoAOD', 'NanoAOD', 'MiniAOD'], files: FileList):
-        self._tree[source, dataset, year, era, level] = files
+        self._tree[source, dataset, year, era, level] = FileList(files)
 
     def subset(self, filelist: Callable[[FileList], bool] = None, file: Callable[[File], bool] = None, **kwarg: str | list[str]):
         subset = Dataset()
