@@ -11,6 +11,8 @@ from string import Formatter
 
 import numpy as np
 
+from .._utils import unpack
+
 
 class CouplingError(Exception):
     __module__ = Exception.__module__
@@ -91,10 +93,7 @@ class Diagram:
         return weight
 
     def int_m2(self, couplings: Coupling):
-        int_m2 = self.weight(couplings) @ self._int_m2
-        if int_m2.shape[0] == 1:
-            return int_m2[0]
-        return int_m2
+        return unpack(self.weight(couplings) @ self._int_m2)
 
 class Decay:
     _decays: dict[str, dict[str, FormulaBR | float]] = {}
