@@ -21,11 +21,11 @@ class Performance:
         self._perf_start = time.perf_counter()
         self._proc_start = time.process_time()
         tracemalloc.clear_traces()
-        
+
     def checkpoint(self, name: str):
         self._raw.setdefault(name, []).append(
-            (*tracemalloc.get_traced_memory(), 
-             time.perf_counter() - self._perf_start, 
+            (*tracemalloc.get_traced_memory(),
+             time.perf_counter() - self._perf_start,
              time.process_time() - self._proc_start))
         self.reset()
 

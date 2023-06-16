@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import json
 import re
 from collections import defaultdict
 from typing import Any, Callable, Generator, Generic, TypeVar

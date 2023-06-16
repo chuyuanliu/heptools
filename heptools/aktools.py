@@ -12,8 +12,8 @@ from ._utils import astuple
 
 __all__ = ['FieldLike', 'Sliceable',
            'get_field', 'update_fields', 'sort_field',
-           'mul_arrays', 
-           'or_fields', 'and_fields', 'mul_fields', 
+           'mul_arrays',
+           'or_fields', 'and_fields', 'mul_fields',
            'where']
 
 AnyInt = Union[int, np.integer]

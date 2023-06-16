@@ -60,7 +60,7 @@ class XSection:
             if xs is None:
                 xs = self.process(process)
             elif isinstance(xs, str):
-                xs = self._get_xs(xs.format(**match.groupdict()))                
+                xs = self._get_xs(xs.format(**match.groupdict()))
         if xs:
             xs *= XSection._get_br(decay = self.decay if decay is None else decay, process = process)
             if self.kfactors and kfactors:

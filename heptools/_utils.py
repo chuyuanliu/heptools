@@ -40,17 +40,17 @@ def match_any(target: _TargetType, patterns: Iterable[_PatternType], match: Call
 
 _EvalType = TypeVar('_EvalType')
 class Eval(Generic[_EvalType]):
-    _quote_arg_pattern = re.compile(r'(?P<arg>' + 
-                                    r'|'.join([rf'((?<={i})[^\[\]\",=]*?(?={j}))' 
-                                               for i in ['\[', ','] 
-                                               for j in [',', '\]']]) + 
+    _quote_arg_pattern = re.compile(r'(?P<arg>' +
+                                    r'|'.join([rf'((?<={i})[^\[\]\",=]*?(?={j}))'
+                                               for i in ['\[', ',']
+                                               for j in [',', '\]']]) +
                                     r')')
     _eval_call_pattern = re.compile(r'\[(?P<arg>.*?)\]')
 
     def __init__(self, method: Callable[[], _EvalType] | dict[str, _EvalType], *args, **kwargs):
         self.method = method
         self.args   = args
-        self.kwargs = kwargs        
+        self.kwargs = kwargs
 
     def __call__(self, expression: str) -> _EvalType:
         return eval(re.sub(self._eval_call_pattern, rf'self.method(\g<arg>,*self.args,**self.kwargs)', re.sub(self._quote_arg_pattern, r'"\g<arg>"', expression)))

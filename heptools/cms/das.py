@@ -22,8 +22,8 @@ def client(*queries: str, to_json = True, **kwargs: str):
     return result
 
 def query_file_mp(file):
-    return {'path': file['file'][0]['name'], 
-            'nevents': file['file'][0]['nevents'], 
+    return {'path': file['file'][0]['name'],
+            'nevents': file['file'][0]['nevents'],
             'site': client('site', file = file['path'], to_json = False).split('\n')}
 
 def query_dataset(query: str):
@@ -31,11 +31,11 @@ def query_dataset(query: str):
     if not files:
         raise DASError(f'no files found for dataset "{filelist}"')
     filelist = {
-        'nevents': 0, 
-        'nfiles': len(files), 
-        'files': [], 
-        'path': files[0]['file'][0]['dataset'], 
-        'das_query': query, 
+        'nevents': 0,
+        'nfiles': len(files),
+        'files': [],
+        'path': files[0]['file'][0]['dataset'],
+        'das_query': query,
         'site': client('site', dataset = query, to_json = False)}
     with Pool(processes = len(files)) as pool:
         files = pool.map(query_file_mp, files)

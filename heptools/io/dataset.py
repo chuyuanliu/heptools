@@ -41,7 +41,7 @@ class FileList(File):
     def files(self) -> list[File]:
         return self.setdefault('files', [])
 
-    def sublist(self, file: Callable[[File], bool] = None): # TODO check deepcopy
+    def sublist(self, file: Callable[[File], bool] = None):
         sublist = FileList(self)
         sublist['files'] = [i for i in self.files if file is None or file(i)]
         return sublist
@@ -59,13 +59,13 @@ class Dataset:
     def __str__(self) -> str:
         return str(self._tree)
 
-    def update(self, 
+    def update(self,
                source: Literal['Data', 'MC'], dataset: str,
-               year: str, era: str, 
+               year: str, era: str,
                level: Literal['PicoAOD', 'NanoAOD', 'MiniAOD'], files: FileList):
         self._tree[source, dataset, year, era, level] = files
 
-    def subset(self, filelist: Callable[[FileList], bool] = None, file: Callable[[File], bool] = None, **kwarg: str | list[str]): # TODO check deepcopy
+    def subset(self, filelist: Callable[[FileList], bool] = None, file: Callable[[File], bool] = None, **kwarg: str | list[str]):
         subset = Dataset()
         for meta, entry in self._tree.walk(*(kwarg.get(k) for k in self._metadata)):
             entry = entry.sublist(file)

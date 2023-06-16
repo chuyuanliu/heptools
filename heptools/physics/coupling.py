@@ -42,7 +42,7 @@ class Coupling:
                 idx = self.kappas.index(kappa)
                 couplings.append(self.couplings[:, idx: idx + 1])
             except ValueError:
-                couplings.append(np.tile(default, [self.couplings.shape[0], 1]))                
+                couplings.append(np.tile(default, [self.couplings.shape[0], 1]))
         new.couplings = np.concatenate(couplings, axis = -1)
         return new
 
