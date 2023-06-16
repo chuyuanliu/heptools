@@ -24,7 +24,7 @@ def client(*queries: str, to_json = True, **kwargs: str):
 def query_file_mp(file):
     return {'path': file['file'][0]['name'],
             'nevents': file['file'][0]['nevents'],
-            'site': client('site', file = file['path'], to_json = False).split('\n')}
+            'site': client('site', file = file['file'][0]['name'], to_json = False).split('\n')}
 
 def query_dataset(query: str):
     files = client('file', dataset = query)

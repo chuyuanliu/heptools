@@ -3,6 +3,7 @@ from __future__ import annotations
 import json
 from typing import Callable, Literal
 
+from ..benchmark.unit import Metric
 from .container import Tree
 
 
@@ -29,7 +30,6 @@ class FileList(File):
         super().__init__(data)
 
     def __str__(self) -> str:
-        from ..benchmark.unit import Metric
         profile = []
         profile.append(f' [path] {self.path}')
         events = [file.events for file in self.files]
