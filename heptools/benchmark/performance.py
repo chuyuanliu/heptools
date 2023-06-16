@@ -14,7 +14,7 @@ class Performance:
         - cpu time [s]
     '''
     def __init__(self, *meta, **raw: list[tuple[int, int, float, float]]):
-        self._meta = meta
+        self._meta = meta # TODO add meta data
         self._raw = raw
 
     def reset(self):
@@ -31,9 +31,12 @@ class Performance:
 
     def __add__(self, other: Performance):
         if isinstance(other, Performance):
-            return Performance(*self._meta, **accumulate(self._raw, other._raw))
+            return Performance(*self._meta, **accumulate(self._raw, other._raw)) # TODO fix and test
         else:
             return NotImplemented
+
+    def __str__(self):
+        pass # TODO
 
     def start(self):
         tracemalloc.start()

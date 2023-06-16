@@ -16,21 +16,26 @@ class PartialBoolArray:
     def _bit_padding(x: bool):
         return ~np.uint8(0) if x else np.uint8(0)
 
-    def _bit_value(self, index: npt.NDArray[np.uint]) -> npt.NDArray[np.uint8]:
+    def _bit_index(self, index: npt.NDArray[np.uint]) -> tuple[npt.NDArray[np.uint], npt.NDArray[np.uint8]]:
         if self._start != 0:
             index -= self._start
-        _offset = np.asarray(index, dtype = np.uint8) & np.uint8(7)
+        offset = np.asarray(index, dtype = np.uint8) & np.uint8(7)
         index //= IndexType(8)
-        return (self._value[index] >> _offset) & np.uint8(1)
+        return index, offset 
+
+    def _bit_value(self, index: npt.NDArray[np.uint]) -> npt.NDArray[np.uint8]:
+        index, offset = self._bit_index(index)
+        return (self._value[index] >> offset) & np.uint8(1)
 
     def __init__(self, index: Iterable[np.uint] = None, value: bool | Iterable[bool] = True, default = False):
-        index = np.asarray(index, dtype = IndexType)
+        index = np.array(index)
         value = np.asarray(value, dtype = np.bool_)
         self._start, self._end = self._bit_align(index.min()), self._bit_align(index.max()) + IndexType(7)
         self._default = default
-        _value = np.full(self.shape, self._default, dtype = np.bool_)
-        _value[index - self._start] = value
-        self._value = np.packbits(_value, bitorder = 'little') #TODO improve memory usage
+        index, offset = self._bit_index(index)
+        self._value = np.full(self.shape//IndexType(8), self._bit_padding(self._default), dtype = np.uint8)
+        np.bitwise_or.at(self._value, index[value], (np.uint8(1) << offset[value]))
+        np.bitwise_and.at(self._value, index[~value], ~(np.uint8(1) << offset[~value]))
 
     def __invert__(self):
         obj = object.__new__(self.__class__)
@@ -102,7 +107,7 @@ class PartialBoolArray:
             return self._bit_value(index).astype(np.bool_)
         else:
             out = np.full(len(index), self._default, dtype = np.bool_)
-            stored = (index >= 0) & (index < self.shape)
+            stored = (index >= self._start) & (index <= self._end)
             out[stored] = self._bit_value(index[stored]).astype(np.bool_)
             return out
 
