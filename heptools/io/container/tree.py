@@ -41,6 +41,24 @@ class Tree(defaultdict[str], Generic[_LeafType]):
                 lines.append((f' ├─{k}\n' + str(self[k])).replace('\n', '\n │'))
         return '\n'.join(lines)
 
+    def __ior__(self, other: Tree[_LeafType]) -> Tree[_LeafType]:
+        if isinstance(other, Tree):
+            for k, v in other.items():
+                if isinstance(v, Tree):
+                    self[k] |= v
+                else:
+                    self[k] = v
+            return self
+        return NotImplemented
+
+    def __or__(self, other: Tree[_LeafType]) -> Tree[_LeafType]:
+        if isinstance(other, Tree):
+            tree = Tree[_LeafType]()
+            tree |= self
+            tree |= other
+            return tree
+        return NotImplemented
+
     def from_dict(self, tree: dict, depth: int = float('inf'), leaf: Callable[[Any], _LeafType] = None):
         for k, v in tree.items():
             if isinstance(v, dict) and depth > 1:

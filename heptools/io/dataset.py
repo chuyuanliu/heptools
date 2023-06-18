@@ -76,6 +76,13 @@ class Dataset:
     def __iter__(self):
         yield from self._tree.walk()
 
+    def __or__(self, other: Dataset) -> Dataset:
+        if isinstance(other, Dataset):
+            dataset = Dataset()
+            dataset._tree = self._tree | other._tree
+            return dataset
+        return NotImplemented
+
     @property
     def files(self):
         for meta, entry in self:
