@@ -8,8 +8,10 @@ import re
 from abc import ABC, abstractmethod
 from functools import cached_property
 from string import Formatter
+from typing import Generator, overload
 
 import numpy as np
+import numpy.typing as npt
 
 from .._utils import unpack
 
@@ -54,9 +56,9 @@ class Coupling:
         return len(self.couplings)
 
     def __getitem__(self, idx):
-        return dict(zip(self.kappas, self.couplings[idx].T))
+        return dict[str, npt.NDArray](zip(self.kappas, self.couplings[idx].T))
 
-    def __iter__(self):
+    def __iter__(self) -> Generator[dict[str, float]]:
         for i in range(len(self)):
             yield self[i]
 
@@ -168,7 +170,13 @@ class Formula(ABC):
                     pars[k] = self._parse_number(v)
         return pars
 
-    def _parse_number(self, value: str | float | int):
+    @overload
+    def _parse_number(self, value: str) -> float:
+        ...
+    @overload
+    def _parse_number(self, value: float) -> str:
+        ...
+    def _parse_number(self, value):
         if isinstance(value, str):
             return float(value.replace(self.number_separator, '.'))
         else:

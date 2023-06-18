@@ -1,4 +1,5 @@
 import numpy as np
+import numpy.typing as npt
 
 
 class Prefix:
@@ -7,7 +8,7 @@ class Prefix:
         self.prefix = np.asarray(prefix)
         self.range  = np.asarray(range)
 
-    def __call__(self, value):
+    def __call__(self, value: npt.NDArray[np.float64]):
         value = np.asarray(value, dtype=np.float64)
         with np.errstate(divide='ignore'):
             power = (np.nan_to_num(np.log(np.abs(value)), False, 0, 0, 0) / self.base).astype(int)

@@ -1,6 +1,8 @@
 '''
-    https://cmsweb.cern.ch/das/
-    https://github.com/dmwm/dasgoclient
+|               |                                     |
+| -             | -                                   |
+| DAS           | https://cmsweb.cern.ch/das/         |
+| client        | https://github.com/dmwm/dasgoclient |
 '''
 
 import json

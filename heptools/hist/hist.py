@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from copy import deepcopy
-from typing import Iterable, Union
+from typing import Iterable, Union, overload
 
 import numpy as np
 from hist import Hist
@@ -46,6 +46,15 @@ def _create_axis(args: AxesMixin | tuple) -> AxesMixin:
     raise HistError(f'cannot create axis from arguments "{args}"')
 
 class Label:
+    @overload
+    def __init__(self, label: Label):
+        ...
+    @overload
+    def __init__(self, label: tuple[str, str]):
+        ...
+    @overload
+    def __init__(self, code: str, display: str):
+        ...
     def __init__(self, code: LabelLike, display: str = None):
         if isinstance(code, Label):
             self.code    = code.code
