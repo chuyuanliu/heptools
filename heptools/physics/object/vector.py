@@ -6,7 +6,7 @@ import awkward as ak
 from awkward import Array
 from coffea.nanoevents.methods import vector as vec
 
-from ...combination import partition
+from ...aktools import partition
 from ._utils import register_behavior, setup_lead_subl, setup_lorentz_vector
 
 __all__ = ['pair', 'PairError']

@@ -9,6 +9,7 @@ import numpy as np
 from awkward import Array
 
 from ._utils import astuple
+from .partition import Partition
 
 __all__ = ['FieldLike', 'Sliceable',
            'get_field', 'update_fields', 'sort_field',
@@ -61,3 +62,10 @@ def where(default: Array, *conditions: tuple[Array, Any]) -> Array:
     for condition, value in conditions:
         default = ak.where(condition, value, default)
     return default
+
+def partition(data: Array, groups: int, members: int) -> tuple[Array, ...]:
+    _sizes = ak.num(data)
+    assert(ak.all(_sizes >= groups * members))
+    _combs = ak.Array([Partition(i, groups, members).combination[0] for i in range(ak.max(_sizes) + 1)])[_sizes]
+    _combs = tuple(ak.unflatten(data[ak.flatten(_combs[:, :, :, i], axis = 2)], groups, axis=1) for i in range(members))
+    return _combs
