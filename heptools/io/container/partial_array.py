@@ -21,7 +21,7 @@ class PartialBoolArray:
             index -= self._start
         offset = np.asarray(index, dtype = np.uint8) & np.uint8(7)
         index //= IndexType(8)
-        return index, offset 
+        return index, offset
 
     def _bit_value(self, index: npt.NDArray[np.uint]) -> npt.NDArray[np.uint8]:
         index, offset = self._bit_index(index)
