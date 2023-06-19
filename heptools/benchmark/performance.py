@@ -16,7 +16,7 @@ import numpy.typing as npt
 
 from .unit import Binary, Metric
 
-matplotlib.rc('font', size = 20)
+matplotlib.rc('font', size = 15)
 
 class Performance:
     measures = [('memory', Binary, 'B'),
@@ -25,7 +25,7 @@ class Performance:
                 ('cpu time', Metric, 's')]
     width = 20
 
-    def __init__(self, group = None):
+    def __init__(self, group: str = None):
         self._raw = defaultdict(list)
         if group is None:
             group = ''.join(random.choice(string.ascii_letters + string.digits) for _ in range(self.width - 1))
@@ -104,7 +104,7 @@ class Performance:
                     report += f'{cell:<{self.width}}'
         report += sep("=")
         return report
-# TODO chech below
+
     def plot(self, *checkpoints: str, path: str = None, **ops: Callable[[npt.NDArray], float]):
         def pathify(s: str):
             return s.replace(' ', '_')
@@ -127,11 +127,11 @@ class Performance:
                 plt.pie(y, labels = checkpoints, autopct = '%1.1f%%')
                 plt.title(f'{measure}({op_name})')
                 finish(op_name, measure)
-            plt.figure(figsize = (3 * (len(groups) + 1), 8))
+            plt.figure(figsize = (2 * len(groups) + 6, 8))
             bottom = np.zeros(len(groups))
             for k in checkpoints:
                 height = np.array([data[k][measure]['raw'][data[k][None].index(group)] if group in data[k][None] else 0 for group in groups])
-                plt.bar(np.arange(len(groups)), height, label = k, bottom = bottom)
+                plt.bar(np.arange(len(groups)), height = height, width = 0.5, label = k, bottom = bottom)
                 bottom += height
             plt.xticks(np.arange(len(groups)), groups)
             plt.title(f'{measure}(raw)')
