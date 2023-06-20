@@ -8,6 +8,8 @@ import numpy.typing as npt
 IndexType = np.uint64
 
 class PartialBoolArray:
+    _uint8_bit_sum = None
+
     @staticmethod
     def _bit_align(x: IndexType):
         return IndexType(x) & ~IndexType(7)
@@ -113,3 +115,9 @@ class PartialBoolArray:
 
     def __call__(self, index: Iterable[np.uint], bounded: bool = True):
         return self.get(index, bounded)
+
+    @property
+    def count(self):
+        if PartialBoolArray._uint8_bit_sum is None:
+            PartialBoolArray._uint8_bit_sum = np.unpackbits(np.arange(256, dtype = np.uint8)).reshape(-1, 8).sum(axis = 1)
+        return PartialBoolArray._uint8_bit_sum[self._value].sum()

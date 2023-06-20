@@ -97,7 +97,7 @@ class Performance:
             report += f'{sep("-")}{"":<{self.width}}'
             for k in checkpoints:
                 report += f'{k:<{self.width}}'
-            for group in data[None]:
+            for group in sorted(data[None]):
                 report += f'\n{group:<{self.width}}'
                 for k in checkpoints:
                     cell = get_cell(data[k][measure]['raw'][data[k][None].index(group)]) if group in data[k][None] else ''
@@ -119,7 +119,7 @@ class Performance:
         else:
             def finish(fig, measure):
                 plt.show()
-        groups = [*data[None]]
+        groups = sorted(data[None])
         for measure, _, _ in self.measures:
             for op_name in ops:
                 plt.figure(figsize = (8, 8))
