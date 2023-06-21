@@ -11,7 +11,7 @@ from .._utils import Eval
 from .container import PartialBoolArray
 
 
-class Skim:
+class Selection:
     def __init__(self, **filters: PartialBoolArray):
         self._filters: dict[str, PartialBoolArray] = filters
 
@@ -20,9 +20,9 @@ class Skim:
         self._filters = accumulate((self._filters, {selection: value}))
         return self
 
-    def __add__(self, other: Skim) -> Skim:
-        if isinstance(other, Skim):
-            return Skim(**accumulate((self._filters, other._filters)))
+    def __add__(self, other: Selection) -> Selection:
+        if isinstance(other, Selection):
+            return Selection(**accumulate((self._filters, other._filters)))
         else:
             return NotImplemented
 
