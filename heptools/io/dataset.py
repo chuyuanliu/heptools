@@ -33,7 +33,7 @@ class FileList(File):
         profile = []
         profile.append(f' [path] {self.path}')
         events = [file.events for file in self.files]
-        v, u = Metric([sum(events), self.events])
+        v, u = Metric.add([sum(events), self.events])
         profile.append(f' [nevents] {v[0]:0.1f}{u[0]}/{v[1]:0.1f}{u[1]} [nfiles] {len(events)}/{self["nfiles"]}')
         return '\n'.join(profile)
 

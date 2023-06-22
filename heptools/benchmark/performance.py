@@ -14,15 +14,16 @@ import matplotlib.pyplot as plt
 import numpy as np
 import numpy.typing as npt
 
-from .unit import Binary, Metric
+from .unit import Binary, Metric, Prefix
 
 matplotlib.rc('font', size = 15)
 
 class Performance:
-    measures = [('memory', Binary, 'B'),
-                ('peak memory', Binary, 'B'),
-                ('wall time', Metric, 's'),
-                ('cpu time', Metric, 's')]
+    measures: list[tuple[str, Prefix, str]] = [
+        ('memory', Binary, 'B'),
+        ('peak memory', Binary, 'B'),
+        ('wall time', Metric, 's'),
+        ('cpu time', Metric, 's')]
     width = 20
 
     def __init__(self, group: str = None):
@@ -78,7 +79,7 @@ class Performance:
 
     def report(self, *checkpoints: str, **ops: Callable[[npt.NDArray], float]):
         def get_cell(v: float):
-            v, u = prefix(v)
+            v, u = prefix.add(v)
             return f'{v:.3g}{u}{unit}'
         def sep(c):
             return f'\n{c*(self.width*columns)}\n'
@@ -116,6 +117,7 @@ class Performance:
             path = f'{path}/{{measure}}/{{fig}}.pdf'
             def finish(fig, measure):
                 plt.savefig(path.format(measure = pathify(measure), fig = pathify(fig)))
+                plt.close()
         else:
             def finish(fig, measure):
                 plt.show()
