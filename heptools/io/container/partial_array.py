@@ -36,8 +36,10 @@ class PartialBoolArray:
         self._default = default
         index, offset = self._bit_index(index)
         self._value = np.full(self.shape//IndexType(8), self._bit_padding(self._default), dtype = np.uint8)
-        np.bitwise_or.at(self._value, index[value], (np.uint8(1) << offset[value]))
-        np.bitwise_and.at(self._value, index[~value], ~(np.uint8(1) << offset[~value]))
+        if not self._default:
+            np.bitwise_or.at(self._value, index[value], (np.uint8(1) << offset[value]))
+        else:
+            np.bitwise_and.at(self._value, index[~value], ~(np.uint8(1) << offset[~value]))
 
     def __invert__(self):
         obj = object.__new__(self.__class__)
