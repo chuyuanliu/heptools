@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import re
-from typing import Any, Callable, Generic, Iterable, TypeVar, get_args
+from typing import Any, Callable, Generic, Iterable, Sized, TypeVar, get_args
 
 __all__ = ['isinstance_', 'sequence_call', 'astuple']
 
@@ -21,10 +21,14 @@ def sequence_call(*_funcs: Callable[[Any], Any]):
 def astuple(_o):
     return _o if isinstance(_o, tuple) else (_o,)
 
-def unpack(__iter: list | tuple):
-    if len(__iter) == 1:
-        return __iter[0]
-    return __iter
+def unpack(__iter: Iterable) -> Any:
+    __next = __iter
+    while isinstance(__next, Iterable) and isinstance(__next, Sized) and not isinstance(__next, str):
+        if len(__next) == 1:
+            __next = __next[0]
+        else:
+            return __iter
+    return __next
 
 _TargetType = TypeVar('_TargetType')
 _PatternType = TypeVar('_PatternType')

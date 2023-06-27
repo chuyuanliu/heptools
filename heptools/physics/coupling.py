@@ -94,8 +94,11 @@ class Diagram:
             weight[is_basis] = matched_basis[is_basis]
         return weight
 
-    def int_m2(self, couplings: Coupling):
+    def int_m2_w(self, couplings: Coupling):
         return unpack(self.weight(couplings) @ self._int_m2)
+
+    def int_m2_w2(self, couplings: Coupling):
+        return unpack(np.sqrt(self.weight(couplings)**2 @ self._int_m2**2))
 
 class Decay:
     _decays: dict[str, dict[str, FormulaBR | float]] = {}
@@ -196,7 +199,11 @@ class FormulaXS(Diagram, Formula):
 
     def xs(self, couplings: Coupling):
         '''[pb]'''
-        return self.int_m2(couplings)
+        return self.int_m2_w(couplings)
+
+    def xs_unc(self, couplings: Coupling):
+        '''[pb]'''
+        return self.int_m2_w2(couplings)
 
     def __call__(self, process: str):
         return self.xs(Coupling(self.diagrams[0]).meshgrid(**self.parameters(process)))
@@ -222,7 +229,7 @@ class FormulaBR(Diagram, Formula):
 
     def width(self, couplings: Coupling):
         '''[GeV]'''
-        return self.int_m2(couplings)
+        return self.int_m2_w(couplings)
 
     def br(self, couplings: Coupling):
         return self.width(couplings) / Decay.width(self.parent, couplings)

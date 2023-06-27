@@ -1,46 +1,31 @@
 # HEP Tools
 Tools for high energy physics analysis.
 
-# Getting Started
-## `pip`
+# Installation
 install from github
 
-    pip install git+https://github.com/ChuyuanLiu/heptools@master
+    pip install git+https://github.com/ChuyuanLiu/heptools.git@master
 or from local
 
     pip install .
-## `conda`
-use pip
-## Container
-### `docker`
+# Build image and run in container
+## `docker`
 build docker image
 
-    docker build -t <image> .
-run script in container
+    docker build -t [TAG] https://github.com/ChuyuanLiu/heptools.git#master
+## `singularity`
+run an interactive shell
 
-    docker run -it -rm \
-    -v <script dir>:/analysis \
-    <image> python <script>
-
-### `singularity`
-run script in singularity container
-
-    singularity run \
-    -B <script dir>:/analysis \
-    <image> python /analysis/<script>
-
-### convert image
-save docker image to tar archive
-
-    docker save <image> > <archive>.tar
-build singularity image from docker archive
-
-    singularity build <image>.sif docker-archive://<archive>.tar
-
-### Tips
-- pre-built image is avaliable in docker hub `docker://chuyuanliu/heptools:latest`
-- mount `/cvmfs` in `singularity`: add `-B /cvmfs:/cvmfs:ro`
+    singularity shell                   `# run a shell within a container`\
+    -B /cvmfs                           `# mount cvmfs`\
+    -B ~/nobackup:/nobackup             `# mount nobackup dir`\
+    -B .:/analysis                      `# mount analysis dir`\
+    --pwd /analysis                     `# set initial working directory`\
+    docker://chuyuanliu/heptools:latest `# use prebuilt docker image`
+## Tips
+- change singularity (apptainer) cache dir `export APPTAINER_CACHEDIR=${HOME}/nobackup/.apptainer/`
 
 # TODO
+- condor
 - plot
-- save skim
+- dasgoclient
