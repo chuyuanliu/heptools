@@ -25,6 +25,7 @@ class Coupling:
         self.couplings = np.empty([0, len(kappas)])
 
     def append(self, couplings: np.ndarray):
+        couplings = np.asarray(couplings)
         if couplings.shape[-1] != len(self.kappas):
             raise CouplingError(f'coupling shape {couplings.shape} does not match (, {len(self.kappas)})')
         self.couplings = np.concatenate((self.couplings, couplings), axis = 0)

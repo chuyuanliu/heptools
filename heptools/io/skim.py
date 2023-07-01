@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import gc
 from abc import ABC, abstractmethod
 from collections import defaultdict
 from typing import Callable
@@ -54,6 +55,7 @@ class Buffer(ABC):
 
     def __iadd__(self, block: ak.Array):
         self.add_block(block)
+        gc.collect()
         return self
 
     def __enter__(self):
@@ -65,8 +67,8 @@ class Buffer(ABC):
         self._file.close()
 
 class BasketSizeOptimizedBuffer(Buffer):
-    def __init__(self, path: str, tree: str, jagged: list[str], buffer_size: int = 100_000):
-        self.size = max(buffer_size, 100_000)
+    def __init__(self, path: str, tree: str, jagged: list[str], buffer_size: int = 10000):
+        self.size = buffer_size
         super().__init__(path, tree, jagged)
 
     @property
