@@ -1,8 +1,11 @@
 from __future__ import annotations
 
 import gc
+import multiprocessing
+import operator
 from abc import ABC, abstractmethod
 from collections import defaultdict
+from functools import reduce
 from typing import Callable
 
 import awkward as ak
@@ -111,16 +114,21 @@ class Skim:
         self.buffer = buffer
         self.buffer_args = buffer_args
 
+    def _get_branches(self, file):
+        with uproot.open(file) as f:
+            branches = set(f['Events'].keys())
+            for excluded in self.excluded:
+                branches -= set(f['Events'].keys(filter_name = excluded))
+            return branches
+
     def __call__(self, files: list[str], output: str, selection: Callable[[ak.Array], ak.Array] = None, iterate_step: int | str = None, monitor: Performance = None, **buffer_args):
         if iterate_step is None:
             iterate_step = self.iterate_step
         buffer_args = self.buffer_args | buffer_args
         with self.buffer(output, 'Events', self.jagged, **buffer_args) as output:
             start = 0
-            with uproot.open(files[0]) as f:
-                branches = set(f['Events'].keys())
-                for excluded in self.excluded:
-                    branches -= set(f['Events'].keys(filter_name = excluded))
+            with multiprocessing.Pool(len(files)) as pool:
+                branches = reduce(operator.and_, pool.map(self._get_branches, files))
             if monitor: monitor.reset()
             for i, chunk in enumerate(uproot.iterate([f'{f}:Events' for f in files], expressions = branches, step_size = iterate_step)):
                 if monitor: monitor.checkpoint('read', f'chunk{i}')
