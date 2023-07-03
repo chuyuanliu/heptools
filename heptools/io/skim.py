@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import gc
-import multiprocessing
 import operator
 from abc import ABC, abstractmethod
 from collections import defaultdict
@@ -70,7 +69,7 @@ class Buffer(ABC):
         self._file.close()
 
 class BasketSizeOptimizedBuffer(Buffer):
-    def __init__(self, path: str, tree: str, jagged: list[str], buffer_size: int = 10000):
+    def __init__(self, path: str, tree: str, jagged: list[str], buffer_size: int = 100_000):
         self.size = buffer_size
         super().__init__(path, tree, jagged)
 
@@ -121,14 +120,19 @@ class Skim:
                 branches -= set(f['Events'].keys(filter_name = excluded))
             return branches
 
-    def __call__(self, files: list[str], output: str, selection: Callable[[ak.Array], ak.Array] = None, iterate_step: int | str = None, monitor: Performance = None, **buffer_args):
+    def __call__(self, files: list[str], output: str, selection: Callable[[ak.Array], ak.Array] = None, iterate_step: int | str = None, monitor: Performance = None, allow_multiprocessing: bool = True, **buffer_args):
         if iterate_step is None:
             iterate_step = self.iterate_step
         buffer_args = self.buffer_args | buffer_args
         with self.buffer(output, 'Events', self.jagged, **buffer_args) as output:
             start = 0
-            with multiprocessing.Pool(len(files)) as pool:
-                branches = reduce(operator.and_, pool.map(self._get_branches, files))
+            if allow_multiprocessing:
+                import multiprocessing as mp
+                with mp.Pool(len(files)) as pool:
+                    branches = pool.map(self._get_branches, files)
+            else:
+                branches = [self._get_branches(file) for file in files]
+            branches = reduce(operator.and_, branches)
             if monitor: monitor.reset()
             for i, chunk in enumerate(uproot.iterate([f'{f}:Events' for f in files], expressions = branches, step_size = iterate_step)):
                 if monitor: monitor.checkpoint('read', f'chunk{i}')
