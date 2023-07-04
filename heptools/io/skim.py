@@ -112,6 +112,7 @@ class Skim:
         self.iterate_step = iterate_step
         self.buffer = buffer
         self.buffer_args = buffer_args
+        self.timeout  = 7 * 24 * 60
 
     def _get_branches(self, file):
         with uproot.open(file) as f:
@@ -134,7 +135,7 @@ class Skim:
                 branches = [self._get_branches(file) for file in files]
             branches = reduce(operator.and_, branches)
             if monitor: monitor.reset()
-            for i, chunk in enumerate(uproot.iterate([f'{f}:Events' for f in files], expressions = branches, step_size = iterate_step)):
+            for i, chunk in enumerate(uproot.iterate([f'{f}:Events' for f in files], expressions = branches, step_size = iterate_step, timeout = self.timeout)):
                 if monitor: monitor.checkpoint('read', f'chunk{i}')
                 if selection is not None:
                     chunk = selection(chunk)
