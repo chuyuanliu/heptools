@@ -72,34 +72,36 @@ class Diagram:
         assert self.diagrams is not None
         self.unit_basis_weight = unit_basis_weight
         basis = np.asarray(basis)
-        self._basis = Coupling(self.diagrams[0]).append(basis[:, :-1])
-        self._int_m2 = basis[:, -1]
-        self._transmat = np.linalg.pinv(self.scale_m2(self._basis.couplings))
+        count = len(self.diagrams[0])
+        self._basis = Coupling(self.diagrams[0]).append(basis[:, :count])
+        self._intm2 = basis[:, count]
+        self._intm2_unc = basis[:, count + 1] if basis.shape[1] >= (count + 2) else self._intm2
+        self._transmat = np.linalg.pinv(self._component_scale(self._basis.couplings))
         _s = self._transmat.shape
         if _s[1] < _s[0]:
             raise CouplingError(f'require at least {_s[0] - _s[1]} more coupling combinations')
 
-    def scale_m2(self, couplings):
+    def _component_scale(self, couplings):
         couplings = np.asarray(couplings)[:, :, np.newaxis]
-        diagrams  = np.asarray(self.diagrams[1]).T[np.newaxis, :, :]
-        idx2 = np.stack(np.tril_indices(diagrams.shape[-1]), axis = -1)
-        diagram2  = np.unique(np.sum(diagrams[:, :, idx2], axis = -1), axis = -1)
+        diagram = np.asarray(self.diagrams[1]).T[np.newaxis, :, :]
+        idx2 = np.stack(np.tril_indices(diagram.shape[-1]), axis = -1)
+        diagram2 = np.unique(np.sum(diagram[:, :, idx2], axis = -1), axis = -1)
         return np.product(np.power(couplings, diagram2), axis = 1)
 
     def weight(self, couplings: Coupling):
         couplings = couplings.reshape(self.diagrams[0]).couplings
-        weight = self.scale_m2(couplings) @ self._transmat
+        weight = self._component_scale(couplings) @ self._transmat
         if self.unit_basis_weight:
             matched_basis = (couplings == self._basis.couplings[:, np.newaxis]).all(-1).T
             is_basis = matched_basis.any(-1)
             weight[is_basis] = matched_basis[is_basis]
         return weight
 
-    def int_m2_w(self, couplings: Coupling):
-        return unpack(self.weight(couplings) @ self._int_m2)
+    def _sumw_intm2(self, couplings: Coupling):
+        return unpack(self.weight(couplings) @ self._intm2)
 
-    def int_m2_w2(self, couplings: Coupling):
-        return unpack(np.sqrt(self.weight(couplings)**2 @ self._int_m2**2))
+    def _sqrt_sumw2_intm2_unc(self, couplings: Coupling):
+        return unpack(np.sqrt(self.weight(couplings)**2 @ self._intm2_unc**2))
 
 class Decay:
     _decays: dict[str, dict[str, FormulaBR | float]] = {}
@@ -200,11 +202,11 @@ class FormulaXS(Diagram, Formula):
 
     def xs(self, couplings: Coupling):
         '''[pb]'''
-        return self.int_m2_w(couplings)
+        return self._sumw_intm2(couplings)
 
     def xs_unc(self, couplings: Coupling):
         '''[pb]'''
-        return self.int_m2_w2(couplings)
+        return self._sqrt_sumw2_intm2_unc(couplings)
 
     def __call__(self, process: str):
         return self.xs(Coupling(self.diagrams[0]).meshgrid(**self.parameters(process)))
@@ -220,7 +222,7 @@ class FormulaBR(Diagram, Formula):
         self.total  = total
         if basis_br is not None:
             basis = np.asarray(basis_br)
-            basis[:, -1] = basis[:, -1] * Decay.width(self.parent)
+            basis[:, len(self.diagrams[0])] = basis[:, len(self.diagrams[0])] * Decay.width(self.parent)
         elif basis_width is not None:
             basis = np.asarray(basis_width)
         else:
@@ -230,7 +232,7 @@ class FormulaBR(Diagram, Formula):
 
     def width(self, couplings: Coupling):
         '''[GeV]'''
-        return self.int_m2_w(couplings)
+        return self._sumw_intm2(couplings)
 
     def br(self, couplings: Coupling):
         return self.width(couplings) / Decay.width(self.parent, couplings)
