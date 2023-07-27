@@ -15,7 +15,7 @@ from ..benchmark.performance import Performance
 
 
 class Buffer(ABC):
-    def __init__(self, path: str, tree:str, jagged: list[str]):
+    def __init__(self, path: str, tree: str, jagged: list[str]):
         self.path = f'{path}'
         self.tree = tree
         self.jagged = jagged
@@ -104,7 +104,7 @@ class NoBuffer(Buffer):
 class Skim:
     def __init__(self, jagged: list[str], excluded: list[str] = None, metadata = None, # TODO
                  renumber: bool = True, iterate_step: int | str = '1 GB',
-                 buffer: type[Buffer] = BasketSizeOptimizedBuffer, **buffer_args):
+                 buffer: type[Buffer] = NoBuffer, **buffer_args):
         self.jagged = jagged
         self.excluded = excluded if excluded is not None else []
         self.metadata = metadata # TODO
@@ -115,7 +115,7 @@ class Skim:
         self.timeout  = 7 * 24 * 60
 
     def _get_branches(self, file):
-        with uproot.open(file) as f:
+        with uproot.open(file, timeout = self.timeout) as f:
             branches = set(f['Events'].keys())
             for excluded in self.excluded:
                 branches -= set(f['Events'].keys(filter_name = excluded))

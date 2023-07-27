@@ -14,7 +14,7 @@ class Fourvector(Subset):
     def __init__(self, name: LabelLike, fill: FieldLike = None, pt = (100, 0, 500), mass = (100, 0, 500), pz = (150, 0, 1500), energy = (100, 0, 500), count = False, **fill_args: FieldLike):
         super().__init__(name, fill, **fill_args)
         if count:
-            self.add('n', (1, 20, ('n', 'Number')), n = lambda x: ak.num(x[self._data]))
+            self.add('n', (0, 20, ('n', 'Number')), n = lambda x: ak.num(x[self._data]))
         self.add('pt'     , (               *pt,     ('pt', R'$p_{\mathrm{T}}$ [GeV]')))
         self.add('mass'   , (             *mass,   ('mass', R'Mass [GeV]')))
         self.add('eta'    , (100,     -5,     5,    ('eta', R'$\eta$')))

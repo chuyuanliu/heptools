@@ -77,7 +77,7 @@ class Set:
         self._fills: dict[str, list[str]] = {}
         self._hists: dict[str,   Hist   ] = {}
         self._categories = deepcopy(categories)
-        self._axes:  dict[str, AxesMixin] = {k: _create_axis((v, (k, k.capitalize()))) for k, v in self._categories.items()}
+        self._axes:  dict[str, AxesMixin] = {k: _create_axis((*(v if isinstance(v, tuple) else (v,)), (k, k.capitalize()))) for k, v in self._categories.items()}
         self.focus()
 
     def add(self, name: str, *axes: AxesMixin | tuple, storage: str | Storage = 'weight', label: str = 'Events', **fill_args: fs.FillLike):
