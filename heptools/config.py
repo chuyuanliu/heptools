@@ -25,7 +25,7 @@ class config_property:
             return self
         else:
             return partial(cls, *dependencies)
-    def __get__(self, cls: Config, _):
+    def __get__(self, _, cls: type[Config]):
         for dependency in self._dependencies:
             if (not hasattr(cls, dependency)) or getattr(cls, dependency) is Undefined:
                 return Undefined
@@ -38,7 +38,6 @@ class Config:
     __unified__ = []
     __default__ = {}
     __updated__ = {}
-
 
     @classmethod
     def __overridden__(cls):
