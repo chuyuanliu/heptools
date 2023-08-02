@@ -96,7 +96,7 @@ class Set:
     def auto_fill(self, name: str, **fill_args: fs.FillLike):
         default_args = {k: _default_field(k) for k in self._fills[name] if k not in fill_args}
         fill_args = {f'{name}:{k}': v for k, v in fill_args.items()} | default_args
-        fills = {name: self._fills[name] + list(self._categories) + ['weight']}
+        fills = {name: self._fills[name] + [*self._categories] + ['weight']}
         return fs.Fill(fills, **fill_args)
 
     def duplicate_axes(self, name: str) -> list[AxesMixin]:
