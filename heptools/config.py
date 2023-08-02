@@ -42,7 +42,7 @@ class Config:
             for par in cls.__parameters__:
                 v_old = getattr(cls, par)
                 v_new = getattr(config, par)
-                if v_old != v_new:
+                if v_old is not v_new:
                     setattr(cls, par, v_new)
                     if par not in cls.__default__:
                         cls.__default__[par] = v_old
