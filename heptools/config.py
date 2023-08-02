@@ -1,8 +1,7 @@
 from __future__ import annotations
 
-from functools import partial
 from inspect import getmro
-from typing import Any, Callable, get_type_hints
+from typing import Any, Generic, TypeVar, get_args, get_origin, get_type_hints
 
 from rich.text import Text
 
@@ -15,21 +14,15 @@ class ConfigError(Exception):
 Undefined = object()
 Extra = object()
 
-class config_property:
-    def __new__(cls, *dependencies: str):
-        if isinstance(dependencies[-1], Callable):
-            func, args = dependencies[-1], dependencies[:-1]
-            self = object.__new__(cls)
-            self._dependencies = args
-            self._func = func
-            return self
-        else:
-            return partial(cls, *dependencies)
-    def __get__(self, _, cls: type[Config]):
-        for dependency in self._dependencies:
-            if (not hasattr(cls, dependency)) or getattr(cls, dependency) is Undefined:
-                return Undefined
-        return self._func(cls)
+_ConfigPropertyType = TypeVar('_ConfigPropertyType')
+class config_property(Generic[_ConfigPropertyType]):
+    def __init__(self, func):
+        self._func = func
+    def __get__(self, _, cls: type[Config]) -> _ConfigPropertyType:
+        try:
+            return self._func(cls)
+        except:
+            return Undefined
 
 class Config:
     __annotations__ = {}
@@ -51,6 +44,8 @@ class Config:
 
     @classmethod
     def __print_parameter__(cls, __par, __type = Any, __value = Undefined):
+        if get_origin(__type) is config_property:
+            __type = get_args(__type)[0]
         args = {} if __value is Undefined or isinstance_(__value, __type) else {'style': 'red'}
         __source = cls.__updated__.get(__par, cls.__name__)
         __extra  = cls.__default__.get(__par) is Extra
@@ -74,6 +69,8 @@ class Config:
                 raise ConfigError(f'cannot update {cls.__name__} with {config.__name__} without {",".join([i.__name__ for i in diff])}')
             cls.__unified__.append(config)
             for k, v in config.__overridden__().items():
+                if get_origin(v) is config_property:
+                    continue
                 v_new = getattr(config, k)
                 if hasattr(cls, k):
                     v_old = getattr(cls, k)
