@@ -1,7 +1,8 @@
 from __future__ import annotations
 
+from functools import partial
 from inspect import getmro
-from typing import Any, get_type_hints
+from typing import Any, Callable, get_type_hints
 
 from rich.text import Text
 
@@ -14,10 +15,26 @@ class ConfigError(Exception):
 Undefined = object()
 Extra = object()
 
+class config_property:
+    def __new__(cls, *dependencies: str):
+        if isinstance(dependencies[-1], Callable):
+            func, args = dependencies[-1], dependencies[:-1]
+            self = object.__new__(cls)
+            self._dependencies = args
+            self._func = func
+            return self
+        else:
+            return partial(cls, *dependencies)
+    def __get__(self, cls: Config, _):
+        for dependency in self._dependencies:
+            if (not hasattr(cls, dependency)) or getattr(cls, dependency) is Undefined:
+                return Undefined
+        return self._func(cls)
+
 class Config:
     __annotations__ = {}
 
-    __reserve__ = ['update', 'reset', 'report']
+    __reserve__ = ['update', 'reset', 'report', 'undefined']
     __unified__ = []
     __default__ = {}
     __updated__ = {}
@@ -107,3 +124,8 @@ class Config:
             undefined_pars +
             [Text('↑'*15, style = 'yellow')]) if undefined_pars else [])
         )
+
+    @classmethod
+    @property
+    def undefined(cls):
+        return [__par for __par in cls.__parameters__ if getattr(cls, __par) is Undefined]
