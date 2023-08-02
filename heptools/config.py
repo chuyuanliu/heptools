@@ -15,7 +15,7 @@ Undefined = object()
 class Config:
     __default__ = {}
     __reserve__ = ['update', 'reset', 'report']
-    __unified__ = set()
+    __unified__ = []
 
     @classmethod
     def __print_parameter__(cls, __par, __type = Any, __value = Undefined):
@@ -38,7 +38,10 @@ class Config:
             if not issubclass(config, cls):
                 raise ConfigError(f'cannot update {cls.__name__} with {config.__name__}')
         for config in configs:
-            cls.__unified__.add(config.__name__)
+            diff = set(config.__bases__) - ({*cls.__bases__} | {cls} | {*cls.__unified__})
+            if diff:
+                raise ConfigError(f'cannot update {cls.__name__} with {config.__name__} without {diff}')
+            cls.__unified__.append(config)
             for par in cls.__parameters__:
                 v_old = getattr(cls, par)
                 v_new = getattr(config, par)
@@ -52,7 +55,7 @@ class Config:
         for k, v in cls.__default__.items():
             setattr(cls, k, v)
         cls.__default__ = {}
-        cls.__unified__ = set()
+        cls.__unified__ = []
 
     @classmethod
     def report(cls):
@@ -66,9 +69,9 @@ class Config:
                 undefined_pars.append(__str)
             else:
                 defined_pars.append(__str)
-        configs = " + ".join([cls.__name__] + sorted(list(cls.__unified__)))
+        configs = " + ".join([i.__name__ for i in [*cls.__bases__] + [cls] + cls.__unified__])
         return Text('\n').join(
-            [Text(f'Config = {configs}', style = 'bold yellow')] +
+            [Text(f'{configs.replace("+", "=", 1)}', style = 'bold yellow')] +
             defined_pars + ((
             [Text('↓↓ Undefined ↓↓', style = 'yellow')] +
             undefined_pars +
