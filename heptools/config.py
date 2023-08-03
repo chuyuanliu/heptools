@@ -51,7 +51,13 @@ class Config:
         __extra  = cls.__default__.get(__par) is Extra
         __source = Text(' (') + Text(f'{__source}', style = 'yellow' + (' italic' if __extra else '')) + Text(')') if (__value is not Undefined) or __extra else Text('')
         __type   = Text(' : ') + Text(f'{type_name(__type)}', style = 'green') if __type is not Any else Text('')
-        __value  = Text(' = ') + Text(f'{__value}', style = 'blue') if __value is not Undefined else Text('')
+        if __value is Undefined:
+            __value = Text('')
+        else:
+            __value = f'{__value}'
+            if '\n' in __value:
+                __value = '\n' + __value
+            __value = Text(' = ') + Text(f'{__value}', style = 'blue')
         return Text(f'{__par}', **args) + __type + __value + __source
 
     @classmethod
