@@ -7,6 +7,9 @@ from rich.text import Text
 
 from ._utils import isinstance_, type_name
 
+__all__ = ['Config', 'ConfigError',
+           'config_property',
+           'Undefined', 'Extra']
 
 class ConfigError(Exception):
     __module__ = Exception.__module__

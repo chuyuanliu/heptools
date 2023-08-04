@@ -10,6 +10,7 @@ from coffea.processor.accumulator import accumulate
 from .._utils import Eval
 from .container import PartialBoolArray
 
+__all__ = ['Selection']
 
 class Selection:
     def __init__(self, **filters: PartialBoolArray):

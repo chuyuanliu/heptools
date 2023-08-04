@@ -8,6 +8,7 @@ from typing import Iterable, overload
 import numpy as np
 import numpy.typing as npt
 
+__all__ = ['Partition']
 
 class Partition:
     @overload

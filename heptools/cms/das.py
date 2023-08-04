@@ -9,6 +9,8 @@ import json
 from multiprocessing import Pool
 from subprocess import check_output
 
+__all__ = ['DASError', 
+           'client', 'query_dataset', 'query_file_mp']
 
 class DASError(Exception):
     __module__ = Exception.__module__
