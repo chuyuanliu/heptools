@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import operator
-from functools import reduce
+from functools import partial, reduce
 from typing import Any, Callable, Union
 
 import awkward as ak
@@ -13,9 +13,8 @@ from .partition import Partition
 
 __all__ = ['FieldLike', 'Sliceable',
            'get_field', 'update_fields', 'sort_field',
-           'mul_arrays',
-           'or_fields', 'and_fields', 'mul_fields',
-           'where']
+           'or_arrays', 'or_fields', 'and_arrays', 'and_fields', 'add_arrays', 'add_fields', 'mul_arrays', 'mul_arrays',
+           'where', 'partition']
 
 AnyInt = Union[int, np.integer]
 AnyFloat = Union[float, np.floating]
@@ -39,24 +38,21 @@ def update_fields(data: Array, new: Array, *fields: FieldLike):
 def sort_field(data: Array, field: FieldLike, axis: int = -1, ascending: bool = False):
     return data[ak.argsort(get_field(data, field), axis = axis, ascending = ascending)]
 
-def _reduce(op: Callable[[Array, Array], Array], *arrays: Array) -> Array:
+def _op_arrays(*arrays: Array, op: Callable[[Array, Array], Array]) -> Array:
     if arrays:
         return reduce(op, arrays)
 
-def mul_arrays(*arrays: Array):
-    return _reduce(operator.mul, *arrays)
+def _op_fields(data: Array, *fields: FieldLike, op: Callable[[Array, Array], Array]):
+    return _op_arrays(*(get_field(data, field) for field in fields), op = op)
 
-def _operator_fields(data: Array, op: Callable[[Array, Array], Array], *fields: FieldLike) -> Array:
-    return _reduce(op, *[get_field(data, field) for field in fields])
-
-def or_fields(data: Array, *fields: FieldLike):
-    return _operator_fields(data, operator.or_, *fields)
-
-def and_fields(data: Array, *fields: FieldLike):
-    return _operator_fields(data, operator.and_, *fields)
-
-def mul_fields(data: Array, *fields: FieldLike):
-    return _operator_fields(data, operator.mul, *fields)
+or_arrays = partial(_op_arrays, op = operator.or_)
+or_fields = partial(_op_fields, op = operator.or_)
+and_arrays = partial(_op_arrays, op = operator.and_)
+and_fields = partial(_op_fields, op = operator.and_)
+add_arrays = partial(_op_arrays, op = operator.add)
+add_fields = partial(_op_fields, op = operator.add)
+mul_arrays = partial(_op_arrays, op = operator.mul)
+mul_fields = partial(_op_fields, op = operator.mul)
 
 def where(default: Array, *conditions: tuple[Array, Any]) -> Array:
     for condition, value in conditions:

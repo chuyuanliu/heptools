@@ -6,6 +6,7 @@ from typing import Callable, Literal
 from ..benchmark.unit import Metric
 from .container import Tree
 
+__all__ = ['File', 'FileList', 'Dataset']
 
 class File(dict):
     def  __init__(self, data: dict = {}):
@@ -95,3 +96,6 @@ class Dataset:
 
     def save(self, path: str):
         json.dump(self._tree, open(path, 'w'), indent = 4)
+
+    def split(self):
+        pass # TODO

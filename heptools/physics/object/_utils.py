@@ -6,13 +6,17 @@ import awkward as ak
 import heptools
 
 
+def array_name(array: ak.Array):
+    name = str(ak.type(array)).split(' * ')[-1]
+    return name[0].capitalize() + name[1:]
+
 def register_behavior(cls = None, dependencies: dict = None):
     if cls is None:
         return partial(register_behavior, dependencies = dependencies)
     _behavior = {}
     ak.mixin_class(_behavior)(cls)
     classname = cls.__name__
-    _behavior[('__typestr__', classname)] = classname[0].lower() + classname[1:]
+    _behavior[('__typestr__', classname)] = classname
     _behavior[classname].__repr__ = lambda self: classname
     if dependencies:
         heptools.behavior |= dependencies

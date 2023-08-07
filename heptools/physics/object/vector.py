@@ -1,13 +1,15 @@
 from __future__ import annotations
 
+from collections import defaultdict
 from typing import Callable, Literal
 
 import awkward as ak
 from awkward import Array
 from coffea.nanoevents.methods import vector as vec
 
-from ...aktools import partition
-from ._utils import register_behavior, setup_lead_subl, setup_lorentz_vector
+from ...aktools import get_field, partition
+from ._utils import (array_name, register_behavior, setup_lead_subl,
+                     setup_lorentz_vector)
 
 __all__ = ['pair', 'PairError']
 
@@ -18,15 +20,30 @@ class PairError(Exception):
 @setup_lorentz_vector('_p')
 @setup_lead_subl('mass', 'pt')
 class DiLorentzVector(vec.PtEtaPhiMLorentzVector):
-    fields = ['st', 'ht', 'dr']
+    fields = ['st', 'ht', 'dr', 'constituents']
 
+    @property
+    def constituents(self):
+        '''all constituents'''
+        ps = defaultdict(list)
+        for p in (self._p1, self._p2):
+            if 'constituents' in p.fields:
+                constituents = p.constituents
+                for k in constituents.fields:
+                    ps[k].append(get_field(constituents, k))
+            else:
+                ps[array_name(p)].append(ak.unflatten(p, 1, axis = p.layout.minmax_depth[0] - 1))
+        for k, v in ps.items():
+            ps[k] = ak.concatenate(v, axis = v[0].layout.minmax_depth[0] - 1)
+        return ak.Array(ps, behavior = self.behavior)
+
+    # TODO caculate p, st with duplicated removal
     @property
     def _p(self):
         '''four-momentum'''
         return self._p1 + self._p2
-
     @property
-    def st(self):
+    def st(self): # TODO sum constituents
         '''scalar sum of `pt` (ATLAS)'''
         return self._p1.pt + self._p2.pt
     @property
@@ -65,4 +82,3 @@ def pair(*p: Array, mode: Literal['single', 'cartesian', 'combination'] = 'singl
             return ak.combinations(p[0], 2, fields = ['_p1', '_p2'], with_name = name, behavior = behavior)
         else:
             return pair(*partition(p[0], combinations, 2), mode = 'single', name = name, behavior = behavior)
-    
