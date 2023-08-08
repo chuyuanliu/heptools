@@ -4,7 +4,7 @@ import re
 from dataclasses import dataclass
 from typing import ClassVar
 
-from .._utils import Eval
+from ..utils import Eval
 from .coupling import Decay, Formula
 
 

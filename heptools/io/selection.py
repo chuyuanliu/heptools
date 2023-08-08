@@ -7,7 +7,7 @@ from typing import Iterable
 import numpy as np
 from coffea.processor.accumulator import accumulate
 
-from .._utils import Eval
+from ..utils import Eval
 from .container import PartialBoolArray
 
 __all__ = ['Selection']

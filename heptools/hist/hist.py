@@ -9,7 +9,7 @@ from hist.axis import (AxesMixin, Boolean, IntCategory, Integer, Regular,
                        StrCategory, Variable)
 from hist.storage import Storage
 
-from .._utils import astuple, isinstance_
+from ..utils import astuple, isinstance_
 from ..aktools import AnyInt, AnyNumber, FieldLike
 from . import fill as fs
 

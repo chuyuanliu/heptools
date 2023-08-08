@@ -17,7 +17,7 @@ class DASError(Exception):
 
 def client(*queries: str, to_json = True, **kwargs: str):
     if not queries or not kwargs:
-        raise DASError(f'invalid query {queries} {kwargs}')
+        raise DASError(f'invalid query: {queries} {kwargs}')
     result = check_output(f'dasgoclient{" -json" if to_json else ""} -query="{",".join(queries)} {" ".join(f"{k}={v}" for k, v in kwargs.items())}"', shell=True)
     if to_json:
         result = json.loads(result)

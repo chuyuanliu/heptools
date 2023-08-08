@@ -8,7 +8,7 @@ import awkward as ak
 import numpy as np
 from awkward import Array
 
-from ._utils import astuple
+from .utils import astuple
 from .partition import Partition
 
 __all__ = ['FieldLike', 'Sliceable',

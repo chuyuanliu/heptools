@@ -3,7 +3,7 @@ from functools import partial
 from ...aktools import add_arrays, get_field, or_arrays, to_tuple, where
 from . import PhysicsObjectError
 from . import vector as vec
-from ._utils import register_behavior, typestr
+from .utils import register_behavior, typestr
 
 __all__ = ['pair', 'extend']
 

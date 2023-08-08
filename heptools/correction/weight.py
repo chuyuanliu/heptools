@@ -5,7 +5,7 @@ from typing import Callable, Union
 import awkward as ak
 import numpy as np
 
-from .._utils import isinstance_
+from ..utils import isinstance_
 from ..aktools import FieldLike, get_field, mul_arrays
 
 ContentLike = Union[FieldLike, Callable, Number]

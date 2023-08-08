@@ -3,7 +3,7 @@ from functools import partial
 
 import numpy as np
 
-from .._utils import sequence_call
+from ..utils import sequence_call
 from .correction import (CorrectionError, EventLevelCorrection,
                          ObjectLevelCorrection, _Correction)
 

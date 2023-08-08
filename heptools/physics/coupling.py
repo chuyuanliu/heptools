@@ -13,7 +13,7 @@ from typing import Generator, overload
 import numpy as np
 import numpy.typing as npt
 
-from .._utils import unpack
+from ..utils import unpack
 
 
 class CouplingError(Exception):

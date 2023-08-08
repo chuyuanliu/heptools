@@ -6,7 +6,7 @@ import awkward as ak
 import numpy as np
 from hist.axis import AxesMixin
 
-from .._utils import astuple
+from ..utils import astuple
 from .hist import FieldLike, Label, LabelLike, Set, Subset, _default_field
 
 

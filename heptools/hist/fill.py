@@ -7,7 +7,7 @@ import awkward as ak
 import numpy as np
 from hist.axis import Boolean, IntCategory, StrCategory
 
-from .._utils import isinstance_
+from ..utils import isinstance_
 from ..aktools import FieldLike, Sliceable, and_fields, get_field
 from . import hist as hs
 

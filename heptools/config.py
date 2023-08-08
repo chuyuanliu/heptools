@@ -5,7 +5,7 @@ from typing import Any, Generic, TypeVar, get_args, get_origin, get_type_hints
 
 from rich.text import Text
 
-from ._utils import isinstance_, type_name
+from .utils import isinstance_, type_name
 
 __all__ = ['Config', 'ConfigError',
            'config_property',
