@@ -8,11 +8,7 @@ from ._utils import register_behavior
 __all__ = ['pair']
 
 @register_behavior(dependencies = nanoaod.behavior)
-class Dijet(vec.DiLorentzVector):
+class MultiJet(vec.MultiLorentzVector):
     ...
 
-@register_behavior
-class Quadjet(vec.QuadLorentzVector, Dijet):
-    ...
-
-pair = partial(vec.pair, name = partial(vec._di_quad_check, di = 'Dijet', quad = 'Quadjet'))
+pair = partial(vec.pair, name = 'MultiJet')

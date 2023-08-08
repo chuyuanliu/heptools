@@ -19,7 +19,7 @@ class PairError(Exception):
 @register_behavior(dependencies = vec.behavior)
 @setup_lorentz_vector('_p')
 @setup_lead_subl('mass', 'pt')
-class DiLorentzVector(vec.PtEtaPhiMLorentzVector):
+class MultiLorentzVector(vec.PtEtaPhiMLorentzVector):
     fields = ['st', 'ht', 'dr', 'constituents']
 
     @property
@@ -55,21 +55,10 @@ class DiLorentzVector(vec.PtEtaPhiMLorentzVector):
         '''delta R'''
         return self._p1.delta_r(self._p2)
 
-@register_behavior
-@setup_lead_subl('st', 'ht')
-class QuadLorentzVector(DiLorentzVector):
-    ...
-
-def _di_quad_check(*ps: Array, di = 'DiLorentzVector', quad = 'QuadLorentzVector'):
-    di_fields = {'st', 'ht', 'dr'}
-    return quad if all(di_fields <= set(p.fields) for p in ps) else di
-
-def pair(*p: Array, mode: Literal['single', 'cartesian', 'combination'] = 'single', combinations: int = 1, name: str|Callable[[Array, Array], str] = _di_quad_check, behavior = None) -> Array:
+def pair(*p: Array, mode: Literal['single', 'cartesian', 'combination'] = 'single', combinations: int = 1, name: str = 'MultiLorentzVector', behavior = None) -> Array:
     def check(expected: int):
         if len(p) != expected:
             raise PairError(f'expected {expected} arrays for {mode} mode, got {len(p)}')
-    if isinstance(name, Callable):
-        name = name(*p)
     if mode == 'single':
         check(2)
         return ak.zip({'_p1': p[0], '_p2': p[1]}, with_name = name, behavior = behavior)

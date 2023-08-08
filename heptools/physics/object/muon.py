@@ -6,7 +6,7 @@ from ._utils import register_behavior
 __all__ = ['pair']
 
 @register_behavior
-class DiMuon(lep.DiLepton):
+class MultiMuon(lep.MultiLepton):
     ...
 
-pair = partial(lep.pair, name = 'DiMuon')
+pair = partial(lep.pair, name = 'MultiMuon')
