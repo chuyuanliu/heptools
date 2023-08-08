@@ -9,4 +9,4 @@ __all__ = ['pair']
 class MultiMuon(lep.MultiLepton):
     ...
 
-pair = partial(lep.pair, name = 'MultiMuon')
+pair = partial(lep.pair, name = 'MultiMuon', type_check = {'Muon', 'MultiMuon'})

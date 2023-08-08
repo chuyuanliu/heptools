@@ -29,13 +29,26 @@ def get_field(data: Array, field: FieldLike):
         data = getattr(data, field)
     return data
 
+def get_dimension(data: Array) -> int:
+    try:
+        return data.layout.minmax_depth[0]
+    except AttributeError:
+        return 0
+
+def to_tuple(data: Array) -> tuple[Array, ...]:
+    dim = get_dimension(data) - 1
+    count = np.unique(ak.ravel(ak.num(data, axis = dim)))
+    assert(len(count) == 1)
+    slices = tuple(slice(None) for _ in range(dim))
+    return tuple(data[slices + (i,)] for i in range(count[0]))
+
 def update_fields(data: Array, new: Array, *fields: FieldLike):
     if not fields:
         fields = new.fields
     for field in fields:
         data[field] = get_field(new, field)
 
-def sort_field(data: Array, field: FieldLike, axis: int = -1, ascending: bool = False):
+def sort_field(data: Array, field: FieldLike, axis: int = -1, ascending: bool = False) -> Array:
     return data[ak.argsort(get_field(data, field), axis = axis, ascending = ascending)]
 
 def _op_arrays(*arrays: Array, op: Callable[[Array, Array], Array]) -> Array:

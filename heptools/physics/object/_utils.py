@@ -6,7 +6,7 @@ import awkward as ak
 import heptools
 
 
-def array_name(array: ak.Array):
+def typestr(array: ak.Array):
     name = str(ak.type(array)).split(' * ')[-1]
     return name[0].capitalize() + name[1:]
 

@@ -1,22 +1,20 @@
 from __future__ import annotations
 
 from collections import defaultdict
-from typing import Callable, Literal
+from typing import Callable, Iterable, Literal
 
 import awkward as ak
 from awkward import Array
 from coffea.nanoevents.methods import vector as vec
 
-from ...aktools import get_field, partition
-from ._utils import (array_name, register_behavior, setup_lead_subl,
-                     setup_lorentz_vector)
+from ...aktools import add_arrays, get_dimension, partition
+from . import PhysicsObjectError
+from ._utils import (register_behavior, setup_lead_subl, setup_lorentz_vector,
+                     typestr)
 
-__all__ = ['pair', 'PairError']
+__all__ = ['pair']
 
-class PairError(Exception):
-    __module__ = Exception.__module__
-
-@register_behavior(dependencies = vec.behavior)
+@register_behavior
 @setup_lorentz_vector('_p')
 @setup_lead_subl('mass', 'pt')
 class MultiLorentzVector(vec.PtEtaPhiMLorentzVector):
@@ -30,44 +28,53 @@ class MultiLorentzVector(vec.PtEtaPhiMLorentzVector):
             if 'constituents' in p.fields:
                 constituents = p.constituents
                 for k in constituents.fields:
-                    ps[k].append(get_field(constituents, k))
+                    ps[k].append(constituents[k])
             else:
-                ps[array_name(p)].append(ak.unflatten(p, 1, axis = p.layout.minmax_depth[0] - 1))
+                ps[typestr(p)].append(ak.unflatten(p, 1, axis = get_dimension(p) - 1))
         for k, v in ps.items():
-            ps[k] = ak.concatenate(v, axis = v[0].layout.minmax_depth[0] - 1)
+            ps[k] = ak.concatenate(v, axis = get_dimension(v[0]) - 1)
         return ak.Array(ps, behavior = self.behavior)
 
-    # TODO caculate p, st with duplicated removal
     @property
     def _p(self):
         '''four-momentum'''
         return self._p1 + self._p2
+
     @property
-    def st(self): # TODO sum constituents
+    def st(self):
         '''scalar sum of `pt` (ATLAS)'''
-        return self._p1.pt + self._p2.pt
+        return add_arrays(*(p.st if 'st' in p.fields else p.pt for p in (self._p1, self._p2)))
     @property
     def ht(self):
         '''scalar sum of `pt` (CMS)'''
         return self.st
+
     @property
     def dr(self):
         '''delta R'''
         return self._p1.delta_r(self._p2)
 
-def pair(*p: Array, mode: Literal['single', 'cartesian', 'combination'] = 'single', combinations: int = 1, name: str = 'MultiLorentzVector', behavior = None) -> Array:
-    def check(expected: int):
-        if len(p) != expected:
-            raise PairError(f'expected {expected} arrays for {mode} mode, got {len(p)}')
+def pair(*ps: Array, mode: Literal['single', 'cartesian', 'combination'] = 'single', combinations: int = 1, name: str = 'MultiLorentzVector', behavior = None, type_check: set[str] | Callable[[Iterable[Array]], None] = None) -> Array:
+    if isinstance(type_check, set):
+        for p in ps:
+            if typestr(p) not in type_check:
+                raise PhysicsObjectError(f'expected {type_check}, got {typestr(p)}')
+    elif isinstance(type_check, Callable):
+        type_check(ps)
+    def check(length: int):
+        if len(ps) != length:
+            raise PhysicsObjectError(f'expected {length} arrays for {mode} mode, got {len(ps)}')
     if mode == 'single':
         check(2)
-        return ak.zip({'_p1': p[0], '_p2': p[1]}, with_name = name, behavior = behavior)
+        return ak.zip({'_p1': ps[0], '_p2': ps[1]}, with_name = name, behavior = behavior)
     elif mode == 'cartesian':
         check(2)
-        return ak.cartesian({'_p1': p[0], '_p2': p[1]}, with_name = name, behavior = behavior)
+        return ak.cartesian({'_p1': ps[0], '_p2': ps[1]}, with_name = name, behavior = behavior)
     elif mode == 'combination':
         check(1)
         if combinations == 1:
-            return ak.combinations(p[0], 2, fields = ['_p1', '_p2'], with_name = name, behavior = behavior)
+            return ak.combinations(ps[0], 2, fields = ['_p1', '_p2'], with_name = name, behavior = behavior)
         else:
-            return pair(*partition(p[0], combinations, 2), mode = 'single', name = name, behavior = behavior)
+            return pair(*partition(ps[0], combinations, 2), mode = 'single', name = name, behavior = behavior)
+    else:
+        raise PhysicsObjectError(f'invalid mode: {mode}')
