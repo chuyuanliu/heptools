@@ -1,6 +1,7 @@
 from functools import partial
 
-from ...aktools import add_arrays, get_field, or_arrays, to_tuple, where
+from ...aktools import (FieldLike, add_arrays, get_field, or_arrays, to_tuple,
+                        where)
 from . import PhysicsObjectError
 from . import vector as vec
 from .utils import register_behavior, typestr
@@ -13,7 +14,7 @@ class MultiJet(vec.MultiLorentzVector):
 
 @register_behavior
 class ExtendedJet(vec.MultiLorentzVector):
-    def _unique_field(self, field = ()):
+    def _unique_field(self, field: FieldLike = ()):
         constituents = self.constituents
         jets = to_tuple(constituents.Jet)
         p = add_arrays(*(get_field(jet, field) for jet in jets))

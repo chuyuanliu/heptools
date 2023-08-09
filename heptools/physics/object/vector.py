@@ -10,7 +10,7 @@ from coffea.nanoevents.methods import vector as vec
 from ...aktools import add_arrays, get_dimension, partition
 from . import PhysicsObjectError
 from .utils import (register_behavior, setup_lead_subl, setup_lorentz_vector,
-                     typestr)
+                    typestr)
 
 __all__ = ['pair']
 

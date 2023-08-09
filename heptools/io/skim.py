@@ -105,12 +105,10 @@ class NoBuffer(Buffer):
 
 class Skim:
     def __init__(self, jagged: list[str], excluded: list[str] = None, metadata = None, # TODO
-                 renumber: bool = True, iterate_step: int | str = '1 GB',
-                 buffer: type[Buffer] = NoBuffer, **buffer_args):
+                 iterate_step: int | str = '1 GB', buffer: type[Buffer] = NoBuffer, **buffer_args):
         self.jagged = jagged
         self.excluded = excluded if excluded is not None else []
         self.metadata = metadata # TODO
-        self.renumber = renumber
         self.iterate_step = iterate_step
         self.buffer = buffer
         self.buffer_args = buffer_args
@@ -128,7 +126,6 @@ class Skim:
             iterate_step = self.iterate_step
         buffer_args = self.buffer_args | buffer_args
         with self.buffer(output, 'Events', self.jagged, **buffer_args) as output:
-            start = 0
             if allow_multiprocessing:
                 import multiprocessing as mp
                 with mp.Pool(len(files)) as pool:
@@ -141,9 +138,6 @@ class Skim:
                 if monitor: monitor.checkpoint('read', f'chunk{i}')
                 if selection is not None:
                     chunk = selection(chunk)
-                if self.renumber:
-                    chunk['picoEvent'] = np.arange(start, start + len(chunk))
-                    start += len(chunk)
                 if monitor: monitor.checkpoint('select', f'chunk{i}')
                 output += chunk
                 if monitor: monitor.checkpoint('write', f'chunk{i}')

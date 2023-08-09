@@ -8,16 +8,16 @@ import numpy as np
 from coffea.processor.accumulator import accumulate
 
 from ..utils import Eval
-from .container import PartialBoolArray
+from .container import PartialSet
 
 __all__ = ['Selection']
 
 class Selection:
-    def __init__(self, **filters: PartialBoolArray):
-        self._filters: dict[str, PartialBoolArray] = filters
+    def __init__(self, **filters: PartialSet):
+        self._filters: dict[str, PartialSet] = filters
 
-    def add(self, selection: str, index: Iterable[int], value: bool | Iterable[bool]):
-        value = PartialBoolArray(index, value)
+    def add(self, selection: str, value: bool | Iterable[bool], *indices: Iterable[int]):
+        value = PartialSet(value, indices)
         self._filters = accumulate((self._filters, {selection: value}))
         return self
 
@@ -27,7 +27,7 @@ class Selection:
         else:
             return NotImplemented
 
-    def __getitem__(self, selection: str) -> PartialBoolArray:
+    def __getitem__(self, selection: str) -> PartialSet:
         if selection in self._filters:
             return self._filters[selection]
         elif selection == '':
@@ -35,5 +35,5 @@ class Selection:
         else:
             return Eval(self._filters)[selection]
 
-    def __call__(self, index: Iterable[np.uint], selection: str = '', bounded = True):
-        return self[selection](index, bounded)
+    def __call__(self, *indices: Iterable[int], selection: str = ''):
+        return self[selection](*indices)
