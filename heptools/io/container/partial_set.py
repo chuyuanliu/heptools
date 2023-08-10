@@ -69,4 +69,4 @@ class PartialSet:
 
     def unique(self):
         self._in, count = np.unique(self._in, return_counts = True)
-        return np.all(count == 1)
+        return self._in[count > 1]

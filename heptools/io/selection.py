@@ -14,26 +14,26 @@ __all__ = ['Selection']
 
 class Selection:
     def __init__(self, **filters: PartialSet):
-        self._filters: dict[str, PartialSet] = filters
+        self.filters: dict[str, PartialSet] = filters
 
     def add(self, selection: str, value: bool | Iterable[bool], *indices: AnyArray):
         value = PartialSet(value, *indices)
-        self._filters = accumulate((self._filters, {selection: value}))
+        self.filters = accumulate((self.filters, {selection: value}))
         return self
 
     def __add__(self, other: Selection) -> Selection:
         if isinstance(other, Selection):
-            return Selection(**accumulate((self._filters, other._filters)))
+            return Selection(**accumulate((self.filters, other.filters)))
         else:
             return NotImplemented
 
     def __getitem__(self, selection: str) -> PartialSet:
-        if selection in self._filters:
-            return self._filters[selection]
+        if selection in self.filters:
+            return self.filters[selection]
         elif selection == '':
-            return reduce(operator.and_, self._filters.values())
+            return reduce(operator.and_, self.filters.values())
         else:
-            return Eval(self._filters)[selection]
+            return Eval(self.filters)[selection]
 
     def __call__(self, *indices: AnyArray, selection: str = ''):
         return self[selection](*indices)
