@@ -125,7 +125,7 @@ class SkimTask: # TODO dask
 class Skim:
     def __init__(self, jagged: list[str], excluded: list[str] = None, metadata = None, # TODO
                  unique_index: str = None,
-                 iterate_step: int | str = '1 GB', buffer: Buffer = NoBuffer()):
+                 iterate_step: int | str = '500 MB', buffer: Buffer = NoBuffer()):
         self.jagged = jagged
         self.excluded = excluded if excluded is not None else []
         self.metadata = metadata # TODO
@@ -182,4 +182,4 @@ PicoAOD = Skim(
         'Proton_singleRP', 'Proton_multiRP',
         'SV', 'OtherPV', 'PPSLocalTrack', 'IsoTrack',
         'TrigObj'
-    ])
+    ], unique_index = 'eventPico')

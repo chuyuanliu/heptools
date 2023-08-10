@@ -41,4 +41,4 @@ class EOS:
             return False
 
     def __str__(self):
-        return f'{self.url}/{self.path}'
+        return f'{self.url}{self.path}'
