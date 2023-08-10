@@ -9,14 +9,10 @@ from ...aktools import AnyArray
 
 
 class PartialSet:
-    check_unique = False
     sort_kind = 'mergesort'
 
     def __init__(self, value: bool | Iterable[bool], *indices: AnyArray, default = False):
-        indices = np.array(ak.zip(indices))
-        if self.check_unique:
-            if not np.all(np.unique(indices, return_counts = True)[1] == 1):
-                raise IOError('indices are not unique')
+        indices = np.array(ak.zip(indices))            
         self._in = np.empty(0, dtype = indices.dtype)
         self._out = default
         if isinstance(value, bool):
@@ -26,11 +22,17 @@ class PartialSet:
             self._in = indices[value != default]
         self._in.sort(kind = self.sort_kind)
 
-    def __invert__(self):
-        new = object.__new__(self.__class__)
-        new._in = self._in
-        new._out = ~self._out
+    @classmethod
+    def new(cls, _in: np.ndarray, _out: bool, sort: bool = False):
+        new = object.__new__(cls)
+        new._in = _in
+        new._out = _out
+        if sort:
+            new._in.sort(kind = cls.sort_kind)
         return new
+
+    def __invert__(self):
+        return self.new(self._in, ~self._out)
 
     def __and__(self, other: PartialSet):
         if self._out:
@@ -43,11 +45,7 @@ class PartialSet:
                 _in = np.setdiff1d(self._in, other._in)
             else:
                 _in = self._in[np.isin(self._in, other._in)]
-        _in.sort(kind = self.sort_kind)
-        new = object.__new__(self.__class__)
-        new._in = _in
-        new._out = self._out & other._out
-        return new
+        return self.new(_in, self._out & other._out, True)
 
     def __or__(self, other: PartialSet):
         return ~(~self & ~other)
@@ -55,14 +53,11 @@ class PartialSet:
     def __xor__(self, other: PartialSet):
         _v, _c = np.unique(np.concatenate((self._in, other._in)), return_counts = True)
         _in = _v[_c == 1]
-        _in.sort(kind = self.sort_kind)
-        new = object.__new__(self.__class__)
-        new._in = _in
-        new._out = self._out ^ other._out
-        return new
+        return self.new(_in, self._out ^ other._out, True)
 
     def __add__(self, other: PartialSet):
-        return self | other
+        assert(self._out == other._out)
+        return self.new(np.concatenate((self._in, other._in)), self._out | other._out, True)
 
     def __call__(self, *indices: AnyArray):
         indices = np.array(ak.zip(indices))
@@ -70,3 +65,7 @@ class PartialSet:
 
     def __len__(self):
         return len(self._in)
+
+    @property
+    def is_valid(self):
+        return np.all(np.unique(self._in, return_counts = True)[1] == 1)
