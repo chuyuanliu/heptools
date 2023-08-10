@@ -5,14 +5,14 @@ from typing import Iterable
 import awkward as ak
 import numpy as np
 
-from ...aktools import Sliceable
+from ...aktools import AnyArray
 
 
 class PartialSet:
     check_unique = False
     sort_kind = 'mergesort'
 
-    def __init__(self, value: bool | Iterable[bool], *indices: Sliceable, default = False):
+    def __init__(self, value: bool | Iterable[bool], *indices: AnyArray, default = False):
         indices = np.array(ak.zip(indices))
         if self.check_unique:
             if not np.all(np.unique(indices, return_counts = True)[1] == 1):
@@ -64,7 +64,7 @@ class PartialSet:
     def __add__(self, other: PartialSet):
         return self | other
 
-    def __call__(self, *indices: Sliceable):
+    def __call__(self, *indices: AnyArray):
         indices = np.array(ak.zip(indices))
         return np.isin(indices, self._in, invert = self._out)
 

@@ -8,22 +8,24 @@ import awkward as ak
 import numpy as np
 from awkward import Array
 
-from .utils import astuple
 from .partition import Partition
+from .utils import astuple
 
-__all__ = ['FieldLike', 'Sliceable',
+__all__ = ['FieldLike', 'AnyArray', 'AnyNumber', 'AnyInt', 'AnyFloat',
            'get_field', 'update_fields', 'sort_field',
            'or_arrays', 'or_fields', 'and_arrays', 'and_fields', 'add_arrays', 'add_fields', 'mul_arrays', 'mul_arrays',
            'where', 'partition']
 
-AnyInt = Union[int, np.integer]
-AnyFloat = Union[float, np.floating]
+AnyInt    = Union[int, np.integer]
+AnyFloat  = Union[float, np.floating]
 AnyNumber = Union[AnyInt, AnyFloat]
+AnyArray  = Union[Array, np.ndarray]
 
 FieldLike = Union[str, tuple]
-Sliceable = Union[Array, np.ndarray]
 
 def get_field(data: Array, field: FieldLike):
+    if field is ...:
+        ... # TODO return ak.ones_like(data)
     fields = astuple(field)
     for field in fields:
         data = getattr(data, field)

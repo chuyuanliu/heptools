@@ -4,9 +4,9 @@ import operator
 from functools import reduce
 from typing import Iterable
 
-import numpy as np
 from coffea.processor.accumulator import accumulate
 
+from ..aktools import AnyArray
 from ..utils import Eval
 from .container import PartialSet
 
@@ -16,8 +16,8 @@ class Selection:
     def __init__(self, **filters: PartialSet):
         self._filters: dict[str, PartialSet] = filters
 
-    def add(self, selection: str, value: bool | Iterable[bool], *indices: Iterable[int]):
-        value = PartialSet(value, indices)
+    def add(self, selection: str, value: bool | Iterable[bool], *indices: AnyArray):
+        value = PartialSet(value, *indices)
         self._filters = accumulate((self._filters, {selection: value}))
         return self
 
@@ -35,5 +35,5 @@ class Selection:
         else:
             return Eval(self._filters)[selection]
 
-    def __call__(self, *indices: Iterable[int], selection: str = ''):
+    def __call__(self, *indices: AnyArray, selection: str = ''):
         return self[selection](*indices)

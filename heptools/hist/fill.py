@@ -7,11 +7,11 @@ import awkward as ak
 import numpy as np
 from hist.axis import Boolean, IntCategory, StrCategory
 
+from ..aktools import AnyArray, FieldLike, and_fields, get_field
 from ..utils import isinstance_
-from ..aktools import FieldLike, Sliceable, and_fields, get_field
 from . import hist as hs
 
-FillLike  = Union[FieldLike, Sliceable, Number, bool, Callable]
+FillLike  = Union[FieldLike, AnyArray, Number, bool, Callable]
 
 class FillError(Exception):
     __module__ = Exception.__module__
@@ -63,7 +63,7 @@ class Fill:
                     category_args[k] = v
                 elif isinstance_(v, FieldLike):
                     category_args[k] = get_field(masked, v)
-                elif isinstance_(v, Sliceable):
+                elif isinstance_(v, AnyArray):
                     category_args[k] = v if mask is None else v[mask]
                 elif isinstance_(v, Callable):
                     category_args[k] = v(masked)
@@ -97,7 +97,7 @@ class Fill:
                 for k, v in fills.items():
                     fill = category_args[v]
                     if shape is not None:
-                        if v not in jagged_args and isinstance_(fill, Sliceable):
+                        if v not in jagged_args and isinstance_(fill, AnyArray):
                             fill = np.repeat(fill, shape)
                     hist_args[k] = fill
                 # https://github.com/scikit-hep/boost-histogram/issues/452 #
@@ -106,7 +106,7 @@ class Fill:
                     tobroadcast = None
                     for k, v in hist_args.items():
                         if k != 'weight':
-                            if isinstance_(v, Sliceable) and len(v) == len(masked):
+                            if isinstance_(v, AnyArray) and len(v) == len(masked):
                                 broadcasted = True
                                 break
                             else:
