@@ -16,6 +16,13 @@ class Selection:
     def __init__(self, **filters: PartialSet):
         self._filters: dict[str, PartialSet] = filters
 
+    @classmethod
+    def merge(cls, *selections: Selection):
+        assert selections
+        assert all([set(s._filters.keys()) == set(selections[0]._filters.keys()) for s in selections])
+        new = cls(**{k: PartialSet.merge(*[s._filters[k] for s in selections]) for k in selections[0]._filters.keys()})
+        return new
+
     def add(self, selection: str, value: bool | Iterable[bool], *indices: AnyArray):
         value = PartialSet(value, *indices)
         self._filters = accumulate((self._filters, {selection: value}))
