@@ -6,7 +6,6 @@ import awkward as ak
 import numpy as np
 
 from ...aktools import Sliceable
-from . import ContainerError
 
 
 class PartialSet:
@@ -17,7 +16,7 @@ class PartialSet:
         indices = np.array(ak.zip(indices))
         if self.check_unique:
             if not np.all(np.unique(indices, return_counts = True)[1] == 1):
-                raise ContainerError('indices are not unique')
+                raise IOError('indices are not unique')
         self._in = np.empty(0, dtype = indices.dtype)
         self._out = default
         if isinstance(value, bool):
