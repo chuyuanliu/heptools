@@ -15,12 +15,23 @@ __all__ = ['Skim', 'PicoAOD',
            'Buffer', 'BasketSizeOptimizedBuffer', 'NoBuffer']
 
 class Buffer(ABC):
-    def __init__(self, path: str, tree: str, jagged: list[str]):
-        self.path = f'{path}'
-        self.tree = tree
-        self.jagged = jagged
+    path: str
+    tree: str
+    jagged: list[str]
+
+    def __init__(self):
         self._file: uproot.WritableDirectory = None
         self._buffer: ak.Array = None
+
+    def __call__(self, path: str, tree: str, jagged: list[str] = None):
+        new = self.copy()
+        new.path = path
+        new.tree = tree
+        new.jagged = jagged
+        return new
+
+    def copy(self):
+        return self.__class__()
 
     def flush(self):
         if self._file is not None and self._buffer is not None:
@@ -61,6 +72,8 @@ class Buffer(ABC):
         return self
 
     def __enter__(self):
+        if self.jagged is None:
+            self.jagged = []
         self._file = uproot.recreate(self.path)
         return self
 
@@ -69,9 +82,12 @@ class Buffer(ABC):
         self._file.close()
 
 class BasketSizeOptimizedBuffer(Buffer):
-    def __init__(self, path: str, tree: str, jagged: list[str], buffer_size: int = 100_000):
+    def __init__(self, buffer_size: int = 100_000):
         self.size = buffer_size
-        super().__init__(path, tree, jagged)
+        super().__init__()
+
+    def copy(self):
+        return self.__class__(self.size)
 
     @property
     def occupied(self):
@@ -101,18 +117,26 @@ class NoBuffer(Buffer):
     def before_flush(self):
         ...
 
+class SkimTask: # TODO dask
+    def __init__(self, files: list[str], selection: Callable[[ak.Array], ak.Array] = None):
+        self.files = files
+        self.selection = selection
+
 class Skim:
     def __init__(self, jagged: list[str], excluded: list[str] = None, metadata = None, # TODO
                  unique_index: str = None,
-                 iterate_step: int | str = '1 GB', buffer: type[Buffer] = NoBuffer, **buffer_args):
+                 iterate_step: int | str = '1 GB', buffer: Buffer = NoBuffer()):
         self.jagged = jagged
         self.excluded = excluded if excluded is not None else []
         self.metadata = metadata # TODO
         self.unique_index = unique_index
         self.iterate_step = iterate_step
         self.buffer = buffer
-        self.buffer_args = buffer_args
         self.timeout  = 7 * 24 * 60
+
+    def copy(self):
+        return self.__class__(self.jagged, self.excluded, self.metadata,
+                              self.unique_index, self.iterate_step, self.buffer.copy())
 
     def _get_branches(self, file):
         with uproot.open(file, timeout = self.timeout) as f:
@@ -121,11 +145,20 @@ class Skim:
                 branches -= set(f['Events'].keys(filter_name = excluded))
             return branches
 
-    def __call__(self, files: list[str], output: str, selection: Callable[[ak.Array], ak.Array] = None, iterate_step: int | str = None, allow_multiprocessing: bool = True, **buffer_args):
-        if iterate_step is None:
-            iterate_step = self.iterate_step
-        buffer_args = self.buffer_args | buffer_args
-        with self.buffer(output, 'Events', self.jagged, **buffer_args) as output:
+    def __call__(self, output: str, tasks: list[SkimTask], allow_multiprocessing: bool = False): # TODO dask
+        if len(tasks) == 1:
+            self.create(output, tasks[0].files, tasks[0].selection, allow_multiprocessing)
+        else:
+            pico_chunk = self.copy()
+            pico_chunk.unique_index = None
+            chunks = []
+            for i, task in enumerate(tasks):
+                chunks.append(f'{output}.chunk{i}')
+                pico_chunk.create(chunks[-1], task.files, task.selection, allow_multiprocessing)
+            self.create(output, chunks, None, allow_multiprocessing)          
+
+    def create(self, output: str, files: list[str], selection: Callable[[ak.Array], ak.Array] = None, allow_multiprocessing: bool = False):
+        with self.buffer(output, 'Events', self.jagged) as output:
             start = 0
             if allow_multiprocessing:
                 import multiprocessing as mp
@@ -134,7 +167,7 @@ class Skim:
             else:
                 branches = [self._get_branches(file) for file in files]
             branches = reduce(operator.and_, branches)
-            for i, chunk in enumerate(uproot.iterate([f'{f}:Events' for f in files], expressions = branches, step_size = iterate_step, timeout = self.timeout)):
+            for chunk in uproot.iterate([f'{f}:Events' for f in files], expressions = branches, step_size = self.iterate_step, timeout = self.timeout):
                 if selection is not None:
                     chunk = selection(chunk)
                 if self.unique_index is not None:
