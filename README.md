@@ -25,6 +25,9 @@ run an interactive shell
 ## Tips
 - change singularity (apptainer) cache dir `export APPTAINER_CACHEDIR=${HOME}/nobackup/.apptainer/`
 
+# Submit `HTCondor` jobs
+use [lpcjobqueue](https://github.com/CoffeaTeam/lpcjobqueue) scripts
+
 # TODO
 - condor
 - plot
