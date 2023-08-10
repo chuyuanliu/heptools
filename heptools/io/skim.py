@@ -11,8 +11,6 @@ import awkward as ak
 import numpy as np
 import uproot
 
-from ..benchmark.performance import Performance
-
 __all__ = ['Skim', 'PicoAOD',
            'Buffer', 'BasketSizeOptimizedBuffer', 'NoBuffer']
 
@@ -105,10 +103,12 @@ class NoBuffer(Buffer):
 
 class Skim:
     def __init__(self, jagged: list[str], excluded: list[str] = None, metadata = None, # TODO
+                 unique_index: str = None,
                  iterate_step: int | str = '1 GB', buffer: type[Buffer] = NoBuffer, **buffer_args):
         self.jagged = jagged
         self.excluded = excluded if excluded is not None else []
         self.metadata = metadata # TODO
+        self.unique_index = unique_index
         self.iterate_step = iterate_step
         self.buffer = buffer
         self.buffer_args = buffer_args
@@ -121,11 +121,12 @@ class Skim:
                 branches -= set(f['Events'].keys(filter_name = excluded))
             return branches
 
-    def __call__(self, files: list[str], output: str, selection: Callable[[ak.Array], ak.Array] = None, iterate_step: int | str = None, monitor: Performance = None, allow_multiprocessing: bool = True, **buffer_args):
+    def __call__(self, files: list[str], output: str, selection: Callable[[ak.Array], ak.Array] = None, iterate_step: int | str = None, allow_multiprocessing: bool = True, **buffer_args):
         if iterate_step is None:
             iterate_step = self.iterate_step
         buffer_args = self.buffer_args | buffer_args
         with self.buffer(output, 'Events', self.jagged, **buffer_args) as output:
+            start = 0
             if allow_multiprocessing:
                 import multiprocessing as mp
                 with mp.Pool(len(files)) as pool:
@@ -133,14 +134,13 @@ class Skim:
             else:
                 branches = [self._get_branches(file) for file in files]
             branches = reduce(operator.and_, branches)
-            if monitor: monitor.reset()
             for i, chunk in enumerate(uproot.iterate([f'{f}:Events' for f in files], expressions = branches, step_size = iterate_step, timeout = self.timeout)):
-                if monitor: monitor.checkpoint('read', f'chunk{i}')
                 if selection is not None:
                     chunk = selection(chunk)
-                if monitor: monitor.checkpoint('select', f'chunk{i}')
+                if self.unique_index is not None:
+                    chunk[self.unique_index] = np.arange(start, start + len(chunk), dtype = np.uint64)
+                    start += len(chunk)
                 output += chunk
-                if monitor: monitor.checkpoint('write', f'chunk{i}')
 
 PicoAOD = Skim(
     jagged = [

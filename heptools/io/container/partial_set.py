@@ -34,14 +34,6 @@ class PartialSet:
             new._in.sort(kind = cls.sort_kind)
         return new
 
-    @classmethod
-    def merge(cls, *sets: PartialSet):
-        assert sets
-        assert all([sets[0]._out == s._out for s in sets])
-        new = cls.new(np.concatenate([s._in for s in sets]), sets[0]._out, True)
-        assert new.is_valid
-        return new
-
     def __invert__(self):
         return self.new(self._in, ~self._out)
 
@@ -65,7 +57,8 @@ class PartialSet:
         return self.new(np.setxor1d(self._in, other._in, assume_unique = True), self._out ^ other._out, True)
 
     def __add__(self, other: PartialSet):
-        return self.merge(self, other)
+        assert self._out == other._out
+        return self.new(np.concatenate((self._in, other._in)), self._out | other._out, True)
 
     def __call__(self, *indices: AnyArray):
         indices = np.array(self._zip(*indices))
@@ -74,6 +67,6 @@ class PartialSet:
     def __len__(self):
         return len(self._in)
 
-    @property
-    def is_valid(self):
-        return np.all(np.unique(self._in, return_counts = True)[1] == 1)
+    def unique(self):
+        self._in, count = np.unique(self._in, return_counts = True)
+        return np.all(count == 1)
