@@ -17,7 +17,7 @@ __all__ = ['pair']
 @register_behavior
 @setup_lorentz_vector('_p')
 @setup_lead_subl('mass', 'pt')
-class MultiLorentzVector(vec.PtEtaPhiMLorentzVector):
+class DiLorentzVector(vec.PtEtaPhiMLorentzVector):
     fields = ['st', 'ht', 'dr', 'constituents']
 
     @property
@@ -54,7 +54,7 @@ class MultiLorentzVector(vec.PtEtaPhiMLorentzVector):
         '''delta R'''
         return self._p1.delta_r(self._p2)
 
-def pair(*ps: Array, mode: Literal['single', 'cartesian', 'combination'] = 'single', combinations: int = 1, name: str = 'MultiLorentzVector', behavior = None, type_check: set[str] | Callable[[Iterable[Array]], None] = None) -> Array:
+def pair(*ps: Array, mode: Literal['single', 'cartesian', 'combination'] = 'single', combinations: int = 1, name: str = 'DiLorentzVector', behavior = None, type_check: set[str] | Callable[[Iterable[Array]], None] = None) -> Array:
     if isinstance(type_check, set):
         for p in ps:
             if typestr(p) not in type_check:

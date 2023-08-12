@@ -9,11 +9,11 @@ from .utils import register_behavior, typestr
 __all__ = ['pair', 'extend']
 
 @register_behavior
-class MultiJet(vec.MultiLorentzVector):
+class DiJet(vec.DiLorentzVector):
     ...
 
 @register_behavior
-class ExtendedJet(vec.MultiLorentzVector):
+class ExtendedJet(vec.DiLorentzVector):
     def _unique_field(self, field: FieldLike = ()):
         constituents = self.constituents
         jets = to_tuple(constituents.Jet)
@@ -34,12 +34,14 @@ class ExtendedJet(vec.MultiLorentzVector):
     def st(self):
         return self._unique_field('pt')
 
+    # TODO count
+
 def _type_check_extended_jet(ps):
-    type_check = {'Jet', 'MultiJet', 'ExtendedJet'}
+    type_check = {'Jet', 'DiJet', 'ExtendedJet'}
     for p in ps:
         if typestr(p) in type_check:
             return
     raise PhysicsObjectError(f'expected at least one of {type_check}, got [{", ".join(typestr(p) for p in ps)}]')
 
-pair = partial(vec.pair, name = 'MultiJet', type_check = {'Jet', 'MultiJet'})
+pair = partial(vec.pair, name = 'DiJet', type_check = {'Jet', 'DiJet'})
 extend = partial(vec.pair, name = 'ExtendedJet', type_check = _type_check_extended_jet)

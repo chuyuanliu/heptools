@@ -21,12 +21,15 @@ run an interactive shell
     -B ~/nobackup:/nobackup             `# mount nobackup dir`\
     -B .:/analysis                      `# mount analysis dir`\
     --pwd /analysis                     `# set initial working directory`\
-    docker://chuyuanliu/heptools:latest `# use prebuilt docker image`
-## Tips
-- change singularity (apptainer) cache dir `export APPTAINER_CACHEDIR=${HOME}/nobackup/.apptainer/`
+    ${HEPTOOLS_DOCKER_IMAGE}            `# path of docker image`
+use [docker hub](https://hub.docker.com/repository/docker/chuyuanliu/heptools)
 
-# Submit `HTCondor` jobs
-use [lpcjobqueue](https://github.com/CoffeaTeam/lpcjobqueue) scripts
+    export HEPTOOLS_DOCKER_IMAGE="docker://chuyuanliu/heptools:latest"
+use [unpacked.cern.ch](https://cvmfs.readthedocs.io/en/latest/cpt-containers.html#using-unpacked-cern-ch)
+
+    export HEPTOOLS_DOCKER_IMAGE="/cvmfs/unpacked.cern.ch/registry.hub.docker.com/chuyuanliu/heptools:latest"
+## Tips
+- change singularity (apptainer) cache dir `export APPTAINER_CACHEDIR="${HOME}/nobackup/.apptainer/"`
 
 # TODO
 - condor
