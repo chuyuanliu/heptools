@@ -133,7 +133,7 @@ class Decay:
             else:
                 if br is None:
                     if width is None:
-                        raise CouplingError(f'either BR or decay width of ({decay}) must be specified')
+                        raise CouplingError(f'either BR or decay width of "{decay}" must be specified')
                     br = width/cls.width(cls.parent(decay))
         if br is not None:
             cls._decays.setdefault(cls.parent(decay), {})[decay] = br
@@ -226,7 +226,7 @@ class FormulaBR(Diagram, Formula):
         elif basis_width is not None:
             basis = np.asarray(basis_width)
         else:
-            raise CouplingError(f'either BR or decay width of ({decay}) must be specified')
+            raise CouplingError(f'either BR or decay width of "{decay}" must be specified')
         Diagram.__init__(self, basis, unit_basis_weight, diagrams)
         Formula.__init__(self)
 

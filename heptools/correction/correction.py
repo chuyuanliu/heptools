@@ -18,7 +18,7 @@ class _Correction:
         if file is not None:
             self.corrections = CorrectionSet.from_file(file)
         else:
-            raise CorrectionError()
+            raise CorrectionError
 
     def _evaluate(self, events: ak.Array, _correction: str = None, **inputs: ContentLike):
         if _correction is None:

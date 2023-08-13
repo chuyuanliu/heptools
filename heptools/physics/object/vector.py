@@ -58,7 +58,7 @@ def pair(*ps: Array, mode: Literal['single', 'cartesian', 'combination'] = 'sing
     if isinstance(type_check, set):
         for p in ps:
             if typestr(p) not in type_check:
-                raise PhysicsObjectError(f'expected {type_check}, got {typestr(p)}')
+                raise PhysicsObjectError(f'expected {type_check}, got <{typestr(p)}>')
     elif isinstance(type_check, Callable):
         type_check(ps)
     def check(length: int):
@@ -77,4 +77,4 @@ def pair(*ps: Array, mode: Literal['single', 'cartesian', 'combination'] = 'sing
         else:
             return pair(*partition(ps[0], combinations, 2), mode = 'single', name = name, behavior = behavior)
     else:
-        raise PhysicsObjectError(f'invalid mode: {mode}')
+        raise PhysicsObjectError(f'invalid mode "{mode}"')

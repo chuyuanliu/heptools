@@ -46,7 +46,7 @@ class Config(metaclass = ConfigMeta):
     def _protected(func):
         def wrapper(cls, *args, **kwargs):
             if cls is Config:
-                raise ConfigError(f'cannot call Config.{func.__name__}() from base class')
+                raise ConfigError(f'cannot call "Config.{func.__name__}()" from base class')
             return func(cls, *args, **kwargs)
         return wrapper
 
@@ -144,7 +144,7 @@ class Config(metaclass = ConfigMeta):
                 _pars = config
             diff = {*_bases} - ({*getmro(cls)} | {*cls.__unified__})
             if diff:
-                raise ConfigError(f'cannot update {cls.__name__} with {_name} without {",".join([i.__name__ for i in diff])}')
+                raise ConfigError(f'cannot update <{cls.__name__}> with <{_name}> without [{",".join([i.__name__ for i in diff])}]')
             cls.__unified__.extend(_unified)
             for k, (t, v) in _pars.items():
                 if cls.__set_parameter__(k, t, v):

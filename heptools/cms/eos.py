@@ -51,14 +51,14 @@ class EOS:
     def cp(cls, src: PathLike, dest: PathLike, parents: bool = False, override: bool = False, *args: str):
         src, dest = EOS(src), EOS(dest)
         if not src.exists():
-            raise FileNotFoundError(f'{src} does not exist')
+            raise FileNotFoundError(f'"{src}" does not exist')
         if not override and dest.exists():
-            raise FileExistsError(f'{dest} already exists')
+            raise FileExistsError(f'"{dest}" already exists')
         if parents:
             dest.parent.mkdir(parents = True, exist_ok = True)
         else:
             if not dest.parent.exists():
-                raise FileNotFoundError(f'{dest.parent} does not exist')
+                raise FileNotFoundError(f'"{dest.parent}" does not exist')
         if src.is_local and dest.is_local:
             cls.cmd('cp', src.path, dest.path, *args)
         else:
@@ -80,7 +80,7 @@ class EOS:
                 self.parent.mkdir(parents = parents, exist_ok = exist_ok)
             self.call('mkdir', self.path)
         elif not exist_ok:
-            raise FileExistsError(f'{self} already exists')
+            raise FileExistsError(f'"{self}" already exists')
 
     @property
     def name(self):

@@ -42,7 +42,7 @@ def type_name(__type) -> str:
         return ' | '.join(args)
     if origin is type:
         if len(args) != 1:
-            raise TypeError(f'invalid type: {__type}')
+            raise TypeError(f'invalid type <{__type}>')
         return f'<{args[0]}>'
     if args:
         args = f'[{", ".join(args)}]'

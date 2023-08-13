@@ -42,7 +42,7 @@ class Fill:
     def fill(self, events: ak.Array, hists: hs.Set = None, **fill_args: FillLike):
         if hists is None:
             if hs.Set.current is None:
-                raise FillError('current hists set is None')
+                raise FillError('no histogram set is specified')
             hists  = hs.Set.current
         fill_args = self._kwargs | fill_args
         mask_categories = []
@@ -92,7 +92,7 @@ class Fill:
                 elif len(shape) == 1:
                     shape = counts_args[next(iter(shape))]
                 else:
-                    raise FillError(f'cannot fill hist {name} with unmatched jagged arrays')
+                    raise FillError(f'cannot fill hist "{name}" with unmatched jagged arrays')
                 hist_args = {}
                 for k, v in fills.items():
                     fill = category_args[v]
