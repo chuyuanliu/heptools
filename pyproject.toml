@@ -1,8 +1,9 @@
 [project]
 name = "heptools"
-version = "0.2.2"
+version = "0.2.3"
 requires-python = ">=3.9"
 dependencies = [
     "coffea",
     "psutil",
+    "dask-jobqueue",
 ]

@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from copy import copy
 from inspect import getmro
 from typing import Any, Generic, TypeVar, get_args, get_origin, get_type_hints
 
@@ -21,36 +22,49 @@ _ConfigPropertyType = TypeVar('_ConfigPropertyType')
 class config_property(Generic[_ConfigPropertyType]):
     def __init__(self, func):
         self._func = func
+        self._type = get_type_hints(func).get('return', Any)
     def __get__(self, _, cls: type[Config]) -> _ConfigPropertyType:
         try:
             return self._func(cls)
         except:
             return Undefined
 
-class Config:
-    __annotations__ = {}
+class ConfigMeta(type):
+    __reserved__ = {
+                '__unified__': list,
+                '__default__': dict,
+                '__updated__': dict,
+            }
+    def __getattr__(cls, key):
+        if key in cls.__reserved__:
+            if key not in vars(cls):
+                setattr(cls, key, cls.__reserved__[key]())
+            return getattr(cls, key)
+        raise AttributeError
 
-    __reserve__ = ['update', 'reset', 'report', 'undefined']
-    __unified__ = []
-    __default__ = {}
-    __updated__ = {}
+class Config(metaclass = ConfigMeta):
+    def _protected(func):
+        def wrapper(cls, *args, **kwargs):
+            if cls is Config:
+                raise ConfigError(f'cannot call Config.{func.__name__}() from base class')
+            return func(cls, *args, **kwargs)
+        return wrapper
+
+    @_protected
+    def __new__(cls):
+        pars = cls.__get_parameter__(False)
+        return pars | {
+            '__bases__'  : copy(cls.__bases__),
+            '__unified__': copy(cls.__unified__),
+            '__updated__': {k: cls.__track_parameter__(k) for k in pars},
+        }
 
     @classmethod
-    def __overridden__(cls):
-        overridden = {}
-        class base(*cls.__bases__):
-            ...
-        for k, v in cls.__parameters__.items():
-            if (not hasattr(base, k)) or getattr(base, k) is not getattr(cls, k):
-                overridden[k] = v
-        return overridden
-
-    @classmethod
-    def __print_parameter__(cls, __par, __type = Any, __value = Undefined):
+    def __print_parameter__(cls, __par, __type, __value):
         if get_origin(__type) is config_property:
             __type = get_args(__type)[0]
         args = {} if __value is Undefined or isinstance_(__value, __type) else {'style': 'red'}
-        __source = cls.__updated__.get(__par, cls.__name__)
+        __source = cls.__track_parameter__(__par)
         __extra  = cls.__default__.get(__par) is Extra
         __source = Text(' (') + Text(f'{__source}', style = 'yellow' + (' italic' if __extra else '')) + Text(')') if (__value is not Undefined) or __extra else Text('')
         __type   = Text(' : ') + Text(f'{type_name(__type)}', style = 'green') if __type is not Any else Text('')
@@ -64,37 +78,80 @@ class Config:
         return Text(f'{__par}', **args) + __type + __value + __source
 
     @classmethod
-    @property
-    def __parameters__(cls):
-        keys = set(dir(cls)) - set(cls.__reserve__)
+    def __set_parameter__(cls, __par, __type, __value):
+        if hasattr(cls, __par):
+            v_old = getattr(cls, __par)
+            if v_old is not __par:
+                setattr(cls, __par, __value)
+                if __par not in cls.__default__:
+                    cls.__default__[__par] = v_old
+                return True
+        else:
+            setattr(cls, __par, __value)
+            cls.__default__[__par] = Extra
+            if not isinstance(__value, config_property):
+                cls.__annotations__[__par] = __type
+            return True
+        return False
+
+    @classmethod
+    def __get_parameter__(cls, property_value = True, derived_only = False):
         hints = get_type_hints(cls)
-        return {k: hints.get(k, Any) for k in keys if not ((k.startswith('__') and k.endswith('__')))}
-
-    @classmethod
-    def update(cls, *configs: Config):
+        pars = {}
+        configs = (cls,) if derived_only else getmro(cls)
         for config in configs:
-            diff = set(config.__bases__) - ({*getmro(cls)} | {*cls.__unified__})
-            if diff:
-                raise ConfigError(f'cannot update {cls.__name__} with {config.__name__} without {",".join([i.__name__ for i in diff])}')
-            cls.__unified__.append(config)
-            for k, v in config.__overridden__().items():
-                if get_origin(v) is config_property:
-                    continue
-                v_new = getattr(config, k)
-                if hasattr(cls, k):
-                    v_old = getattr(cls, k)
-                    if v_old is not v_new:
-                        setattr(cls, k, v_new)
-                        cls.__updated__[k] = config.__name__
-                        if k not in cls.__default__:
-                            cls.__default__[k] = v_old
-                else:
-                    setattr(cls, k, v_new)
-                    cls.__updated__[k] = config.__name__
-                    cls.__default__[k] = Extra
-                    cls.__annotations__[k] = v
+            if config is Config:
+                break
+            for k, v in vars(config).items():
+                if not (k.startswith('__') and k.endswith('__')):
+                    if isinstance(v, config_property):
+                        t = v._type
+                        if property_value:
+                            v = getattr(cls, k)
+                    else:
+                        t = hints.get(k, Any)
+                    pars[k] = (t, v)
+        return pars
 
     @classmethod
+    def __track_parameter__(cls, __par):
+        try:
+            return cls.__updated__[__par]
+        except KeyError:
+            for config in getmro(cls):
+                if config is Config:
+                    break
+                if __par in vars(config):
+                    return config.__name__
+        return ''
+
+    @classmethod
+    @_protected
+    def update(cls, *configs: type[Config] | dict):
+        for config in configs:
+            if isinstance_(config, type[Config]):
+                _name = config.__name__
+                _bases = config.__bases__
+                _unified = [config] + config.__unified__
+                _updated = config.__updated__
+                _pars = config.__get_parameter__(False, True)
+            elif isinstance_(config, dict):
+                config = copy(config)
+                _name = ''
+                _bases = config.pop('__bases__', ())
+                _unified = config.pop('__unified__', [])
+                _updated = config.pop('__updated__', {})
+                _pars = config
+            diff = {*_bases} - ({*getmro(cls)} | {*cls.__unified__})
+            if diff:
+                raise ConfigError(f'cannot update {cls.__name__} with {_name} without {",".join([i.__name__ for i in diff])}')
+            cls.__unified__.extend(_unified)
+            for k, (t, v) in _pars.items():
+                if cls.__set_parameter__(k, t, v):
+                    cls.__updated__[k] = _updated.get(k, _name)
+
+    @classmethod
+    @_protected
     def reset(cls):
         for k, v in cls.__default__.items():
             if v is Extra:
@@ -102,19 +159,20 @@ class Config:
                 cls.__annotations__.pop(k, None)
             else:
                 setattr(cls, k, v)
-        cls.__unified__ = []
-        cls.__default__ = {}
-        cls.__updated__ = {}
+        cls.__unified__.clear()
+        cls.__default__.clear()
+        cls.__updated__.clear()
 
     @classmethod
+    @_protected
     def report(cls):
         defined_pars = []
         undefined_pars = []
-        pars = cls.__parameters__
-        for __par in sorted([*pars]):
-            __value = getattr(cls, __par)
-            __str = cls.__print_parameter__(__par, pars[__par], __value)
-            if __value is Undefined:
+        pars = cls.__get_parameter__()
+        for k in sorted([*pars]):
+            t, v = pars[k]
+            __str = cls.__print_parameter__(k, t, v)
+            if v is Undefined:
                 undefined_pars.append(__str)
             else:
                 defined_pars.append(__str)
@@ -132,5 +190,6 @@ class Config:
 
     @classmethod
     @property
+    @_protected
     def undefined(cls):
-        return [__par for __par in cls.__parameters__ if getattr(cls, __par) is Undefined]
+        return [k for k, (_, v) in cls.__get_parameter__().items() if v is Undefined]
