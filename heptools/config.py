@@ -54,8 +54,8 @@ class Config(metaclass = ConfigMeta):
     def __new__(cls):
         pars = cls.__get_parameter__(False)
         return pars | {
-            '__bases__'  : copy(cls.__bases__),
-            '__unified__': copy(cls.__unified__),
+            '__mro__'    : getmro(cls)[1:],
+            '__unified__': [cls] + copy(cls.__unified__),
             '__updated__': {k: cls.__track_parameter__(k) for k in pars},
         }
 
@@ -130,19 +130,19 @@ class Config(metaclass = ConfigMeta):
     def update(cls, *configs: type[Config] | dict):
         for config in configs:
             if isinstance_(config, type[Config]):
-                _name = config.__name__
-                _bases = config.__bases__
+                _mro  = getmro(config)[1:]
                 _unified = [config] + config.__unified__
                 _updated = config.__updated__
+                _name = config.__name__
                 _pars = config.__get_parameter__(False, True)
             elif isinstance_(config, dict):
                 config = copy(config)
-                _name = ''
-                _bases = config.pop('__bases__', ())
+                _mro  = config.pop('__mro__', ())
                 _unified = config.pop('__unified__', [])
                 _updated = config.pop('__updated__', {})
+                _name = _unified[0].__name__
                 _pars = config
-            diff = {*_bases} - ({*getmro(cls)} | {*cls.__unified__})
+            diff = {*_mro} - ({*getmro(cls)} | {*cls.__unified__})
             if diff:
                 raise ConfigError(f'cannot update <{cls.__name__}> with <{_name}> without [{",".join([i.__name__ for i in diff])}]')
             cls.__unified__.extend(_unified)
