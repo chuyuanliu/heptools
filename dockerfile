@@ -10,6 +10,7 @@ RUN mamba install --yes \
     xrootd \
     ca-policy-lcg \
     htcondor \
+    ncurses \
     tini \
     && mamba clean --all --yes \
     && pip install --no-cache-dir git+https://github.com/chuyuanliu/heptools.git@master
