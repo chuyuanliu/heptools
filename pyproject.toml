@@ -4,6 +4,5 @@ version = "0.2.3"
 requires-python = ">=3.9"
 dependencies = [
     "coffea",
-    "psutil",
-    "dask-jobqueue",
+    "dask-jobqueue"
 ]
