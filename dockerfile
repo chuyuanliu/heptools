@@ -9,6 +9,7 @@ RUN mamba install --yes \
     voms \
     xrootd \
     ca-policy-lcg \
+    htcondor \
     && mamba clean --all --yes \
     && pip install --no-cache-dir git+https://github.com/chuyuanliu/heptools.git@master
 RUN ln -s /opt/conda/etc/grid-security /etc/grid-security
