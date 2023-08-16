@@ -10,6 +10,9 @@ RUN mamba install --yes \
     xrootd \
     ca-policy-lcg \
     htcondor \
+    tini \
     && mamba clean --all --yes \
     && pip install --no-cache-dir git+https://github.com/chuyuanliu/heptools.git@master
 RUN ln -s /opt/conda/etc/grid-security /etc/grid-security
+RUN mkdir -p /opt/conda
+ENTRYPOINT ["tini", "-g", "--"]
