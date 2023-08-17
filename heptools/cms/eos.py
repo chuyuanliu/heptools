@@ -10,7 +10,8 @@ __all__ = ['EOS', 'PathLike']
 # TODO wildcard
 
 class EOS:
-    history: list[tuple[str, str]] = []
+    run_cmd: bool = True
+    history: list[tuple[datetime, str, bytes]] = []
 
     def __init__(self, path: PathLike, url: str = None):
         if isinstance(path, EOS):
@@ -24,63 +25,77 @@ class EOS:
     def is_local(self):
         return not self.url
 
+    @property
+    def is_dir(self):
+        # TODO
+        ...
+
     @classmethod
     def cmd(cls, *args):
         args = [str(arg) for arg in args if arg]
-        cls.history.append((datetime.now(), ' '.join(args)))
-        return check_output([*args], stderr = PIPE)
+        if cls.run_cmd:
+            output = check_output([*args], stderr = PIPE)
+        else:
+            output = b''
+        cls.history.append((datetime.now(), ' '.join(args), output))
+        return output
 
     def call(self, command: str, *args):
         eos = () if self.is_local else ('eos', self.url)
-        return self.cmd(*eos, command, *args)          
+        return self.cmd(*eos, command, *args)
 
-    def ls(self, *args: str):
+    def ls(self, *args: str): # TODO return list of EOS
         return self.call('ls', *args, self.path).decode().split('\n')
 
-    def rm(self, *args: str):
-        if self.exists():
-            self.call('rm', *args, self.path)
+    def rm(self, recursive: bool = False):
+        self.call('rm', '-r' if recursive else '', self.path)
 
-    def copy_to(self, dest: PathLike, parents: bool = False, override: bool = False, *args: str):
-        self.cp(self, dest, parents, override, *args)
+    def mkdir(self, recursive: bool = False):
+        self.call('mkdir', '-p' if recursive else '', self.path)
 
-    def move_to(self, dest: PathLike, parents: bool = False, override: bool = False, *args: str):
-        self.mv(self, dest, parents, override, *args)
-
-    @classmethod
-    def cp(cls, src: PathLike, dest: PathLike, parents: bool = False, override: bool = False, *args: str):
-        src, dest = EOS(src), EOS(dest)
-        if not src.exists():
-            raise FileNotFoundError(f'"{src}" does not exist')
-        if not override and dest.exists():
-            raise FileExistsError(f'"{dest}" already exists')
-        if parents:
-            dest.parent.mkdir(parents = True, exist_ok = True)
-        else:
-            if not dest.parent.exists():
-                raise FileNotFoundError(f'"{dest.parent}" does not exist')
-        if src.is_local and dest.is_local:
-            cls.cmd('cp', src.path, dest.path, *args)
-        else:
-            cls.cmd('xrdcp', src, dest, *args)
-
-    @classmethod
-    def mv(cls, src: PathLike, dest: PathLike, parents: bool = False, override: bool = False, *args: str):
-        cls.cp(src, dest, parents, override, *args)
-        if dest.exists():
-            EOS(src).rm()
-
-    # Path
-    def joinpath(self, *other: str | Path):
+    def join(self, *other: str):
         return EOS(self.path.joinpath(*other), self.url)
 
-    def mkdir(self, parents = False, exist_ok = False):
-        if not self.exists():
-            if parents:
-                self.parent.mkdir(parents = parents, exist_ok = exist_ok)
-            self.call('mkdir', self.path)
-        elif not exist_ok:
-            raise FileExistsError(f'"{self}" already exists')
+    def copy_to(self, dest: PathLike, parents: bool = False, override: bool = False, recursive: bool = False):
+        self.cp(self, dest, parents, override, recursive)
+
+    def move_to(self, dest: PathLike, parents: bool = False, override: bool = False, recursive: bool = False):
+        self.mv(self, dest, parents, override, recursive)
+
+    @classmethod
+    def _dual_check(cls, src: PathLike, dest: PathLike, parents: bool, override: bool):
+        src, dest = EOS(src), EOS(dest)
+        if not src.exists:
+            raise FileNotFoundError(f'"{src}" does not exist')
+        if not override and dest.exists:
+            raise FileExistsError(f'"{dest}" already exists')
+        if parents:
+            dest.parent.mkdir(recursive = True)
+        else:
+            if not dest.parent.exists:
+                raise FileNotFoundError(f'"{dest.parent}" does not exist')
+        return src, dest
+
+    @classmethod
+    def cp(cls, src: PathLike, dest: PathLike, parents: bool = False, override: bool = False, recursive: bool = False):
+        src, dest = cls._dual_check(src, dest, parents, override)
+        if src.is_local and dest.is_local:
+            cls.cmd('cp', '-r' if recursive else '', src, dest)
+        else:
+            if recursive:
+                raise NotImplementedError # TODO
+            cls.cmd('xrdcp', src, dest)
+
+    @classmethod
+    def mv(cls, src: PathLike, dest: PathLike, parents: bool = False, override: bool = False, recursive: bool = False):
+        src, dest = cls._dual_check(src, dest, parents, override)
+        if src.url == dest.url:
+            src.call('mv', src.path, dest.path)
+        else:
+            if recursive:
+                raise NotImplementedError # TODO
+            cls.cp(src, dest)
+            src.rm()
 
     @property
     def name(self):
@@ -94,9 +109,7 @@ class EOS:
     def parent(self):
         return EOS(self.path.parent, self.url)
 
-    def is_dir(self):
-        return self.path.is_dir()
-
+    @property
     def exists(self):
         try:
             self.ls()
@@ -104,7 +117,7 @@ class EOS:
         except CalledProcessError:
             return False
 
-    def __str__(self):
+    def __str__(self): # TODO rich
         return f'{self.url}{self.path}'
 
 PathLike = Union[str, Path, EOS]
