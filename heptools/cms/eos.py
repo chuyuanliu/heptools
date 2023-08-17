@@ -48,22 +48,22 @@ class EOS:
         return self.cmd(*eos, command, *args)
 
     def ls(self, *args: str): # TODO return list of EOS
-        return self.call('ls', *args, self.path)[1].decode().split('\n')
+        return self.call('ls', *args, self.path)
 
     def rm(self, recursive: bool = False):
-        self.call('rm', '-r' if recursive else '', self.path)
+        return self.call('rm', '-r' if recursive else '', self.path)
 
     def mkdir(self, recursive: bool = False):
-        self.call('mkdir', '-p' if recursive else '', self.path)
+        return self.call('mkdir', '-p' if recursive else '', self.path)
 
     def join(self, *other: str):
         return EOS(self.path.joinpath(*other), self.url)
 
     def copy_to(self, dest: PathLike, parents: bool = False, overwrite: bool = False, recursive: bool = False):
-        self.cp(self, dest, parents, overwrite, recursive)
+        return self.cp(self, dest, parents, overwrite, recursive)
 
     def move_to(self, dest: PathLike, parents: bool = False, overwrite: bool = False, recursive: bool = False):
-        self.mv(self, dest, parents, overwrite, recursive)
+        return self.mv(self, dest, parents, overwrite, recursive)
 
     @classmethod
     def cp(cls, src: PathLike, dest: PathLike, parents: bool = False, overwrite: bool = False, recursive: bool = False):
@@ -71,14 +71,14 @@ class EOS:
         if parents:
             dest.parent.mkdir(recursive = True)
         if src.is_local and dest.is_local:
-            cls.cmd('cp',
+            return cls.cmd('cp',
                     '-r' if recursive else '',
                     '-n' if not overwrite else '',
                     src, dest)
         else:
             if recursive:
                 raise NotImplementedError # TODO
-            cls.cmd('xrdcp',
+            return cls.cmd('xrdcp',
                     '-f' if overwrite else '',
                     src, dest)
 
@@ -88,14 +88,17 @@ class EOS:
         if parents:
             dest.parent.mkdir(recursive = True)
         if src.url == dest.url:
-            src.call('mv',
+            return src.call('mv',
                      '-n' if not overwrite else '',
                      src.path, dest.path)
         else:
             if recursive:
                 raise NotImplementedError # TODO
-            cls.cp(src, dest, parents, overwrite, recursive)
-            src.rm()
+            output = cls.cp(src, dest, parents, overwrite, recursive)
+            if output[0]:
+                return src.rm()
+            else:
+                return output
 
     @property
     def name(self):
