@@ -1,0 +1,16 @@
+name: heptools-dev
+channels:
+  - conda-forge
+dependencies:
+  - python=3.9
+  - numpy
+  - scipy
+  - pandas
+  - matplotlib
+  - dask_jobqueue
+  - rich
+  - awkward
+  - hist
+  - uproot
+  - coffea
+  - correctionlib

@@ -3,6 +3,13 @@ name = "heptools"
 version = "0.2.3"
 requires-python = ">=3.9"
 dependencies = [
+    "numpy",
+    "matplotlib",
+    "dask_jobqueue",
+    "rich",
+    "awkward",
+    "hist",
+    "uproot",
     "coffea",
-    "dask-jobqueue"
+    "correctionlib",
 ]
