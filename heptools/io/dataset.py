@@ -30,7 +30,7 @@ class FileList(File):
             data = data | {'files': [File(file) for file in data.get('files', [])]}
         super().__init__(data)
 
-    def __str__(self) -> str:
+    def __str__(self): # TODO rich, __repr__
         profile = []
         profile.append(f' [path] {self.path}')
         events = [file.events for file in self.files]
@@ -57,7 +57,7 @@ class Dataset:
     def __init__(self) -> None:
         self._tree = Tree[FileList]()
 
-    def __str__(self) -> str:
+    def __str__(self): # TODO rich, __repr__
         return str(self._tree)
 
     def update(self,

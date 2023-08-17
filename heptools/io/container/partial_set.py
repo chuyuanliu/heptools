@@ -7,7 +7,7 @@ import numpy as np
 
 from ...aktools import AnyArray
 
-
+# TODO numba
 class PartialSet:
     sort_kind = 'mergesort'
 
@@ -15,7 +15,7 @@ class PartialSet:
         return ak.zip(indices) if len(indices) > 1 else indices[0]
 
     def __init__(self, value: bool | Iterable[bool], *indices: AnyArray, default = False):
-        indices = np.array(self._zip(*indices))            
+        indices = np.array(self._zip(*indices))
         self._in = np.empty(0, dtype = indices.dtype)
         self._out = default
         if isinstance(value, bool):

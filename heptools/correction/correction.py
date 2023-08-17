@@ -30,7 +30,7 @@ class _Correction:
             args.append(arg if var.type == 'string' and isinstance(arg, str) else _get_content(events, arg))
         return corr.evaluate(*args)
 
-    def __str__(self):
+    def __str__(self): # TODO rich, __repr__
         vline_l, vline_m = '-'*30, '-'*10
         lines = [vline_l]
         for k, v in self.corrections.items():

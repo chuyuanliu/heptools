@@ -31,12 +31,15 @@ class EOS:
         ...
 
     @classmethod
-    def cmd(cls, *args):
+    def cmd(cls, *args) -> tuple[bool, bytes]:
         args = [str(arg) for arg in args if arg]
         if cls.run_cmd:
-            output = check_output([*args], stderr = PIPE)
+            try:
+                output = (True, check_output([*args], stderr = PIPE))
+            except CalledProcessError as e:
+                output = (False, e.stderr)
         else:
-            output = b''
+            output = (True, b'')
         cls.history.append((datetime.now(), ' '.join(args), output))
         return output
 
@@ -45,7 +48,7 @@ class EOS:
         return self.cmd(*eos, command, *args)
 
     def ls(self, *args: str): # TODO return list of EOS
-        return self.call('ls', *args, self.path).decode().split('\n')
+        return self.call('ls', *args, self.path)[1].decode().split('\n')
 
     def rm(self, recursive: bool = False):
         self.call('rm', '-r' if recursive else '', self.path)
@@ -56,45 +59,42 @@ class EOS:
     def join(self, *other: str):
         return EOS(self.path.joinpath(*other), self.url)
 
-    def copy_to(self, dest: PathLike, parents: bool = False, override: bool = False, recursive: bool = False):
-        self.cp(self, dest, parents, override, recursive)
+    def copy_to(self, dest: PathLike, parents: bool = False, overwrite: bool = False, recursive: bool = False):
+        self.cp(self, dest, parents, overwrite, recursive)
 
-    def move_to(self, dest: PathLike, parents: bool = False, override: bool = False, recursive: bool = False):
-        self.mv(self, dest, parents, override, recursive)
+    def move_to(self, dest: PathLike, parents: bool = False, overwrite: bool = False, recursive: bool = False):
+        self.mv(self, dest, parents, overwrite, recursive)
 
     @classmethod
-    def _dual_check(cls, src: PathLike, dest: PathLike, parents: bool, override: bool):
+    def cp(cls, src: PathLike, dest: PathLike, parents: bool = False, overwrite: bool = False, recursive: bool = False):
         src, dest = EOS(src), EOS(dest)
-        if not src.exists:
-            raise FileNotFoundError(f'"{src}" does not exist')
-        if not override and dest.exists:
-            raise FileExistsError(f'"{dest}" already exists')
         if parents:
             dest.parent.mkdir(recursive = True)
-        else:
-            if not dest.parent.exists:
-                raise FileNotFoundError(f'"{dest.parent}" does not exist')
-        return src, dest
-
-    @classmethod
-    def cp(cls, src: PathLike, dest: PathLike, parents: bool = False, override: bool = False, recursive: bool = False):
-        src, dest = cls._dual_check(src, dest, parents, override)
         if src.is_local and dest.is_local:
-            cls.cmd('cp', '-r' if recursive else '', src, dest)
+            cls.cmd('cp',
+                    '-r' if recursive else '',
+                    '-n' if not overwrite else '',
+                    src, dest)
         else:
             if recursive:
                 raise NotImplementedError # TODO
-            cls.cmd('xrdcp', src, dest)
+            cls.cmd('xrdcp',
+                    '-f' if overwrite else '',
+                    src, dest)
 
     @classmethod
-    def mv(cls, src: PathLike, dest: PathLike, parents: bool = False, override: bool = False, recursive: bool = False):
-        src, dest = cls._dual_check(src, dest, parents, override)
+    def mv(cls, src: PathLike, dest: PathLike, parents: bool = False, overwrite: bool = False, recursive: bool = False):
+        src, dest = EOS(src), EOS(dest)
+        if parents:
+            dest.parent.mkdir(recursive = True)
         if src.url == dest.url:
-            src.call('mv', src.path, dest.path)
+            src.call('mv',
+                     '-n' if not overwrite else '',
+                     src.path, dest.path)
         else:
             if recursive:
                 raise NotImplementedError # TODO
-            cls.cp(src, dest)
+            cls.cp(src, dest, parents, overwrite, recursive)
             src.rm()
 
     @property
@@ -109,15 +109,7 @@ class EOS:
     def parent(self):
         return EOS(self.path.parent, self.url)
 
-    @property
-    def exists(self):
-        try:
-            self.ls()
-            return True
-        except CalledProcessError:
-            return False
-
-    def __str__(self): # TODO rich
+    def __str__(self): # TODO rich, __repr__
         return f'{self.url}{self.path}'
 
 PathLike = Union[str, Path, EOS]

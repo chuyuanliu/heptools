@@ -165,7 +165,7 @@ class Config(metaclass = ConfigMeta):
 
     @classmethod
     @_protected
-    def report(cls):
+    def report(cls): # TODO rename __repr__
         defined_pars = []
         undefined_pars = []
         pars = cls.__get_parameter__()
