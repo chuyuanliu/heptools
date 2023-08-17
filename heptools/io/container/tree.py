@@ -31,7 +31,7 @@ class Tree(defaultdict[str], Generic[_LeafType]):
                 else:
                     yield (k,), self[k]
 
-    def __str__(self):
+    def __str__(self): # TODO rich, __repr__
         lines = []
         branches = sorted(self.keys())
         for i, k in enumerate(branches):
@@ -41,23 +41,37 @@ class Tree(defaultdict[str], Generic[_LeafType]):
                 lines.append((f' ├─{k}\n' + str(self[k])).replace('\n', '\n │'))
         return '\n'.join(lines)
 
-    def __ior__(self, other: Tree[_LeafType]) -> Tree[_LeafType]:
+    def iop(self, other: Tree[_LeafType], op: Callable[[_LeafType, _LeafType], _LeafType]) -> Tree[_LeafType]:
         if isinstance(other, Tree):
             for k, v in other.items():
                 if isinstance(v, Tree):
-                    self[k] |= v
+                    self[k].iop(v, op)
                 else:
-                    self[k] = v
+                    if k in self:
+                        self[k] = op(self[k], v)
+                    else:
+                        self[k] = v
             return self
         return NotImplemented
 
+    @staticmethod
+    def op(first: Tree[_LeafType], second: Tree[_LeafType], op: Callable[[_LeafType, _LeafType], _LeafType]) -> Tree[_LeafType]:
+        tree = Tree[_LeafType]()
+        tree.iop(first, op)
+        tree.iop(second, op)
+        return tree
+
+    def __ior__(self, other: Tree[_LeafType]) -> Tree[_LeafType]:
+        return self.iop(other, lambda x, y: x | y)
+
     def __or__(self, other: Tree[_LeafType]) -> Tree[_LeafType]:
-        if isinstance(other, Tree):
-            tree = Tree[_LeafType]()
-            tree |= self
-            tree |= other
-            return tree
-        return NotImplemented
+        return self.op(self, other, lambda x, y: x | y)
+
+    def __iadd__(self, other: Tree[_LeafType]) -> Tree[_LeafType]:
+        return self.iop(other, lambda x, y: x + y)
+
+    def __add__(self, other: Tree[_LeafType]) -> Tree[_LeafType]:
+        return self.op(self, other, lambda x, y: x + y)
 
     def from_dict(self, tree: dict, depth: int = float('inf'), leaf: Callable[[Any], _LeafType] = None):
         for k, v in tree.items():

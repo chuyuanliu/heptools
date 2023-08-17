@@ -35,7 +35,7 @@ class PartialSet:
         return new
 
     def __invert__(self):
-        return self.new(self._in, ~self._out)
+        return self.new(self._in, not self._out)
 
     def __and__(self, other: PartialSet):
         if self._out:
@@ -48,17 +48,17 @@ class PartialSet:
                 _in = np.setdiff1d(self._in, other._in)
             else:
                 _in = self._in[np.isin(self._in, other._in)]
-        return self.new(_in, self._out & other._out, True)
+        return self.new(_in, self._out and other._out, True)
 
     def __or__(self, other: PartialSet):
         return ~(~self & ~other)
 
     def __xor__(self, other: PartialSet):
-        return self.new(np.setxor1d(self._in, other._in, assume_unique = True), self._out ^ other._out, True)
+        return self.new(np.setxor1d(self._in, other._in, assume_unique = True), self._out is not other._out, True)
 
     def __add__(self, other: PartialSet):
         assert self._out == other._out
-        return self.new(np.concatenate((self._in, other._in)), self._out | other._out, True)
+        return self.new(np.concatenate((self._in, other._in)), self._out or other._out, True)
 
     def __call__(self, *indices: AnyArray):
         indices = np.array(self._zip(*indices))

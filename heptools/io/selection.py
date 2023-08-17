@@ -4,26 +4,25 @@ import operator
 from functools import reduce
 from typing import Iterable
 
-from coffea.processor.accumulator import accumulate
-
 from ..aktools import AnyArray
 from ..utils import Eval
-from .container import PartialSet
+from .container import PartialSet, Tree
 
 __all__ = ['Selection']
 
 class Selection:
-    def __init__(self, **filters: PartialSet):
-        self.filters: dict[str, PartialSet] = filters
+    def __init__(self):
+        self.filters = Tree[PartialSet]()
 
-    def add(self, selection: str, value: bool | Iterable[bool], *indices: AnyArray):
-        value = PartialSet(value, *indices)
-        self.filters = accumulate((self.filters, {selection: value}))
+    def add(self, selection: str, value: bool | Iterable[bool], *indices: AnyArray, default = False):
+        self.filters |= Tree().from_dict({selection: PartialSet(value, *indices, default = default)})
         return self
 
     def __add__(self, other: Selection) -> Selection:
         if isinstance(other, Selection):
-            return Selection(**accumulate((self.filters, other.filters)))
+            new = Selection()
+            new.filters = self.filters + other.filters
+            return new
         else:
             return NotImplemented
 
