@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import gc
 import operator
+import re
 from abc import ABC, abstractmethod
 from collections import defaultdict
 from functools import reduce
@@ -10,6 +11,8 @@ from typing import Callable
 import awkward as ak
 import numpy as np
 import uproot
+
+from ..utils import match_any
 
 __all__ = ['Skim', 'PicoAOD',
            'Buffer', 'BasketSizeOptimizedBuffer', 'NoBuffer']
@@ -117,13 +120,8 @@ class NoBuffer(Buffer):
     def before_flush(self):
         ...
 
-class SkimTask: # TODO dask
-    def __init__(self, files: list[str], selection: Callable[[ak.Array], ak.Array] = None):
-        self.files = files
-        self.selection = selection
-
 class Skim:
-    def __init__(self, jagged: list[str], excluded: list[str] = None, metadata = None, # TODO
+    def __init__(self, jagged: list[str], excluded: list[str | re.Pattern] = None, metadata = None, # TODO
                  unique_index: str = None,
                  iterate_step: int | str = '500 MB', buffer: Buffer = NoBuffer()):
         self.jagged = jagged
@@ -141,25 +139,11 @@ class Skim:
     def _get_branches(self, file):
         with uproot.open(file, timeout = self.timeout) as f:
             branches = set(f['Events'].keys())
-            for excluded in self.excluded:
-                branches -= set(f['Events'].keys(filter_name = excluded))
-            return branches
-
-    def __call__(self, output: str, tasks: list[SkimTask], allow_multiprocessing: bool = False): # TODO dask
-        if len(tasks) == 1:
-            self.create(output, tasks[0].files, tasks[0].selection, allow_multiprocessing)
-        else:
-            pico_chunk = self.copy()
-            pico_chunk.unique_index = None
-            chunks = []
-            for i, task in enumerate(tasks):
-                chunks.append(f'{output}.chunk{i}')
-                pico_chunk.create(chunks[-1], task.files, task.selection, allow_multiprocessing)
-            self.create(output, chunks, None, allow_multiprocessing)          
+        return {b for b in branches if not match_any(b, self.excluded, lambda x, y: re.match(y, x) is not None)}
 
     def create(self, output: str, files: list[str], selection: Callable[[ak.Array], ak.Array] = None, allow_multiprocessing: bool = False):
+        nevents = 0
         with self.buffer(output, 'Events', self.jagged) as output:
-            start = 0
             if allow_multiprocessing:
                 import multiprocessing as mp
                 with mp.Pool(len(files)) as pool:
@@ -171,9 +155,10 @@ class Skim:
                 if selection is not None:
                     chunk = selection(chunk)
                 if self.unique_index is not None:
-                    chunk[self.unique_index] = np.arange(start, start + len(chunk), dtype = np.uint64)
-                    start += len(chunk)
+                    chunk[self.unique_index] = np.arange(nevents, nevents + len(chunk), dtype = np.uint64)
+                nevents += len(chunk)
                 output += chunk
+        return nevents
 
 PicoAOD = Skim(
     jagged = [
