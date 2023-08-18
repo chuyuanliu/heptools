@@ -11,6 +11,6 @@
 | BTV           | https://btv-wiki.docs.cern.ch/                                            |
 '''
 
-from .json_pog import json_POG_integration
+from .cvmfs import jsonPOG_integration
 
-__all__ = ['json_POG_integration']
+__all__ = ['jsonPOG_integration']

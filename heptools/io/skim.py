@@ -133,7 +133,7 @@ class Skim:
         self.timeout  = 7 * 24 * 60
 
     def copy(self):
-        return self.__class__(self.jagged, self.excluded, self.metadata,
+        return self.__class__(self.jagged.copy(), self.excluded.copy(), self.metadata,
                               self.unique_index, self.iterate_step, self.buffer.copy())
 
     def _get_branches(self, file):
@@ -141,7 +141,7 @@ class Skim:
             branches = set(f['Events'].keys())
         return {b for b in branches if not match_any(b, self.excluded, lambda x, y: re.match(y, x) is not None)}
 
-    def create(self, output: str, files: list[str], selection: Callable[[ak.Array], ak.Array] = None, allow_multiprocessing: bool = False):
+    def __call__(self, output: str, files: list[str], selection: Callable[[ak.Array], ak.Array] = None, allow_multiprocessing: bool = False):
         nevents = 0
         with self.buffer(output, 'Events', self.jagged) as output:
             if allow_multiprocessing:
