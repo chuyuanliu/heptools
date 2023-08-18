@@ -3,14 +3,19 @@ channels:
   - conda-forge
 dependencies:
   - python=3.9
+  - rich
   - numpy
   - scipy
   - pandas
   - matplotlib
+# Dask jobqueue, dashboard, visualize
   - dask_jobqueue
-  - rich
+  - bokeh
+  - graphviz
+# Scikit-HEP
   - awkward
-  - hist
   - uproot
+  - hist
+# CMS
   - coffea
   - correctionlib

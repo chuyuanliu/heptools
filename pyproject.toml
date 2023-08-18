@@ -3,13 +3,16 @@ name = "heptools"
 version = "0.2.3"
 requires-python = ">=3.9"
 dependencies = [
+    "rich",
     "numpy",
     "matplotlib",
+# Dask
     "dask_jobqueue",
-    "rich",
+# Scikit-HEP
     "awkward",
-    "hist",
     "uproot",
+    "hist",
+# CMS
     "coffea",
     "correctionlib",
 ]

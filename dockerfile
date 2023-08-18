@@ -6,10 +6,17 @@ FROM condaforge/mambaforge:latest
 RUN mamba install --yes \
     -c conda-forge \
     python=3.9 \
+# grid certificate
     voms \
-    xrootd \
     ca-policy-lcg \
+# XRootD
+    xrootd \
+# HTCondor
     htcondor \
+# Dask dashboard, visualize
+    bokeh \
+    graphviz \
+# tini
     tini \
     && mamba clean --all --yes \
     && pip install --no-cache-dir git+https://github.com/chuyuanliu/heptools.git@master
