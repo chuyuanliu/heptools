@@ -8,7 +8,7 @@ import numpy as np
 from hist.axis import Boolean, IntCategory, StrCategory
 
 from ..aktools import AnyArray, FieldLike, and_fields, get_field
-from ..utils import isinstance_
+from ..typetools import isinstance_
 from . import hist as hs
 
 FillLike  = FieldLike | AnyArray | Number | bool | Callable

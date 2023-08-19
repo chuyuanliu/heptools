@@ -5,7 +5,7 @@ from typing import Callable
 import awkward as ak
 import numpy as np
 
-from ..utils import isinstance_
+from ..typetools import isinstance_
 from ..aktools import FieldLike, get_field, mul_arrays
 
 ContentLike = FieldLike | Callable | Number
