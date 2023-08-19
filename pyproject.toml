@@ -6,8 +6,7 @@ dependencies = [
     "rich",
     "numpy",
     "matplotlib",
-# Dask
-    "dask_jobqueue",
+    "dask-jobqueue",
 # Scikit-HEP
     "awkward",
     "uproot",
