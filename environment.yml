@@ -8,10 +8,9 @@ dependencies:
   - scipy
   - pandas
   - matplotlib
-# Dask jobqueue, dashboard, visualize
-  - dask_jobqueue
   - bokeh
   - graphviz
+  - dask-jobqueue
 # Scikit-HEP
   - awkward
   - uproot
