@@ -6,6 +6,9 @@ FROM condaforge/mambaforge:latest
 RUN mamba install --yes \
     -c conda-forge \
     python=3.9 \
+# Dask dashboard, visualize
+    bokeh \
+    graphviz \
 # grid certificate
     voms \
     ca-policy-lcg \
