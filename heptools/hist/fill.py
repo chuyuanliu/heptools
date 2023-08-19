@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from numbers import Number
-from typing import Callable, Union
+from typing import Callable
 
 import awkward as ak
 import numpy as np
@@ -11,7 +11,7 @@ from ..aktools import AnyArray, FieldLike, and_fields, get_field
 from ..utils import isinstance_
 from . import hist as hs
 
-FillLike  = Union[FieldLike, AnyArray, Number, bool, Callable]
+FillLike  = FieldLike | AnyArray | Number | bool | Callable
 
 class FillError(Exception):
     __module__ = Exception.__module__

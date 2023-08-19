@@ -5,7 +5,7 @@
 from __future__ import annotations
 
 import re
-from abc import ABC, abstractmethod
+from abc import ABC, abstractmethod, abstractproperty
 from functools import cached_property
 from string import Formatter
 from typing import Generator, overload
@@ -63,11 +63,12 @@ class Coupling:
         for i in range(len(self)):
             yield self[i]
 
-class Diagram:
-    diagrams: tuple[list[str], list] = None
+class Diagram(ABC):
+    @abstractproperty
+    def diagrams(self) -> tuple[list[str], list]:
+        ...
 
     def __init__(self, basis, unit_basis_weight = True):
-        assert self.diagrams is not None
         self.unit_basis_weight = unit_basis_weight
         basis = np.asarray(basis)
         count = len(self.diagrams[0])
@@ -151,13 +152,13 @@ class Decay:
             raise CouplingError(f'BR({decay}) is not recorded')
 
 class Formula(ABC):
-    search_pattern : str | re.Pattern = None
-    format_pattern : str = None
-    number_pattern : str = '{:.1f}'
-    number_separator : str = '_'
+    @abstractproperty
+    def search_pattern(self) -> re.Pattern:
+        ...
 
-    def __init__(self):
-        assert self.search_pattern is not None
+    format_pattern: str = None
+    number_pattern: str = '{:.1f}'
+    number_separator: str = '_'
 
     @property
     def _kappas(self):
@@ -195,8 +196,7 @@ class Formula(ABC):
 
 class FormulaXS(Diagram, Formula):
     def __init__(self, basis_xs, unit_basis_weight = True):
-        Diagram.__init__(self, basis_xs, unit_basis_weight)
-        Formula.__init__(self)
+        super().__init__(basis_xs, unit_basis_weight)
 
     def xs(self, couplings: Coupling):
         '''[pb]'''
@@ -225,8 +225,7 @@ class FormulaBR(Diagram, Formula):
             basis = np.asarray(basis_width)
         else:
             raise CouplingError(f'either BR or decay width of "{decay}" must be specified')
-        Diagram.__init__(self, basis, unit_basis_weight)
-        Formula.__init__(self)
+        super().__init__(basis, unit_basis_weight)
 
     def width(self, couplings: Coupling):
         '''[GeV]'''

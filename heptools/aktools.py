@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import operator
 from functools import partial, reduce
-from typing import Any, Callable, Union
+from typing import Any, Callable
 
 import awkward as ak
 import numpy as np
@@ -16,12 +16,12 @@ __all__ = ['FieldLike', 'AnyArray', 'AnyNumber', 'AnyInt', 'AnyFloat',
            'or_arrays', 'or_fields', 'and_arrays', 'and_fields', 'add_arrays', 'add_fields', 'mul_arrays', 'mul_arrays',
            'where', 'partition']
 
-AnyInt    = Union[int, np.integer]
-AnyFloat  = Union[float, np.floating]
-AnyNumber = Union[AnyInt, AnyFloat]
-AnyArray  = Union[Array, np.ndarray]
+AnyInt    = int | np.integer
+AnyFloat  = float | np.floating
+AnyNumber = AnyInt | AnyFloat
+AnyArray  = Array | np.ndarray
 
-FieldLike = Union[str, tuple]
+FieldLike = str | tuple
 
 def get_field(data: Array, field: FieldLike):
     if field is ...:

@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from copy import deepcopy
-from typing import Iterable, Union, overload
+from typing import Iterable, overload
 
 import numpy as np
 from hist import Hist
@@ -69,7 +69,7 @@ class Label:
     def askwarg(self, code: str = 'code', display: str = 'display'):
         return {code: self.code, display: self.display}
 
-LabelLike = Union[str, tuple[str, str], Label]
+LabelLike = str | tuple[str, str] | Label
 
 class Set:
     current: Set = None

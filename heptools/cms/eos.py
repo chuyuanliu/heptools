@@ -3,7 +3,6 @@ from __future__ import annotations
 from datetime import datetime
 from pathlib import Path
 from subprocess import PIPE, CalledProcessError, check_output
-from typing import Union
 
 __all__ = ['EOS', 'PathLike']
 
@@ -115,4 +114,4 @@ class EOS:
     def __str__(self): # TODO rich, __repr__
         return f'{self.url}{self.path}'
 
-PathLike = Union[str, Path, EOS]
+PathLike = str | Path | EOS

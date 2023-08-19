@@ -3,12 +3,9 @@
 # https://github.com/CoffeaTeam/docker-coffea-dask/blob/main/dask/Dockerfile
 FROM condaforge/mambaforge:latest
 
+RUN mamba env update -f https://raw.githubusercontent.com/chuyuanliu/heptools/master/environment.yml
 RUN mamba install --yes \
     -c conda-forge \
-    python=3.9 \
-# Dask dashboard, visualize
-    bokeh \
-    graphviz \
 # grid certificate
     voms \
     ca-policy-lcg \
@@ -17,8 +14,8 @@ RUN mamba install --yes \
 # HTCondor
     htcondor \
 # tini
-    tini \
-    && mamba clean --all --yes \
-    && pip install --no-cache-dir git+https://github.com/chuyuanliu/heptools.git@master
+    tini
+RUN mamba clean --all --yes
+RUN pip install --no-cache-dir --no-dependencies git+https://github.com/chuyuanliu/heptools.git@master
 RUN ln -s /opt/conda/etc/grid-security /etc/grid-security
 ENTRYPOINT ["tini", "-g", "--"]

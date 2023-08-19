@@ -1,6 +1,6 @@
 from functools import partial
 from numbers import Number
-from typing import Callable, Union
+from typing import Callable
 
 import awkward as ak
 import numpy as np
@@ -8,7 +8,7 @@ import numpy as np
 from ..utils import isinstance_
 from ..aktools import FieldLike, get_field, mul_arrays
 
-ContentLike = Union[FieldLike, Callable, Number]
+ContentLike = FieldLike | Callable | Number
 
 def _get_content(data: ak.Array, content: ContentLike):
     if isinstance_(content, FieldLike):

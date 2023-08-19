@@ -37,9 +37,10 @@ class ConfigMeta(type):
             }
     def __getattr__(cls, key):
         if key in cls.__reserved__:
-            if key not in vars(cls):
-                setattr(cls, key, cls.__reserved__[key]())
-            return getattr(cls, key)
+            _key = f'__{cls.__name__.lower()}{key}'
+            if _key not in vars(cls):
+                setattr(cls, _key, cls.__reserved__[key]())
+            return getattr(cls, _key)
         raise AttributeError
 
 class Config(metaclass = ConfigMeta):

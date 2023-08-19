@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import re
+from types import UnionType
 from typing import (Any, Callable, Generic, Iterable, Sized, TypeVar, Union,
                     get_args, get_origin)
 
@@ -10,16 +11,15 @@ def isinstance_(__obj, __class_or_tuple) -> bool:
     if __class_or_tuple is Any:
         return True
     origin = get_origin(__class_or_tuple)
-    if origin is Union:
-        return isinstance(__obj, get_args(__class_or_tuple))
-    elif origin is type:
+    if origin is type:
         if not isinstance(__obj, type):
             return False
-        return issubclass(__obj, get_args(__class_or_tuple))
-    elif origin is None:
-        return isinstance(__obj, __class_or_tuple)
+        return issubclass(__obj, get_args(__class_or_tuple))        
     else:
-        return isinstance(__obj, origin)
+        try:
+            return isinstance(__obj, __class_or_tuple)
+        except TypeError:
+            return isinstance(__obj, origin)
 
 def type_name(__type) -> str:
     if isinstance(__type, Iterable):
@@ -38,7 +38,7 @@ def type_name(__type) -> str:
         return __type.__name__
     if is_callable:
         return f'{args[0]} -> {args[1]}'
-    if origin is Union:
+    if origin is UnionType or origin is Union:
         return ' | '.join(args)
     if origin is type:
         if len(args) != 1:
