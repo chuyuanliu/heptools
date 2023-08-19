@@ -10,7 +10,7 @@ from hist.axis import (AxesMixin, Boolean, IntCategory, Integer, Regular,
 from hist.storage import Storage
 
 from ..aktools import AnyInt, AnyNumber, FieldLike
-from ..typetools import isinstance_
+from ..typetools import check_type
 from ..utils import astuple
 from . import fill as fs
 
@@ -27,10 +27,10 @@ def _create_axis(args: AxesMixin | tuple) -> AxesMixin:
     assert len(args) > 0
     label = Label(args[-1]).askwarg('name', 'label')
     if len(args) == 4:
-        if isinstance_(args[0], AnyInt) and args[0] > 0 and all(isinstance_(arg, AnyNumber) for arg in args[1:3]):
+        if check_type(args[0], AnyInt) and args[0] > 0 and all(check_type(arg, AnyNumber) for arg in args[1:3]):
             return Regular(*args[0:3], **label)
     elif len(args) == 3:
-        if all(isinstance_(arg, AnyInt) for arg in args[0:2]) and args[0] <= args [1]:
+        if all(check_type(arg, AnyInt) for arg in args[0:2]) and args[0] <= args [1]:
             return Integer(*args[0:2], **label)
     elif len(args) == 2:
         if args[0] is ...:
@@ -38,9 +38,9 @@ def _create_axis(args: AxesMixin | tuple) -> AxesMixin:
         elif isinstance(args[0], Iterable):
             if all(isinstance(arg, str) for arg in args[0]):
                 return StrCategory(args[0], **label, growth = True)
-            elif all(isinstance_(arg, AnyInt) for arg in args[0]):
+            elif all(check_type(arg, AnyInt) for arg in args[0]):
                 return IntCategory(args[0], **label, growth = True)
-            elif all(isinstance_(arg, AnyNumber) for arg in args[0]):
+            elif all(check_type(arg, AnyNumber) for arg in args[0]):
                 return Variable(args[0], **label)
     elif len(args) == 1:
         return Boolean(**label)
@@ -129,7 +129,7 @@ class Subset:
         for axis in axes:
             axis.label = f'{self._name.display} {axis.label}'
             if axis.name in fill_args:
-                if isinstance_(fill_args, FieldLike):
+                if check_type(fill_args, FieldLike):
                     _fill[axis.name] = self._data + astuple(fill_args[axis.name])
                 else:
                     _fill[axis.name] = fill_args[axis.name]

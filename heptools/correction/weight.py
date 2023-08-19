@@ -5,13 +5,13 @@ from typing import Callable
 import awkward as ak
 import numpy as np
 
-from ..typetools import isinstance_
+from ..typetools import check_type
 from ..aktools import FieldLike, get_field, mul_arrays
 
 ContentLike = FieldLike | Callable | Number
 
 def _get_content(data: ak.Array, content: ContentLike):
-    if isinstance_(content, FieldLike):
+    if check_type(content, FieldLike):
         return get_field(data, content)
     elif isinstance(content, Callable):
         return content(data)

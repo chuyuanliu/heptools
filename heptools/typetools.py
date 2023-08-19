@@ -1,10 +1,10 @@
 from types import UnionType
 from typing import Any, Iterable, Union, get_args, get_origin
 
-__all__ = ['isinstance_', 'type_name']
+__all__ = ['check_type', 'type_name']
 
 # TODO check for list[], dict[], set[], tuple[], Literal[], __genericguard__, instance of object
-def isinstance_(__obj, __class_or_tuple) -> bool:
+def check_type(__obj, __class_or_tuple) -> bool:
     if __class_or_tuple is Any:
         return True
     origin = get_origin(__class_or_tuple)

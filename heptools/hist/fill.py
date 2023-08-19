@@ -8,7 +8,7 @@ import numpy as np
 from hist.axis import Boolean, IntCategory, StrCategory
 
 from ..aktools import AnyArray, FieldLike, and_fields, get_field
-from ..typetools import isinstance_
+from ..typetools import check_type
 from . import hist as hs
 
 FillLike  = FieldLike | AnyArray | Number | bool | Callable
@@ -61,11 +61,11 @@ class Fill:
             for k, v in fill_args.items():
                 if (isinstance(v, str) and k in hists._categories) or isinstance(v, (bool, Number)):
                     category_args[k] = v
-                elif isinstance_(v, FieldLike):
+                elif check_type(v, FieldLike):
                     category_args[k] = get_field(masked, v)
-                elif isinstance_(v, AnyArray):
+                elif check_type(v, AnyArray):
                     category_args[k] = v if mask is None else v[mask]
-                elif isinstance_(v, Callable):
+                elif check_type(v, Callable):
                     category_args[k] = v(masked)
                 else:
                     raise FillError(f'cannot fill "{k}" with "{v}"')
@@ -97,16 +97,16 @@ class Fill:
                 for k, v in fills.items():
                     fill = category_args[v]
                     if shape is not None:
-                        if v not in jagged_args and isinstance_(fill, AnyArray):
+                        if v not in jagged_args and check_type(fill, AnyArray):
                             fill = np.repeat(fill, shape)
                     hist_args[k] = fill
                 # https://github.com/scikit-hep/boost-histogram/issues/452 #
-                if all([isinstance_(axis, (StrCategory, Boolean, IntCategory)) for axis in hists._hists[name].axes]) and len(masked) > 0:
+                if all([check_type(axis, (StrCategory, Boolean, IntCategory)) for axis in hists._hists[name].axes]) and len(masked) > 0:
                     broadcasted = False
                     tobroadcast = None
                     for k, v in hist_args.items():
                         if k != 'weight':
-                            if isinstance_(v, AnyArray) and len(v) == len(masked):
+                            if check_type(v, AnyArray) and len(v) == len(masked):
                                 broadcasted = True
                                 break
                             else:

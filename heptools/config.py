@@ -6,7 +6,7 @@ from typing import Any, Generic, TypeVar, get_args, get_origin, get_type_hints
 
 from rich.text import Text
 
-from .typetools import isinstance_, type_name
+from .typetools import check_type, type_name
 
 __all__ = ['Config', 'ConfigError',
            'config_property',
@@ -64,7 +64,7 @@ class Config(metaclass = ConfigMeta):
     def __print_parameter__(cls, __par, __type, __value):
         if get_origin(__type) is config_property:
             __type = get_args(__type)[0]
-        args = {} if __value is Undefined or isinstance_(__value, __type) else {'style': 'red'}
+        args = {} if __value is Undefined or check_type(__value, __type) else {'style': 'red'}
         __source = cls.__track_parameter__(__par)
         __extra  = cls.__default__.get(__par) is Extra
         __source = Text(' (') + Text(f'{__source}', style = 'yellow' + (' italic' if __extra else '')) + Text(')') if (__value is not Undefined) or __extra else Text('')
@@ -130,13 +130,13 @@ class Config(metaclass = ConfigMeta):
     @_protected
     def update(cls, *configs: type[Config] | dict):
         for config in configs:
-            if isinstance_(config, type[Config]):
+            if check_type(config, type[Config]):
                 _mro  = getmro(config)[1:]
                 _unified = [config] + config.__unified__
                 _updated = config.__updated__
                 _name = config.__name__
                 _pars = config.__get_parameter__(False, True)
-            elif isinstance_(config, dict):
+            elif check_type(config, dict):
                 config = copy(config)
                 _mro  = config.pop('__mro__', ())
                 _unified = config.pop('__unified__', [])
