@@ -66,9 +66,7 @@ class Coupling:
 class Diagram:
     diagrams: tuple[list[str], list] = None
 
-    def __init__(self, basis, unit_basis_weight = True, diagrams: tuple[list[str], list] = None):
-        if diagrams is not None:
-            self.diagrams = diagrams
+    def __init__(self, basis, unit_basis_weight = True):
         assert self.diagrams is not None
         self.unit_basis_weight = unit_basis_weight
         basis = np.asarray(basis)
@@ -196,8 +194,8 @@ class Formula(ABC):
         ...
 
 class FormulaXS(Diagram, Formula):
-    def __init__(self, basis_xs, unit_basis_weight = True, diagrams: tuple[list[str], list] = None):
-        Diagram.__init__(self, basis_xs, unit_basis_weight, diagrams)
+    def __init__(self, basis_xs, unit_basis_weight = True):
+        Diagram.__init__(self, basis_xs, unit_basis_weight)
         Formula.__init__(self)
 
     def xs(self, couplings: Coupling):
@@ -216,7 +214,7 @@ class FormulaXS(Diagram, Formula):
         return self.process(self._basis)
 
 class FormulaBR(Diagram, Formula):
-    def __init__(self, decay: str, basis_br = None, basis_width = None, total = False, unit_basis_weight = True, diagrams: tuple[list[str], list] = None):
+    def __init__(self, decay: str, basis_br = None, basis_width = None, total = False, unit_basis_weight = True):
         self.decay  = decay
         self.parent = Decay.parent(decay)
         self.total  = total
@@ -227,7 +225,7 @@ class FormulaBR(Diagram, Formula):
             basis = np.asarray(basis_width)
         else:
             raise CouplingError(f'either BR or decay width of "{decay}" must be specified')
-        Diagram.__init__(self, basis, unit_basis_weight, diagrams)
+        Diagram.__init__(self, basis, unit_basis_weight)
         Formula.__init__(self)
 
     def width(self, couplings: Coupling):
