@@ -1,6 +1,6 @@
 from functools import partial
 
-from ...aktools import (FieldLike, add_arrays, get_field, or_arrays, to_tuple,
+from ...aktools import (FieldLike, add_arrays, foreach, get_field, or_arrays,
                         where)
 from . import PhysicsObjectError
 from . import vector as vec
@@ -16,11 +16,11 @@ class DiJet(vec.DiLorentzVector):
 class ExtendedJet(vec.DiLorentzVector):
     def _unique_field(self, field: FieldLike = ()):
         constituents = self.constituents
-        jets = to_tuple(constituents.Jet)
+        jets = foreach(constituents.Jet)
         p = add_arrays(*(get_field(jet, field) for jet in jets))
         others = set(constituents.fields) - {'Jet'}
         for other in others:
-            objs = to_tuple(constituents[other])
+            objs = foreach(constituents[other])
             for obj in objs:
                 p = where(p + get_field(obj, field),
                           (or_arrays(*(obj.jetIdx == jet.index for jet in jets)), p))

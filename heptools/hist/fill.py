@@ -48,15 +48,12 @@ class Fill:
         mask_categories = []
         for category in hists._categories:
             if category not in fill_args:
-                if category in events.fields:
-                    fill_args[category] = (category,)
+                if isinstance(hists._axes[category], StrCategory):
+                    mask_categories.append(category)
                 else:
-                    if isinstance(hists._axes[category], StrCategory):
-                        mask_categories.append(category)
-                    else:
-                        raise FillError(f'field "{category}" does not exist in data') from None
+                    fill_args[category] = hs._default_field(category)
         for category_args in hists._generate_category_combinations(mask_categories):
-            mask   = and_fields(events, *category_args.values())
+            mask   = and_fields(events, *category_args.items())
             masked = events if mask is None else events[mask]
             for k, v in fill_args.items():
                 if (isinstance(v, str) and k in hists._categories) or isinstance(v, (bool, Number)):

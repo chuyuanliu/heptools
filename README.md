@@ -51,5 +51,6 @@ change singularity (apptainer) cache dir
 
 # TODO
 - doc
+- unit test
 - plot
 - dasgoclient

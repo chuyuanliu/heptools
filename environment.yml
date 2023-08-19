@@ -16,8 +16,8 @@ dependencies:
     - graphviz
 # Scikit-HEP
   - awkward
-  - uproot
+  - uproot=4.3.*
   - hist
 # CMS
-  - coffea
+  - coffea=0.7.21
   - correctionlib
