@@ -13,9 +13,6 @@ RUN mamba install --yes \
     xrootd \
 # HTCondor
     htcondor \
-# Dask dashboard, visualize
-    bokeh \
-    graphviz \
 # tini
     tini \
     && mamba clean --all --yes \
