@@ -11,6 +11,9 @@ dependencies:
   - bokeh
   - graphviz
   - dask-jobqueue
+  - pip
+  - pip:
+    - graphviz
 # Scikit-HEP
   - awkward
   - uproot

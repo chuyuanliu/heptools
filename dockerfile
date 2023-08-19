@@ -3,7 +3,7 @@
 # https://github.com/CoffeaTeam/docker-coffea-dask/blob/main/dask/Dockerfile
 FROM condaforge/mambaforge:latest
 
-RUN mamba env update -f https://raw.githubusercontent.com/chuyuanliu/heptools/master/environment.yml \
+RUN mamba env update -n base -f https://raw.githubusercontent.com/chuyuanliu/heptools/master/environment.yml \
  && mamba install --yes \
     -c conda-forge \
 # grid certificate

@@ -1,5 +1,5 @@
 # HEP Tools
-Tools for high energy physics analysis.
+Analysis tools for experimental high energy physics.
 
 # Installation
 Install from github
