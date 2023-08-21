@@ -18,12 +18,15 @@ class _Correction:
         if file is not None:
             self.corrections = CorrectionSet.from_file(file)
         else:
-            raise CorrectionError
+            raise CorrectionError('path of correction file must be provided')
 
     def _evaluate(self, events: ak.Array, _correction: str = None, **inputs: ContentLike):
         if _correction is None:
-            assert len(self.corrections) == 1
+            if not len(self.corrections) == 1:
+                raise CorrectionError(f'no correction is specified (available: {list(self.corrections)})')
             _correction = next(iter(self.corrections))
+        elif _correction not in self.corrections:
+            raise CorrectionError(f'correction must be one of {list(self.corrections)} (got {_correction})')
         corr, args = self.corrections[_correction], []
         for var in corr.inputs:
             arg = inputs.get(var.name, var.name)

@@ -41,7 +41,7 @@ def _type_check_extended_jet(ps):
     for p in ps:
         if typestr(p) in type_check:
             return
-    raise PhysicsObjectError(f'expected at least one of {type_check}, got [{", ".join(typestr(p) for p in ps)}]')
+    raise PhysicsObjectError(f'expected at least one of {type_check} (got [{", ".join(typestr(p) for p in ps)}])')
 
 pair = partial(vec.pair, name = 'DiJet', type_check = {'Jet', 'DiJet'})
 extend = partial(vec.pair, name = 'ExtendedJet', type_check = _type_check_extended_jet)

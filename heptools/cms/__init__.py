@@ -10,7 +10,3 @@
 |               | https://hlt-config-editor-confdbv3.app.cern.ch/                           |
 | BTV           | https://btv-wiki.docs.cern.ch/                                            |
 '''
-
-from .cvmfs import jsonPOG_integration
-
-__all__ = ['jsonPOG_integration']

@@ -69,10 +69,12 @@ class Buffer(ABC):
     def before_flush(self):
         ...
 
-    def __iadd__(self, block: ak.Array):
-        self.add_block(block)
-        gc.collect()
-        return self
+    def __iadd__(self, block: ak.Array) -> Buffer:
+        if isinstance(block, ak.Array):
+            self.add_block(block)
+            gc.collect()
+            return self
+        return NotImplemented
 
     def __enter__(self):
         if self.jagged is None:

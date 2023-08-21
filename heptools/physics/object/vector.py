@@ -58,12 +58,12 @@ def pair(*ps: Array, mode: Literal['single', 'cartesian', 'combination'] = 'sing
     if isinstance(type_check, set):
         for p in ps:
             if typestr(p) not in type_check:
-                raise PhysicsObjectError(f'expected {type_check}, got <{typestr(p)}>')
+                raise PhysicsObjectError(f'expected {type_check} (got <{typestr(p)}>)')
     elif isinstance(type_check, Callable):
         type_check(ps)
     def check(length: int):
         if len(ps) != length:
-            raise PhysicsObjectError(f'expected {length} arrays for {mode} mode, got {len(ps)}')
+            raise PhysicsObjectError(f'expected {length} arrays for {mode} mode (got {len(ps)})')
     if mode == 'single':
         check(2)
         return ak.zip({'_p1': ps[0], '_p2': ps[1]}, with_name = name, behavior = behavior)

@@ -23,8 +23,7 @@ class Selection:
             new = Selection()
             new.filters = self.filters + other.filters
             return new
-        else:
-            return NotImplemented
+        return NotImplemented
 
     def __getitem__(self, selection: str) -> PartialSet:
         if selection in self.filters:

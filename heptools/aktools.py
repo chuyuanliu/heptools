@@ -72,13 +72,15 @@ def get_dimension(data: Array) -> int:
 def foreach(data: Array) -> tuple[Array, ...]:
     dim = get_dimension(data) - 1
     count = np.unique(ak.ravel(ak.num(data, axis = dim)))
-    assert(len(count) == 1)
+    if not len(count) == 1:
+        raise IndexError(f'the length of the last axis must be uniform (got {count})')
     slices = tuple(slice(None) for _ in range(dim))
     return tuple(data[slices + (i,)] for i in range(count[0]))
 
 def partition(data: Array, groups: int, members: int) -> tuple[Array, ...]:
     _sizes = ak.num(data)
-    assert(ak.all(_sizes >= groups * members))
+    if not ak.all(_sizes >= groups * members):
+        raise ValueError(f'not enough data to partition into {groups}×{members}')
     _combs = ak.Array([Partition(i, groups, members).combination[0] for i in range(ak.max(_sizes) + 1)])[_sizes]
     _combs = tuple(ak.unflatten(data[ak.flatten(_combs[:, :, :, i], axis = 2)], groups, axis=1) for i in range(members))
     return _combs

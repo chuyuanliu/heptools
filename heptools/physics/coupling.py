@@ -49,9 +49,11 @@ class Coupling:
         new.couplings = np.concatenate(couplings, axis = -1)
         return new
 
-    def __iadd__(self, other: Coupling):
-        self.append(other.reshape(self.kappas).couplings)
-        return self
+    def __iadd__(self, other: Coupling) -> Coupling:
+        if isinstance(other, Coupling):
+            self.append(other.reshape(self.kappas).couplings)
+            return self
+        return NotImplemented
 
     def __len__(self):
         return len(self.couplings)
@@ -126,13 +128,14 @@ class Decay:
             decay = decay.decay
         else:
             if '->' not in decay:
-                assert width is not None
+                if width is None:
+                    raise CouplingError(f'total width of particle "{decay}" must be provided')
                 br = None
                 cls._widths[decay] = width
             else:
                 if br is None:
                     if width is None:
-                        raise CouplingError(f'either BR or decay width of "{decay}" must be specified')
+                        raise CouplingError(f'either BR or decay width of "{decay}" must be provided')
                     br = width/cls.width(cls.parent(decay))
         if br is not None:
             cls._decays.setdefault(cls.parent(decay), {})[decay] = br
@@ -224,7 +227,7 @@ class FormulaBR(Diagram, Formula):
         elif basis_width is not None:
             basis = np.asarray(basis_width)
         else:
-            raise CouplingError(f'either BR or decay width of "{decay}" must be specified')
+            raise CouplingError(f'either BR or decay width of "{decay}" must be provided')
         super().__init__(basis, unit_basis_weight)
 
     def width(self, couplings: Coupling):

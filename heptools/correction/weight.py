@@ -24,7 +24,8 @@ class EventWeight:
 
     def add(self, name: str, central: ContentLike = ..., **variations: ContentLike):
         if central is ...:
-            assert '' in variations
+            if '' not in variations:
+                raise ValueError('central value must be provided')
         self.weights[name] = {'': central} | variations
 
     def correlate(self, name: str, **variations: dict[str, str]):

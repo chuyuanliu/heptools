@@ -56,10 +56,12 @@ class Tree(defaultdict[str], Generic[_LeafType]):
 
     @staticmethod
     def op(first: Tree[_LeafType], second: Tree[_LeafType], op: Callable[[_LeafType, _LeafType], _LeafType]) -> Tree[_LeafType]:
-        tree = Tree[_LeafType]()
-        tree.iop(first, op)
-        tree.iop(second, op)
-        return tree
+        if isinstance(first, Tree) and isinstance(second, Tree):
+            tree = Tree[_LeafType]()
+            tree.iop(first, op)
+            tree.iop(second, op)
+            return tree
+        return NotImplemented
 
     def __ior__(self, other: Tree[_LeafType]) -> Tree[_LeafType]:
         return self.iop(other, lambda x, y: x | y)

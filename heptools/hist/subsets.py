@@ -9,6 +9,7 @@ from hist.axis import AxesMixin
 from ..utils import astuple
 from .hist import FieldLike, Label, LabelLike, Set, Subset, _default_field
 
+# TODO Jet, Lepton, Muon, Electron
 
 class Fourvector(Subset):
     def __init__(self, name: LabelLike, fill: FieldLike = None, pt = (100, 0, 500), mass = (100, 0, 500), pz = (150, 0, 1500), energy = (100, 0, 500), count = False, **fill_args: FieldLike):

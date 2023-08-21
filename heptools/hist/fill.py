@@ -27,8 +27,7 @@ class Fill:
             fills  = other._fills  | self._fills
             kwargs = other._kwargs | self._kwargs
             return Fill(fills, **kwargs)
-        else:
-            return NotImplemented
+        return NotImplemented
 
     def __call__(self, events: ak.Array, hists: hs.Set = None, **fill_args: FillLike):
         self.fill(events, hists, **fill_args)
@@ -89,7 +88,7 @@ class Fill:
                 elif len(shape) == 1:
                     shape = counts_args[next(iter(shape))]
                 else:
-                    raise FillError(f'cannot fill hist "{name}" with unmatched jagged arrays')
+                    raise FillError(f'cannot fill hist "{name}" with unmatched jagged arrays {jagged_args}')
                 hist_args = {}
                 for k, v in fills.items():
                     fill = category_args[v]

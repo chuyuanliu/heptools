@@ -1,3 +1,4 @@
+# TODO deprecated
 from __future__ import annotations
 
 import random
@@ -45,15 +46,14 @@ class Performance:
              self._group if group is None else group))
         self.reset()
 
-    def __add__(self, other: Performance):
+    def __add__(self, other: Performance) -> Performance:
         if isinstance(other, Performance):
             new = Performance()
             for raw in (self._raw, other._raw):
                 for k, v in raw.items():
                     new._raw[k] += v
             return new
-        else:
-            return NotImplemented
+        return NotImplemented
 
     def analyze(self, **ops: Callable[[npt.NDArray], float]):
         def tree1(): return defaultdict(float)
