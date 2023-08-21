@@ -14,14 +14,11 @@ class CorrectionError(Exception):
     __module__ = Exception.__module__
 
 class _Correction:
-    def __init__(self, file: str = None):
-        if file is not None:
-            self.corrections = CorrectionSet.from_file(file)
-        else:
-            raise CorrectionError('path of correction file must be provided')
+    def __init__(self, file: str):
+        self.corrections = CorrectionSet.from_file(file)
 
-    def _evaluate(self, events: ak.Array, _correction: str = None, **inputs: ContentLike):
-        if _correction is None:
+    def _evaluate(self, events: ak.Array, _correction: str = ..., **inputs: ContentLike):
+        if _correction is ...:
             if not len(self.corrections) == 1:
                 raise CorrectionError(f'no correction is specified (available: {list(self.corrections)})')
             _correction = next(iter(self.corrections))
@@ -45,11 +42,11 @@ class _Correction:
         return '\n'.join(lines)
 
 class EventLevelCorrection(_Correction):
-    def evaluate(self, _correction: str = None, **inputs: ContentLike):
+    def evaluate(self, _correction: str = ..., **inputs: ContentLike):
         return partial(self._evaluate, _correction = _correction, **inputs)
 
 class ObjectLevelCorrection(_Correction):
-    def _evaluate_objects(self, events: ak.Array, _selection: Callable[[ak.Array], ak.Array] = None, _transform: Callable[[ak.Array, ak.Array], ak.Array] = None, _correction: str = None, **inputs: ContentLike) -> ak.Array:
+    def _evaluate_objects(self, events: ak.Array, _selection: Callable[[ak.Array], ak.Array] = None, _transform: Callable[[ak.Array, ak.Array], ak.Array] = None, _correction: str = ..., **inputs: ContentLike) -> ak.Array:
         if _selection is not None:
             events = _selection(events)
         corrections = ak.unflatten(self._evaluate(ak.flatten(events), _correction, **inputs), counts = ak.num(events))
@@ -63,7 +60,7 @@ class ObjectLevelCorrection(_Correction):
     def _evaluate_groups(self, events: ak.Array, groups: Iterable[tuple[Callable[[ak.Array], ak.Array], dict[str, ContentLike]]], **kwargs):
         return mul_arrays(*[self._evaluate_events(events, **(kwargs | {'_selection': group[0]} | group[1])) for group in groups])
 
-    def evaluate(self, _correction: str = None, *groups: tuple[Callable[[ak.Array], ak.Array], dict[str, ContentLike]], **inputs: ContentLike):
+    def evaluate(self, _correction: str = ..., *groups: tuple[Callable[[ak.Array], ak.Array], dict[str, ContentLike]], **inputs: ContentLike):
         if groups:
             return partial(self._evaluate_groups, groups = groups, _correction = _correction, **inputs)
         else:

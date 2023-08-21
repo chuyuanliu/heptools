@@ -113,9 +113,9 @@ class Decay:
         return decay.split('->')[0]
 
     @staticmethod
-    def width(particle: str, coupling: Coupling = None):
+    def width(particle: str, coupling: Coupling = ...):
         '''[GeV]'''
-        if coupling is None:
+        if coupling is ...:
             return Decay._widths[particle]
         else:
             decays = [decay for decay in Decay._decays[particle].values() if isinstance(decay, FormulaBR) and decay.total]

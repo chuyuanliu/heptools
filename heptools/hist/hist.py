@@ -57,7 +57,7 @@ class Label:
     @overload
     def __init__(self, code: str, display: str):
         ...
-    def __init__(self, code: LabelLike, display: str = None):
+    def __init__(self, code: LabelLike, display: str = ...):
         if isinstance(code, Label):
             self.code    = code.code
             self.display = code.display
@@ -66,7 +66,7 @@ class Label:
             self.display = code[1]
         elif isinstance(code, str):
             self.code    = code
-            self.display = code if display is None else display
+            self.display = code if display is ... else display
 
     def askwarg(self, code: str = 'code', display: str = 'display'):
         return {code: self.code, display: self.display}
@@ -117,10 +117,10 @@ class Set:
         return {'hists': self._hists, 'categories': {*self._categories}}
 
 class Subset:
-    def __init__(self, name: LabelLike, fill: FieldLike = None, **fill_args: FieldLike):
+    def __init__(self, name: LabelLike, fill: FieldLike = ..., **fill_args: FieldLike):
         self._fills = fs.Fill()
         self._name  = Label(name)
-        self._data  = astuple(_default_field(self._name.code) if fill is None else fill)
+        self._data  = astuple(_default_field(self._name.code) if fill is ... else fill)
         self._fill_args = fill_args
 
     def add(self, name: str, *axes: AxesMixin | tuple, storage: str | Storage = 'weight', label: str = 'Events', **fill_args: FieldLike):

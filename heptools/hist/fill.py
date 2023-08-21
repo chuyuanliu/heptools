@@ -29,7 +29,7 @@ class Fill:
             return Fill(fills, **kwargs)
         return NotImplemented
 
-    def __call__(self, events: ak.Array, hists: hs.Set = None, **fill_args: FillLike):
+    def __call__(self, events: ak.Array, hists: hs.Set = ..., **fill_args: FillLike):
         self.fill(events, hists, **fill_args)
 
     def __setitem__(self, key: str, value: FillLike):
@@ -38,8 +38,8 @@ class Fill:
     def __getitem__(self, key: str):
         return self._kwargs[key]
 
-    def fill(self, events: ak.Array, hists: hs.Set = None, **fill_args: FillLike):
-        if hists is None:
+    def fill(self, events: ak.Array, hists: hs.Set = ..., **fill_args: FillLike):
+        if hists is ...:
             if hs.Set.current is None:
                 raise FillError('no histogram set is specified')
             hists  = hs.Set.current

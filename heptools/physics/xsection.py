@@ -45,14 +45,14 @@ class XSection:
         self.__init__(process = process, xs = xs, decay = decay, kfactors = kfactors)
         cls._all.append(self)
 
-    def __new__(cls, process: str, *kfactors: str, decay: str = None):
+    def __new__(cls, process: str, decay: str = ..., *kfactors: str):
         for _xs in cls._all:
-            xs = _xs(process, decay, kfactors)
+            xs = _xs(process, decay, *kfactors)
             if xs is not None:
                 return xs
         raise XSectionError(f'the cross section of "{process}" is not recorded')
 
-    def __call__(self, process: str, decay: str = None, kfactors: list[str] | str = None) -> float:
+    def __call__(self, process: str, decay: str = ..., *kfactors: str) -> float:
         xs = None
         match = self.process.match(process)
         if match:
@@ -62,7 +62,7 @@ class XSection:
             elif isinstance(xs, str):
                 xs = self._get_xs(xs.format(**match.groupdict()))
         if xs:
-            xs *= XSection._get_br(decay = self.decay if decay is None else decay, process = process)
+            xs *= XSection._get_br(decay = self.decay if decay is ... else decay, process = process)
             if self.kfactors and kfactors:
                 for kfactor in kfactors:
                     xs *= self.kfactors.get(kfactor, 1)

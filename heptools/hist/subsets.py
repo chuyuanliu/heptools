@@ -12,7 +12,7 @@ from .hist import FieldLike, Label, LabelLike, Set, Subset, _default_field
 # TODO Jet, Lepton, Muon, Electron
 
 class Fourvector(Subset):
-    def __init__(self, name: LabelLike, fill: FieldLike = None, pt = (100, 0, 500), mass = (100, 0, 500), pz = (150, 0, 1500), energy = (100, 0, 500), count = False, **fill_args: FieldLike):
+    def __init__(self, name: LabelLike, fill: FieldLike = ..., pt = (100, 0, 500), mass = (100, 0, 500), pz = (150, 0, 1500), energy = (100, 0, 500), count = False, **fill_args: FieldLike):
         super().__init__(name, fill, **fill_args)
         if count:
             self.add('n', (0, 20, ('n', 'Number')), n = lambda x: ak.num(x[self._data]))
@@ -24,7 +24,7 @@ class Fourvector(Subset):
         self.add('energy' , (           *energy, ('energy', R'Energy [GeV]')))
 
 class DiFourvector(Fourvector):
-    def __init__(self, name: LabelLike, fill: FieldLike = None, pt = (100, 0, 500), mass = (100, 0, 500), pz = (150, 0, 1500), energy = (100, 0, 500), dr = (100, 0, 4), ht = (100, 0 , 1000), count = False, **fill_args: FieldLike):
+    def __init__(self, name: LabelLike, fill: FieldLike = ..., pt = (100, 0, 500), mass = (100, 0, 500), pz = (150, 0, 1500), energy = (100, 0, 500), dr = (100, 0, 4), ht = (100, 0 , 1000), count = False, **fill_args: FieldLike):
         super().__init__(name, fill, pt, mass, pz, energy, count, **fill_args)
         self.add('dr' , (*dr, ('dr', R'$\Delta R(p_1,p_2)$')))
         self.add('ht' , (*ht, ('ht', R'$H_{\mathrm{T}}$ [GeV]')))

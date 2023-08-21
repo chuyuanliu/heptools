@@ -19,7 +19,7 @@ class _Variation(_Correction, ABC):
     def _corrections(self) -> dict[str]:
         ...
 
-    def __init__(self, file: str = None, variations: list[str] = ...):
+    def __init__(self, file: str, variations: list[str] = ...):
         if variations is None:
             variations = []
         elif variations is ...:
@@ -52,7 +52,7 @@ class BTagSF_Shape(_Variation, ObjectLevelCorrection):
     '''
     _names = {'': 'central'}
 
-    def __init__(self, file: str = None, variations: list[str] = ..., jet: str = 'Jet', unbounded: bool = False, jes: list[str] = None):
+    def __init__(self, file: str, variations: list[str] = ..., jet: str = 'Jet', unbounded: bool = False, jes: list[str] = None):
         self.jes = [] if jes is None else jes
         self.target = (lambda x: x[jet],)
         if unbounded:
@@ -82,7 +82,7 @@ class PileupJetIDSF(_Variation, ObjectLevelCorrection):
     '''
     _names = {0b000: '', 0b100: 'L', 0b110: 'M', 0b111: 'T', '': 'nom'}
 
-    def __init__(self, file: str = None, variations: list[str] = ..., jet: str = 'Jet', working_point: int = 0, untagged: bool = False):
+    def __init__(self, file: str, variations: list[str] = ..., jet: str = 'Jet', working_point: int = 0, untagged: bool = False):
         self.working_point = working_point
         self.untagged = untagged
         self.target = (lambda x: x[jet], lambda x: x[(x.pt < 50) & (x.pt > 20) & (x.genJetIdx > -1)])
