@@ -12,3 +12,5 @@ def jsonPOG_integration(era: str, file: str):
         - https://gitlab.cern.ch/cms-nanoAOD/jsonpog-integration/-/tree/master/
     '''
     return f'/cvmfs/cms.cern.ch/rsync/cms-nanoAOD/jsonpog-integration/POG/{_jsonPOG_integration_groups[file]}/{era}/{file}.json.gz'
+
+# TODO unpacked.cern.ch
