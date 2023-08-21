@@ -25,7 +25,7 @@ def _create_axis(args: AxesMixin | tuple) -> AxesMixin:
     if isinstance(args, AxesMixin):
         return deepcopy(args)
     if len(args) == 0:
-        raise HistError('require at least one argument ("name") to create an axis')
+        raise HistError('require at least one argument "name" to create an axis')
     label = Label(args[-1]).askwarg('name', 'label')
     if len(args) == 4:
         if check_type(args[0], AnyInt) and args[0] > 0 and all(check_type(arg, AnyNumber) for arg in args[1:3]):

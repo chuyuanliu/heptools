@@ -47,7 +47,7 @@ class Config(metaclass = ConfigMeta):
     def _protected(func):
         def wrapper(cls, *args, **kwargs):
             if cls is Config:
-                raise ConfigError(f'cannot call "Config.{func.__name__}()" from base class')
+                raise ConfigError(f'cannot call "{func.__qualname__}" from base class')
             return func(cls, *args, **kwargs)
         return wrapper
 
