@@ -4,7 +4,7 @@ import json
 from typing import Callable, Literal
 
 from ..benchmark.unit import Metric
-from .container import Tree
+from ..container import Tree
 
 __all__ = ['File', 'FileList', 'Dataset']
 

@@ -5,7 +5,8 @@ from typing import Iterable
 import awkward as ak
 import numpy as np
 
-from ...aktools import AnyArray
+from ..aktools import AnyArray
+
 
 # TODO numba
 class PartialSet:

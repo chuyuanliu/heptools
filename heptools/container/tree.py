@@ -4,7 +4,7 @@ import re
 from collections import defaultdict
 from typing import Any, Callable, Generator, Generic, TypeVar
 
-from ...utils import match_any, unpack
+from ..utils import match_any, unpack
 
 _LeafType = TypeVar('_LeafType')
 class Tree(defaultdict[str], Generic[_LeafType]):

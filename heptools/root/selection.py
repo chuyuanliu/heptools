@@ -5,8 +5,8 @@ from functools import reduce
 from typing import Iterable
 
 from ..aktools import AnyArray
+from ..container import PartialSet, Tree
 from ..utils import Eval
-from .container import PartialSet, Tree
 
 __all__ = ['Selection']
 
