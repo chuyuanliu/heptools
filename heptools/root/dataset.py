@@ -68,7 +68,7 @@ class Dataset:
 
     def subset(self, filelist: Callable[[FileList], bool] = None, file: Callable[[File], bool] = None, **kwarg: str | list[str]):
         subset = Dataset()
-        for meta, entry in self._tree.walk(*(kwarg.get(k) for k in self._metadata)):
+        for meta, entry in self._tree.walk(*(kwarg.get(k, ...) for k in self._metadata)):
             entry = entry.sublist(file)
             if filelist is None or filelist(entry):
                 subset.update(*meta, entry)

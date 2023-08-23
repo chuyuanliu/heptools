@@ -1,28 +1,43 @@
 from __future__ import annotations
 
+import getpass
+import socket
 import tarfile
 import uuid
+import warnings
 from abc import ABC, abstractmethod, abstractproperty
-from typing import Literal
+from datetime import datetime
+from typing import Iterable, Literal
 
 import numpy as np
+from dask_jobqueue.htcondor import HTCondorCluster, HTCondorJob
 
-from ...utils import match_any
+from heptools.container import Tree
+
+from ...container import Tree
+from ...utils import match_any, unpack
+from ..cvmfs import unpacked_cern_ch
 from ..eos import EOS, PathLike, load, save
 
 __all__ = ['TransferInput', 'Tarball', 'LocalFile',
            'HTCondor']
+
+class FileTransferWarning(Warning):
+    __module__ = Warning.__module__
 
 class TransferInput(ABC):
     _scratch: EOS = None
 
     @staticmethod
     def set_scratch(path: PathLike):
-        TransferInput._scratch = EOS(path)
-        TransferInput._scratch.mkdir(recursive = True)
+        TransferInput._scratch = EOS(path).mkdir(recursive = True)
 
     @abstractproperty
     def inputs(self) -> list[str]:
+        ...
+
+    @abstractproperty
+    def tree(self) -> Tree[list[str]]:
         ...
 
     @abstractproperty
@@ -45,8 +60,15 @@ class Tarball(TransferInput):
         return [str(self.tarball)]
 
     @property
+    def tree(self):
+        unpacked = Tree(list[str])
+        for src, dst, _ in self.files:
+            unpacked[unpack((*dst.split('/'), ))].append(str(src))
+        return unpacked
+
+    @property
     def prologue(self):
-        return [f'tar -xzf {self.tarball.name}']
+        return [f'tar -xzf {self.tarball.name}', f'rm {self.tarball.name}']
 
     def clean(self):
         if not self._cache_enabled:
@@ -58,7 +80,7 @@ class Tarball(TransferInput):
         cls._base.mkdir(recursive = True)
         cls._cache_enabled = enable_cache
         if cls._cache_enabled:
-            cls._cache_path = cls._base.join(metadata)
+            cls._cache_path = cls._base / metadata
             if cls._cache_path.exists:
                 cls._cache: dict[Tarball, EOS] = load(cls._cache_path)
                 for cache in (*cls._cache,):
@@ -90,7 +112,7 @@ class Tarball(TransferInput):
                 dst = EOS(src.name)
             for path, stat in src.scan():
                 mtime = stat.st_mtime_ns
-                files.append((str(path), str(dst.join(path.relative_to(src))), mtime))
+                files.append((str(path), str(dst / path.relative_to(src)), mtime))
         if len(files) == 0:
             raise FileNotFoundError(f'no file found in {inputs}')
         self.files = frozenset(files)
@@ -98,8 +120,8 @@ class Tarball(TransferInput):
         if self._cache_enabled:
             self.tarball = self._cache.get(self)
         if self.tarball is None:
-            self.tarball = self._base.join(f'{uuid.uuid4()}.tar.{algorithm}')
-            with tarfile.open(str(self.tarball), f'w:{algorithm}', compresslevel = compresslevel) as tar:
+            self.tarball = self._base / f'{uuid.uuid4()}.tar.{algorithm}'
+            with tarfile.open(self.tarball, f'w:{algorithm}', compresslevel = compresslevel) as tar:
                 for src, dst, _ in self.files:
                     tar.add(src, arcname = dst)
             if self._cache_enabled:
@@ -135,6 +157,13 @@ class LocalFile(TransferInput):
         return [str(file) for file in self.files]
 
     @property
+    def tree(self) -> Tree[list[str]]:
+        files = Tree(list[str])
+        for file in self.files:
+            files[file.name].append(str(self.copied.get(file, file)))
+        return files
+
+    @property
     def prologue(self):
         return []
 
@@ -148,17 +177,19 @@ class LocalFile(TransferInput):
 
     def __init__(self, *inputs: str):
         self.files : list[EOS] = []
-        self.copied: list[EOS] = []
+        self.copied: dict[EOS, EOS] = {}
         for src in inputs:
             src = EOS(src)
             if not match_any(src, self._mount, lambda x, y: x.isin(y)):
-                src.copy_to(self._scratch, recursive = True)
-                src = self._scratch.join(src.name)
-                self.copied.append(src)
-            self.files.extend(src.walk())
+                for file in src.walk():
+                    dst = self._scratch / file.name
+                    file.copy_to(dst)
+                    self.files.append(dst)
+                    self.copied[dst] = file
+            else:
+                self.files.extend(src.walk())
 
-# TODO create Condor Cluster
-class HTCondor(ABC):
+class HTCondor:
     open_ports: tuple[int, int] = (0, 65535)
 
     @classmethod
@@ -171,9 +202,123 @@ class HTCondor(ABC):
             np.sum(required))
         return (*ports,)
 
-    @abstractmethod
-    def config(cls, *args, **kwargs) -> dict[str]:
-        ...
+    def __init__(self,
+                 name: str = 'dask',
+                 cores: int = 1,
+                 memory: int | str = ...,
+                 disk: int | str = '40GB',
+                 image: str = 'chuyuanliu/heptools:latest',
+                 log: PathLike = ...,
+                 scheduler_port: int = ...,
+                 dashboard_port: int = ...,
+                 inputs: Iterable[str | tuple[str, str] | TransferInput] = None,
+                 **kwargs):
+        ''' optional args
+            - `job_extra_directives: dict[str]`
+            - `job_script_prologue: list[str]`
+            - `scheduler_options: dict[str]`
+            - `worker_extra_args: list[str]`
+        '''
+        if memory is ...:
+            memory = f'{cores * 2}GB'
 
-    def __init__(self):
-        ... # TODO
+        if log is ...:
+            log = TransferInput._scratch / 'condor_logs'
+        if log is not None:
+            log = str(EOS(log).join(datetime.now().strftime(f'{name}__%Y_%m_%d__%H_%M_%S')).mkdir(recursive = True))
+        self._log = log
+
+        scheduler_port, self._dashboard_port = self.random_port(scheduler_port, dashboard_port)
+        mid_port = sum(self.open_ports) // 2
+
+        if inputs is None:
+            inputs = ()
+        self._inputs: list[TransferInput] = []
+        tarball, files = [], []
+        for file in inputs:
+            if isinstance(file, TransferInput):
+                self._inputs.append(file)
+            elif isinstance(file, tuple):
+                tarball.append(file)
+            elif isinstance(file, str):
+                if EOS(file).is_dir:
+                    tarball.append(file)
+                else:
+                    files.append(file)
+        if len(tarball) > 0:
+            self._inputs.append(Tarball(*tarball))
+        if len(files) > 0:
+            self._inputs.append(LocalFile(*files))
+
+        self._excecutable = TransferInput._scratch / f'condor_exec.exe'
+        with open(self._excecutable, 'w') as f:
+            f.writelines(['#!/bin/bash', 'eval $2'])
+        HTCondorJob.executable = str(self._excecutable)
+
+        self._cluster = HTCondorCluster(
+            cores = cores,
+            memory = memory,
+            disk = disk,
+            local_directory = '/srv',
+            log_directory = log,
+            python = 'python',
+
+            job_extra_directives = {
+                'batch_name': name,
+                'use_x509userproxy': True,
+                'should_transfer_files': 'YES',
+                'transfer_input_files': ','.join(sum([input.inputs for input in self._inputs], [])),
+                '+SingularityImage': f'"{unpacked_cern_ch(image)}"',
+            } | kwargs.pop('job_extra_directives', {}),
+
+            job_script_prologue = sum([input.prologue for input in self._inputs], [])
+              + kwargs.pop('job_script_prologue', []),
+
+            scheduler_options={
+                'dashboard_address': self._dashboard_port,
+                'port': scheduler_port,
+            } | kwargs.pop('scheduler_options', {}),
+
+            worker_extra_args = [
+                f'--worker-port {self.open_ports[0]}:{mid_port}',
+                f'--nanny-port {mid_port}:{self.open_ports[1]}'
+            ] + kwargs.pop('worker_extra_args', []),
+
+            **kwargs
+        )
+
+    @property
+    def cluster(self):
+        return self._cluster
+
+    def check_inputs(self):
+        tree = sum([input.tree for input in self._inputs], Tree(list[str]))
+        for path, files in tree.walk():
+            if len(files) > 1:
+                warnings.warn(f'{files} will be transferred to the same path "{"/".join(path)}"', FileTransferWarning)
+        return tree
+
+    def dashboard(self, local_port = ...):
+        if self._dashboard_port is None:
+            return ''
+        else:
+            if local_port is ...:
+                local_port = self._dashboard_port
+            return '\n'.join([
+                f'python -m webbrowser "http://localhost:{local_port}"',
+                f'ssh -L {local_port}:localhost:{self._dashboard_port} {getpass.getuser()}@{socket.gethostname()}'
+            ])
+
+    def clean(self):
+        self._excecutable.rm()
+        for input in self._inputs:
+            input.clean()
+
+    @property
+    def log(self):
+        logs = {'log': [], 'err': [], 'out': []}
+        for file in EOS(self._log).walk():
+            ext = file.extension
+            if ext in logs:
+                logs[ext].append(open(file, 'r').read())
+        return logs

@@ -30,11 +30,11 @@ class Tree(dict[str], Generic[_LeafType]):
         elif isinstance(__key, str):
             super().__setitem__(__key, __value)
 
-    def walk(self, *pattern: list[str | list[str]]) -> Generator[tuple[tuple[str, ...], _LeafType]]:
+    def walk(self, *pattern: str | list[str]) -> Generator[tuple[tuple[str, ...], _LeafType]]:
         for k in self.keys():
             if not pattern or match_any(k, pattern[0], lambda x, y: re.match(y, x) is not None):
                 if isinstance(self[k], Tree):
-                    for meta, entry in self[k].walk(*(pattern[1:] if len(pattern) > 1 else [])):
+                    for meta, entry in self[k].walk(*pattern[1:]):
                         yield (k, *meta), entry
                 else:
                     yield (k,), self[k]
@@ -51,7 +51,7 @@ class Tree(dict[str], Generic[_LeafType]):
 
     def iop(self, other: Tree[_LeafType], op: Callable[[_LeafType, _LeafType], _LeafType]) -> Tree[_LeafType]:
         if isinstance(other, Tree):
-            if not self.leaf is other.leaf:
+            if not (self.leaf == other.leaf):
                 raise TypeError(f'cannot operate on trees with different leaf types: "{self.leaf}" and "{other.leaf}"')
             for k, v in other.items():
                 if isinstance(v, Tree):

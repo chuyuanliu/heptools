@@ -13,4 +13,8 @@ def jsonPOG_integration(era: str, file: str):
     '''
     return f'/cvmfs/cms.cern.ch/rsync/cms-nanoAOD/jsonpog-integration/POG/{_jsonPOG_integration_groups[file]}/{era}/{file}.json.gz'
 
-# TODO unpacked.cern.ch
+def unpacked_cern_ch(image: str):
+    '''
+        - https://cvmfs.readthedocs.io/en/stable/cpt-containers.html#using-unpacked-cern-ch
+    '''
+    return f'/cvmfs/unpacked.cern.ch/registry.hub.docker.com/{image}'

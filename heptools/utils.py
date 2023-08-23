@@ -36,8 +36,10 @@ def merge_op(op, _x, _y):
 
 _TargetType = TypeVar('_TargetType')
 _PatternType = TypeVar('_PatternType')
-def match_any(target: _TargetType, patterns: Iterable[_PatternType], match: Callable[[_TargetType, _PatternType], bool]):
-    if patterns in [None, ...]:
+def match_any(target: _TargetType, patterns: _PatternType | Iterable[_PatternType], match: Callable[[_TargetType, _PatternType], bool]):
+    if patterns is None:
+        return False
+    if patterns is ...:
         return True
     if not isinstance(patterns, Iterable) or isinstance(patterns, str):
         patterns = [patterns]
