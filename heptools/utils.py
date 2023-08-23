@@ -48,6 +48,13 @@ def match_any(target: _TargetType, patterns: _PatternType | Iterable[_PatternTyp
             return True
     return False
 
+def ensure(__str: str, __prefix: str = None, __suffix: str = None):
+    if __prefix is not None and not __str.startswith(__prefix):
+        __str = __prefix + __str
+    if __suffix is not None and not __str.endswith(__suffix):
+        __str = __str + __suffix
+    return __str
+
 _EvalType = TypeVar('_EvalType')
 class Eval(Generic[_EvalType]):
     _quote_arg_pattern = re.compile(r'(?P<arg>' +

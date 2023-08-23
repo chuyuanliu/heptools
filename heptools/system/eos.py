@@ -1,3 +1,4 @@
+# TODO wildcard
 from __future__ import annotations
 
 import importlib
@@ -9,9 +10,12 @@ from pathlib import Path
 from subprocess import PIPE, CalledProcessError, check_output
 from typing import Any, Generator, Literal
 
+from ..utils import ensure
+
 __all__ = ['EOS', 'PathLike']
 
-# TODO wildcard
+if not os.name == 'posix':
+    raise NotImplementedError(f'"{__name__}" only works on POSIX systems, not "{os.name.upper()}"')
 
 class EOS:
     _url_pattern   = re.compile(r'^[\w]+://[\w.-]+')
@@ -31,9 +35,7 @@ class EOS:
             if match:
                 default = match.group(0)
                 path = path[len(default):]
-        self.url = default if url is ... else url
-        if self.url and not self.url.endswith('/'):
-            self.url += '/'
+        self.url = ensure(default if url is ... else url, __suffix = '/')
         self.path = Path(self._slash_pattern.sub('/', str(path)))
 
     @property
@@ -116,7 +118,7 @@ class EOS:
         return self.path.stat()
 
     def isin(self, other: PathLike):
-        return str(self).startswith(str(other))
+        return str(self).startswith(ensure(str(other), __suffix = '/'))
 
     def relative_to(self, other: PathLike):
         if self.url == other.url:
