@@ -3,6 +3,8 @@ from __future__ import annotations
 import re
 from typing import Callable, Generator, Generic, TypeVar
 
+from rich.text import Text
+
 from ..utils import match_any, merge_op, unpack
 
 _LeafType = TypeVar('_LeafType')
@@ -25,8 +27,9 @@ class Tree(dict[str], Generic[_LeafType]):
             return super().__getitem__(__key)
 
     def __setitem__(self, __key, __value) -> Tree[_LeafType] | _LeafType:
+        __key = unpack(__key)
         if isinstance(__key, tuple):
-            self[(__key[0], )][unpack(__key[1:])] = __value
+            self[(__key[0], )][__key[1:]] = __value
         elif isinstance(__key, str):
             super().__setitem__(__key, __value)
 
@@ -39,7 +42,7 @@ class Tree(dict[str], Generic[_LeafType]):
                 else:
                     yield (k,), self[k]
 
-    def __str__(self): # TODO rich, __repr__
+    def __str__(self):
         lines = []
         branches = sorted(self.keys())
         for i, k in enumerate(branches):
@@ -48,6 +51,23 @@ class Tree(dict[str], Generic[_LeafType]):
             else:
                 lines.append((f' ├─{k}\n' + str(self[k])).replace('\n', '\n │'))
         return '\n'.join(lines)
+
+    @property # TODO rich.print temp
+    def rich(self):
+        lines = []
+        branches = sorted(self.keys())
+        for i, k in enumerate(branches):
+            s = self[k]
+            if isinstance(s, Tree):
+                s = self[k].rich
+            elif not isinstance(s, Text):
+                s = Text(str(s), style = 'default')
+            line = [*s.split('\n')]
+            if i == len(branches) - 1:
+                lines.append(Text('\n  ', style = 'blue').join([Text(' └─', style = 'blue') + Text(k, style = 'default')] + line))
+            else:
+                lines.append(Text('\n │', style = 'blue').join([Text(' ├─', style = 'blue') + Text(k, style = 'default')] + line))
+        return Text('\n').join(lines)
 
     def iop(self, other: Tree[_LeafType], op: Callable[[_LeafType, _LeafType], _LeafType]) -> Tree[_LeafType]:
         if isinstance(other, Tree):

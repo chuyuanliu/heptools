@@ -4,13 +4,14 @@ import getpass
 import socket
 import tarfile
 import uuid
-import warnings
 from abc import ABC, abstractmethod, abstractproperty
+from collections import defaultdict
 from datetime import datetime
 from typing import Iterable, Literal
 
 import numpy as np
 from dask_jobqueue.htcondor import HTCondorCluster, HTCondorJob
+from rich.text import Text
 
 from heptools.container import Tree
 
@@ -63,7 +64,7 @@ class Tarball(TransferInput):
     def tree(self):
         unpacked = Tree(list[str])
         for src, dst, _ in self.files:
-            unpacked[unpack((*dst.split('/'), ))].append(str(src))
+            unpacked[unpack((*dst.split('/'), ))].append((str(src), self.tarball.name))
         return unpacked
 
     @property
@@ -154,13 +155,16 @@ class LocalFile(TransferInput):
 
     @property
     def inputs(self):
-        return [str(file) for file in self.files]
+        return [str(file) for file in self.files + [*self.copied]]
 
     @property
     def tree(self) -> Tree[list[str]]:
         files = Tree(list[str])
         for file in self.files:
-            files[file.name].append(str(self.copied.get(file, file)))
+            files[file.name].append(str(file))
+        for dst, srcs in self.copied.items():
+            for src in srcs:
+                files[dst.name].append((str(src), str(dst)))
         return files
 
     @property
@@ -169,7 +173,7 @@ class LocalFile(TransferInput):
 
     def clean(self):
         for file in self.copied:
-            file.rm(recursive = True)
+            file.rm()
 
     @classmethod
     def mount(cls, *paths: PathLike):
@@ -177,15 +181,14 @@ class LocalFile(TransferInput):
 
     def __init__(self, *inputs: str):
         self.files : list[EOS] = []
-        self.copied: dict[EOS, EOS] = {}
+        self.copied = defaultdict[EOS, list[EOS]](list)
         for src in inputs:
             src = EOS(src)
             if not match_any(src, self._mount, lambda x, y: x.isin(y)):
                 for file in src.walk():
                     dst = self._scratch / file.name
                     file.copy_to(dst)
-                    self.files.append(dst)
-                    self.copied[dst] = file
+                    self.copied[dst].append(file)
             else:
                 self.files.extend(src.walk())
 
@@ -267,7 +270,7 @@ class HTCondor:
                 'batch_name': name,
                 'use_x509userproxy': True,
                 'should_transfer_files': 'YES',
-                'transfer_input_files': ','.join(sum([input.inputs for input in self._inputs], [])),
+                'transfer_input_files': ','.join(set(sum([input.inputs for input in self._inputs], []))),
                 '+SingularityImage': f'"{unpacked_cern_ch(image)}"',
             } | kwargs.pop('job_extra_directives', {}),
 
@@ -291,11 +294,20 @@ class HTCondor:
     def cluster(self):
         return self._cluster
 
-    def check_inputs(self):
-        tree = sum([input.tree for input in self._inputs], Tree(list[str]))
-        for path, files in tree.walk():
+    def check_inputs(self): # TODO rich.print temp
+        raw = sum([input.tree for input in self._inputs], Tree(list[str]))
+        tree = Tree(Text)
+        for path, files in raw.walk():
+            args = {'style': 'default'}
             if len(files) > 1:
-                warnings.warn(f'{files} will be transferred to the same path "{"/".join(path)}"', FileTransferWarning)
+                args['style'] = 'red'
+            text = Text(**args)
+            for file in files:
+                if isinstance(file, str):
+                    text += Text('  ' + file + '\n', **args)
+                elif isinstance(file, tuple):
+                    text += Text(f'  {file[0]} -> {file[1]}\n', **args)
+            tree[unpack(path)] += text
         return tree
 
     def dashboard(self, local_port = ...):
