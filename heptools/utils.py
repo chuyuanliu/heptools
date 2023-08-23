@@ -3,7 +3,7 @@ from __future__ import annotations
 import re
 from typing import Any, Callable, Generic, Iterable, Sized, TypeVar
 
-__all__ = ['sequence_call', 'astuple', 'unpack', 'match_any', 'Eval']
+__all__ = ['sequence_call', 'astuple', 'unpack', 'merge_op', 'match_any', 'Eval']
 
 def sequence_call(*_funcs: Callable[[Any], Any]):
     def func(x):
@@ -19,10 +19,20 @@ def unpack(__iter: Iterable) -> Any:
     __next = __iter
     while isinstance(__next, Iterable) and isinstance(__next, Sized) and not isinstance(__next, str):
         if len(__next) == 1:
-            __next = __next[0]
+            __next = next(iter(__next))
+        elif len(__next) == 0:
+            return None
         else:
             return __iter
     return __next
+
+def merge_op(op, _x, _y):
+    if _x is None:
+        return _y
+    elif _y is None:
+        return _x
+    else:
+        return op(_x, _y)
 
 _TargetType = TypeVar('_TargetType')
 _PatternType = TypeVar('_PatternType')

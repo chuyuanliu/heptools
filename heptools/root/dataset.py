@@ -55,7 +55,7 @@ class Dataset:
     _metadata = ['source', 'dataset', 'year', 'era', 'level']
 
     def __init__(self) -> None:
-        self._tree = Tree[FileList]()
+        self._tree = Tree(FileList)
 
     def __str__(self): # TODO rich, __repr__
         return str(self._tree)
@@ -91,7 +91,7 @@ class Dataset:
                 yield meta, file
 
     def load(self, path: str):
-        self._tree = Tree[FileList]().from_dict(json.load(open(path, 'r')), depth = len(self._metadata), leaf = FileList)
+        self._tree.from_dict(json.load(open(path, 'r')), depth = len(self._metadata))
         return self
 
     def save(self, path: str):
