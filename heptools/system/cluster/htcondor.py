@@ -101,16 +101,18 @@ class Tarball(TransferInput):
             cls._cache = {}
             cls._cache_path.rm()
 
-    def __init__(self, *inputs: str | tuple[str, str], algorithm: Literal['gz', 'bz2', 'xz'] = 'gz', compresslevel: int = 4):
+    def __init__(self, *inputs: PathLike | tuple[PathLike, PathLike], algorithm: Literal['gz', 'bz2', 'xz'] = 'gz', compresslevel: int = 4):
         if self._base is None:
             raise NotADirectoryError(f'call {self.set_base.__qualname__} before creating {Tarball.__qualname__}')
         files: list[tuple[str, str, int]] = []
         for src in inputs:
             if isinstance(src, tuple):
                 src, dst = EOS(src[0]), EOS(src[1])
-            elif isinstance(src, str):
+            elif isinstance(src, PathLike):
                 src = EOS(src)
                 dst = EOS(src.name)
+            if not (src.is_local and dst.is_local):
+                raise ValueError(f'cannot use remote path "{src}" -> "{dst}" in {Tarball.__qualname__}')
             for path, stat in src.scan():
                 mtime = stat.st_mtime_ns
                 files.append((str(path), str(dst / path.relative_to(src)), mtime))
@@ -179,7 +181,7 @@ class LocalFile(TransferInput):
     def mount(cls, *paths: PathLike):
         cls._mount.extend(EOS(path) for path in paths)
 
-    def __init__(self, *inputs: str):
+    def __init__(self, *inputs: PathLike):
         self.files : list[EOS] = []
         self.copied = defaultdict[EOS, list[EOS]](list)
         for src in inputs:
@@ -214,7 +216,7 @@ class HTCondor:
                  log: PathLike = ...,
                  scheduler_port: int = ...,
                  dashboard_port: int = ...,
-                 inputs: Iterable[str | tuple[str, str] | TransferInput] = None,
+                 inputs: Iterable[PathLike | tuple[PathLike, PathLike] | TransferInput] = None,
                  **kwargs):
         ''' optional args
             - `job_extra_directives: dict[str]`
@@ -243,8 +245,9 @@ class HTCondor:
                 self._inputs.append(file)
             elif isinstance(file, tuple):
                 tarball.append(file)
-            elif isinstance(file, str):
-                if EOS(file).is_dir:
+            elif isinstance(file, PathLike):
+                file = EOS(file)
+                if file.is_dir:
                     tarball.append(file)
                 else:
                     files.append(file)

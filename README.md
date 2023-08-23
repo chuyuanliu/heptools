@@ -2,29 +2,35 @@
 Analysis tools for experimental high energy physics.
 
 # Installation
-Install from github
+## Conda (recommend [Mamba](https://mamba.readthedocs.io/) for performance)
+Create an environment
+
+    mamba env create -f https://raw.githubusercontent.com/chuyuanliu/heptools/master/environment.yml
+    conda activate heptools-dev
+Install without dependencies
+
+    pip install --no-dependencies git+https://github.com/chuyuanliu/heptools.git@master
+## pip
+Install all denpendencies with pip
 
     pip install git+https://github.com/chuyuanliu/heptools.git@master
-# Build image and run in container
-## [Docker](https://docs.docker.com/get-started/overview/)
-Build docker image
 
-    docker build -t <tag> https://github.com/chuyuanliu/heptools.git#master
-## [Singularity](https://apptainer.org/docs/user/main/index.html)
-Run an interactive shell
+# Run in container
+A docker image will be automatically built and pushed to [docker hub](https://hub.docker.com/repository/docker/chuyuanliu/heptools) when a new commit is pushed to master branch.
+## Run an ineractive shell with [Singularity(Apptainer)](https://apptainer.org/docs/user/latest/)
 
     singularity shell \
     -B .:/srv \
     -B /cvmfs \
     --pwd /srv \
     ${HEPTOOLS_DOCKER_IMAGE}
-using [docker hub](https://hub.docker.com/repository/docker/chuyuanliu/heptools)
+use image from [docker hub](https://hub.docker.com/repository/docker/chuyuanliu/heptools)
 
     export HEPTOOLS_DOCKER_IMAGE="docker://chuyuanliu/heptools:latest"
-or [unpacked.cern.ch](https://cvmfs.readthedocs.io/en/latest/cpt-containers.html#using-unpacked-cern-ch) (recommended)
+use image from [unpacked.cern.ch](https://cvmfs.readthedocs.io/en/latest/cpt-containers.html#using-unpacked-cern-ch) (recommended)
 
     export HEPTOOLS_DOCKER_IMAGE="/cvmfs/unpacked.cern.ch/registry.hub.docker.com/chuyuanliu/heptools:latest"
-## [HTCondor](https://htcondor.readthedocs.io/en/latest/)
+## Submit jobs to batch system with [HTCondor](https://htcondor.readthedocs.io/)
 ### LPC
 Create X.509 proxy. (stored in `${X509_USER_PROXY}`)
 
