@@ -44,29 +44,31 @@ class Tree(dict[str], Generic[_LeafType]):
 
     def __str__(self):
         lines = []
-        branches = sorted(self.keys())
-        for i, k in enumerate(branches):
-            if i == len(branches) - 1:
-                lines.append((f' └─{k}\n' + str(self[k])).replace('\n', '\n  '))
+        keys = sorted(self.keys())
+        for i, k in enumerate(keys):
+            if i == len(keys) - 1:
+                branch, joint = ' ', '└─'
             else:
-                lines.append((f' ├─{k}\n' + str(self[k])).replace('\n', '\n │'))
+                branch, joint = '│', '├─'
+            lines.append((f' {joint}{k}\n' + str(self[k])).replace('\n', f'\n {branch}'))
         return '\n'.join(lines)
 
     @property # TODO rich.print temp
     def rich(self):
         lines = []
-        branches = sorted(self.keys())
-        for i, k in enumerate(branches):
+        keys = sorted(self.keys())
+        for i, k in enumerate(keys):
             s = self[k]
             if isinstance(s, Tree):
                 s = self[k].rich
             elif not isinstance(s, Text):
                 s = Text(str(s), style = 'default')
             line = [*s.split('\n')]
-            if i == len(branches) - 1:
-                lines.append(Text('\n  ', style = 'blue').join([Text(' └─', style = 'blue') + Text(k, style = 'default')] + line))
+            if i == len(keys) - 1:
+                branch, joint = ' ', '└─'
             else:
-                lines.append(Text('\n │', style = 'blue').join([Text(' ├─', style = 'blue') + Text(k, style = 'default')] + line))
+                branch, joint = '│', '├─'
+            lines.append(Text(f'\n {branch}', style = 'yellow').join([Text(f' {joint}', style = 'yellow') + Text(k, style = 'default')] + line))
         return Text('\n').join(lines)
 
     def iop(self, other: Tree[_LeafType], op: Callable[[_LeafType, _LeafType], _LeafType]) -> Tree[_LeafType]:
