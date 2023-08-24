@@ -46,7 +46,7 @@ Start a container
     singularity shell \
     -B .:/srv \
     -B /cvmfs \
-    -B /uscmst1b_scratch/lpc1/3DayLifetime \
+    -B /uscmst1b_scratch/lpc1 \
     -B $(readlink ${HOME}/nobackup) \
     --env "CONDOR_CONFIG=${CONDOR_CONFIG}" \
     --pwd /srv \

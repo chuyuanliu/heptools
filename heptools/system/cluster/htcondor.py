@@ -258,7 +258,7 @@ class HTCondor:
 
         self._excecutable = TransferInput._scratch / f'condor_exec.exe'
         with open(self._excecutable, 'w') as f:
-            f.writelines(['#!/bin/bash', 'eval $2'])
+            f.write('\n'.join(['#!/bin/bash', 'eval $2']))
         HTCondorJob.executable = str(self._excecutable)
 
         self._cluster = HTCondorCluster(
@@ -266,13 +266,14 @@ class HTCondor:
             memory = memory,
             disk = disk,
             local_directory = '/srv',
-            log_directory = log,
+            log_directory = self._log,
             python = 'python',
 
             job_extra_directives = {
                 'batch_name': name,
                 'use_x509userproxy': True,
                 'should_transfer_files': 'YES',
+                'initialdir': str(self.log),
                 'transfer_input_files': ','.join(set(sum([input.inputs for input in self._inputs], []))),
                 '+SingularityImage': f'"{unpacked_cern_ch(image)}"',
             } | kwargs.pop('job_extra_directives', {}),

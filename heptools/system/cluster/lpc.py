@@ -10,7 +10,7 @@ import getpass
 from pathlib import Path
 
 from ..eos import EOS
-from .htcondor import LocalFile, Tarball, TransferInput
+from .htcondor import HTCondor, LocalFile, Tarball, TransferInput
 
 
 class LPC:
@@ -21,7 +21,8 @@ class LPC:
     nobackup = EOS(Path(f'/uscms/home/{user}/nobackup').resolve())
 
     @classmethod
-    def use_default_dir(cls):
+    def setup_condor(cls):
+        HTCondor.open_ports = (10000, 10200)
         TransferInput.set_scratch(cls.scratch / cls.user)
         Tarball.set_base(cls.nobackup / '.condor_tarball')
         LocalFile.mount(cls.scratch, cls.nobackup)
