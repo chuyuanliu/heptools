@@ -35,7 +35,9 @@ class EOS:
             if match:
                 default = match.group(0)
                 path = path[len(default):]
-        self.url = ensure(default if url is ... else url, __suffix = '/')
+        self.url = default if url is ... else url
+        if self.url:
+            self.url = ensure(self.url, __suffix = '/')
         self.path = Path(self._slash_pattern.sub('/', str(path)))
 
     @property
