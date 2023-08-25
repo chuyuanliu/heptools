@@ -12,6 +12,7 @@ from pathlib import Path
 from ..eos import EOS
 from .htcondor import HTCondor, LocalFile, Tarball, TransferInput
 
+__all__ = ['LPC']
 
 class LPC:
     eos = EOS(f'/store', 'root://cmseos.fnal.gov')

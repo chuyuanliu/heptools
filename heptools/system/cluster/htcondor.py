@@ -23,9 +23,6 @@ from ..eos import EOS, PathLike, load, save
 __all__ = ['TransferInput', 'Tarball', 'LocalFile',
            'HTCondor']
 
-class FileTransferWarning(Warning):
-    __module__ = Warning.__module__
-
 class TransferInput(ABC):
     _scratch: EOS = None
 
@@ -52,7 +49,6 @@ class TransferInput(ABC):
 class Tarball(TransferInput):
     _cache: dict[Tarball, EOS] = {}
     _cache_path: EOS = None
-    _cache_enabled: bool = True
 
     _base : EOS = None
 
@@ -64,7 +60,7 @@ class Tarball(TransferInput):
     def tree(self):
         unpacked = Tree(list[str])
         for src, dst, _ in self.files:
-            unpacked[unpack((*dst.split('/'), ))].append((str(src), self.tarball.name))
+            unpacked[unpack((*str(dst).split('/'), ))].append((str(src), self.tarball.name))
         return unpacked
 
     @property
@@ -72,62 +68,67 @@ class Tarball(TransferInput):
         return [f'tar -xzf {self.tarball.name}', f'rm {self.tarball.name}']
 
     def clean(self):
-        if not self._cache_enabled:
+        if not self.cached:
             self.tarball.rm()
 
     @classmethod
     def set_base(cls, path: PathLike = ..., enable_cache: bool = True, metadata: str = '.cache'):
-        cls._base = cls._scratch if path is ... else EOS(path)
-        cls._base.mkdir(recursive = True)
-        cls._cache_enabled = enable_cache
-        if cls._cache_enabled:
+        cls._base = (cls._scratch if path is ... else EOS(path)).mkdir(recursive = True)
+        cls._cache = {}
+        cls._cache_path = None
+        if enable_cache and cls._base is not None:
             cls._cache_path = cls._base / metadata
             if cls._cache_path.exists:
                 cls._cache: dict[Tarball, EOS] = load(cls._cache_path)
                 for cache in (*cls._cache,):
-                    if not cache.is_valid:
-                        cache.tarball.rm()
-                        del cls._cache[cache]
+                    if not cache.tarball.exists:
+                        cls._cache.pop(cache)
                 save(cls._cache_path, cls._cache)
-        else:
-            cls._cache = {}
-            cls._cache_path = None
 
     @classmethod
     def reset_cache(cls):
-        if cls._cache_enabled:
+        if cls._cache_path is not None:
             for cache in cls._cache.values():
                 cache.rm()
             cls._cache = {}
             cls._cache_path.rm()
 
+    @classmethod
+    def remove_invalid_cache(cls):
+        if cls._cache_path is not None:
+            for cache in (*cls._cache,):
+                if not cache.is_valid:
+                    cls._cache.pop(cache).rm()
+            save(cls._cache_path, cls._cache)
+
     def __init__(self, *inputs: PathLike | tuple[PathLike, PathLike], algorithm: Literal['gz', 'bz2', 'xz'] = 'gz', compresslevel: int = 4):
         if self._base is None:
             raise NotADirectoryError(f'call {self.set_base.__qualname__} before creating {Tarball.__qualname__}')
-        files: list[tuple[str, str, int]] = []
+        files: list[tuple[EOS, EOS, int]] = []
         for src in inputs:
             if isinstance(src, tuple):
                 src, dst = EOS(src[0]), EOS(src[1])
             elif isinstance(src, PathLike):
                 src = EOS(src)
                 dst = EOS(src.name)
+            else:
+                raise TypeError(f'invalid type <{type(src)}>')
             if not (src.is_local and dst.is_local):
-                raise ValueError(f'cannot use remote path "{src}" -> "{dst}" in {Tarball.__qualname__}')
+                raise ValueError(f'cannot use remote path "{src}" -> "{dst}"')
             for path, stat in src.scan():
                 mtime = stat.st_mtime_ns
-                files.append((str(path), str(dst / path.relative_to(src)), mtime))
+                files.append((path, dst / path.relative_to(src), mtime))
         if len(files) == 0:
             raise FileNotFoundError(f'no file found in {inputs}')
         self.files = frozenset(files)
-        self.tarball = None
-        if self._cache_enabled:
-            self.tarball = self._cache.get(self)
+        self.tarball = self._cache.get(self)
+        self.cached = self._cache_path is not None
         if self.tarball is None:
             self.tarball = self._base / f'{uuid.uuid4()}.tar.{algorithm}'
             with tarfile.open(self.tarball, f'w:{algorithm}', compresslevel = compresslevel) as tar:
                 for src, dst, _ in self.files:
                     tar.add(src, arcname = dst)
-            if self._cache_enabled:
+            if self.cached:
                 self._cache[self] = self.tarball
                 save(self._cache_path, self._cache)
 
@@ -136,7 +137,6 @@ class Tarball(TransferInput):
         if not self.tarball.exists:
             return False
         for file, _, stamp in self.files:
-            file = EOS(file)
             try:
                 if file.stat().st_mtime_ns != stamp:
                     return False
