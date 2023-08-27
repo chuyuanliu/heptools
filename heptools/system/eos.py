@@ -12,10 +12,7 @@ from typing import Any, Generator, Literal
 
 from ..utils import ensure
 
-__all__ = ['EOS', 'PathLike']
-
-if not os.name == 'posix':
-    raise NotImplementedError(f'"{__name__}" only works on POSIX systems, not "{os.name.upper()}"')
+__all__ = ['EOS', 'PathLike', 'save', 'load']
 
 class EOS:
     _url_pattern   = re.compile(r'^[\w]+://[\w.-]+')
@@ -70,6 +67,11 @@ class EOS:
                 output = (True, check_output(args, stderr = PIPE))
             except CalledProcessError as e:
                 output = (False, e.stderr)
+            except FileNotFoundError as e:
+                if os.name != 'posix':
+                    output = (False, f'unsupported OS "{os.name.upper()}"'.encode())
+                else:
+                    output = (False, str(e).encode())
         else:
             output = (True, b'')
         cls.history.append((datetime.now(), ' '.join(args), output))

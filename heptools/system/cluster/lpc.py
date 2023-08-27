@@ -1,9 +1,3 @@
-'''
-|               |                                   |
-| -             | -                                 |
-| monitor       | https://landscape.fnal.gov/lpc/   |
-'''
-
 from __future__ import annotations
 
 import getpass
@@ -15,6 +9,11 @@ from .htcondor import HTCondor, LocalFile, Tarball, TransferInput
 __all__ = ['LPC']
 
 class LPC:
+    '''
+    |               |                                   |
+    | -             | -                                 |
+    | monitor       | https://landscape.fnal.gov/lpc/   |
+    '''
     eos = EOS(f'/store', 'root://cmseos.fnal.gov')
     scratch = EOS('/uscmst1b_scratch/lpc1/3DayLifetime')
 

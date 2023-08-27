@@ -1,6 +1,7 @@
 import numpy as np
 import numpy.typing as npt
 
+__all__ = ['Metric', 'Binary']
 
 class Prefix:
     def __init__(self, base: int, prefix: list[str], range: tuple[int, int]):

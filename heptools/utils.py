@@ -3,7 +3,7 @@ from __future__ import annotations
 import re
 from typing import Any, Callable, Generic, Iterable, Sized, TypeVar
 
-__all__ = ['sequence_call', 'astuple', 'unpack', 'merge_op', 'match_any', 'Eval']
+__all__ = ['sequence_call', 'astuple', 'unpack', 'merge_op', 'match_any', 'ensure', 'Eval']
 
 def sequence_call(*_funcs: Callable[[Any], Any]):
     def func(x):

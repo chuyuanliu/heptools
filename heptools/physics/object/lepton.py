@@ -1,7 +1,7 @@
 from functools import partial
 
 from . import vector as vec
-from .utils import register_behavior
+from ._utils import register_behavior
 
 __all__ = ['pair']
 

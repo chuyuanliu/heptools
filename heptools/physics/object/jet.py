@@ -4,7 +4,7 @@ from ...aktools import (FieldLike, add_arrays, foreach, get_field, or_arrays,
                         where)
 from . import PhysicsObjectError
 from . import vector as vec
-from .utils import register_behavior, typestr
+from ._utils import register_behavior, typestr
 
 __all__ = ['pair', 'extend']
 

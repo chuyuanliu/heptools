@@ -1,9 +1,12 @@
 import operator
 from functools import partial
+from typing import Callable
 
 import awkward as ak
 
 import heptools
+
+from ...aktools import FieldLike
 
 
 def typestr(array: ak.Array):
@@ -47,3 +50,6 @@ def setup_lead_subl(*targets: str):
         cls.fields = cls.fields + fields
         return cls
     return _wrap
+
+def setup_merged_field(op: Callable[[ak.Array, ak.Array], ak.Array], *fields: FieldLike):
+    ... # TODO

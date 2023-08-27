@@ -1,9 +1,7 @@
 from .correction import (CorrectionError, EventLevelCorrection,
                          ObjectLevelCorrection)
-from .variation import BTagSF_Shape, PileupJetIDSF, PileupWeight
-from .weight import EventWeight
+from .weight import ContentLike, EventWeight
 
-__all__ = ['EventWeight',
+__all__ = ['EventWeight', 'ContentLike',
            'EventLevelCorrection', 'ObjectLevelCorrection',
-           'PileupWeight', 'BTagSF_Shape', 'PileupJetIDSF',
            'CorrectionError']

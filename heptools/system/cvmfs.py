@@ -1,3 +1,5 @@
+__all__ = ['jsonPOG_integration', 'unpacked_cern_ch']
+
 _jsonPOG_integration_groups = (
     dict.fromkeys(['btagging', 'ctagging', 'subjet_btagging'], 'BTV') |
     dict.fromkeys(['electron', 'photon'], 'EGM') |

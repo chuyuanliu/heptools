@@ -13,8 +13,8 @@ from .utils import astuple
 
 __all__ = ['FieldLike', 'AnyArray', 'AnyNumber', 'AnyInt', 'AnyFloat',
            'has_field', 'get_field', 'set_field', 'update_fields', 'sort_field',
-           'or_arrays', 'or_fields', 'and_arrays', 'and_fields', 'add_arrays', 'add_fields', 'mul_arrays', 'mul_arrays',
-           'where', 'partition']
+           'get_dimension', 'foreach', 'partition', 'where',
+           'or_arrays', 'or_fields', 'and_arrays', 'and_fields', 'add_arrays', 'add_fields', 'mul_arrays', 'mul_arrays']
 
 AnyInt    = int | np.integer
 AnyFloat  = float | np.floating
