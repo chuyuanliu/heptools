@@ -125,7 +125,7 @@ class NoBuffer(Buffer):
 class Skim:
     def __init__(self, jagged: list[str], excluded: list[str | re.Pattern] = None, metadata = None, # TODO
                  unique_index: str = None,
-                 iterate_step: int | str = '500 MB', buffer: Buffer = NoBuffer()):
+                 iterate_step: int = 100_000, buffer: Buffer = NoBuffer()):
         self.jagged = jagged
         self.excluded = excluded if excluded is not None else []
         self.metadata = metadata # TODO
@@ -138,10 +138,11 @@ class Skim:
         return self.__class__(self.jagged.copy(), self.excluded.copy(), self.metadata,
                               self.unique_index, self.iterate_step, self.buffer.copy())
 
-    def _get_branches(self, file):
+    def _get_treemeta(self, file):
         with uproot.open(file, timeout = self.timeout) as f:
             branches = set(f['Events'].keys())
-        return {b for b in branches if not match_any(b, self.excluded, lambda x, y: re.match(y, x) is not None)}
+            num_entries = f['Events'].num_entries
+        return {b for b in branches if not match_any(b, self.excluded, lambda x, y: re.match(y, x) is not None)}, (file, num_entries)
 
     def __call__(self, output: str, files: list[str], selection: Callable[[ak.Array], ak.Array] = None, allow_multiprocessing: bool = False):
         nevents = 0
@@ -149,17 +150,24 @@ class Skim:
             if allow_multiprocessing:
                 import multiprocessing as mp
                 with mp.Pool(len(files)) as pool:
-                    branches = pool.map(self._get_branches, files)
+                    treemeta = pool.map(self._get_treemeta, files)
             else:
-                branches = [self._get_branches(file) for file in files]
-            branches = reduce(operator.and_, branches)
-            for chunk in uproot.iterate([f'{f}:Events' for f in files], expressions = branches, step_size = self.iterate_step, timeout = self.timeout):
-                if selection is not None:
-                    chunk = selection(chunk)
-                if self.unique_index is not None:
-                    chunk[self.unique_index] = np.arange(nevents, nevents + len(chunk), dtype = np.uint64)
-                nevents += len(chunk)
-                output += chunk
+                treemeta = [self._get_treemeta(file) for file in files]
+            branches = reduce(operator.and_, (b for b, _ in treemeta))
+            num_entries = dict(n for _, n in treemeta)
+            for file in files:
+                start, total = 0, num_entries[file]
+                while start < total:
+                    end = min(start + self.iterate_step, total)
+                    with uproot.open(f'{file}:Events', object_cache = None, array_cache = None, timeout = self.timeout) as root:
+                        chunk = root.arrays(branches, entry_start = start, entry_stop = end)
+                    if selection is not None:
+                        chunk = selection(chunk)
+                    if self.unique_index is not None:
+                        chunk[self.unique_index] = np.arange(nevents, nevents + len(chunk), dtype = np.uint64)
+                    nevents += len(chunk)
+                    output += chunk
+                    start = end
         return nevents
 
 PicoAOD = Skim(
