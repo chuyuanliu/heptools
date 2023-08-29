@@ -17,7 +17,17 @@ def dask_sizeof_plugin(sizeof):
     def register_hist():
         from hist import Hist
         @sizeof.register(Hist)
-        def sizeof_hist(x):
+        def sizeof_hist(x: Hist):
             return sizeof(x.view(flow = True))
 
-    #TODO heptools
+    @sizeof.register_lazy('heptools')
+    def register_heptools():
+        from ..container import PartialSet
+        @sizeof.register(PartialSet)
+        def sizeof_partialset(x: PartialSet):
+            return sizeof(x._in)
+
+        from ..root.selection import Selection
+        @sizeof.register(Selection)
+        def sizeof_selection(x: Selection):
+            return sizeof(x.filters)

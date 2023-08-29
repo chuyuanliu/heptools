@@ -38,7 +38,7 @@ class PartialSet:
     def __invert__(self):
         return self.new(self._in, not self._out)
 
-    def __and__(self, other: PartialSet) -> PartialSet:
+    def __and__(self, other: PartialSet) -> PartialSet: # TODO check type of self._in and other._in 
         if isinstance(other, PartialSet):
             if self._out:
                 if other._out:
