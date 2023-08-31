@@ -1,5 +1,5 @@
 # HEP Tools
-Analysis tools for experimental high energy physics.
+A collection of tools for experimental high energy physics analysis.
 
 # Installation
 ## Conda (recommend [Mamba](https://mamba.readthedocs.io/) for performance)
@@ -59,6 +59,7 @@ change singularity (apptainer) cache dir
 
 # TODO
 - doc
+- format
 - unit test
 - plot
 - dasgoclient

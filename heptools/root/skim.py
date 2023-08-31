@@ -39,26 +39,27 @@ class Buffer(ABC):
     def flush(self):
         if self._file is not None and self._buffer is not None:
             self.before_flush()
-            buffer = defaultdict(dict)
-            for k in self._buffer.fields:
-                is_jagged = False
+            if len(self._buffer) > 0:
+                buffer = defaultdict(dict)
+                for k in self._buffer.fields:
+                    is_jagged = False
+                    for jagged in self.jagged:
+                        if k == f'n{jagged}':
+                            is_jagged = True
+                        elif k.startswith(f'{jagged}_'):
+                            is_jagged = True
+                            buffer[jagged][k.removeprefix(f'{jagged}_')] = self._buffer[k]
+                        if is_jagged:
+                            break
+                    if not is_jagged:
+                        buffer[k] = self._buffer[k]
                 for jagged in self.jagged:
-                    if k == f'n{jagged}':
-                        is_jagged = True
-                    elif k.startswith(f'{jagged}_'):
-                        is_jagged = True
-                        buffer[jagged][k.removeprefix(f'{jagged}_')] = self._buffer[k]
-                    if is_jagged:
-                        break
-                if not is_jagged:
-                    buffer[k] = self._buffer[k]
-            for jagged in self.jagged:
-                if jagged in buffer:
-                    buffer[jagged] = ak.zip(buffer[jagged])
-            if self.tree in self._file:
-                self._file[self.tree].extend(buffer)
-            else:
-                self._file[self.tree] = buffer
+                    if jagged in buffer:
+                        buffer[jagged] = ak.zip(buffer[jagged])
+                if self.tree in self._file:
+                    self._file[self.tree].extend(buffer)
+                else:
+                    self._file[self.tree] = buffer
             self._buffer = None
 
     @abstractmethod
