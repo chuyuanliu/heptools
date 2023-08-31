@@ -24,7 +24,7 @@ class File(dict):
     def site(self):
         return self.setdefault('site', [])
 
-class FileList(File):
+class FileList(File): # TODO rewrite
     def __init__(self, data: dict = {}):
         if data.get('files', []):
             data = data | {'files': [File(file) for file in data.get('files', [])]}

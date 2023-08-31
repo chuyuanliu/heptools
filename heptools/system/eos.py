@@ -203,7 +203,7 @@ class EOS:
         return self.url + str(self.path)
 
     def __fspath__(self):
-        return str(self.path)
+        return str(self)
 
     def __truediv__(self, other: str):
         return self.join(other)
