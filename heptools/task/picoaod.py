@@ -14,6 +14,7 @@ def skim(processor: ProcessorABC, output: EOS, inputs: dict, lazy_chunksize: int
         executor = iterative_executor(),
         schema = NanoAODSchema,
         chunksize = lazy_chunksize,
+        xrootdtimeout = 3 * 60 * 60,
     )
     selection = runner(inputs, 'Events', processor)
     chunkAOD = PicoAOD.copy()
@@ -21,23 +22,48 @@ def skim(processor: ProcessorABC, output: EOS, inputs: dict, lazy_chunksize: int
     chunkAOD.iterate_step = full_chunksize
     def select(x):
         return x[selection(x['run'], x['luminosityBlock'], x['event'])]
-    chunkAOD(output, sum((v['files'] for v in inputs.values()), []), select)
-    return output
+    local_output = EOS(output.name)
+    nevents = chunkAOD(local_output, sum((v['files'] for v in inputs.values()), []), select)
+    local_output.move_to(output, overwrite = True)
+    return output, nevents
 
 @delayed
-def merge(output: EOS, inputs: list[EOS], full_chunksize: int):
-    mergeAOD = PicoAOD.copy()
-    mergeAOD.iterate_step = full_chunksize
-    count = mergeAOD(output, inputs)
-    for chunk in inputs:
-        chunk.rm()
-    return output, count
+def merge(output: EOS, inputs: list[tuple[EOS, int]], full_chunksize: int, merge_chunks: bool):
+    if merge_chunks:
+        mergeAOD = PicoAOD.copy()
+        mergeAOD.iterate_step = full_chunksize
+        local_output = EOS(output.name)
+        nevents = mergeAOD(local_output, [i for i, _ in inputs])
+        local_output.move_to(output, overwrite = True)
+        for chunk, _ in inputs:
+            chunk.rm()
+        return FileList({
+            'path'   : str(output.parent.path),
+            'nevents': nevents,
+            'nfiles' : 1,
+            'files'  : [File({
+                'site'   : [output.url],
+                'path'   : str(output.path),
+                'nevents': nevents})]
+        })
+    else:
+        # TODO balance number of events
+        return FileList({
+            'path'   : str(output.parent.path),
+            'nevents': sum(i for _, i in inputs),
+            'nfiles' : len(inputs),
+            'files'  : [File({
+                'site'   : [i.url],
+                'path'   : str(i.path),
+                'nevents': n}) for i, n in inputs]
+        })
 
 def create_picoaod_from_dataset(
         base: PathLike,
         filelists: Dataset,
         lazy_chunksize: int = 500_000,
-        full_chunksize: int = 100_000, # TODO adaptive based on memory
+        full_chunksize: int = 100_000,
+        merge_chunks: bool = True,
         **selections: ProcessorABC):
     base = EOS(base)
     outputs = []
@@ -79,19 +105,12 @@ def create_picoaod_from_dataset(
                     output = path / f'picoAOD{selection}.root',
                     inputs = chunks,
                     full_chunksize = full_chunksize,
+                    merge_chunks = merge_chunks,
                 ), source, dataset, year, era, selection)
             )
 
     outputs = compute(*outputs)
     skimmed = Dataset()
-    for ((output, count), source, dataset, year, era, selection) in outputs:
-        skimmed.update(source, dataset, year, era, f'PicoAOD{selection}',
-                       FileList({
-                           'path'   : str(output.path.parent),
-                           'nevents': count,
-                           'nfiles' : 1,
-                           'files'  : [File({
-                               'site'   : [output.url],
-                               'path'   : str(output.path),
-                               'nevents': count})],}))
+    for (filelist, source, dataset, year, era, selection) in outputs:
+        skimmed.update(source, dataset, year, era, f'PicoAOD{selection}', filelist)
     return skimmed

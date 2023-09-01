@@ -273,6 +273,7 @@ class HTCondor:
                 'batch_name': name,
                 'use_x509userproxy': True,
                 'should_transfer_files': 'YES',
+                'when_to_transfer_output': 'ON_EXIT_OR_EVICT',
                 'initialdir': str(self._log),
                 'transfer_input_files': ','.join(set(sum([input.inputs for input in self._inputs], []))),
                 '+SingularityImage': f'"{unpacked_cern_ch(image)}"',

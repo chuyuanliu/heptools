@@ -163,14 +163,14 @@ class EOS:
         if src.url == dest.url:
             result = src.call('mv',
                               '-n' if not overwrite and src.client != 'xrdfs' else '',
-                              src.path, dest.path)
+                              src.path, dest.path)[0]
         else:
             if recursive:
                 raise NotImplementedError(f'"{cls.mv.__qualname__}" does not support recursive moving of remote files from different sites') # TODO
             result = cls.cp(src, dest, parents, overwrite, recursive)
-            if result[0]:
+            if result:
                 result = src.rm()
-        if result[0]:
+        if result:
             return dest
 
     @property
