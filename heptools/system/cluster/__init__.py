@@ -1,5 +1,5 @@
 from .htcondor import HTCondor, LocalFile, Tarball, TransferInput
-from .lpc import LPC
+from .sites import Sites
 
 __all__ = ['LocalFile', 'Tarball', 'TransferInput',
-           'HTCondor', 'LPC']
+           'HTCondor', 'Sites']

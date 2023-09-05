@@ -33,17 +33,6 @@ def query_file_mp(file):
 def query_dataset(query: str):
     files = client('file', dataset = query)
     if not files:
-        raise DASError(f'no files found for dataset "{filelist}"')
-    filelist = {
-        'nevents': 0,
-        'nfiles': len(files),
-        'files': [],
-        'path': files[0]['file'][0]['dataset'],
-        'das_query': query,
-        'site': client('site', dataset = query, to_json = False)}
+        raise DASError(f'no files found for dataset "{query}"')
     with Pool(processes = len(files)) as pool:
-        files = pool.map(query_file_mp, files)
-    for file in files:
-        filelist['files'].append(file)
-        filelist['nevents'] += file['nevents']
-    return filelist
+        return {'files': pool.map(query_file_mp, files)}

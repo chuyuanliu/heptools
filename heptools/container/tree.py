@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import re
+from copy import copy
 from typing import Callable, Generator, Generic, TypeVar
 
 from rich.text import Text
@@ -82,7 +83,7 @@ class Tree(dict[str], Generic[_LeafType]):
                     if k in self:
                         self[k] = merge_op(op, self[k], v)
                     else:
-                        self[k] = v
+                        self[k] = copy(v)
             return self
         return NotImplemented
 

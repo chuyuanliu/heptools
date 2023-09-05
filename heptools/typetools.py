@@ -1,7 +1,23 @@
+import json
 from types import UnionType
 from typing import Any, Iterable, Union, get_args, get_origin
 
 __all__ = ['check_type', 'type_name']
+
+class DefaultEncoder(json.JSONEncoder):
+    def default(self, __obj):
+        if '__json__' in dir(__obj):
+            return __obj.__json__()
+        return super().default(__obj)
+
+def alias(*methods: str):
+    def wrapper(cls):
+        for method in methods:
+            if not hasattr(cls, method):
+                raise TypeError(f'{cls.__name__}.{method}() is not defined')
+            setattr(cls, f'__{method}__', getattr(cls, method))
+        return cls
+    return wrapper
 
 # TODO check for list[], dict[], set[], tuple[], Literal[], __genericguard__, instance of object
 def check_type(__obj, __class_or_tuple) -> bool:

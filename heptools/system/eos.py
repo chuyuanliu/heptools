@@ -179,11 +179,18 @@ class EOS:
 
     @property
     def stem(self):
-        return self.path.stem
+        return self.name.split('.')[0]
 
     @property
     def extension(self):
-        return self.path.suffix.removeprefix('.')
+        exts = self.extensions
+        if not exts:
+            return ''
+        return exts[-1]
+
+    @property
+    def extensions(self):
+        return self.name.split('.')[1:]
 
     @property
     def parent(self):

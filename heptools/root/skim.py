@@ -12,13 +12,14 @@ import awkward as ak
 import numpy as np
 import uproot
 
+from ..system.eos import PathLike
 from ..utils import match_any
 
 __all__ = ['Skim', 'PicoAOD',
            'Buffer', 'BasketSizeOptimizedBuffer', 'NoBuffer']
 
 class Buffer(ABC):
-    path: str
+    path: PathLike
     tree: str
     jagged: list[str]
 
@@ -26,7 +27,7 @@ class Buffer(ABC):
         self._file: uproot.WritableDirectory = None
         self._buffer: ak.Array = None
 
-    def __call__(self, path: str, tree: str, jagged: list[str] = None):
+    def __call__(self, path: PathLike, tree: str, jagged: list[str] = None):
         new = self.copy()
         new.path = path
         new.tree = tree
@@ -83,7 +84,7 @@ class Buffer(ABC):
         self._file = uproot.recreate(self.path)
         return self
 
-    def __exit__(self, exc_type, exc_value, traceback):
+    def __exit__(self, *_):
         self.flush()
         self._file.close()
 
@@ -139,37 +140,37 @@ class Skim:
         return self.__class__(self.jagged.copy(), self.excluded.copy(), self.metadata,
                               self.unique_index, self.iterate_step, self.buffer.copy())
 
-    def _get_treemeta(self, file):
-        with uproot.open(file, timeout = self.timeout) as f:
-            branches = set(f['Events'].keys())
-            num_entries = f['Events'].num_entries
-        return {b for b in branches if not match_any(b, self.excluded, lambda x, y: re.match(y, x) is not None)}, (file, num_entries)
+    def _get_treemeta(self, file: PathLike):
+        with uproot.open(f'{file}:Events', object_cache = None, array_cache = None, timeout = self.timeout) as f:
+            nevents = f.num_entries
+            branches = {b for b in set(f.keys()) if not match_any(b, self.excluded, lambda x, y: re.match(y, x) is not None)}
+        return file, nevents, branches
 
-    def __call__(self, output: str, files: list[str], selection: Callable[[ak.Array], ak.Array] = None, allow_multiprocessing: bool = False):
-        nevents = 0
-        with self.buffer(output, 'Events', self.jagged) as output:
+    def __call__(self, output: PathLike, inputs: list[PathLike], selection: Callable[[ak.Array], ak.Array] = None, index_shift: int = 0, allow_multiprocessing: bool = False):
+        nevents = index_shift
+        with self.buffer(output, 'Events', self.jagged) as buffer:
             if allow_multiprocessing:
                 import multiprocessing as mp
-                with mp.Pool(len(files)) as pool:
-                    treemeta = pool.map(self._get_treemeta, files)
+                with mp.Pool(len(inputs)) as pool:
+                    treemeta = pool.map(self._get_treemeta, inputs)
             else:
-                treemeta = [self._get_treemeta(file) for file in files]
-            branches = reduce(operator.and_, (b for b, _ in treemeta))
-            num_entries = dict(n for _, n in treemeta)
-            for file in files:
+                treemeta = [self._get_treemeta(file) for file in inputs]
+            branches = reduce(operator.and_, (b for _, _, b in treemeta))
+            num_entries = {f: n for f, n, _ in treemeta}
+            for file in inputs:
                 start, total = 0, num_entries[file]
                 while start < total:
                     end = min(start + self.iterate_step, total)
-                    with uproot.open(f'{file}:Events', object_cache = None, array_cache = None, timeout = self.timeout) as root:
-                        chunk = root.arrays(branches, entry_start = start, entry_stop = end)
+                    with uproot.open(f'{file}:Events', object_cache = None, array_cache = None, timeout = self.timeout) as f:
+                        chunk = f.arrays(branches, entry_start = start, entry_stop = end)
                     if selection is not None:
                         chunk = selection(chunk)
                     if self.unique_index is not None:
                         chunk[self.unique_index] = np.arange(nevents, nevents + len(chunk), dtype = np.uint64)
                     nevents += len(chunk)
-                    output += chunk
+                    buffer += chunk
                     start = end
-        return nevents
+        return nevents - index_shift
 
 PicoAOD = Skim(
     jagged = [

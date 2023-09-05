@@ -14,8 +14,9 @@
 from ..correction.variation import BTagSF_Shape, PileupJetIDSF, PileupWeight
 from ..root import das as DAS
 from ..root.skim import PicoAOD
-from ..system.cluster import LPC
+from ..system.cluster.lpc import LPC
+from ..system.cluster.sites import CMSSites as Sites
 from ..system.cvmfs import jsonPOG_integration
 
 __all__ = ['PileupWeight', 'BTagSF_Shape', 'PileupJetIDSF',
-           'PicoAOD', 'jsonPOG_integration', 'LPC', 'DAS']
+           'PicoAOD', 'jsonPOG_integration', 'LPC', 'Sites', 'DAS']
