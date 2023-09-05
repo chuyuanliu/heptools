@@ -3,11 +3,11 @@ from __future__ import annotations
 import json
 from typing import Callable, Iterable, Literal
 
-from ..benchmark.unit import Metric
-from ..container import Tree
-from ..system.cluster.sites import Sites
-from ..system.eos import EOS
-from ..typetools import DefaultEncoder, alias
+from .benchmark.unit import Metric
+from .container import Tree
+from .system.cluster.sites import Sites
+from .system.eos import EOS
+from .typetools import DefaultEncoder, alias
 
 __all__ = ['File', 'FileList', 'Dataset',
            'DatasetError']

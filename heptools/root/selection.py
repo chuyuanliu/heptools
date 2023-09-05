@@ -8,7 +8,6 @@ from ..aktools import AnyArray
 from ..container import PartialSet, Tree
 from ..utils import Eval
 
-__all__ = ['Selection']
 
 class Selection:
     def __init__(self):

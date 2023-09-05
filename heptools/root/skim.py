@@ -14,9 +14,8 @@ import uproot
 
 from ..system.eos import PathLike
 from ..utils import match_any
+from .chunk import Chunk
 
-__all__ = ['Skim', 'PicoAOD',
-           'Buffer', 'BasketSizeOptimizedBuffer', 'NoBuffer']
 
 class Buffer(ABC):
     path: PathLike
@@ -146,30 +145,28 @@ class Skim:
             branches = {b for b in set(f.keys()) if not match_any(b, self.excluded, lambda x, y: re.match(y, x) is not None)}
         return file, nevents, branches
 
-    def __call__(self, output: PathLike, inputs: list[PathLike], selection: Callable[[ak.Array], ak.Array] = None, index_shift: int = 0, allow_multiprocessing: bool = False):
+    def __call__(self, output: PathLike, inputs: list[PathLike | Chunk], selection: Callable[[ak.Array], ak.Array] = None, index_shift: int = 0, allow_multiprocessing: bool = False):
         nevents = index_shift
+        input_files = {f.path if isinstance(f, Chunk) else f for f in inputs}
         with self.buffer(output, 'Events', self.jagged) as buffer:
             if allow_multiprocessing:
                 import multiprocessing as mp
-                with mp.Pool(len(inputs)) as pool:
-                    treemeta = pool.map(self._get_treemeta, inputs)
+                with mp.Pool(len(input_files)) as pool:
+                    treemeta = pool.map(self._get_treemeta, input_files)
             else:
-                treemeta = [self._get_treemeta(file) for file in inputs]
+                treemeta = [self._get_treemeta(file) for file in input_files]
             branches = reduce(operator.and_, (b for _, _, b in treemeta))
             num_entries = {f: n for f, n, _ in treemeta}
             for file in inputs:
-                start, total = 0, num_entries[file]
-                while start < total:
-                    end = min(start + self.iterate_step, total)
-                    with uproot.open(f'{file}:Events', object_cache = None, array_cache = None, timeout = self.timeout) as f:
-                        chunk = f.arrays(branches, entry_start = start, entry_stop = end)
+                if isinstance(file, PathLike):
+                    file = Chunk(file, num_entries[file])
+                for chunk in file.iterate('Events', branches, self.iterate_step):
                     if selection is not None:
                         chunk = selection(chunk)
                     if self.unique_index is not None:
                         chunk[self.unique_index] = np.arange(nevents, nevents + len(chunk), dtype = np.uint64)
                     nevents += len(chunk)
                     buffer += chunk
-                    start = end
         return nevents - index_shift
 
 PicoAOD = Skim(

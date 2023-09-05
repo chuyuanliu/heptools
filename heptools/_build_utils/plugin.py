@@ -27,7 +27,7 @@ def dask_sizeof_plugin(sizeof):
         def sizeof_partialset(x: PartialSet):
             return sizeof(x._in)
 
-        from ..root.selection import Selection
+        from ..root import Selection
         @sizeof.register(Selection)
         def sizeof_selection(x: Selection):
             return sizeof(x.filters)

@@ -3,7 +3,7 @@ from __future__ import annotations
 import getpass
 from pathlib import Path
 
-from ...root.dataset import File
+from ...dataset import File
 from ..eos import EOS
 from .htcondor import HTCondor, LocalFile, Tarball, TransferInput
 from .sites import CMSSites
