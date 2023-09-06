@@ -6,7 +6,7 @@ from typing import Callable, Iterable, Literal
 from .benchmark.unit import Metric
 from .container import Tree
 from .system.cluster.sites import Sites
-from .system.eos import EOS
+from .system.eos import EOS, PathLike
 from .typetools import DefaultEncoder, alias
 
 __all__ = ['File', 'FileList', 'Dataset',
@@ -18,14 +18,20 @@ class DatasetError(Exception):
 class File:
     priority: Sites = None
 
-    def  __init__(self, data: dict | File = {}):
+    def  __init__(self,
+                  data: dict | File = {},
+                  site: str | list[str] = None,
+                  path: PathLike = None,
+                  nevents: int = None):
         self.excluded = False
+        if isinstance(site, str):
+            site = [site]
         if isinstance(data, File):
             self.excluded = data.excluded
             data = data.__dict__
-        self.path = data.get('path', '')
-        self.nevents = data.get('nevents', 0)
-        self.site = frozenset(data.get('site', []))
+        self.site = frozenset(data.get('site', []) if site is None else site)
+        self.path = data.get('path', '') if path is None else path
+        self.nevents = data.get('nevents', 0) if nevents is None else nevents
 
     def __json__(self):
         return {'path': self.path, 'nevents': self.nevents, 'site': [*self.site]}
@@ -101,7 +107,7 @@ class FileList:
         return self
 
 class Dataset:
-    _metadata = ('source', 'dataset', 'year', 'era', 'level')
+    _metadata = ('source', 'dataset', 'year', 'era', 'tier')
 
     def __init__(self) -> None:
         self._tree = Tree(FileList)
@@ -112,8 +118,8 @@ class Dataset:
     def update(self,
                source: Literal['Data', 'MC'], dataset: str,
                year: str, era: str,
-               level: Literal['PicoAOD', 'NanoAOD', 'MiniAOD'], files: FileList):
-        self._tree[source, dataset, year, era, level] = files.copy()
+               tier: str, files: FileList):
+        self._tree[source, dataset, year, era, tier] += files.copy()
 
     def subset(self, filelist: Callable[[FileList], bool] = None, file: Callable[[File], bool] = None, **kwarg: str | list[str]):
         subset = Dataset()

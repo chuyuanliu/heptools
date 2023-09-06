@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from typing import overload
 
 import uproot
@@ -52,24 +54,26 @@ class Chunk:
                 yield f[tree].arrays(branches, entry_start = start, entry_stop = end)
             start = end
 
-    def __repr__(self):
+    def __repr__(self): # TODO
         return f'<{self.path}:[{self.start},{self.stop})>'
 
     @staticmethod
-    def split(chunksize: int, *files: tuple[PathLike, int]):
-        file, event, remain = 0, 0, chunksize
-        chunks = []
+    def split(chunksize: int, *files: Chunk):
+        file, event, remain = 0, None, chunksize
+        chunks: list[Chunk] = []
         while file < len(files):
-            chunk = min(remain, files[file][1] - event)
-            chunks.append(Chunk(files[file][0], event, event + chunk))
+            if event is None:
+                event = files[file].start
+            chunk = min(remain, files[file].stop - event)
+            chunks.append(Chunk(files[file].path, event, event + chunk))
             remain -= chunk
             event += chunk
             if remain == 0:
                 yield chunks
                 chunks = []
                 remain = chunksize
-            if event == files[file][1]:
+            if event == files[file].stop:
                 file += 1
-                event = 0
+                event = None
         if chunks:
             yield chunks
