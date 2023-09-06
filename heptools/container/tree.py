@@ -43,7 +43,7 @@ class Tree(dict[str], Generic[_LeafType]):
                 else:
                     yield (k,), self[k]
 
-    def __str__(self):
+    def __str__(self): # TODO rich, __repr__
         lines = []
         keys = sorted(self.keys())
         for i, k in enumerate(keys):
@@ -54,8 +54,8 @@ class Tree(dict[str], Generic[_LeafType]):
             lines.append((f' {joint}{k}\n' + str(self[k])).replace('\n', f'\n {branch}'))
         return '\n'.join(lines)
 
-    @property # TODO rich.print temp
-    def rich(self):
+    @property
+    def rich(self): # TODO rich, __repr__
         lines = []
         keys = sorted(self.keys())
         for i, k in enumerate(keys):
