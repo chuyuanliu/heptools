@@ -60,8 +60,8 @@ def merge(output: EOS, inputs: list[EOS], full_read_step: int, index_shift: int)
 def create_picoaod_from_dataset(
         base: PathLike,
         datasets: Dataset,
-        lazy_read_step: int | str = 500_000,
-        full_read_step: int | str = 100_000,
+        lazy_read_step: int | str = '500k',
+        full_read_step: int | str = '100k',
         **selections: ProcessorABC):
     base = EOS(base)
     lazy_read_step, full_read_step = _int(lazy_read_step, full_read_step)
@@ -101,8 +101,8 @@ def create_picoaod_from_dataset(
 def merge_chunks(
         base: PathLike,
         datasets: Dataset,
-        chunksize: int | str = ...,
-        full_read_step: int | str = 100_000,
+        chunksize: int | str = '1M',
+        full_read_step: int | str = '100k',
         ):
     base = EOS(base)
     chunksize, full_read_step = _int(chunksize, full_read_step)
@@ -128,7 +128,7 @@ def merge_chunks(
                 ), temp, output, source, dataset, year, era, tier
             ))
             shift += sum(len(i) for i in chunk)
-    
+
     outputs = compute(*outputs)
     for _, file in datasets.files:
         file.eos.rm()
