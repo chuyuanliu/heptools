@@ -86,7 +86,7 @@ class EOS:
             raise NotImplementedError(f'"{self.rm.__qualname__}" does not support recursive removal of remote files using "xrdfs" client') # TODO
         return self.call('rm', '-r' if recursive else '', self.path)[0]
 
-    def mkdir(self, recursive: bool = False):
+    def mkdir(self, recursive: bool = False) -> EOS:
         if self.call('mkdir', '-p' if recursive else '', self.path)[0]:
             return self
 
@@ -137,7 +137,7 @@ class EOS:
         return self.mv(self, dest, parents, overwrite, recursive)
 
     @classmethod
-    def cp(cls, src: PathLike, dest: PathLike, parents: bool = False, overwrite: bool = False, recursive: bool = False):
+    def cp(cls, src: PathLike, dest: PathLike, parents: bool = False, overwrite: bool = False, recursive: bool = False) -> EOS:
         src, dest = EOS(src), EOS(dest)
         if parents:
             dest.parent.mkdir(recursive = True)
@@ -156,7 +156,7 @@ class EOS:
             return dest
 
     @classmethod
-    def mv(cls, src: PathLike, dest: PathLike, parents: bool = False, overwrite: bool = False, recursive: bool = False):
+    def mv(cls, src: PathLike, dest: PathLike, parents: bool = False, overwrite: bool = False, recursive: bool = False) -> EOS:
         src, dest = EOS(src), EOS(dest)
         if parents:
             dest.parent.mkdir(recursive = True)
