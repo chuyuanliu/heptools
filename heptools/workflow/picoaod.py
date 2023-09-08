@@ -14,18 +14,18 @@ FILENAME = 'picoAOD'
 def _int(*values: int | str) -> tuple[int, ...]:
     return tuple(int(Metric.remove(v)) if isinstance(v, str) else v for v in values)
 
-def _cluster_skim(output: PathLike, inputs: list[PathLike | Chunk], step: int, shift: int = None, selection = None):
+def _cluster_skim(output: PathLike, inputs: list[PathLike | Chunk], step: int, offset: int = None, selection = None):
     skim = PicoAOD.copy()
     skim.iterate_step = step
-    if shift is None:
+    if offset is None:
         skim.unique_index = None
-        shift = 0
+        offset = 0
 
     local_output = EOS(output.name)
     nevents = skim(output = local_output,
                    inputs = inputs,
                    selection = selection,
-                   index_shift = shift)
+                   index_offset = offset)
     local_output.move_to(output, parents = True, overwrite = True)
 
     return File(
@@ -49,12 +49,12 @@ def select(processor: ProcessorABC, output: EOS, inputs: dict, lazy_read_step: i
     )
 
 @delayed
-def merge(output: EOS, inputs: list[EOS], full_read_step: int, index_shift: int): # TODO
+def merge(output: EOS, inputs: list[EOS], full_read_step: int, index_offset: int): # TODO
     return _cluster_skim(
         output = output,
         inputs = inputs,
         step = full_read_step,
-        shift = index_shift,
+        offset = index_offset,
     )
 
 def create_picoaod_from_dataset(
@@ -108,7 +108,7 @@ def merge_chunks(
     chunksize, full_read_step = _int(chunksize, full_read_step)
     outputs = []
     for (source, dataset, year, era, tier), filelist in datasets:
-        shift = 0
+        offset = 0
         path = base / source / dataset / (year + era)
         files = [Chunk(f.eos, f.nevents) for f in filelist]
         if chunksize is ...:
@@ -124,10 +124,10 @@ def merge_chunks(
                     output = temp,
                     inputs = input,
                     full_read_step = full_read_step,
-                    index_shift = shift,
+                    index_offset = offset,
                 ), temp, output, source, dataset, year, era, tier
             ))
-            shift += sum(len(i) for i in chunk)
+            offset += sum(len(i) for i in chunk)
 
     outputs = compute(*outputs)
     for _, file in datasets.files:

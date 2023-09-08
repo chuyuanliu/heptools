@@ -3,7 +3,22 @@ from __future__ import annotations
 import re
 from typing import Any, Callable, Generic, Iterable, Sized, TypeVar
 
-__all__ = ['sequence_call', 'astuple', 'unpack', 'merge_op', 'match_any', 'ensure', 'Eval']
+__all__ = ['arg_set', 'arg_new',
+           'sequence_call', 'astuple', 'unpack', 'merge_op', 'match_any', 'ensure', 'Eval']
+
+def arg_set(arg, none = None, default = ...):
+    if arg is None:
+        return none
+    if arg is ...:
+        return default
+    return arg
+
+def arg_new(arg, none: Callable[[]] = lambda: None, default: Callable[[]] = lambda: ...):
+    if arg is None:
+        return none()
+    if arg is ...:
+        return default()
+    return arg
 
 def sequence_call(*_funcs: Callable[[Any], Any]):
     def func(x):

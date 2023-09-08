@@ -145,8 +145,8 @@ class Skim:
             branches = {b for b in set(f.keys()) if not match_any(b, self.excluded, lambda x, y: re.match(y, x) is not None)}
         return file, nevents, branches
 
-    def __call__(self, output: PathLike, inputs: list[PathLike | Chunk], selection: Callable[[ak.Array], ak.Array] = None, index_shift: int = 0, allow_multiprocessing: bool = False):
-        nevents = index_shift
+    def __call__(self, output: PathLike, inputs: list[PathLike | Chunk], selection: Callable[[ak.Array], ak.Array] = None, index_offset: int = 0, allow_multiprocessing: bool = False):
+        nevents = index_offset
         input_files = {f.path if isinstance(f, Chunk) else f for f in inputs}
         with self.buffer(output, 'Events', self.jagged) as buffer:
             if allow_multiprocessing:
@@ -167,7 +167,7 @@ class Skim:
                         chunk[self.unique_index] = np.arange(nevents, nevents + len(chunk), dtype = np.uint64)
                     nevents += len(chunk)
                     buffer += chunk
-        return nevents - index_shift
+        return nevents - index_offset
 
 PicoAOD = Skim(
     jagged = [

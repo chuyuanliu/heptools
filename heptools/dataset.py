@@ -8,6 +8,7 @@ from .container import Tree
 from .system.cluster.sites import Sites
 from .system.eos import EOS, PathLike
 from .typetools import DefaultEncoder, alias
+from .utils import arg_new
 
 __all__ = ['File', 'FileList', 'Dataset',
            'DatasetError']
@@ -19,10 +20,11 @@ class File:
     priority: Sites = None
 
     def  __init__(self,
-                  data: dict | File = {},
+                  data: dict | File = None,
                   site: str | list[str] = None,
                   path: PathLike = None,
                   nevents: int = None):
+        data = arg_new(data, dict)
         self.excluded = False
         if isinstance(site, str):
             site = [site]
@@ -44,7 +46,8 @@ class File:
 
 @alias('copy')
 class FileList:
-    def __init__(self, data: dict = {}):
+    def __init__(self, data: dict = None):
+        data = arg_new(data, dict)
         files = [File(f) for f in data.get('files', [])]
         self._files = {f.path: f for f in files}
 

@@ -22,7 +22,6 @@ class DiLorentzVector(vec.PtEtaPhiMLorentzVector):
 
     @property
     def constituents(self):
-        '''all constituents'''
         ps = defaultdict(list)
         for p in (self._p1, self._p2):
             if 'constituents' in p.fields:
@@ -37,21 +36,17 @@ class DiLorentzVector(vec.PtEtaPhiMLorentzVector):
 
     @property
     def _p(self):
-        '''four-momentum'''
         return self._p1 + self._p2
 
     @property
     def st(self):
-        '''scalar sum of `pt` (ATLAS)'''
         return add_arrays(*(p.st if 'st' in p.fields else p.pt for p in (self._p1, self._p2)))
     @property
     def ht(self):
-        '''scalar sum of `pt` (CMS)'''
         return self.st
 
     @property
     def dr(self):
-        '''delta R'''
         return self._p1.delta_r(self._p2)
 
 def pair(*ps: Array, mode: Literal['single', 'cartesian', 'combination'] = 'single', combinations: int = 1, name: str = 'DiLorentzVector', behavior = None, type_check: set[str] | Callable[[Iterable[Array]], None] = None) -> Array:
