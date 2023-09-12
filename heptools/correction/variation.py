@@ -3,28 +3,22 @@ from functools import partial
 
 import numpy as np
 
-from ..utils import sequence_call
+from ..utils import arg_new, sequence_call
 from .correction import (CorrectionError, EventLevelCorrection,
                          ObjectLevelCorrection, _Correction)
 
 
 class _Variation(_Correction, ABC):
-    @property
     @abstractmethod
     def _default(self) -> list[str]:
         ...
 
-    @property
     @abstractmethod
     def _corrections(self) -> dict[str]:
         ...
 
     def __init__(self, file: str, variations: list[str] = ...):
-        if variations is None:
-            variations = []
-        elif variations is ...:
-            variations = self._default
-        self.variations = set(variations + [''])
+        self.variations = set(arg_new(variations, list, self._default) + [''])
         super().__init__(file)
 
     def __new__(cls, *args, **kwargs):
@@ -33,16 +27,14 @@ class _Variation(_Correction, ABC):
             self.__init__(*args, **kwargs)
         except CorrectionError:
             return {'': 1}
-        return self._corrections
+        return self._corrections()
 
 class PileupWeight(_Variation, EventLevelCorrection):
     _names = {'': 'nominal'}
 
-    @property
     def _default(self):
         return ['up', 'down']
 
-    @property
     def _corrections(self):
         return {k: self.evaluate(weights = self._names.get(k, k), NumTrueInteractions = ('Pileup', 'nTrueInt')) for k in self.variations}
 
@@ -59,11 +51,10 @@ class BTagSF_Shape(_Variation, ObjectLevelCorrection):
             self.target += (lambda x: x[np.abs(x.eta) < 2.5],)
         super().__init__(file, variations)
 
-    @property
     def _default(self):
-        return [f'{direction}_{source}' for source in ['lf', 'lfstats1', 'lfstats2', 'hf', 'hfstats1', 'hfstats2', 'cferr1', 'cferr2'] + [f'jes{jes}' for jes in self.jes] for direction in ['up', 'down']]
+        return [f'{direction}_{source}' for source in ['lf', 'lfstats1', 'lfstats2', 'hf', 'hfstats1', 'hfstats2', 'cferr1', 'cferr2']
+                + [f'jes{jes}' for jes in self.jes] for direction in ['up', 'down']]
 
-    @property
     def _corrections(self):
         groups = []
         flavor_gudsb = sequence_call(*self.target, lambda x: x[x.hadronFlavour != 4])
@@ -88,11 +79,9 @@ class PileupJetIDSF(_Variation, ObjectLevelCorrection):
         self.target = (lambda x: x[jet], lambda x: x[(x.pt < 50) & (x.pt > 20) & (x.genJetIdx > -1)])
         super().__init__(file, variations)
 
-    @property
     def _default(self):
         return ['up', 'down']
 
-    @property
     def _corrections(self):
         wp  = self._names[self.working_point]
         if wp:

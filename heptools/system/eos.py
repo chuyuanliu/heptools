@@ -10,7 +10,7 @@ from pathlib import Path
 from subprocess import PIPE, CalledProcessError, check_output
 from typing import Any, Generator, Literal
 
-from ..utils import ensure
+from ..utils import arg_set, ensure
 
 __all__ = ['EOS', 'PathLike', 'save', 'load']
 
@@ -32,7 +32,7 @@ class EOS:
             if match:
                 default = match.group(0)
                 path = path[len(default):]
-        self.url = default if url is ... else url
+        self.url = arg_set(url, '', default)
         if self.url:
             self.url = ensure(self.url, __suffix = '/')
         self.path = Path(self._slash_pattern.sub('/', str(path)))
