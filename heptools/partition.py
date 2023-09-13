@@ -62,7 +62,7 @@ class Partition:
         else:
             combs = np.fromiter(combinations(np.arange(size), members), dtype = np.dtype((int, members)))
         if groups == 1:
-            return combs[np.newaxis, :, :]
+            return combs[:, np.newaxis, :]
         combs = combs[combs[:, 0] <= (size - groups * members)]
         start, partitions = 0, np.empty((Partition._count(size, groups, members), groups, members), dtype = int)
         for c in combs:

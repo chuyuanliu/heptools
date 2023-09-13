@@ -4,9 +4,9 @@ from typing import Callable
 
 import awkward as ak
 import numpy as np
-from hist.axis import Boolean, IntCategory, StrCategory
+from hist.axis import StrCategory
 
-from ..aktools import AnyArray, RealNumber, FieldLike, and_fields, get_field
+from ..aktools import AnyArray, FieldLike, RealNumber, and_fields, get_field
 from ..typetools import check_type
 from . import hist as hs
 
@@ -97,17 +97,22 @@ class Fill:
                             fill = np.repeat(fill, shape)
                     hist_args[k] = fill
                 # https://github.com/scikit-hep/boost-histogram/issues/452 #
-                if all([check_type(axis, (StrCategory, Boolean, IntCategory)) for axis in hists._hists[name].axes]) and len(masked) > 0:
-                    broadcasted = False
-                    tobroadcast = None
-                    for k, v in hist_args.items():
-                        if k != 'weight':
-                            if check_type(v, AnyArray) and len(v) == len(masked):
-                                broadcasted = True
-                                break
-                            else:
-                                tobroadcast = k
-                    if not broadcasted and tobroadcast is not None:
-                        hist_args[tobroadcast] = np.full(len(masked), hist_args[tobroadcast])
+                if all([check_type(axis, StrCategory) for axis in hists._hists[name].axes]):
+                    try:
+                        weight = hist_args['weight']
+                        if len(weight) > 0:
+                            broadcasted = False
+                            tobroadcast = None
+                            for k, v in hist_args.items():
+                                if k != 'weight':
+                                    if check_type(v, AnyArray) and len(v) == len(weight):
+                                        broadcasted = True
+                                        break
+                                    else:
+                                        tobroadcast = k
+                            if not broadcasted and tobroadcast is not None:
+                                hist_args[tobroadcast] = np.full(len(weight), hist_args[tobroadcast])
+                    except:
+                        continue
                 ############################################################
                 hists._hists[name].fill(**hist_args, threads = self.threads)

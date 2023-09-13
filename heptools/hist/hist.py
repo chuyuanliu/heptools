@@ -11,7 +11,7 @@ from hist.axis import (AxesMixin, Boolean, IntCategory, Integer, Regular,
 
 from ..aktools import AnyInt, FieldLike, RealNumber, get_field
 from ..typetools import check_type
-from ..utils import astuple
+from ..utils import astuple, match_any
 from . import fill as fs
 
 AxisLike = AxesMixin | tuple
@@ -155,11 +155,10 @@ class Template:
         self._data  = astuple(_default_field(self._name.code) if fill is ... else fill)
         self._fill_args = fill_args
 
-        skip = set() if skip is None else set(skip)
         if bins is None:
             bins = {}
         for name, hist in self.hists().items():
-            if name not in skip:
+            if not match_any(name, skip, lambda x, y: re.match(y, x) is not None):
                 self._add(name, *hist.axes(name, bins), **hist.fill_args)
 
     def _add(self, name: str, *axes: AxisLike, **fill_args: fs.LazyFill):
@@ -197,3 +196,15 @@ class Template:
         self = object.__new__(cls)
         self.__init__(*args, **kwargs)
         return self._fills
+
+class Systematic(Template):
+    def __init__(self, name: str, systs: Iterable[LabelLike], *axes: AxesMixin | tuple, weight: FieldLike = 'weight', **fill_args: FieldLike):
+        super().__init__((name, ''), (), **fill_args)
+        weight = astuple(weight)
+        if len(axes) == 0:
+            axes = Collection.current.duplicate_axes(name)
+        for _var in systs:
+            _var = Label(_var)
+            self._name.display = f'({_var.display})'
+            self._add(_var.code, *axes, weight = weight + _default_field(_var.code))
+        self._name.display = ''

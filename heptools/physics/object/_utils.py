@@ -6,8 +6,9 @@ import awkward as ak
 
 import heptools
 
-from ...aktools import FieldLike
 
+class PhysicsObjectError(Exception):
+    __module__ = Exception.__module__
 
 def typestr(array: ak.Array):
     name = str(ak.type(array)).split(' * ')[-1]
