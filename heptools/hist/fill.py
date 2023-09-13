@@ -1,17 +1,17 @@
 from __future__ import annotations
 
-from numbers import Number
 from typing import Callable
 
 import awkward as ak
 import numpy as np
 from hist.axis import Boolean, IntCategory, StrCategory
 
-from ..aktools import AnyArray, FieldLike, and_fields, get_field
+from ..aktools import AnyArray, RealNumber, FieldLike, and_fields, get_field
 from ..typetools import check_type
 from . import hist as hs
 
-FillLike  = FieldLike | AnyArray | Number | bool | Callable
+LazyFill  = FieldLike | Callable
+FillLike  = LazyFill | AnyArray | RealNumber | bool
 
 class FillError(Exception):
     __module__ = Exception.__module__
@@ -55,7 +55,7 @@ class Fill:
             mask   = and_fields(events, *category_args.items())
             masked = events if mask is None else events[mask]
             for k, v in fill_args.items():
-                if (isinstance(v, str) and k in hists._categories) or isinstance(v, (bool, Number)):
+                if (isinstance(v, str) and k in hists._categories) or isinstance(v, (bool, RealNumber)):
                     category_args[k] = v
                 elif check_type(v, FieldLike):
                     category_args[k] = get_field(masked, v)

@@ -1,7 +1,7 @@
 from __future__ import annotations
 
-import operator
 from functools import partial, reduce
+from operator import add, and_, mul, or_
 from typing import Any, Callable
 
 import awkward as ak
@@ -11,14 +11,14 @@ from awkward import Array
 from .partition import Partition
 from .utils import astuple
 
-__all__ = ['FieldLike', 'AnyArray', 'AnyNumber', 'AnyInt', 'AnyFloat',
+__all__ = ['FieldLike', 'AnyArray', 'RealNumber', 'AnyInt', 'AnyFloat',
            'has_field', 'get_field', 'set_field', 'update_fields', 'sort_field',
            'get_dimension', 'foreach', 'partition', 'where',
            'or_arrays', 'or_fields', 'and_arrays', 'and_fields', 'add_arrays', 'add_fields', 'mul_arrays', 'mul_arrays']
 
 AnyInt    = int | np.integer
 AnyFloat  = float | np.floating
-AnyNumber = AnyInt | AnyFloat
+RealNumber = AnyInt | AnyFloat
 AnyArray  = Array | np.ndarray
 
 # field
@@ -94,14 +94,14 @@ def _op_arrays(*arrays: Array, op: Callable[[Array, Array], Array]) -> Array:
 def _op_fields(data: Array, *fields: FieldLike, op: Callable[[Array, Array], Array]):
     return _op_arrays(*(get_field(data, field) for field in fields), op = op)
 
-or_arrays = partial(_op_arrays, op = operator.or_)
-or_fields = partial(_op_fields, op = operator.or_)
-and_arrays = partial(_op_arrays, op = operator.and_)
-and_fields = partial(_op_fields, op = operator.and_)
-add_arrays = partial(_op_arrays, op = operator.add)
-add_fields = partial(_op_fields, op = operator.add)
-mul_arrays = partial(_op_arrays, op = operator.mul)
-mul_fields = partial(_op_fields, op = operator.mul)
+or_arrays = partial(_op_arrays, op = or_)
+or_fields = partial(_op_fields, op = or_)
+and_arrays = partial(_op_arrays, op = and_)
+and_fields = partial(_op_fields, op = and_)
+add_arrays = partial(_op_arrays, op = add)
+add_fields = partial(_op_fields, op = add)
+mul_arrays = partial(_op_arrays, op = mul)
+mul_fields = partial(_op_fields, op = mul)
 
 # where
 

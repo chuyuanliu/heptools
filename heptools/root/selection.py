@@ -1,7 +1,7 @@
 from __future__ import annotations
 
-import operator
 from functools import reduce
+from operator import and_
 from typing import Iterable
 
 from ..aktools import AnyArray
@@ -28,7 +28,7 @@ class Selection:
         if selection in self.filters:
             return self.filters[selection]
         elif selection == '':
-            return reduce(operator.and_, self.filters.values())
+            return reduce(and_, self.filters.values())
         else:
             return Eval(self.filters)[selection]
 

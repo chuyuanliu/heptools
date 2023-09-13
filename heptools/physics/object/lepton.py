@@ -1,14 +1,14 @@
 from functools import partial
+from operator import add
 
 from . import vector as vec
-from ._utils import register_behavior
+from ._utils import register_behavior, setup_field
 
 __all__ = ['pair']
 
 @register_behavior
+@setup_field(add, 'charge')
 class DiLepton(vec.DiLorentzVector):
-    @property
-    def charge(self):
-        return self._p1.charge + self._p2.charge
+    ...
 
 pair = partial(vec.pair, name = 'DiLepton')

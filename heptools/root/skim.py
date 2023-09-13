@@ -1,11 +1,11 @@
 from __future__ import annotations
 
 import gc
-import operator
 import re
 from abc import ABC, abstractmethod
 from collections import defaultdict
 from functools import reduce
+from operator import and_
 from typing import Callable
 
 import awkward as ak
@@ -155,7 +155,7 @@ class Skim:
                     treemeta = pool.map(self._get_treemeta, input_files)
             else:
                 treemeta = [self._get_treemeta(file) for file in input_files]
-            branches = reduce(operator.and_, (b for _, _, b in treemeta))
+            branches = reduce(and_, (b for _, _, b in treemeta))
             num_entries = {f: n for f, n, _ in treemeta}
             for file in inputs:
                 if isinstance(file, PathLike):

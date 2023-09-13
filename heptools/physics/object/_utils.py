@@ -1,5 +1,5 @@
-import operator
 from functools import partial
+from operator import ge, lt
 from typing import Callable
 
 import awkward as ak
@@ -30,10 +30,10 @@ def setup_lorentz_vector(target: str):
     def _wrap(cls):
         def _get(self, name):
             return getattr(getattr(self, target), name)
-        components = ['pt', 'eta', 'phi', 'mass']
-        for k in components:
+        fields = ['pt', 'eta', 'phi', 'mass']
+        for k in fields:
             setattr(cls, k, property(partial(_get, name = k)))
-        cls.fields = cls.fields + components
+        cls.fields = cls.fields + fields
         return cls
     return _wrap
 
@@ -43,7 +43,7 @@ def setup_lead_subl(*targets: str):
             return ak.where(op(getattr(self._p1, target), getattr(self._p2, target)), self._p1, self._p2)
         fields = []
         for target in targets:
-            for k, op in [('lead', operator.ge), ('subl', operator.lt)]:
+            for k, op in [('lead', ge), ('subl', lt)]:
                 field = f'{k}_{target}'
                 setattr(cls, field, property(partial(_get, op = op, target = target)))
                 fields += [field]
@@ -51,5 +51,12 @@ def setup_lead_subl(*targets: str):
         return cls
     return _wrap
 
-def setup_merged_field(op: Callable[[ak.Array, ak.Array], ak.Array], *fields: FieldLike):
-    ... # TODO
+def setup_field(op: Callable[[ak.Array, ak.Array], ak.Array], *targets: str):
+    def _wrap(cls):
+        def _get(self, target):
+            return op(getattr(self._p1, target), getattr(self._p2, target))
+        for target in targets:
+            setattr(cls, target, property(partial(_get, target = target)))
+        cls.fields = cls.fields + [*targets]
+        return cls
+    return _wrap
