@@ -1,7 +1,7 @@
-from ...aktools import (FieldLike, add_arrays, foreach, get_field, or_arrays,
-                        where)
+from ...aktools import (FieldLike, add_arrays, foreach, get_field, get_typestr,
+                        or_arrays, where)
 from ...hist import H
-from ._utils import Pair, PhysicsObjectError, register_behavior, typestr
+from ._utils import Pair, PhysicsObjectError, register_behavior
 from .vector import DiLorentzVector, _PlotDiLorentzVector, _PlotLorentzVector
 
 
@@ -31,7 +31,9 @@ class ExtendedJet(DiLorentzVector):
     def st(self):
         return self._unique_sum('pt')
 
-    # TODO count
+    @property
+    def n_unique(self):
+        return self._unique_sum(...)
 
 
 class _PairJet(Pair):
@@ -44,9 +46,9 @@ class _ExtendJet(Pair):
     def type_check(ps):
         type_check = {'Jet', 'DiJet', 'ExtendedJet'}
         for p in ps:
-            if typestr(p) in type_check:
+            if get_typestr(p) in type_check:
                 return
-        raise PhysicsObjectError(f'expected at least one of {type_check} (got [{", ".join(typestr(p) for p in ps)}])')
+        raise PhysicsObjectError(f'expected at least one of {type_check} (got [{", ".join(get_typestr(p) for p in ps)}])')
 
 
 class _PlotCommon:

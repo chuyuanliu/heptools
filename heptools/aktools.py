@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from functools import partial, reduce
 from operator import add, and_, mul, or_
-from typing import Any, Callable
+from typing import Any, Callable, Literal
 
 import awkward as ak
 import numpy as np
@@ -13,7 +13,8 @@ from .utils import astuple
 
 __all__ = ['FieldLike', 'AnyArray', 'RealNumber', 'AnyInt', 'AnyFloat',
            'has_record', 'get_field', 'set_field', 'update_fields', 'sort_field',
-           'get_dimension', 'foreach', 'partition', 'where',
+           'get_depth', 'get_typestr',
+           'foreach', 'partition', 'where',
            'or_arrays', 'or_fields', 'and_arrays', 'and_fields', 'add_arrays', 'add_fields', 'mul_arrays', 'mul_arrays']
 
 AnyInt    = int | np.integer
@@ -37,7 +38,10 @@ def has_record(data: Array, field: FieldLike) -> tuple[str, ...]:
 
 def get_field(data: Array, field: FieldLike):
     if field is ...:
-        ... # TODO return ak.ones_like(data)
+        try:
+            return ak.num(data, axis = get_depth(data))
+        except:
+            return ak.Array(np.ones(len(data)))
     for level in astuple(field):
         data = getattr(data, level)
     return data
@@ -62,16 +66,24 @@ def sort_field(data: Array, field: FieldLike, axis: int = -1, ascending: bool = 
 
 # shape
 
-def get_dimension(data: Array, default: int = 0) -> int:
+def get_depth(data: Array, default: int = 0) -> int:
     try:
         return data.layout.minmax_depth[0]
     except AttributeError:
         return default
 
+def get_typestr(data: Array, format: Literal['PascalCase', 'camelCase'] = 'PascalCase'):
+    name = str(ak.type(data)).split(' * ')[-1]
+    if format == 'PascalCase':
+        name = name[0].upper() + name[1:]
+    elif format == 'camelCase':
+        name = name[0].lower() + name[1:]
+    return name
+
 # slice
 
 def foreach(data: Array) -> tuple[Array, ...]:
-    dim = get_dimension(data) - 1
+    dim = get_depth(data) - 1
     count = np.unique(ak.ravel(ak.num(data, axis = dim)))
     if not len(count) == 1:
         raise IndexError(f'the length of the last axis must be uniform (got {count})')

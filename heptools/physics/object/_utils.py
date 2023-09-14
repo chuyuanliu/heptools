@@ -4,19 +4,11 @@ from typing import Callable, Iterable, Literal
 
 import awkward as ak
 
-from ...aktools import partition
+from ...aktools import get_typestr, partition
 
 
 class PhysicsObjectError(Exception):
     __module__ = Exception.__module__
-
-def typestr(array: ak.Array, format: Literal['PascalCase', 'camelCase'] = 'PascalCase'):
-    name = str(ak.type(array)).split(' * ')[-1]
-    if format == 'PascalCase':
-        name = name[0].upper() + name[1:]
-    elif format == 'camelCase':
-        name = name[0].lower() + name[1:]
-    return name
 
 def register_behavior(cls = None, dependencies: dict = None):
     from ... import behavior
@@ -72,8 +64,8 @@ class Pair:
              combinations: int = 1) -> ak.Array:
         if isinstance(cls.type_check, set):
             for p in ps:
-                if typestr(p) not in cls.type_check:
-                    raise PhysicsObjectError(f'expected {cls.type_check} (got <{typestr(p)}>)')
+                if get_typestr(p) not in cls.type_check:
+                    raise PhysicsObjectError(f'expected {cls.type_check} (got <{get_typestr(p)}>)')
         elif isinstance(cls.type_check, Callable):
             cls.type_check(ps)
         def check(length: int):
