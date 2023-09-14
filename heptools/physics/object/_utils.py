@@ -1,10 +1,12 @@
 from functools import partial
 from operator import ge, lt
-from typing import Callable
+from typing import Callable, Iterable, Literal
 
 import awkward as ak
 
 import heptools
+
+from ...aktools import partition
 
 
 class PhysicsObjectError(Exception):
@@ -61,3 +63,36 @@ def setup_field(op: Callable[[ak.Array, ak.Array], ak.Array], *targets: str):
         cls.fields = cls.fields + [*targets]
         return cls
     return _wrap
+
+class Pair:
+    name: str = None
+    type_check: set[str] | Callable[[Iterable[ak.Array]], None] = None
+
+    @classmethod
+    def pair(cls,
+             *ps: ak.Array,
+             mode: Literal['single', 'cartesian', 'combination'] = 'single',
+             combinations: int = 1) -> ak.Array:
+        if isinstance(cls.type_check, set):
+            for p in ps:
+                if typestr(p) not in cls.type_check:
+                    raise PhysicsObjectError(f'expected {cls.type_check} (got <{typestr(p)}>)')
+        elif isinstance(cls.type_check, Callable):
+            cls.type_check(ps)
+        def check(length: int):
+            if len(ps) != length:
+                raise PhysicsObjectError(f'expected {length} arrays for {mode} mode (got {len(ps)})')
+        if mode == 'single':
+            check(2)
+            return ak.zip({'_p1': ps[0], '_p2': ps[1]}, with_name = cls.name)
+        elif mode == 'cartesian':
+            check(2)
+            return ak.cartesian({'_p1': ps[0], '_p2': ps[1]}, with_name = cls.name)
+        elif mode == 'combination':
+            check(1)
+            if combinations == 1:
+                return ak.combinations(ps[0], 2, fields = ['_p1', '_p2'], with_name = cls.name)
+            else:
+                return cls.pair(*partition(ps[0], combinations, 2), mode = 'single')
+        else:
+            raise PhysicsObjectError(f'invalid mode "{mode}"')

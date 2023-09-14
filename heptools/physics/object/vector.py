@@ -1,16 +1,14 @@
 from __future__ import annotations
 
 from collections import defaultdict
-from typing import Callable, Iterable, Literal
 
 import awkward as ak
 import numpy as np
-from awkward import Array
 from coffea.nanoevents.methods import vector as vec
 
-from ...aktools import add_arrays, get_dimension, partition
+from ...aktools import add_arrays, get_dimension
 from ...hist import H, Template
-from ._utils import (PhysicsObjectError, register_behavior, setup_lead_subl,
+from ._utils import (Pair, register_behavior, setup_lead_subl,
                      setup_lorentz_vector, typestr)
 
 
@@ -49,35 +47,10 @@ class DiLorentzVector(vec.PtEtaPhiMLorentzVector):
     def dr(self):
         return self._p1.delta_r(self._p2)
 
-class _Pair_LorentzVector:
-    name: str = 'DiLorentzVector'
-    type_check: set[str] | Callable[[Iterable[Array]], None] = None
 
-    @classmethod
-    def create(cls, *ps: Array, mode: Literal['single', 'cartesian', 'combination'] = 'single', combinations: int = 1) -> Array:
-        if isinstance(cls.type_check, set):
-            for p in ps:
-                if typestr(p) not in cls.type_check:
-                    raise PhysicsObjectError(f'expected {cls.type_check} (got <{typestr(p)}>)')
-        elif isinstance(cls.type_check, Callable):
-            cls.type_check(ps)
-        def check(length: int):
-            if len(ps) != length:
-                raise PhysicsObjectError(f'expected {length} arrays for {mode} mode (got {len(ps)})')
-        if mode == 'single':
-            check(2)
-            return ak.zip({'_p1': ps[0], '_p2': ps[1]}, with_name = cls.name)
-        elif mode == 'cartesian':
-            check(2)
-            return ak.cartesian({'_p1': ps[0], '_p2': ps[1]}, with_name = cls.name)
-        elif mode == 'combination':
-            check(1)
-            if combinations == 1:
-                return ak.combinations(ps[0], 2, fields = ['_p1', '_p2'], with_name = cls.name)
-            else:
-                return cls.create(*partition(ps[0], combinations, 2), mode = 'single')
-        else:
-            raise PhysicsObjectError(f'invalid mode "{mode}"')
+class _Pair_LorentzVector(Pair):
+    name = 'DiLorentzVector'
+
 
 class _Plot_LorentzVector(Template):
     n       = H((0, 20, ('n', 'Number')), n = ak.num)
@@ -92,7 +65,8 @@ class _Plot_DiLorentzVector(_Plot_LorentzVector):
     dr      = H((100, 0, 4, ('dr', R'$\Delta R$')))
     ht      = H((100, 0, 1000, ('ht', R'$H_{\mathrm{T}}$ [GeV]')))
 
+
 class LorentzVector:
-    pair        = _Pair_LorentzVector.create
+    pair        = _Pair_LorentzVector.pair
     plot        = _Plot_LorentzVector
     plot_pair   = _Plot_DiLorentzVector

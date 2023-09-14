@@ -1,8 +1,8 @@
 from ...aktools import (FieldLike, add_arrays, foreach, get_field, or_arrays,
                         where)
-from ._utils import PhysicsObjectError, register_behavior, typestr
-from .vector import (DiLorentzVector, H, _Pair_LorentzVector,
-                     _Plot_DiLorentzVector, _Plot_LorentzVector)
+from ...hist import H
+from ._utils import Pair, PhysicsObjectError, register_behavior, typestr
+from .vector import DiLorentzVector, _Plot_DiLorentzVector, _Plot_LorentzVector
 
 
 @register_behavior
@@ -33,30 +33,38 @@ class ExtendedJet(DiLorentzVector):
 
     # TODO count
 
-def _type_check_extended_jet(ps):
-    type_check = {'Jet', 'DiJet', 'ExtendedJet'}
-    for p in ps:
-        if typestr(p) in type_check:
-            return
-    raise PhysicsObjectError(f'expected at least one of {type_check} (got [{", ".join(typestr(p) for p in ps)}])')
 
-class _Pair_Jet(_Pair_LorentzVector):
+class _Pair_Jet(Pair):
     name = 'DiJet'
     type_check = {'Jet', 'DiJet'}
 
-class _Extend_Jet(_Pair_LorentzVector):
+class _Extend_Jet(Pair):
     name = 'ExtendedJet'
-    type_check = _type_check_extended_jet
+    @staticmethod
+    def type_check(ps):
+        type_check = {'Jet', 'DiJet', 'ExtendedJet'}
+        for p in ps:
+            if typestr(p) in type_check:
+                return
+        raise PhysicsObjectError(f'expected at least one of {type_check} (got [{", ".join(typestr(p) for p in ps)}])')
 
-class _Plot_Jet(_Plot_LorentzVector):
+
+class _Plot_Common:
+    ...
+
+class _Plot_Jet(_Plot_Common, _Plot_LorentzVector):
     deepjet_b   = H((100, 0, 1, ('btagDeepFlavB', 'DeepJet $b$')))
     deepjet_c   = H((100, 0, 1, ('btagDeepFlavCvL', 'DeepJet $c$ vs $uds+g$')),
                     (100, 0, 1, ('btagDeepFlavCvB', 'DeepJet $c$ vs $b$')))
     id_pileup   = H(([0b000, 0b100, 0b110, 0b111], ('puId', 'Pileup ID')))
     id_jet      = H(([0b000, 0b010, 0b110], ('jetId', 'Jet ID')))
 
+class _Plot_DiJet(_Plot_Common, _Plot_DiLorentzVector):
+    ...
+
+
 class Jet:
-    pair        = _Pair_Jet.create
-    extend      = _Extend_Jet.create
+    pair        = _Pair_Jet.pair
+    extend      = _Extend_Jet.pair
     plot        = _Plot_Jet
-    plot_pair   = _Plot_DiLorentzVector
+    plot_pair   = _Plot_DiJet
