@@ -11,7 +11,7 @@
 | BTV           | https://btv-wiki.docs.cern.ch/                                            |
 '''
 
-from ..correction.variation import BTagSF_Shape, PileupJetIDSF, PileupWeight
+from ..correction.variations import BTagSF_Shape, PileupJetIDSF, PileupWeight
 from ..root.skim import PicoAOD
 from ..system.cluster.lpc import LPC
 from ..system.cluster.sites import CMSSites as Sites

@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from abc import ABC, abstractmethod
 from functools import partial
 from typing import Callable, Iterable
 
@@ -7,6 +8,7 @@ import awkward as ak
 from correctionlib import CorrectionSet
 
 from ..aktools import mul_arrays
+from ..utils import arg_new
 from .weight import ContentLike, _get_content
 
 
@@ -65,3 +67,24 @@ class ObjectLevelCorrection(_Correction):
             return partial(self._evaluate_groups, groups = groups, _correction = _correction, **inputs)
         else:
             return partial(self._evaluate_events, _correction = _correction, **inputs)
+
+class Variation(_Correction, ABC):
+    @abstractmethod
+    def _default(self) -> list[str]:
+        ...
+
+    @abstractmethod
+    def _corrections(self) -> dict[str]:
+        ...
+
+    def __init__(self, file: str, variations: list[str] = ...):
+        self.variations = set(arg_new(variations, list, self._default) + [''])
+        super().__init__(file)
+
+    def __new__(cls, *args, **kwargs):
+        self = object().__new__(cls)
+        try:
+            self.__init__(*args, **kwargs)
+        except CorrectionError:
+            return {'': 1}
+        return self._corrections()

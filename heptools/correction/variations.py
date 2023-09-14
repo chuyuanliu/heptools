@@ -1,35 +1,12 @@
-from abc import ABC, abstractmethod
 from functools import partial
 
 import numpy as np
 
-from ..utils import arg_new, sequence_call
-from .correction import (CorrectionError, EventLevelCorrection,
-                         ObjectLevelCorrection, _Correction)
+from ..utils import sequence_call
+from .correction import EventLevelCorrection, ObjectLevelCorrection, Variation
 
 
-class _Variation(_Correction, ABC):
-    @abstractmethod
-    def _default(self) -> list[str]:
-        ...
-
-    @abstractmethod
-    def _corrections(self) -> dict[str]:
-        ...
-
-    def __init__(self, file: str, variations: list[str] = ...):
-        self.variations = set(arg_new(variations, list, self._default) + [''])
-        super().__init__(file)
-
-    def __new__(cls, *args, **kwargs):
-        self = object().__new__(cls)
-        try:
-            self.__init__(*args, **kwargs)
-        except CorrectionError:
-            return {'': 1}
-        return self._corrections()
-
-class PileupWeight(_Variation, EventLevelCorrection):
+class PileupWeight(Variation, EventLevelCorrection):
     _names = {'': 'nominal'}
 
     def _default(self):
@@ -38,7 +15,7 @@ class PileupWeight(_Variation, EventLevelCorrection):
     def _corrections(self):
         return {k: self.evaluate(weights = self._names.get(k, k), NumTrueInteractions = ('Pileup', 'nTrueInt')) for k in self.variations}
 
-class BTagSF_Shape(_Variation, ObjectLevelCorrection):
+class BTagSF_Shape(Variation, ObjectLevelCorrection):
     '''
         - https://twiki.cern.ch/twiki/bin/view/CMS/BTagShapeCalibration
     '''
@@ -66,7 +43,7 @@ class BTagSF_Shape(_Variation, ObjectLevelCorrection):
                 groups.append((var, (flavor_gudsb, {'systematic': self._names.get(var, var)})))
         return {group[0]: self.evaluate('deepJet_shape', *group[1:], systematic = 'central', flavor = 'hadronFlavour', abseta = lambda x: np.abs(x.eta), discriminant = 'btagDeepFlavB') for group in groups}
 
-class PileupJetIDSF(_Variation, ObjectLevelCorrection):
+class PileupJetIDSF(Variation, ObjectLevelCorrection):
     '''
         - https://twiki.cern.ch/twiki/bin/view/CMS/PileupJetIDUL#Data_MC_Efficiency_Scale_Factors
         - https://twiki.cern.ch/twiki/bin/view/CMS/BTagSFMethods#1a_Event_reweighting_using_scale
