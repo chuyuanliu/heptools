@@ -12,7 +12,7 @@ from .partition import Partition
 from .utils import astuple
 
 __all__ = ['FieldLike', 'AnyArray', 'RealNumber', 'AnyInt', 'AnyFloat',
-           'has_field', 'get_field', 'set_field', 'update_fields', 'sort_field',
+           'has_record', 'get_field', 'set_field', 'update_fields', 'sort_field',
            'get_dimension', 'foreach', 'partition', 'where',
            'or_arrays', 'or_fields', 'and_arrays', 'and_fields', 'add_arrays', 'add_fields', 'mul_arrays', 'mul_arrays']
 
@@ -25,13 +25,14 @@ AnyArray  = Array | np.ndarray
 
 FieldLike = str | tuple
 
-def has_field(data: Array, field: FieldLike) -> tuple[int, ...]:
+def has_record(data: Array, field: FieldLike) -> tuple[str, ...]:
     parents = []
     for level in astuple(field):
-        if level not in data.fields:
+        try:
+            data = data[level]
+            parents.append(level)
+        except:
             break
-        parents.append(level)
-        data = data[level]
     return (*parents,)
 
 def get_field(data: Array, field: FieldLike):
@@ -43,7 +44,7 @@ def get_field(data: Array, field: FieldLike):
 
 def set_field(data: Array, field: FieldLike, value: Array):
     field = astuple(field)
-    parent = field[:len(has_field(data, field)) + 1]
+    parent = field[:len(has_record(data, field)) + 1]
     nested = field[len(parent):]
     if nested:
         for level in reversed(nested):
@@ -61,11 +62,11 @@ def sort_field(data: Array, field: FieldLike, axis: int = -1, ascending: bool = 
 
 # shape
 
-def get_dimension(data: Array) -> int:
+def get_dimension(data: Array, default: int = 0) -> int:
     try:
         return data.layout.minmax_depth[0]
     except AttributeError:
-        return 0
+        return default
 
 # slice
 
