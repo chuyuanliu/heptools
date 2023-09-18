@@ -7,23 +7,11 @@ import awkward as ak
 import numpy as np
 from coffea.nanoevents.methods import vector as vec
 
-from ...aktools import get_depth, get_typestr
+from ...aktools import get_shape
 from ...hist import H, Template
 from ._utils import (Pair, register_behavior, setup_field, setup_lead_subl,
                      setup_lorentz_vector)
 
-# patch
-vec.TwoVector.st = property(
-    lambda self: self.pt)
-vec.TwoVector.ht = property(
-    lambda self: self.st)
-vec.LorentzVector.p4vec = property(
-    lambda self: ak.zip({
-        'x': self.x,
-        'y': self.y,
-        'z': self.z,
-        't': self.t,},
-        with_name = 'LorentzVector'))
 
 @register_behavior
 @setup_lorentz_vector('p4vec')
@@ -39,9 +27,9 @@ class DiLorentzVector(vec.PtEtaPhiMLorentzVector):
                 for k in constituents.fields:
                     ps[k].append(constituents[k])
             except:
-                ps[get_typestr(p)].append(ak.unflatten(p, 1, axis = get_depth(p) - 1))
+                ps[get_shape(p)[-1]].append(ak.unflatten(p, 1, axis = len(get_shape(p)) - 2))
         for k, v in ps.items():
-            ps[k] = ak.concatenate(v, axis = get_depth(v[0]) - 1)
+            ps[k] = ak.concatenate(v, axis = len(get_shape((v[0]))) - 2)
         return ak.Array(ps, behavior = self.behavior)
 
     @property

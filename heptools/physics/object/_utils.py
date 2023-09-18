@@ -4,7 +4,7 @@ from typing import Callable, Iterable, Literal
 
 import awkward as ak
 
-from ...aktools import get_typestr, partition
+from ...aktools import get_shape, partition
 
 
 class PhysicsObjectError(Exception):
@@ -14,14 +14,12 @@ def register_behavior(cls = None, dependencies: dict = None):
     from ... import behavior
     if cls is None:
         return partial(register_behavior, dependencies = dependencies)
-    _behavior = {}
-    ak.mixin_class(_behavior)(cls)
+    ak.mixin_class(behavior)(cls)
     classname = cls.__name__
-    _behavior[('__typestr__', classname)] = classname
-    _behavior[classname].__repr__ = lambda self: classname
+    behavior[('__typestr__', classname)] = classname
+    behavior[classname].__repr__ = lambda _: classname
     if dependencies:
         behavior |= dependencies
-    behavior |= _behavior
     return cls
 
 def setup_lorentz_vector(target: str):
@@ -64,8 +62,8 @@ class Pair:
              combinations: int = 1) -> ak.Array:
         if isinstance(cls.type_check, set):
             for p in ps:
-                if get_typestr(p) not in cls.type_check:
-                    raise PhysicsObjectError(f'expected {cls.type_check} (got <{get_typestr(p)}>)')
+                if get_shape(p)[-1] not in cls.type_check:
+                    raise PhysicsObjectError(f"expected {cls.type_check} (got '{get_shape(p)[-1]}')")
         elif isinstance(cls.type_check, Callable):
             cls.type_check(ps)
         def check(length: int):

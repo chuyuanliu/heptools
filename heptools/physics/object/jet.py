@@ -1,4 +1,4 @@
-from ...aktools import (FieldLike, add_arrays, foreach, get_field, get_typestr,
+from ...aktools import (FieldLike, add_arrays, foreach, get_field, get_shape,
                         or_arrays, where)
 from ...hist import H
 from ._utils import Pair, PhysicsObjectError, register_behavior
@@ -46,9 +46,9 @@ class _ExtendJet(Pair):
     def type_check(ps):
         type_check = {'Jet', 'DiJet', 'ExtendedJet'}
         for p in ps:
-            if get_typestr(p) in type_check:
+            if get_shape(p)[-1] in type_check:
                 return
-        raise PhysicsObjectError(f'expected at least one of {type_check} (got [{", ".join(get_typestr(p) for p in ps)}])')
+        raise PhysicsObjectError(f"expected at least one of {type_check} (got {set(get_shape(p)[-1] for p in ps)})")
 
 
 class _PlotCommon:
