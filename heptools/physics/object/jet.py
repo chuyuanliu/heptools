@@ -1,4 +1,9 @@
-from ...aktools import (FieldLike, add_arrays, foreach, get_field, get_shape,
+from operator import add
+from typing import Callable
+
+import awkward as ak
+
+from ...aktools import (FieldLike, foreach, get_field, get_shape, op_arrays,
                         or_arrays, where)
 from ...hist import H
 from ._utils import Pair, PhysicsObjectError, register_behavior
@@ -11,29 +16,21 @@ class DiJet(DiLorentzVector):
 
 @register_behavior
 class ExtendedJet(DiLorentzVector):
-    def _unique_sum(self, field: FieldLike = ()):
+    def cumulate(self, op: Callable[[ak.Array, ak.Array], ak.Array], field: FieldLike):
         constituents = self.constituents
         jets = foreach(constituents.Jet)
-        p = add_arrays(*(get_field(jet, field) for jet in jets))
+        p = op_arrays(*(get_field(jet, field) for jet in jets), op = op)
         others = set(constituents.fields) - {'Jet'}
         for other in others:
             objs = foreach(constituents[other])
             for obj in objs:
-                p = where(p + get_field(obj, field),
+                p = where(op(p, get_field(obj, field)),
                           (or_arrays(*(obj.jetIdx == jet.jetIdx for jet in jets)), p))
         return p
 
     @property
-    def p4vec(self):
-        return self._unique_sum('p4vec')
-
-    @property
-    def st(self):
-        return self._unique_sum('pt')
-
-    @property
     def n_unique(self):
-        return self._unique_sum(...)
+        return self.cumulate(add, ...)
 
 
 class _PairJet(Pair):

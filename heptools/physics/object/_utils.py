@@ -45,7 +45,7 @@ def setup_lead_subl(*targets: str):
 def setup_field(op: Callable[[ak.Array, ak.Array], ak.Array], *targets: str):
     def _wrap(cls):
         def _get(self, target):
-            return op(getattr(self._p1, target), getattr(self._p2, target))
+            return self.cumulate(op, target)
         for target in targets:
             setattr(cls, target, property(partial(_get, target = target)))
         return cls

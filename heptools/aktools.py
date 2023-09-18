@@ -103,21 +103,21 @@ def partition(data: Array, groups: int, members: int) -> tuple[Array, ...]:
 
 # reduce
 
-def _op_arrays(*arrays: Array, op: Callable[[Array, Array], Array]) -> Array:
+def op_arrays(*arrays: Array, op: Callable[[Array, Array], Array]) -> Array:
     if arrays:
         return reduce(op, arrays)
 
-def _op_fields(data: Array, *fields: FieldLike, op: Callable[[Array, Array], Array]):
-    return _op_arrays(*(get_field(data, field) for field in fields), op = op)
+def op_fields(data: Array, *fields: FieldLike, op: Callable[[Array, Array], Array]):
+    return op_arrays(*(get_field(data, field) for field in fields), op = op)
 
-or_arrays = partial(_op_arrays, op = or_)
-or_fields = partial(_op_fields, op = or_)
-and_arrays = partial(_op_arrays, op = and_)
-and_fields = partial(_op_fields, op = and_)
-add_arrays = partial(_op_arrays, op = add)
-add_fields = partial(_op_fields, op = add)
-mul_arrays = partial(_op_arrays, op = mul)
-mul_fields = partial(_op_fields, op = mul)
+or_arrays = partial(op_arrays, op = or_)
+or_fields = partial(op_fields, op = or_)
+and_arrays = partial(op_arrays, op = and_)
+and_fields = partial(op_fields, op = and_)
+add_arrays = partial(op_arrays, op = add)
+add_fields = partial(op_fields, op = add)
+mul_arrays = partial(op_arrays, op = mul)
+mul_fields = partial(op_fields, op = mul)
 
 # where
 

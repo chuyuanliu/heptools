@@ -2,12 +2,13 @@ from __future__ import annotations
 
 from collections import defaultdict
 from operator import add
+from typing import Callable
 
 import awkward as ak
 import numpy as np
 from coffea.nanoevents.methods import vector as vec
 
-from ...aktools import get_shape
+from ...aktools import FieldLike, get_field, get_shape
 from ...hist import H, Template
 from ._utils import (Pair, register_behavior, setup_field, setup_lead_subl,
                      setup_lorentz_vector)
@@ -16,8 +17,11 @@ from ._utils import (Pair, register_behavior, setup_field, setup_lead_subl,
 @register_behavior
 @setup_lorentz_vector('p4vec')
 @setup_lead_subl('pt', 'st', 'ht')
-@setup_field(add, 'st')
+@setup_field(add, 'p4vec', 'st')
 class DiLorentzVector(vec.PtEtaPhiMLorentzVector):
+    def cumulate(self, op: Callable[[ak.Array, ak.Array], ak.Array], target: FieldLike):
+        return op(get_field(self._p1, target), get_field(self._p2, target))
+
     @property
     def constituents(self):
         ps = defaultdict(list)
@@ -33,12 +37,12 @@ class DiLorentzVector(vec.PtEtaPhiMLorentzVector):
         return ak.Array(ps, behavior = self.behavior)
 
     @property
-    def p4vec(self):
-        return self._p1 + self._p2
-
-    @property
     def dr(self):
         return self._p1.delta_r(self._p2)
+
+    @property
+    def dphi(self):
+        return self._p1.delta_phi(self._p2)
 
 
 class _PairLorentzVector(Pair):
@@ -56,6 +60,7 @@ class _PlotLorentzVector(Template):
 
 class _PlotDiLorentzVector(_PlotLorentzVector):
     dr      = H((100, 0, 4, ('dr', R'$\Delta R$')))
+    dphi    = H((60, -np.pi, np.pi, ('dphi', R'$\Delta\phi$')))
     ht      = H((100, 0, 1000, ('ht', R'$H_{\mathrm{T}}$ [GeV]')))
 
 
