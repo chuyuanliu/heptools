@@ -103,7 +103,7 @@ class Tarball(TransferInput):
 
     def __init__(self, *inputs: PathLike | tuple[PathLike, PathLike], algorithm: Literal['gz', 'bz2', 'xz'] = 'gz', compresslevel: int = 4):
         if self._base is None:
-            raise NotADirectoryError(f'call {self.set_base.__qualname__} before creating {Tarball.__qualname__}')
+            raise NotADirectoryError(f'call `{self.set_base.__qualname__}()` before creating <{Tarball.__qualname__}>')
         files: list[tuple[EOS, EOS, int]] = []
         for src in inputs:
             if isinstance(src, tuple):

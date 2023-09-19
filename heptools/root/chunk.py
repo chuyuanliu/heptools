@@ -54,7 +54,7 @@ class Chunk:
                 yield f[tree].arrays(branches, entry_start = start, entry_stop = end)
             start = end
 
-    def __repr__(self): # TODO
+    def __repr__(self): # TODO __repr__
         return f'<{self.path}:[{self.start},{self.stop})>'
 
     @staticmethod

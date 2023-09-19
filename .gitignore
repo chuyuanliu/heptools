@@ -1,6 +1,7 @@
-# Test
-_TEMP/
+# Local test settings
+TEMP/
 test_*.py
+.vscode/
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

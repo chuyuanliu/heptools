@@ -41,6 +41,9 @@ def unpack(__iter: Iterable) -> Any:
             return __iter
     return __next
 
+def unique(seq: Iterable):
+    return list(dict.fromkeys(seq))
+
 def merge_op(op, _x, _y):
     if _x is None:
         return _y
@@ -49,9 +52,9 @@ def merge_op(op, _x, _y):
     else:
         return op(_x, _y)
 
-_TargetType = TypeVar('_TargetType')
-_PatternType = TypeVar('_PatternType')
-def match_any(target: _TargetType, patterns: _PatternType | Iterable[_PatternType], match: Callable[[_TargetType, _PatternType], bool]):
+_TargetT = TypeVar('_TargetT')
+_PatternT = TypeVar('_PatternT')
+def match_any(target: _TargetT, patterns: _PatternT | Iterable[_PatternT], match: Callable[[_TargetT, _PatternT], bool]):
     if patterns is None:
         return False
     if patterns is ...:
@@ -70,8 +73,8 @@ def ensure(__str: str, __prefix: str = None, __suffix: str = None):
         __str = __str + __suffix
     return __str
 
-_EvalType = TypeVar('_EvalType')
-class Eval(Generic[_EvalType]):
+_EvalT = TypeVar('_EvalT')
+class Eval(Generic[_EvalT]):
     _quote_arg_pattern = re.compile(r'(?P<arg>' +
                                     r'|'.join([rf'((?<={i})[^\[\]\",=]*?(?={j}))'
                                                for i in ['\[', ',']
@@ -79,13 +82,13 @@ class Eval(Generic[_EvalType]):
                                     r')')
     _eval_call_pattern = re.compile(r'\[(?P<arg>.*?)\]')
 
-    def __init__(self, method: Callable[[], _EvalType] | dict[str, _EvalType], *args, **kwargs):
+    def __init__(self, method: Callable[[], _EvalT] | dict[str, _EvalT], *args, **kwargs):
         self.method = method
         self.args   = args
         self.kwargs = kwargs
 
-    def __call__(self, expression: str) -> _EvalType:
+    def __call__(self, expression: str) -> _EvalT:
         return eval(re.sub(self._eval_call_pattern, rf'self.method(\g<arg>,*self.args,**self.kwargs)', re.sub(self._quote_arg_pattern, r'"\g<arg>"', expression)))
 
-    def __getitem__(self, expression: str) -> _EvalType:
+    def __getitem__(self, expression: str) -> _EvalT:
         return eval(re.sub(self._eval_call_pattern, rf'self.method[\g<arg>]', re.sub(self._quote_arg_pattern, r'"\g<arg>"', expression)))

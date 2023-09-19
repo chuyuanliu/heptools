@@ -8,33 +8,33 @@ from rich.text import Text
 
 from ..utils import match_any, merge_op, unpack
 
-_LeafType = TypeVar('_LeafType')
-class Tree(dict[str], Generic[_LeafType]):
-    def __init__(self, leaf: Callable[[], _LeafType] = None):
+_LeafT = TypeVar('_LeafT')
+class Tree(dict[str], Generic[_LeafT]):
+    def __init__(self, leaf: Callable[[], _LeafT] = None):
         self.leaf = leaf
 
-    def __getitem__(self, __key) -> Tree[_LeafType] | _LeafType:
+    def __getitem__(self, __key) -> Tree[_LeafT] | _LeafT:
         if __key is None:
             return self
         if isinstance(__key, tuple):
             if len(__key) == 0:
                 return self
             if __key[0] not in self:
-                super().__setitem__(__key[0], Tree[_LeafType](self.leaf))
+                super().__setitem__(__key[0], Tree[_LeafT](self.leaf))
             return self[__key[0]][unpack(__key[1:])]
         elif isinstance(__key, str):
             if __key not in self:
                 super().__setitem__(__key, self.leaf() if self.leaf else None)
             return super().__getitem__(__key)
 
-    def __setitem__(self, __key, __value) -> Tree[_LeafType] | _LeafType:
+    def __setitem__(self, __key, __value) -> Tree[_LeafT] | _LeafT:
         __key = unpack(__key)
         if isinstance(__key, tuple):
             self[(__key[0], )][__key[1:]] = __value
         elif isinstance(__key, str):
             super().__setitem__(__key, __value)
 
-    def walk(self, *pattern: str | list[str]) -> Generator[tuple[tuple[str, ...], _LeafType]]:
+    def walk(self, *pattern: str | list[str]) -> Generator[tuple[tuple[str, ...], _LeafT]]:
         for k in self.keys():
             if not pattern or match_any(k, pattern[0], lambda x, y: re.match(y, x) is not None):
                 if isinstance(self[k], Tree):
@@ -72,10 +72,10 @@ class Tree(dict[str], Generic[_LeafType]):
             lines.append(Text(f'\n {branch}', style = 'yellow').join([Text(f' {joint}', style = 'yellow') + Text(k, style = 'default')] + line))
         return Text('\n').join(lines)
 
-    def iop(self, other: Tree[_LeafType], op: Callable[[_LeafType, _LeafType], _LeafType]) -> Tree[_LeafType]:
+    def iop(self, other: Tree[_LeafT], op: Callable[[_LeafT, _LeafT], _LeafT]) -> Tree[_LeafT]:
         if isinstance(other, Tree):
             if not (self.leaf == other.leaf):
-                raise TypeError(f'cannot operate on trees with different leaf types: "{self.leaf}" and "{other.leaf}"')
+                raise TypeError(f'cannot operate on trees with different leaf `{self.leaf}()` and `{other.leaf}()`')
             for k, v in other.items():
                 if isinstance(v, Tree):
                     self[(k, )].iop(v, op)
@@ -88,24 +88,24 @@ class Tree(dict[str], Generic[_LeafType]):
         return NotImplemented
 
     @staticmethod
-    def op(first: Tree[_LeafType], second: Tree[_LeafType], op: Callable[[_LeafType, _LeafType], _LeafType]) -> Tree[_LeafType]:
+    def op(first: Tree[_LeafT], second: Tree[_LeafT], op: Callable[[_LeafT, _LeafT], _LeafT]) -> Tree[_LeafT]:
         if isinstance(first, Tree) and isinstance(second, Tree):
-            tree = Tree[_LeafType](first.leaf)
+            tree = Tree[_LeafT](first.leaf)
             tree.iop(first, op)
             tree.iop(second, op)
             return tree
         return NotImplemented
 
-    def __ior__(self, other: Tree[_LeafType]) -> Tree[_LeafType]:
+    def __ior__(self, other: Tree[_LeafT]) -> Tree[_LeafT]:
         return self.iop(other, lambda x, y: x | y)
 
-    def __or__(self, other: Tree[_LeafType]) -> Tree[_LeafType]:
+    def __or__(self, other: Tree[_LeafT]) -> Tree[_LeafT]:
         return self.op(self, other, lambda x, y: x | y)
 
-    def __iadd__(self, other: Tree[_LeafType]) -> Tree[_LeafType]:
+    def __iadd__(self, other: Tree[_LeafT]) -> Tree[_LeafT]:
         return self.iop(other, lambda x, y: x + y)
 
-    def __add__(self, other: Tree[_LeafType]) -> Tree[_LeafType]:
+    def __add__(self, other: Tree[_LeafT]) -> Tree[_LeafT]:
         return self.op(self, other, lambda x, y: x + y)
 
     def from_dict(self, tree: dict, depth: int = float('inf')):

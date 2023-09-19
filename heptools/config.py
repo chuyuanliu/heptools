@@ -2,14 +2,14 @@ from __future__ import annotations
 
 from copy import copy
 from inspect import getmro
-from typing import Any, Generic, TypeVar, get_args, get_origin, get_type_hints
+from typing import Any, Generic, TypeVar, get_type_hints
 
 from rich.text import Text
 
-from .typetools import check_type, type_name
+from .typetools import check_subclass, check_type, type_hint_only, type_name
 
 __all__ = ['Config', 'ConfigError',
-           'config_property',
+           'derived', 'const',
            'Undefined', 'Extra']
 
 class ConfigError(Exception):
@@ -18,16 +18,37 @@ class ConfigError(Exception):
 Undefined = object()
 Extra = object()
 
-_ConfigPropertyType = TypeVar('_ConfigPropertyType')
-class config_property(Generic[_ConfigPropertyType]):
+class derived:
     def __init__(self, func):
         self._func = func
         self._type = get_type_hints(func).get('return', Any)
-    def __get__(self, _, cls: type[Config]) -> _ConfigPropertyType:
+    def __get__(self, _, cls: type[Config]):
         try:
             return self._func(cls)
         except:
             return Undefined
+
+_ConstT = TypeVar('_ConstT')
+@type_hint_only
+class const(Generic[_ConstT]):
+    modification_check: bool = False
+
+    @staticmethod
+    def reversed_mro(cls, __name: str):
+        result = []
+        for base in getmro(cls)[::-1]:
+            if __name in vars(base):
+                result.append((base, vars(base)[__name]))
+        if len(result) > 1 and const.modification_check:
+            raise ConfigError(f'`<{const.__name__}> {result[0][0].__name__}.{__name}` is modified by [{", ".join([i.__name__ for i, _ in result[1:]])}]')
+        return result[0]
+
+    @staticmethod
+    def is_const(cls, __name: str):
+        if not (__name.startswith('__') and __name.endswith('__')):
+            if check_subclass(get_type_hints(cls).get(__name, Any), const):
+                return True
+        return False
 
 class ConfigMeta(type):
     __reserved__ = {
@@ -35,25 +56,36 @@ class ConfigMeta(type):
                 '__default__': dict,
                 '__updated__': dict,
             }
-    def __getattr__(cls, key):
-        if key in cls.__reserved__:
-            _key = f'__{cls.__name__.lower()}{key}'
-            if _key not in vars(cls):
-                setattr(cls, _key, cls.__reserved__[key]())
-            return getattr(cls, _key)
+
+    def __getattr__(cls, __name: str):
+        if __name in cls.__reserved__:
+            var = f'__{cls.__name__.lower()}{__name}'
+            if var not in vars(cls):
+                setattr(cls, var, cls.__reserved__[__name]())
+            return getattr(cls, var)
         raise AttributeError
+
+    def __setattr__(cls, __name: str, __value: Any) -> None:
+        if const.is_const(cls, __name):
+            raise ConfigError(f'cannot modify `<{const.__name__}> {cls.__name__}.{__name}`')
+        return super().__setattr__(__name, __value)
+
+    def __getattribute__(cls, __name: str) -> Any:
+        if const.is_const(cls, __name):
+            return const.reversed_mro(cls, __name)[1]
+        return super().__getattribute__(__name)
 
 class Config(metaclass = ConfigMeta):
     def _protected(func):
         def wrapper(cls, *args, **kwargs):
             if cls is Config:
-                raise ConfigError(f'cannot call "{func.__qualname__}" from base class')
+                raise ConfigError(f'cannot call `{func.__qualname__}()` from base class')
             return func(cls, *args, **kwargs)
         return wrapper
 
     @_protected
     def __new__(cls):
-        pars = cls.__get_parameter__(False)
+        pars = cls.__get_parameter__(True)
         return pars | {
             '__mro__'    : getmro(cls)[1:],
             '__unified__': [cls] + copy(cls.__unified__),
@@ -62,8 +94,6 @@ class Config(metaclass = ConfigMeta):
 
     @classmethod
     def __print_parameter__(cls, __par, __type, __value):
-        if get_origin(__type) is config_property:
-            __type = get_args(__type)[0]
         args = {} if __value is Undefined or check_type(__value, __type) else {'style': 'red'}
         __source = cls.__track_parameter__(__par)
         __extra  = cls.__default__.get(__par) is Extra
@@ -90,13 +120,13 @@ class Config(metaclass = ConfigMeta):
         else:
             setattr(cls, __par, __value)
             cls.__default__[__par] = Extra
-            if not isinstance(__value, config_property):
+            if not isinstance(__value, derived):
                 cls.__annotations__[__par] = __type
             return True
         return False
 
     @classmethod
-    def __get_parameter__(cls, property_value = True, derived_only = False):
+    def __get_parameter__(cls, for_update = False, derived_only = False):
         hints = get_type_hints(cls)
         pars = {}
         configs = (cls,) if derived_only else getmro(cls)
@@ -104,13 +134,18 @@ class Config(metaclass = ConfigMeta):
             if config is Config:
                 break
             for k, v in vars(config).items():
-                if not (k.startswith('__') and k.endswith('__')):
-                    if isinstance(v, config_property):
+                if k not in pars and not (k.startswith('__') and k.endswith('__')):
+                    if isinstance(v, derived):
                         t = v._type
-                        if property_value:
+                        if not for_update:
                             v = getattr(cls, k)
                     else:
                         t = hints.get(k, Any)
+                        if check_subclass(t, const):
+                            if for_update:
+                                continue
+                            else:
+                                v = const.reversed_mro(cls, k)[1]
                     pars[k] = (t, v)
         return pars
 
@@ -122,6 +157,8 @@ class Config(metaclass = ConfigMeta):
             for config in getmro(cls):
                 if config is Config:
                     break
+                if const.is_const(config, __par):
+                    return const.reversed_mro(config, __par)[0].__name__
                 if __par in vars(config):
                     return config.__name__
         return ''
@@ -135,7 +172,7 @@ class Config(metaclass = ConfigMeta):
                 _unified = [config] + config.__unified__
                 _updated = config.__updated__
                 _name = config.__name__
-                _pars = config.__get_parameter__(False, True)
+                _pars = config.__get_parameter__(True, True)
             elif check_type(config, dict):
                 config = copy(config)
                 _mro  = config.pop('__mro__', ())
@@ -145,7 +182,7 @@ class Config(metaclass = ConfigMeta):
                 _pars = config
             diff = {*_mro} - ({*getmro(cls)} | {*cls.__unified__})
             if diff:
-                raise ConfigError(f'cannot update <{cls.__name__}> with <{_name}> without [{",".join([i.__name__ for i in diff])}]')
+                raise ConfigError(f'cannot update <{cls.__name__}> with <{_name}> without [{", ".join([i.__name__ for i in diff])}]')
             cls.__unified__.extend(_unified)
             for k, (t, v) in _pars.items():
                 if cls.__set_parameter__(k, t, v):

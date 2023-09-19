@@ -22,7 +22,7 @@ class _Correction:
     def _evaluate(self, events: ak.Array, _correction: str = ..., **inputs: ContentLike):
         if _correction is ...:
             if not len(self.corrections) == 1:
-                raise CorrectionError(f'no correction is specified (available: {list(self.corrections)})')
+                raise CorrectionError(f'no correction is specified (available {list(self.corrections)})')
             _correction = next(iter(self.corrections))
         elif _correction not in self.corrections:
             raise CorrectionError(f'correction must be one of {list(self.corrections)} (got {_correction})')

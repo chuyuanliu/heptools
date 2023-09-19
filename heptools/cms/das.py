@@ -4,7 +4,7 @@
 | DAS           | https://cmsweb.cern.ch/das/         |
 | client        | https://github.com/dmwm/dasgoclient |
 '''
-
+# TODO migrate to DBSClient
 import json
 from multiprocessing import Pool
 from subprocess import check_output

@@ -12,8 +12,8 @@ from .partition import Partition
 from .utils import astuple
 
 __all__ = ['FieldLike', 'AnyArray', 'RealNumber', 'AnyInt', 'AnyFloat',
-           'has_record', 'get_field', 'set_field', 'update_fields', 'sort_field',
-           'get_shape' 'foreach', 'partition', 'where',
+           'has_record', 'get_field', 'set_field', 'update_fields',
+           'get_shape' 'foreach', 'partition', 'where', 'sort',
            'or_arrays', 'or_fields', 'and_arrays', 'and_fields', 'add_arrays', 'add_fields', 'mul_arrays', 'mul_arrays']
 
 AnyInt    = int | np.integer
@@ -59,9 +59,6 @@ def update_fields(data: Array, new: Array, *fields: FieldLike):
         fields = new.fields
     for field in fields:
         set_field(data, field, get_field(new, field))
-
-def sort_field(data: Array, field: FieldLike, axis: int = -1, ascending: bool = False) -> Array:
-    return data[ak.argsort(get_field(data, field), axis = axis, ascending = ascending)]
 
 # shape
 
@@ -119,9 +116,18 @@ add_fields = partial(op_fields, op = add)
 mul_arrays = partial(op_arrays, op = mul)
 mul_fields = partial(op_fields, op = mul)
 
-# where
+# order
 
 def where(default: Array, *conditions: tuple[Array, Any]) -> Array:
     for condition, value in conditions:
         default = ak.where(condition, value, default)
     return default
+
+def sort(data: Array, value: FieldLike | Callable[[Array], Array], axis: int = -1, ascending: bool = False) -> Array:
+    if isinstance(value, FieldLike):
+        value = get_field(data, value)
+    elif isinstance(value, Callable):
+        value = value(data)
+    else:
+        raise TypeError(f'cannot sort by <{type(value).__name__}>')
+    return data[ak.argsort(value, axis = axis, ascending = ascending)]

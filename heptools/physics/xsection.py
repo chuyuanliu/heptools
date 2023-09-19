@@ -11,6 +11,7 @@ from .coupling import Decay, Formula
 class XSectionError(Exception):
     __module__ = Exception.__module__
 
+# TODO separate to XSectionDB and XSection
 @dataclass
 class XSection:
     '''

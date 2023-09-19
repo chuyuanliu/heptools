@@ -80,7 +80,7 @@ class Diagram(ABC):
         self._transmat = np.linalg.pinv(self._component_scale(self._basis.couplings))
         _s = self._transmat.shape
         if _s[1] < _s[0]:
-            raise CouplingError(f'require at least {_s[0] - _s[1]} more coupling combinations')
+            raise CouplingError(f'require more couplings ({_s[1]}/{_s[0]} provided)')
 
     def _component_scale(self, couplings):
         couplings = np.asarray(couplings)[:, :, np.newaxis]

@@ -69,17 +69,18 @@ class Pair:
         def check(length: int):
             if len(ps) != length:
                 raise PhysicsObjectError(f'expected {length} arrays for {mode} mode (got {len(ps)})')
-        if mode == 'single':
-            check(2)
-            return ak.zip({'_p1': ps[0], '_p2': ps[1]}, with_name = cls.name)
-        elif mode == 'cartesian':
-            check(2)
-            return ak.cartesian({'_p1': ps[0], '_p2': ps[1]}, with_name = cls.name)
-        elif mode == 'combination':
-            check(1)
-            if combinations == 1:
-                return ak.combinations(ps[0], 2, fields = ['_p1', '_p2'], with_name = cls.name)
-            else:
-                return cls.pair(*partition(ps[0], combinations, 2), mode = 'single')
-        else:
-            raise PhysicsObjectError(f'invalid mode "{mode}"')
+        match mode:
+            case 'single':
+                check(2)
+                return ak.zip({'_p1': ps[0], '_p2': ps[1]}, with_name = cls.name)
+            case 'cartesian':
+                check(2)
+                return ak.cartesian({'_p1': ps[0], '_p2': ps[1]}, with_name = cls.name)
+            case 'combination':
+                check(1)
+                if combinations == 1:
+                    return ak.combinations(ps[0], 2, fields = ['_p1', '_p2'], with_name = cls.name)
+                else:
+                    return cls.pair(*partition(ps[0], combinations, 2), mode = 'single')
+            case _:
+                raise PhysicsObjectError(f'invalid mode "{mode}"')

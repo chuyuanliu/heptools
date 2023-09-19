@@ -5,7 +5,7 @@ class Sites:
 
     def __init__(self, *priority: str):
         if self.GLOBAL is None:
-            raise RuntimeError(f'default site "{self.__class__.__name__}.GLOBAL" is not defined')
+            raise RuntimeError(f'default site `{self.__class__.__name__}.GLOBAL` is not defined')
         self.priority = priority
 
     def find(self, sites: list[str]) -> str:
