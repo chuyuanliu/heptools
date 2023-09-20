@@ -28,7 +28,8 @@ class derived:
         except:
             return Undefined
 
-const = Annotated[TypeVar('_ConstT'), 'const']
+_ConstT = TypeVar('_ConstT')
+const = Annotated[_ConstT, 'const']
 class _const:
     @staticmethod
     def reversed_mro(cls, __name: str):
