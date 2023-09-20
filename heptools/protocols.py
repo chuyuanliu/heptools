@@ -25,3 +25,5 @@ class DefaultEncoder(json.JSONEncoder):
         if isinstance(__obj, JSONable):
             return __obj.__json__()
         return super().default(__obj)
+
+# TODO print rich text

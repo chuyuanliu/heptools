@@ -178,7 +178,7 @@ class Template:
                 _kwargs[axis.name] = self._data + _default_field(axis.name)
         if 'weight' in fill_args:
             _kwargs['weight'] = fill_args['weight']
-        self._fills += Collection.current.add(f'{self._name.code}.{name}', *axes, **_kwargs)        
+        self._fills += Collection.current.add(f'{self._name.code}.{name}', *axes, **_kwargs)
 
     def _wrap(self, func: Callable):
         return lambda x: func(get_field(x, self._data))

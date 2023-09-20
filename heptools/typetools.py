@@ -1,10 +1,17 @@
+from collections.abc import Callable
 from types import UnionType
-from typing import (Annotated, Any, Literal, TypeVar, Union, get_args,
-                    get_origin)
+from typing import (Annotated, Any, Literal, Protocol, TypeVar, Union,
+                    get_args, get_origin, runtime_checkable)
 
 from .utils import count, unique
 
-__all__ = ['check_subclass', 'check_type', 'type_name']
+__all__ = ['TypeGuarded',
+           'check_subclass', 'check_type', 'type_name']
+
+@runtime_checkable
+class TypeGuarded(Protocol):
+    def __typeguard__(self, *args) -> bool:
+        ...
 
 def _expand_type(__class_or_tuple):
     origin = get_origin(__class_or_tuple)
@@ -20,10 +27,19 @@ def check_subclass(__derived, __base) -> bool:
     origin_base, args_base, _ = _expand_type(__base)
     origin_derived, args_derived, _ = _expand_type(__derived)
 
+    # Any
     if origin_base is Any:
         return True
     if origin_derived is Any:
         return False
+
+    # None, Ellipsis
+    for type_ in (None, ...):
+        match count([origin_derived, origin_base], type_):
+            case 2:
+                return True
+            case 1:
+                return False
 
     # Union
     union_base = origin_base is UnionType or origin_base is Union
@@ -34,18 +50,21 @@ def check_subclass(__derived, __base) -> bool:
         return all(any(check_subclass(i, j) for j in args_base) for i in args_derived)
     elif union_derived:
         return all(check_subclass(i, __base) for i in args_derived)
-    # Literal
-    match count([origin_base, origin_derived], Literal):
-        case 2:
-            return all(i in args_base for i in args_derived)
-        case 1:
-            return False
-    # Annotated
-    match count([origin_base, origin_derived], Annotated):
-        case 2:
-            return args_base[1:] == args_derived[1:] and check_subclass(args_derived[0], args_base[0])
-        case 1:
-            return False
+    # Literal, Annotated, Callable
+    for type_, func in (
+        (Literal, lambda:
+            all(i in args_base for i in args_derived)),
+        (Annotated, lambda:
+            args_base[1:] == args_derived[1:]
+            and check_subclass(args_derived[0], args_base[0])),
+        (Callable, lambda:
+            True) # TODO Callable
+    ):
+        match count([origin_base, origin_derived], type_):
+            case 2:
+                return func()
+            case 1:
+                return False
 
     if not issubclass(origin_derived, origin_base):
         return False
@@ -56,14 +75,16 @@ def check_subclass(__derived, __base) -> bool:
             return False
     return True
 
-# TODO check Callable
 def check_type(__obj, __type) -> bool:
-    if __type is Any:
-        return True
-    if __type.__class__ is object:
+    # object(), None, Ellipsis
+    if __type.__class__ is object or __type is None or __type is ...:
         return __obj is __type
 
     origin, args, generic = _expand_type(__type)
+
+    # Any
+    if origin is Any:
+        return True
 
     # Union
     if origin is UnionType or origin is Union:
@@ -74,6 +95,7 @@ def check_type(__obj, __type) -> bool:
     # Annotated
     if origin is Annotated:
         return check_type(__obj, args[0])
+    # TODO Callable
 
     if generic:
         if not isinstance(__obj, origin):
@@ -93,7 +115,7 @@ def check_type(__obj, __type) -> bool:
             if len(args) != len(__obj):
                 return False
             return all(check_type(__obj[i], args[i]) for i in range(len(args)))
-        if '__typeguard__' in dir(origin):
+        if isinstance(origin, TypeGuarded):
             return origin.__typeguard__(__obj, *args)
         return True
     else:
@@ -102,9 +124,10 @@ def check_type(__obj, __type) -> bool:
 def type_name(__type) -> str:
     if isinstance(__type, tuple | list):
         return f'({", ".join(type_name(i) for i in __type)})'
+
     origin, args, generic = _expand_type(__type)
-    is_callable = len(args) == 2 and isinstance(args[0], list)
     args = unique(type_name(var) for var in args)
+
     if not generic:
         if origin is Any:
             return 'Any'
@@ -116,17 +139,23 @@ def type_name(__type) -> str:
             return origin.__name__
         except:
             return str(origin)
-    if is_callable:
-        return f'{args[0]} -> {args[1]}'
+
+    # Union
     if origin is UnionType or origin is Union:
         if 'None' in args:
             args.remove('None')
             return f'Optional[{" | ".join(args)}]'
         return ' | '.join(args)
+    # Annotated
     if origin is Annotated:
         return f'[{", ".join(args[1:])}] {args[0]}'
+    # Callable
+    if origin is Callable:
+        return f'{args[0]} -> {args[1]}'
+    # type
     if origin is type:
         return f'<{args[0]}>'
+
     if args:
         args = f'[{", ".join(args)}]'
     return f'{type_name(origin)}{args}'
