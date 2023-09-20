@@ -1,8 +1,8 @@
 '''
-|               |                                     |
-| -             | -                                   |
-| DAS           | https://cmsweb.cern.ch/das/         |
-| client        | https://github.com/dmwm/dasgoclient |
+|               |                                   |
+| -             | -                                 |
+| DAS           | https://cmsweb.cern.ch/das/       |
+| client        | https://github.com/dmwm/DBSClient |
 '''
 # TODO migrate to DBSClient
 import json

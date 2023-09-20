@@ -4,7 +4,9 @@ import re
 from typing import Any, Callable, Generic, Iterable, Sized, TypeVar
 
 __all__ = ['arg_set', 'arg_new',
-           'sequence_call', 'astuple', 'unpack', 'merge_op', 'match_any', 'ensure', 'Eval']
+           'sequence_call', 'merge_op',
+           'astuple', 'unpack', 'unique', 'count',
+           'match_any', 'ensure', 'Eval']
 
 def arg_set(arg, none = None, default = ...):
     if arg is None:
@@ -27,6 +29,14 @@ def sequence_call(*_funcs: Callable[[Any], Any]):
         return x
     return func
 
+def merge_op(op, _x, _y):
+    if _x is None:
+        return _y
+    elif _y is None:
+        return _x
+    else:
+        return op(_x, _y)
+
 def astuple(_o):
     return _o if isinstance(_o, tuple) else (_o,)
 
@@ -44,13 +54,8 @@ def unpack(__iter: Iterable) -> Any:
 def unique(seq: Iterable):
     return list(dict.fromkeys(seq))
 
-def merge_op(op, _x, _y):
-    if _x is None:
-        return _y
-    elif _y is None:
-        return _x
-    else:
-        return op(_x, _y)
+def count(seq: Iterable, value: Any) -> int:
+    return sum(1 for i in seq if i == value)
 
 _TargetT = TypeVar('_TargetT')
 _PatternT = TypeVar('_PatternT')

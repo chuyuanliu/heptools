@@ -3,17 +3,22 @@ channels:
   - conda-forge
 dependencies:
   - python=3.10
-  - rich
+  - pip
+  - pycurl
+# numerical
   - numpy
   - scipy
   - pandas
+# visualization
   - matplotlib
   - bokeh
   - graphviz
-  - dask-jobqueue
-  - pip
   - pip:
     - graphviz
+  - rich
+# parallel
+  - dask-jobqueue
+
 # Scikit-HEP
   - awkward
   - uproot=4.3.*
@@ -21,3 +26,5 @@ dependencies:
 # CMS
   - coffea=0.7.21
   - correctionlib
+  - pip:
+    - dbs3-client

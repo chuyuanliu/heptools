@@ -2,11 +2,11 @@ from __future__ import annotations
 
 from copy import copy
 from inspect import getmro
-from typing import Any, Generic, TypeVar, get_type_hints
+from typing import Annotated, Any, TypeVar, get_type_hints
 
 from rich.text import Text
 
-from .typetools import check_subclass, check_type, type_hint_only, type_name
+from .typetools import check_subclass, check_type, type_name
 
 __all__ = ['Config', 'ConfigError',
            'derived', 'const',
@@ -28,25 +28,19 @@ class derived:
         except:
             return Undefined
 
-_ConstT = TypeVar('_ConstT')
-@type_hint_only
-class const(Generic[_ConstT]):
-    modification_check: bool = False
-
+const = Annotated[TypeVar('_ConstT'), 'const']
+class _const:
     @staticmethod
     def reversed_mro(cls, __name: str):
-        result = []
         for base in getmro(cls)[::-1]:
             if __name in vars(base):
-                result.append((base, vars(base)[__name]))
-        if len(result) > 1 and const.modification_check:
-            raise ConfigError(f'`<{const.__name__}> {result[0][0].__name__}.{__name}` is modified by [{", ".join([i.__name__ for i, _ in result[1:]])}]')
-        return result[0]
+                return base, vars(base)[__name]
+        raise AttributeError
 
     @staticmethod
     def is_const(cls, __name: str):
         if not (__name.startswith('__') and __name.endswith('__')):
-            if check_subclass(get_type_hints(cls).get(__name, Any), const):
+            if check_subclass(get_type_hints(cls, include_extras = True).get(__name, Any), const):
                 return True
         return False
 
@@ -66,13 +60,13 @@ class ConfigMeta(type):
         raise AttributeError
 
     def __setattr__(cls, __name: str, __value: Any) -> None:
-        if const.is_const(cls, __name):
-            raise ConfigError(f'cannot modify `<{const.__name__}> {cls.__name__}.{__name}`')
+        if _const.is_const(cls, __name):
+            raise ConfigError(f'cannot modify {const.__metadata__[0]} `{cls.__name__}.{__name}`')
         return super().__setattr__(__name, __value)
 
     def __getattribute__(cls, __name: str) -> Any:
-        if const.is_const(cls, __name):
-            return const.reversed_mro(cls, __name)[1]
+        if _const.is_const(cls, __name):
+            return _const.reversed_mro(cls, __name)[1]
         return super().__getattribute__(__name)
 
 class Config(metaclass = ConfigMeta):
@@ -127,7 +121,7 @@ class Config(metaclass = ConfigMeta):
 
     @classmethod
     def __get_parameter__(cls, for_update = False, derived_only = False):
-        hints = get_type_hints(cls)
+        hints = get_type_hints(cls, include_extras = True)
         pars = {}
         configs = (cls,) if derived_only else getmro(cls)
         for config in configs:
@@ -145,7 +139,7 @@ class Config(metaclass = ConfigMeta):
                             if for_update:
                                 continue
                             else:
-                                v = const.reversed_mro(cls, k)[1]
+                                v = _const.reversed_mro(cls, k)[1]
                     pars[k] = (t, v)
         return pars
 
@@ -157,8 +151,8 @@ class Config(metaclass = ConfigMeta):
             for config in getmro(cls):
                 if config is Config:
                     break
-                if const.is_const(config, __par):
-                    return const.reversed_mro(config, __par)[0].__name__
+                if _const.is_const(config, __par):
+                    return _const.reversed_mro(config, __par)[0].__name__
                 if __par in vars(config):
                     return config.__name__
         return ''

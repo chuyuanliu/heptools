@@ -1,8 +1,9 @@
 import json
 from types import UnionType
-from typing import Any, Generic, Iterable, Literal, Union, get_args, get_origin
+from typing import (Annotated, Any, Literal, TypeVar, Union, get_args,
+                    get_origin)
 
-from .utils import unique
+from .utils import count, unique
 
 __all__ = ['check_type', 'type_name']
 
@@ -11,12 +12,6 @@ class DefaultEncoder(json.JSONEncoder):
         if '__json__' in dir(__obj):
             return __obj.__json__()
         return super().default(__obj)
-
-def _type_hint_init(self):
-    raise TypeError(f'<{self.__class__.__name__}> is for type hint only')
-def type_hint_only(cls):
-    cls.__init__ = _type_hint_init
-    return cls
 
 def alias(*methods: str):
     def wrapper(cls):
@@ -33,17 +28,18 @@ def _expand_type(__class_or_tuple):
     generic = origin is not None and len(args) > 0
     if origin is None:
         origin = __class_or_tuple
+    if isinstance(origin, TypeVar):
+        origin = origin.__bound__ if origin.__bound__ is not None else Any
     return origin, args, generic
 
-
 def check_subclass(__derived, __base) -> bool:
-    if __base is Any:
-        return True
-    if __derived is Any:
-        return False
-
     origin_base, args_base, _ = _expand_type(__base)
     origin_derived, args_derived, _ = _expand_type(__derived)
+
+    if origin_base is Any:
+        return True
+    if origin_derived is Any:
+        return False
 
     # Union
     union_base = origin_base is UnionType or origin_base is Union
@@ -55,10 +51,17 @@ def check_subclass(__derived, __base) -> bool:
     elif union_derived:
         return all(check_subclass(i, __base) for i in args_derived)
     # Literal
-    if origin_base is Literal and origin_derived is Literal:
-        return all(i in args_base for i in args_derived)
-    if origin_derived is Literal or origin_base is Literal:
-        return False
+    match count([origin_base, origin_derived], Literal):
+        case 2:
+            return all(i in args_base for i in args_derived)
+        case 1:
+            return False
+    # Annotated
+    match count([origin_base, origin_derived], Annotated):
+        case 2:
+            return args_base[1:] == args_derived[1:] and check_subclass(args_derived[0], args_base[0])
+        case 1:
+            return False
 
     if not issubclass(origin_derived, origin_base):
         return False
@@ -84,10 +87,9 @@ def check_type(__obj, __type) -> bool:
     # Literal
     if origin is Literal:
         return __obj in args
-
-    if issubclass(origin, Generic):
-        if origin.__init__ is _type_hint_init:
-            return check_type(__obj, args[0]) if generic else True
+    # Annotated
+    if origin is Annotated:
+        return check_type(__obj, args[0])
 
     if generic:
         if not isinstance(__obj, origin):
@@ -113,10 +115,10 @@ def check_type(__obj, __type) -> bool:
     else:
         return isinstance(__obj, origin)
 
-def type_name(origin) -> str:
-    if isinstance(origin, Iterable):
-        return f'({", ".join(type_name(i) for i in origin)})'
-    origin, args, generic = _expand_type(origin)
+def type_name(__type) -> str:
+    if isinstance(__type, tuple | list):
+        return f'({", ".join(type_name(i) for i in __type)})'
+    origin, args, generic = _expand_type(__type)
     is_callable = len(args) == 2 and isinstance(args[0], list)
     args = unique(type_name(var) for var in args)
     if not generic:
@@ -137,6 +139,8 @@ def type_name(origin) -> str:
             args.remove('None')
             return f'Optional[{" | ".join(args)}]'
         return ' | '.join(args)
+    if origin is Annotated:
+        return f'{args[0]}[{", ".join(args[1:])}]'
     if origin is type:
         return f'<{args[0]}>'
     if args:
