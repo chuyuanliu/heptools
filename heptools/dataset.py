@@ -5,9 +5,9 @@ from typing import Callable, Iterable, Literal
 
 from .benchmark.unit import Metric
 from .container import Tree
+from .protocols import DefaultEncoder, alias
 from .system.cluster.sites import Sites
 from .system.eos import EOS, PathLike
-from .typetools import DefaultEncoder, alias
 
 __all__ = ['File', 'FileList', 'Dataset',
            'DatasetError']

@@ -1,26 +1,10 @@
-import json
 from types import UnionType
 from typing import (Annotated, Any, Literal, TypeVar, Union, get_args,
                     get_origin)
 
 from .utils import count, unique
 
-__all__ = ['check_type', 'type_name']
-
-class DefaultEncoder(json.JSONEncoder):
-    def default(self, __obj):
-        if '__json__' in dir(__obj):
-            return __obj.__json__()
-        return super().default(__obj)
-
-def alias(*methods: str):
-    def wrapper(cls):
-        for method in methods:
-            if not hasattr(cls, method):
-                raise TypeError(f'`{cls.__name__}.{method}()` is not defined')
-            setattr(cls, f'__{method}__', getattr(cls, method))
-        return cls
-    return wrapper
+__all__ = ['check_subclass', 'check_type', 'type_name']
 
 def _expand_type(__class_or_tuple):
     origin = get_origin(__class_or_tuple)
@@ -140,7 +124,7 @@ def type_name(__type) -> str:
             return f'Optional[{" | ".join(args)}]'
         return ' | '.join(args)
     if origin is Annotated:
-        return f'{args[0]}[{", ".join(args[1:])}]'
+        return f'[{", ".join(args[1:])}] {args[0]}'
     if origin is type:
         return f'<{args[0]}>'
     if args:
