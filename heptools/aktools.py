@@ -40,7 +40,7 @@ def get_field(data: Array, field: FieldLike):
         try:
             return ak.num(data, axis = len(get_shape(data)) - 1)
         except:
-            return ak.Array(np.ones(len(data)))
+            return ak.Array(np.ones(len(data), dtype = np.int64))
     for level in astuple(field):
         if level in data.fields:
             data = data[level]
