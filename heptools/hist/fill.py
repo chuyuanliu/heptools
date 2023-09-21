@@ -51,9 +51,12 @@ class Fill:
                     mask_categories.append(category)
                 else:
                     fill_args[category] = hs._default_field(category)
+        # TODO cache fields
         for category_args in hists._generate_category_combinations(mask_categories):
             mask   = and_fields(events, *category_args.items())
             masked = events if mask is None else events[mask]
+            if len(masked) == 0:
+                continue
             for k, v in fill_args.items():
                 if (isinstance(v, str) and k in hists._categories) or isinstance(v, (bool, RealNumber)):
                     category_args[k] = v

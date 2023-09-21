@@ -5,6 +5,7 @@
 | client        | https://github.com/dmwm/DBSClient |
 '''
 # TODO migrate to DBSClient
+# url https://cmsweb.cern.ch/dbs/prod/global/DBSReader/
 import json
 from multiprocessing import Pool
 from subprocess import check_output

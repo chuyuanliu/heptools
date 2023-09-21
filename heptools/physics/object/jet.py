@@ -17,16 +17,19 @@ class DiJet(DiLorentzVector):
 @register_behavior
 class ExtendedJet(DiLorentzVector):
     def cumulate(self, op: Callable[[ak.Array, ak.Array], ak.Array], field: FieldLike):
-        constituents = self.constituents
-        jets = foreach(constituents.Jet)
-        p = op_arrays(*(get_field(jet, field) for jet in jets), op = op)
-        others = set(constituents.fields) - {'Jet'}
-        for other in others:
-            objs = foreach(constituents[other])
-            for obj in objs:
-                p = where(op(p, get_field(obj, field)),
-                          (or_arrays(*(obj.jetIdx == jet.jetIdx for jet in jets)), p))
-        return p
+        if len(self) > 0:
+            constituents = self.constituents
+            jets = foreach(constituents.Jet)
+            p = op_arrays(*(get_field(jet, field) for jet in jets), op = op)
+            others = set(constituents.fields) - {'Jet'}
+            for other in others:
+                objs = foreach(constituents[other])
+                for obj in objs:
+                    p = where(op(p, get_field(obj, field)),
+                            (or_arrays(*(obj.jetIdx == jet.jetIdx for jet in jets)), p))
+            return p
+        else:
+            return super().cumulate(op, field)
 
     @property
     def n_unique(self):

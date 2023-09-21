@@ -31,7 +31,7 @@ class DiLorentzVector(vec.PtEtaPhiMLorentzVector):
                 for k in constituents.fields:
                     ps[k].append(constituents[k])
             except:
-                ps[get_shape(p)[-1]].append(ak.unflatten(p, 1, axis = len(get_shape(p)) - 2))
+                ps[get_shape(p)[-1]].append(ak.unflatten(p, bool(len(p)), axis = len(get_shape(p)) - 2))
         for k, v in ps.items():
             ps[k] = ak.concatenate(v, axis = len(get_shape((v[0]))) - 2)
         return ak.Array(ps, behavior = self.behavior)

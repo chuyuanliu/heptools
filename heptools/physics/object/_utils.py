@@ -22,6 +22,7 @@ def register_behavior(cls = None, dependencies: dict = None):
         behavior |= dependencies
     return cls
 
+# TODO cache fields
 def setup_lorentz_vector(target: str):
     def _wrap(cls):
         def _get(self, name):

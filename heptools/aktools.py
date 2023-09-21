@@ -13,7 +13,7 @@ from .utils import astuple
 
 __all__ = ['FieldLike', 'AnyArray', 'RealNumber', 'AnyInt', 'AnyFloat',
            'has_record', 'get_field', 'set_field', 'update_fields',
-           'get_shape' 'foreach', 'partition', 'where', 'sort',
+           'get_shape' 'foreach', 'partition', 'between', 'where', 'sort',
            'or_arrays', 'or_fields', 'and_arrays', 'and_fields', 'add_arrays', 'add_fields', 'mul_arrays', 'mul_arrays']
 
 AnyInt    = int | np.integer
@@ -42,7 +42,10 @@ def get_field(data: Array, field: FieldLike):
         except:
             return ak.Array(np.ones(len(data)))
     for level in astuple(field):
-        data = getattr(data, level)
+        if level in data.fields:
+            data = data[level]
+        else:
+            data = getattr(data, level)
     return data
 
 def set_field(data: Array, field: FieldLike, value: Array):
@@ -116,7 +119,10 @@ add_fields = partial(op_fields, op = add)
 mul_arrays = partial(op_arrays, op = mul)
 mul_fields = partial(op_fields, op = mul)
 
-# order
+# search, sort
+
+def between(data: Array, range: tuple[float, float]) -> Array:
+    return (data > range[0]) & (data < range[1])
 
 def where(default: Array, *conditions: tuple[Array, Any]) -> Array:
     for condition, value in conditions:
