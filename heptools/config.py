@@ -6,7 +6,7 @@ from typing import Annotated, Any, TypeVar, get_type_hints
 
 from rich.text import Text
 
-from .typetools import check_subclass, check_type, type_name
+from .typetools import check_subclass, check_type, reversed_mro, type_name
 
 __all__ = ['Config', 'ConfigError',
            'derived', 'const',
@@ -30,20 +30,11 @@ class derived:
 
 _ConstT = TypeVar('_ConstT')
 const = Annotated[_ConstT, 'const']
-class _const:
-    @staticmethod
-    def reversed_mro(cls, __name: str):
-        for base in getmro(cls)[::-1]:
-            if __name in vars(base):
-                return base, vars(base)[__name]
-        raise AttributeError
-
-    @staticmethod
-    def is_const(cls, __name: str):
-        if not (__name.startswith('__') and __name.endswith('__')):
-            if check_subclass(get_type_hints(cls, include_extras = True).get(__name, Any), const):
-                return True
-        return False
+def _is_const(cls, name: str):
+    if not (name.startswith('__') and name.endswith('__')):
+        if check_subclass(get_type_hints(cls, include_extras = True).get(name, Any), const):
+            return True
+    return False
 
 class ConfigMeta(type):
     __reserved__ = {
@@ -61,13 +52,13 @@ class ConfigMeta(type):
         raise AttributeError
 
     def __setattr__(cls, __name: str, __value: Any) -> None:
-        if _const.is_const(cls, __name):
+        if _is_const(cls, __name):
             raise ConfigError(f'cannot modify {const.__metadata__[0]} `{cls.__name__}.{__name}`')
         return super().__setattr__(__name, __value)
 
     def __getattribute__(cls, __name: str) -> Any:
-        if _const.is_const(cls, __name):
-            return _const.reversed_mro(cls, __name)[1]
+        if _is_const(cls, __name):
+            return reversed_mro(cls, __name)[1]
         return super().__getattribute__(__name)
 
 class Config(metaclass = ConfigMeta):
@@ -140,7 +131,7 @@ class Config(metaclass = ConfigMeta):
                             if for_update:
                                 continue
                             else:
-                                v = _const.reversed_mro(cls, k)[1]
+                                v = reversed_mro(cls, k)[1]
                     pars[k] = (t, v)
         return pars
 
@@ -152,8 +143,8 @@ class Config(metaclass = ConfigMeta):
             for config in getmro(cls):
                 if config is Config:
                     break
-                if _const.is_const(config, __par):
-                    return _const.reversed_mro(config, __par)[0].__name__
+                if _is_const(config, __par):
+                    return reversed_mro(config, __par)[0].__name__
                 if __par in vars(config):
                     return config.__name__
         return ''

@@ -4,7 +4,9 @@ from typing import Callable, Iterable, Literal
 
 import awkward as ak
 
-from ...aktools import get_shape, partition
+from ...aktools import FieldLike, cache_field, get_field, get_shape, partition
+from ...typetools import accumulated_mro
+from ...utils import arg_new
 
 
 class PhysicsObjectError(Exception):
@@ -25,7 +27,7 @@ def register_behavior(cls = None, dependencies: dict = None):
 def setup_lorentz_vector(target: str):
     def _wrap(cls):
         def _get(self, name):
-            return getattr(getattr(self, target), name)
+            return get_field(get_field(self, target), name)
         for k in ['pt', 'eta', 'phi', 'mass']:
             setattr(cls, k, property(partial(_get, name = k)))
         return cls
@@ -34,7 +36,7 @@ def setup_lorentz_vector(target: str):
 def setup_lead_subl(*targets: str):
     def _wrap(cls):
         def _get(self, op, target):
-            return ak.where(op(getattr(self._p1, target), getattr(self._p2, target)), self._p1, self._p2)
+            return ak.where(op(get_field(self._p1, target), get_field(self._p2, target)), self._p1, self._p2)
         for target in targets:
             for k, op in [('lead', ge), ('subl', lt)]:
                 field = f'{k}_{target}'
@@ -53,13 +55,15 @@ def setup_field(op: Callable[[ak.Array, ak.Array], ak.Array], *targets: str):
 
 class Pair:
     name: str = None
+    cache_field: list[FieldLike] = []
     type_check: set[str] | Callable[[Iterable[ak.Array]], None] = None
 
     @classmethod
     def pair(cls,
              *ps: ak.Array,
              mode: Literal['single', 'cartesian', 'combination'] = 'single',
-             combinations: int = 1) -> ak.Array:
+             combinations: int = 1,
+             cache: list[str] = ...) -> ak.Array:
         if isinstance(cls.type_check, set):
             for p in ps:
                 if get_shape(p)[-1] not in cls.type_check:
@@ -72,15 +76,21 @@ class Pair:
         match mode:
             case 'single':
                 check(2)
-                return ak.zip({'_p1': ps[0], '_p2': ps[1]}, with_name = cls.name)
+                paired = ak.zip({'_p1': ps[0], '_p2': ps[1]}, with_name = cls.name)
             case 'cartesian':
                 check(2)
-                return ak.cartesian({'_p1': ps[0], '_p2': ps[1]}, with_name = cls.name)
+                paired = ak.cartesian({'_p1': ps[0], '_p2': ps[1]}, with_name = cls.name)
             case 'combination':
                 check(1)
                 if combinations == 1:
-                    return ak.combinations(ps[0], 2, fields = ['_p1', '_p2'], with_name = cls.name)
+                    paired = ak.combinations(ps[0], 2, fields = ['_p1', '_p2'], with_name = cls.name)
                 else:
-                    return cls.pair(*partition(ps[0], combinations, 2), mode = 'single')
+                    paired = cls.pair(*partition(ps[0], combinations, 2), mode = 'single')
             case _:
                 raise PhysicsObjectError(f'invalid mode "{mode}"')
+
+
+        cache = arg_new(cache, list, lambda: accumulated_mro(cls, 'cache_field', reverse = True))
+        for field in cache:
+            cache_field(paired, field)
+        return paired

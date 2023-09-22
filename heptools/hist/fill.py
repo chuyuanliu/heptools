@@ -41,7 +41,7 @@ class Fill:
 
     def cache(self, events: ak.Array):
         for v in self._kwargs.values():
-            if isinstance(v, FieldLike) and has_record(events, v) != v:
+            if check_type(v, FieldLike) and has_record(events, v) != v:
                 set_field(events, v, get_field(events, v))
 
     def fill(self, events: ak.Array, hists: hs.Collection = ..., **fill_args: FillLike):

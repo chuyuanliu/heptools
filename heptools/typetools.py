@@ -1,4 +1,7 @@
 from collections.abc import Callable
+from functools import reduce
+from inspect import getmro
+from operator import add
 from types import UnionType
 from typing import (Annotated, Any, Literal, Protocol, TypeVar, Union,
                     get_args, get_origin, runtime_checkable)
@@ -6,7 +9,8 @@ from typing import (Annotated, Any, Literal, Protocol, TypeVar, Union,
 from .utils import count, unique
 
 __all__ = ['TypeGuarded',
-           'check_subclass', 'check_type', 'type_name']
+           'check_subclass', 'check_type', 'type_name',
+           'reversed_mro']
 
 @runtime_checkable
 class TypeGuarded(Protocol):
@@ -159,3 +163,17 @@ def type_name(__type) -> str:
     if args:
         args = f'[{", ".join(args)}]'
     return f'{type_name(origin)}{args}'
+
+# mro
+
+def reversed_mro(cls, name: str):
+    for base in getmro(cls)[::-1]:
+        if name in vars(base):
+            return base, vars(base)[name]
+    raise AttributeError
+
+def accumulated_mro(cls, name: str, reverse: bool = False, op: Callable[[Any, Any], Any] = add):
+    return reduce(op, 
+                  (vars(base)[name]
+                   for base in getmro(cls)[::-1 if reverse else 1]
+                   if name in vars(base)))

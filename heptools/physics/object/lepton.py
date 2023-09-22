@@ -1,8 +1,9 @@
 from operator import add
 
 from ...hist import H
-from ._utils import Pair, register_behavior, setup_field
-from .vector import DiLorentzVector, _PlotDiLorentzVector, _PlotLorentzVector
+from ._utils import register_behavior, setup_field
+from .vector import (DiLorentzVector, _PairLorentzVector, _PlotDiLorentzVector,
+                     _PlotLorentzVector)
 
 
 @register_behavior
@@ -11,7 +12,7 @@ class DiLepton(DiLorentzVector):
     ...
 
 
-class _PairLepton(Pair):
+class _PairLepton(_PairLorentzVector):
     name = 'DiLepton'
 
 

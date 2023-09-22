@@ -6,8 +6,9 @@ import awkward as ak
 from ...aktools import (FieldLike, foreach, get_field, get_shape, op_arrays,
                         or_arrays, where)
 from ...hist import H
-from ._utils import Pair, PhysicsObjectError, register_behavior
-from .vector import DiLorentzVector, _PlotDiLorentzVector, _PlotLorentzVector
+from ._utils import PhysicsObjectError, register_behavior
+from .vector import (DiLorentzVector, _PairLorentzVector, _PlotDiLorentzVector,
+                     _PlotLorentzVector)
 
 
 @register_behavior
@@ -36,11 +37,11 @@ class ExtendedJet(DiLorentzVector):
         return self.cumulate(add, ...)
 
 
-class _PairJet(Pair):
+class _PairJet(_PairLorentzVector):
     name = 'DiJet'
     type_check = {'Jet', 'DiJet'}
 
-class _ExtendJet(Pair):
+class _ExtendJet(_PairLorentzVector):
     name = 'ExtendedJet'
     @staticmethod
     def type_check(ps):

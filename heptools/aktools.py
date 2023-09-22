@@ -9,6 +9,7 @@ import numpy as np
 from awkward import Array
 
 from .partition import Partition
+from .typetools import check_type
 from .utils import astuple
 
 __all__ = ['FieldLike', 'AnyArray', 'RealNumber', 'AnyInt', 'AnyFloat',
@@ -23,7 +24,7 @@ AnyArray  = Array | np.ndarray
 
 # field
 
-FieldLike = str | tuple
+FieldLike = str | tuple[str, ...]
 
 def has_record(data: Array, field: FieldLike) -> tuple[str, ...]:
     parents = []
@@ -56,6 +57,11 @@ def set_field(data: Array, field: FieldLike, value: Array):
         for level in reversed(nested):
             value = ak.zip({level: value})
     data[parent] = value
+
+def cache_field(data: Array, field: FieldLike):
+    field = astuple(field)
+    if has_record(data, field) != field:
+        set_field(data, field, get_field(data, field))
 
 def update_fields(data: Array, new: Array, *fields: FieldLike):
     if not fields:
@@ -130,7 +136,7 @@ def where(default: Array, *conditions: tuple[Array, Any]) -> Array:
     return default
 
 def sort(data: Array, value: FieldLike | Callable[[Array], Array], axis: int = -1, ascending: bool = False) -> Array:
-    if isinstance(value, FieldLike):
+    if check_type(value, FieldLike):
         value = get_field(data, value)
     elif isinstance(value, Callable):
         value = value(data)
