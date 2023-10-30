@@ -29,3 +29,4 @@ dependencies:
   - correctionlib
   - pip:
     - dbs3-client
+    - rucio-clients
