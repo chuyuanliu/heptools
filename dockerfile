@@ -18,4 +18,7 @@ RUN mamba env update -n base -f https://raw.githubusercontent.com/chuyuanliu/hep
  && mamba clean --all --yes \
  && pip install --no-cache-dir --no-dependencies git+https://github.com/chuyuanliu/heptools.git@master
 RUN ln -s /opt/conda/etc/grid-security /etc/grid-security
+# rucio
+RUN mkdir -p /opt/rucio/etc/
+RUN wget -O /opt/rucio/etc/rucio.cfg https://raw.githubusercontent.com/dmwm/CMSRucio/master/docker/CMSRucioClient/rucio-prod.cfg
 ENTRYPOINT ["tini", "-g", "--"]
