@@ -21,3 +21,12 @@ class CMSSites(Sites):
     GLOBAL              = 'root://cms-xrd-global.cern.ch/'
     T1_US_FNAL_Disk     = 'root://cmsxrootd.fnal.gov/'
     T3_US_FNALLPC       = 'root://cmseos.fnal.gov/'
+
+class CERNBox(Sites):
+    '''
+    |       |                               |
+    | -     | -                             |
+    | web   | https://cernbox.cern.ch/      |
+    | docs  | https://cernbox.docs.cern.ch  |
+    '''
+    GLOBAL = 'root://eosuser.cern.ch/'

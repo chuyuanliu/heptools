@@ -23,6 +23,7 @@ dependencies:
   - awkward
   - uproot=4.3.*
   - hist
+  - particle
 # CMS
   - coffea=0.7.21
   - correctionlib
