@@ -36,7 +36,7 @@ def setup_lorentz_vector(target: str):
 def setup_lead_subl(*targets: str):
     def _wrap(cls):
         def _get(self, op, target):
-            return ak.where(op(get_field(self._p1, target), get_field(self._p2, target)), self._p1, self._p2)
+            return ak.where(op(get_field(self.obj1, target), get_field(self.obj2, target)), self.obj1, self.obj2)
         for target in targets:
             for k, op in [('lead', ge), ('subl', lt)]:
                 field = f'{k}_{target}'
@@ -76,14 +76,14 @@ class Pair:
         match mode:
             case 'single':
                 check(2)
-                paired = ak.zip({'_p1': ps[0], '_p2': ps[1]}, with_name = cls.name)
+                paired = ak.zip({'obj1': ps[0], 'obj2': ps[1]}, with_name = cls.name)
             case 'cartesian':
                 check(2)
-                paired = ak.cartesian({'_p1': ps[0], '_p2': ps[1]}, with_name = cls.name)
+                paired = ak.cartesian({'obj1': ps[0], 'obj2': ps[1]}, with_name = cls.name)
             case 'combination':
                 check(1)
                 if combinations == 1:
-                    paired = ak.combinations(ps[0], 2, fields = ['_p1', '_p2'], with_name = cls.name)
+                    paired = ak.combinations(ps[0], 2, fields = ['obj1', 'obj2'], with_name = cls.name)
                 else:
                     paired = cls.pair(*partition(ps[0], combinations, 2), mode = 'single')
             case _:

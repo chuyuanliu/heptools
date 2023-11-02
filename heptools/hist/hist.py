@@ -50,10 +50,7 @@ def _create_axis(args: AxisLike) -> AxesMixin:
 
 class Label:
     @overload
-    def __init__(self, label: Label):
-        ...
-    @overload
-    def __init__(self, label: tuple[str, str]):
+    def __init__(self, label: LabelLike):
         ...
     @overload
     def __init__(self, code: str, display: str):
@@ -84,7 +81,7 @@ class Collection:
         self._fills: dict[str, list[str]] = {}
         self._hists: dict[str,   Hist   ] = {}
         self._categories = deepcopy(categories)
-        self._axes:  dict[str, AxesMixin] = {k: _create_axis((*(v if isinstance(v, tuple) else (v,)), (k, k.capitalize()))) for k, v in self._categories.items()}
+        self._axes:  dict[str, AxesMixin] = {k: _create_axis((*(v if isinstance(v, tuple) else (v,)), k)) for k, v in self._categories.items()}
         self.cd()
 
     def add(self, name: str, *axes: AxisLike, **fill_args: fs.FillLike):

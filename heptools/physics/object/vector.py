@@ -20,12 +20,12 @@ from ._utils import (Pair, register_behavior, setup_field, setup_lead_subl,
 @setup_field(add, 'p4vec', 'st')
 class DiLorentzVector(vec.PtEtaPhiMLorentzVector):
     def cumulate(self, op: Callable[[ak.Array, ak.Array], ak.Array], target: FieldLike):
-        return op(get_field(self._p1, target), get_field(self._p2, target))
+        return op(get_field(self.obj1, target), get_field(self.obj2, target))
 
     @property
     def constituents(self):
         ps = defaultdict(list)
-        for p in (self._p1, self._p2):
+        for p in (self.obj1, self.obj2):
             try:
                 constituents = p.constituents
                 for k in constituents.fields:
@@ -38,11 +38,11 @@ class DiLorentzVector(vec.PtEtaPhiMLorentzVector):
 
     @property
     def dr(self):
-        return self._p1.delta_r(self._p2)
+        return self.obj1.delta_r(self.obj2)
 
     @property
     def dphi(self):
-        return self._p1.delta_phi(self._p2)
+        return self.obj1.delta_phi(self.obj2)
 
 
 class _PairLorentzVector(Pair):

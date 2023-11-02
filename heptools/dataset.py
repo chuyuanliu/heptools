@@ -6,8 +6,6 @@ from typing import Callable, Iterable, Literal
 from .benchmark.unit import Metric
 from .container import Tree
 from .protocols import DefaultEncoder, alias
-from .system.cluster.sites import Sites
-from .system.eos import EOS, PathLike
 
 __all__ = ['File', 'FileList', 'Dataset',
            'DatasetError']
@@ -16,12 +14,10 @@ class DatasetError(Exception):
     __module__ = Exception.__module__
 
 class File:
-    priority: Sites = None
-
     def  __init__(self,
                   data: dict | File = None,
                   site: str | list[str] = None,
-                  path: PathLike = None,
+                  path: str = None,
                   nevents: int = None):
         if data is None:
             data = {}
@@ -37,12 +33,6 @@ class File:
 
     def __json__(self):
         return {'path': self.path, 'nevents': self.nevents, 'site': [*self.site]}
-
-    @property
-    def eos(self):
-        if self.priority is None:
-            raise DatasetError('site priority is not specified')
-        return EOS(self.path, self.priority.find(self.site))
 
 @alias('copy')
 class FileList:

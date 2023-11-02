@@ -3,7 +3,7 @@ from coffea.processor import ProcessorABC, Runner, iterative_executor
 from dask import compute, delayed
 
 from heptools.benchmark.unit import Metric
-from heptools.cms import PicoAOD
+from heptools.cms import AAA, PicoAOD
 from heptools.dataset import Dataset, File, FileList
 from heptools.root import Chunk
 from heptools.system.eos import EOS, PathLike
@@ -14,7 +14,7 @@ FILENAME = 'picoAOD'
 def _int(*values: int | str) -> tuple[int, ...]:
     return tuple(int(Metric.remove(v)) if isinstance(v, str) else v for v in values)
 
-def _cluster_skim(output: PathLike, inputs: list[PathLike | Chunk], step: int, offset: int = None, selection = None):
+def _cluster_skim(output: EOS, inputs: list[PathLike | Chunk], step: int, offset: int = None, selection = None):
     skim = PicoAOD.copy()
     skim.iterate_step = step
     if offset is None:
@@ -29,7 +29,7 @@ def _cluster_skim(output: PathLike, inputs: list[PathLike | Chunk], step: int, o
     local_output.move_to(output, parents = True, overwrite = True)
 
     return File(
-        site = [output.url],
+        site = 'T3_US_FNALLPC',
         path = str(output.path),
         nevents = nevents)
 
@@ -76,7 +76,7 @@ def create_picoaod_from_dataset(
         files: list[tuple[EOS, str]] = []
         for file in filelist:
             files.append((
-                file.eos,
+                EOS(file.path, AAA.US),
                 f'{FILENAME}{{selection}}.chunk{len(files)}.root'
             ))
         for selection, processor in selections.items():
@@ -110,7 +110,7 @@ def merge_chunks(
     for (source, dataset, year, era, tier), filelist in datasets:
         offset = 0
         path = base / source / dataset / (year + era)
-        files = [Chunk(f.eos, f.nevents) for f in filelist]
+        files = [Chunk(EOS(f.path, AAA.US), f.nevents) for f in filelist]
         if chunksize is ...:
             chunks = [files]
         else:
@@ -131,10 +131,10 @@ def merge_chunks(
 
     outputs = compute(*outputs)
     for _, file in datasets.files:
-        file.eos.rm()
+        EOS(file.path, AAA.US).rm()
     merged = Dataset()
     for (file, temp, output, source, dataset, year, era, tier) in outputs:
         temp.move_to(output, parents = True, overwrite = True)
-        file = File(file, site = [output.url], path = str(output.path))
+        file = File(file, site = 'T3_US_FNALLPC', path = str(output.path))
         merged.update(source, dataset, year, era, tier, FileList({'files': [file]}))
     return merged
