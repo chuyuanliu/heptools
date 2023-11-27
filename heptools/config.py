@@ -37,20 +37,6 @@ def _is_const(cls, name: str):
     return False
 
 class ConfigMeta(type):
-    __reserved__ = {
-                '__unified__': list,
-                '__default__': dict,
-                '__updated__': dict,
-            }
-
-    def __getattr__(cls, __name: str):
-        if __name in cls.__reserved__:
-            var = f'__{cls.__name__.lower()}{__name}'
-            if var not in vars(cls):
-                setattr(cls, var, cls.__reserved__[__name]())
-            return getattr(cls, var)
-        raise AttributeError
-
     def __setattr__(cls, __name: str, __value: Any) -> None:
         if _is_const(cls, __name):
             raise ConfigError(f'cannot modify {const.__metadata__[0]} `{cls.__name__}.{__name}`')
@@ -62,6 +48,16 @@ class ConfigMeta(type):
         return super().__getattribute__(__name)
 
 class Config(metaclass = ConfigMeta):
+    __unified__: list[type[Config]] = list
+    __default__: dict[str, Any] = dict
+    __updated__: dict[str, str] = dict
+
+    def __init_subclass__(cls):
+        if cls is not Config:
+            for k in ['unified', 'default', 'updated']:
+                k = f'__{k}__'
+                setattr(cls, k, getattr(Config, k)())
+
     def _protected(func):
         def wrapper(cls, *args, **kwargs):
             if cls is Config:
@@ -74,7 +70,7 @@ class Config(metaclass = ConfigMeta):
         pars = cls.__get_parameter__(True)
         return pars | {
             '__mro__'    : getmro(cls)[1:],
-            '__unified__': [cls] + copy(cls.__unified__),
+            '__unified__': [cls] + cls.__unified__,
             '__updated__': {k: cls.__track_parameter__(k) for k in pars},
         }
 
@@ -112,10 +108,10 @@ class Config(metaclass = ConfigMeta):
         return False
 
     @classmethod
-    def __get_parameter__(cls, for_update = False, derived_only = False):
+    def __get_parameter__(cls, update = False):
         hints = get_type_hints(cls, include_extras = True)
         pars = {}
-        configs = (cls,) if derived_only else getmro(cls)
+        configs = (cls,) if update else getmro(cls)
         for config in configs:
             if config is Config:
                 break
@@ -123,12 +119,12 @@ class Config(metaclass = ConfigMeta):
                 if k not in pars and not (k.startswith('__') and k.endswith('__')):
                     if isinstance(v, derived):
                         t = v._type
-                        if not for_update:
+                        if not update:
                             v = getattr(cls, k)
                     else:
                         t = hints.get(k, Any)
                         if check_subclass(t, const):
-                            if for_update:
+                            if update:
                                 continue
                             else:
                                 v = reversed_mro(cls, k)[1]
@@ -153,12 +149,14 @@ class Config(metaclass = ConfigMeta):
     @_protected
     def update(cls, *configs: type[Config] | dict):
         for config in configs:
+            if config is cls:
+                raise ConfigError(f'cannot update <{cls.__name__}> with itself')
             if check_type(config, type[Config]):
                 _mro  = getmro(config)[1:]
                 _unified = [config] + config.__unified__
                 _updated = config.__updated__
                 _name = config.__name__
-                _pars = config.__get_parameter__(True, True)
+                _pars = config.__get_parameter__(True)
             elif check_type(config, dict):
                 config = copy(config)
                 _mro  = config.pop('__mro__', ())
@@ -169,6 +167,12 @@ class Config(metaclass = ConfigMeta):
             diff = {*_mro} - ({*getmro(cls)} | {*cls.__unified__})
             if diff:
                 raise ConfigError(f'cannot update <{cls.__name__}> with <{_name}> without [{", ".join([i.__name__ for i in diff])}]')
+            if _unified:
+                if cls.__unified__:
+                    if _unified[0] is cls.__unified__[-1]:
+                        _unified = _unified[1:]
+                elif _unified[0] is cls:
+                    _unified = _unified[1:]
             cls.__unified__.extend(_unified)
             for k, (t, v) in _pars.items():
                 if cls.__set_parameter__(k, t, v):
@@ -217,3 +221,11 @@ class Config(metaclass = ConfigMeta):
     @_protected
     def undefined(cls):
         return [k for k, (_, v) in cls.__get_parameter__().items() if v is Undefined]
+
+    @classmethod
+    @property
+    @_protected
+    def base(cls) -> type[Config]:
+        for config in getmro(cls)[::-1]:
+            if config not in [object, Config]:
+                return config
