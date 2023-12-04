@@ -2,7 +2,7 @@ from functools import partial
 
 import numpy as np
 
-from ..utils import sequence_call
+from ..utils import seqcall
 from .correction import EventLevelCorrection, ObjectLevelCorrection, Variation
 
 
@@ -34,8 +34,8 @@ class BTagSF_Shape(Variation, ObjectLevelCorrection):
 
     def _corrections(self):
         groups = []
-        flavor_gudsb = sequence_call(*self.target, lambda x: x[x.hadronFlavour != 4])
-        flavor_c     = sequence_call(*self.target, lambda x: x[x.hadronFlavour == 4])
+        flavor_gudsb = seqcall(*self.target, lambda x: x[x.hadronFlavour != 4])
+        flavor_c     = seqcall(*self.target, lambda x: x[x.hadronFlavour == 4])
         for var in self.variations:
             if 'cferr' in var:
                 groups.append((var, (flavor_gudsb, {}), (flavor_c, {'systematic': self._names.get(var, var)})))
@@ -63,8 +63,8 @@ class PileupJetIDSF(Variation, ObjectLevelCorrection):
         wp  = self._names[self.working_point]
         if wp:
             MCEff = partial(self._evaluate_objects, _correction = 'PUJetID_eff', workingpoint = wp, systematic = 'MCEff')
-            tagged   = sequence_call(*self.target, lambda x: x[x.puId >= self.working_point])
-            untagged = sequence_call(*self.target, lambda x: x[x.puId <  self.working_point])
+            tagged   = seqcall(*self.target, lambda x: x[x.puId >= self.working_point])
+            untagged = seqcall(*self.target, lambda x: x[x.puId <  self.working_point])
             group = [(tagged, {})]
             if self.untagged:
                 def _transform(events, corrections):

@@ -4,7 +4,7 @@ import re
 from typing import Any, Callable, Generic, Iterable, Sized, TypeVar
 
 __all__ = ['arg_set', 'arg_new',
-           'sequence_call', 'merge_op',
+           'seqcall', 'merge_op',
            'astuple', 'unpack', 'unique', 'count',
            'match_any', 'ensure', 'Eval']
 
@@ -22,7 +22,8 @@ def arg_new(arg, none: Callable[[]] = lambda: None, default: Callable[[]] = lamb
         return default()
     return arg
 
-def sequence_call(*_funcs: Callable[[Any], Any]):
+_SeqCallT = TypeVar('_SeqCallT')
+def seqcall(*_funcs: Callable[[_SeqCallT], _SeqCallT]) -> Callable[[_SeqCallT], _SeqCallT]:
     def func(x):
         for _func in _funcs:
             x = _func(x)
