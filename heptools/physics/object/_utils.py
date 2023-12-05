@@ -25,16 +25,16 @@ def register_behavior(cls = None, dependencies: dict = None):
     return cls
 
 def setup_lorentz_vector(target: str):
-    def _wrap(cls):
+    def wrapper(cls):
         def _get(self, name):
             return get_field(get_field(self, target), name)
         for k in ['pt', 'eta', 'phi', 'mass']:
             setattr(cls, k, property(partial(_get, name = k)))
         return cls
-    return _wrap
+    return wrapper
 
 def setup_lead_subl(*targets: str):
-    def _wrap(cls):
+    def wrapper(cls):
         def _get(self, op, target):
             return ak.where(op(get_field(self.obj1, target), get_field(self.obj2, target)), self.obj1, self.obj2)
         for target in targets:
@@ -42,16 +42,16 @@ def setup_lead_subl(*targets: str):
                 field = f'{k}_{target}'
                 setattr(cls, field, property(partial(_get, op = op, target = target)))
         return cls
-    return _wrap
+    return wrapper
 
 def setup_field(op: Callable[[ak.Array, ak.Array], ak.Array], *targets: str):
-    def _wrap(cls):
+    def wrapper(cls):
         def _get(self, target):
             return self.cumulate(op, target)
         for target in targets:
             setattr(cls, target, property(partial(_get, target = target)))
         return cls
-    return _wrap
+    return wrapper
 
 class Pair:
     name: str = None
