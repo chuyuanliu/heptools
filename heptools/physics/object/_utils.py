@@ -12,10 +12,11 @@ from ...utils import arg_new
 class PhysicsObjectError(Exception):
     __module__ = Exception.__module__
 
-def register_behavior(cls = None, dependencies: dict = None):
+
+def register_behavior(cls=None, dependencies: dict = None):
     from ... import behavior
     if cls is None:
-        return partial(register_behavior, dependencies = dependencies)
+        return partial(register_behavior, dependencies=dependencies)
     ak.mixin_class(behavior)(cls)
     classname = cls.__name__
     behavior[('__typestr__', classname)] = classname
@@ -24,14 +25,16 @@ def register_behavior(cls = None, dependencies: dict = None):
         behavior |= dependencies
     return cls
 
+
 def setup_lorentz_vector(target: str):
     def wrapper(cls):
         def _get(self, name):
             return get_field(get_field(self, target), name)
         for k in ['pt', 'eta', 'phi', 'mass']:
-            setattr(cls, k, property(partial(_get, name = k)))
+            setattr(cls, k, property(partial(_get, name=k)))
         return cls
     return wrapper
+
 
 def setup_lead_subl(*targets: str):
     def wrapper(cls):
@@ -40,18 +43,21 @@ def setup_lead_subl(*targets: str):
         for target in targets:
             for k, op in [('lead', ge), ('subl', lt)]:
                 field = f'{k}_{target}'
-                setattr(cls, field, property(partial(_get, op = op, target = target)))
+                setattr(cls, field, property(
+                    partial(_get, op=op, target=target)))
         return cls
     return wrapper
+
 
 def setup_field(op: Callable[[ak.Array, ak.Array], ak.Array], *targets: str):
     def wrapper(cls):
         def _get(self, target):
             return self.cumulate(op, target)
         for target in targets:
-            setattr(cls, target, property(partial(_get, target = target)))
+            setattr(cls, target, property(partial(_get, target=target)))
         return cls
     return wrapper
+
 
 class Pair:
     name: str = None
@@ -67,30 +73,37 @@ class Pair:
         if isinstance(cls.type_check, set):
             for p in ps:
                 if get_shape(p)[-1] not in cls.type_check:
-                    raise PhysicsObjectError(f"expected {cls.type_check} (got '{get_shape(p)[-1]}')")
+                    raise PhysicsObjectError(
+                        f"expected {cls.type_check} (got '{get_shape(p)[-1]}')")
         elif isinstance(cls.type_check, Callable):
             cls.type_check(ps)
+
         def check(length: int):
             if len(ps) != length:
-                raise PhysicsObjectError(f'expected {length} arrays for {mode} mode (got {len(ps)})')
+                raise PhysicsObjectError(
+                    f'expected {length} arrays for {mode} mode (got {len(ps)})')
         match mode:
             case 'single':
                 check(2)
-                paired = ak.zip({'obj1': ps[0], 'obj2': ps[1]}, with_name = cls.name)
+                paired = ak.zip(
+                    {'obj1': ps[0], 'obj2': ps[1]}, with_name=cls.name)
             case 'cartesian':
                 check(2)
-                paired = ak.cartesian({'obj1': ps[0], 'obj2': ps[1]}, with_name = cls.name)
+                paired = ak.cartesian(
+                    {'obj1': ps[0], 'obj2': ps[1]}, with_name=cls.name)
             case 'combination':
                 check(1)
                 if combinations == 1:
-                    paired = ak.combinations(ps[0], 2, fields = ['obj1', 'obj2'], with_name = cls.name)
+                    paired = ak.combinations(
+                        ps[0], 2, fields=['obj1', 'obj2'], with_name=cls.name)
                 else:
-                    paired = cls.pair(*partition(ps[0], combinations, 2), mode = 'single')
+                    paired = cls.pair(
+                        *partition(ps[0], combinations, 2), mode='single')
             case _:
                 raise PhysicsObjectError(f'invalid mode "{mode}"')
 
-
-        cache = arg_new(cache, list, lambda: accumulated_mro(cls, 'cache_field', reverse = True))
+        cache = arg_new(cache, list, lambda: accumulated_mro(
+            cls, 'cache_field', reverse=True))
         for field in cache:
             cache_field(paired, field)
         return paired

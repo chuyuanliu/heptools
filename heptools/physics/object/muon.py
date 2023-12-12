@@ -15,14 +15,16 @@ class _PairMuon(_PairLepton):
 class _PlotCommon:
     ...
 
+
 class _PlotMuon(_PlotCommon, _PlotLepton):
     ...
+
 
 class _PlotDiMuon(_PlotCommon, _PlotDiLepton):
     ...
 
 
 class Muon:
-    pair        = _PairMuon.pair
-    plot        = _PlotMuon
-    plot_pair   = _PlotDiMuon
+    pair = _PairMuon.pair
+    plot = _PlotMuon
+    plot_pair = _PlotDiMuon

@@ -9,6 +9,8 @@ from rich.text import Text
 from ..utils import match_any, merge_op, unpack
 
 _LeafT = TypeVar('_LeafT')
+
+
 class Tree(dict[str], Generic[_LeafT]):
     def __init__(self, leaf: Callable[[], _LeafT] = None):
         self.leaf = leaf
@@ -43,7 +45,7 @@ class Tree(dict[str], Generic[_LeafT]):
                 else:
                     yield (k,), self[k]
 
-    def __str__(self): # TODO rich, __repr__
+    def __str__(self):  # TODO rich, __repr__
         lines = []
         keys = sorted(self.keys())
         for i, k in enumerate(keys):
@@ -51,11 +53,12 @@ class Tree(dict[str], Generic[_LeafT]):
                 branch, joint = ' ', '└─'
             else:
                 branch, joint = '│', '├─'
-            lines.append((f' {joint}{k}\n' + str(self[k])).replace('\n', f'\n {branch}'))
+            lines.append(
+                (f' {joint}{k}\n' + str(self[k])).replace('\n', f'\n {branch}'))
         return '\n'.join(lines)
 
     @property
-    def rich(self): # TODO rich, __repr__
+    def rich(self):  # TODO rich, __repr__
         lines = []
         keys = sorted(self.keys())
         for i, k in enumerate(keys):
@@ -63,19 +66,21 @@ class Tree(dict[str], Generic[_LeafT]):
             if isinstance(s, Tree):
                 s = self[k].rich
             elif not isinstance(s, Text):
-                s = Text(str(s), style = 'default')
+                s = Text(str(s), style='default')
             line = [*s.split('\n')]
             if i == len(keys) - 1:
                 branch, joint = ' ', '└─'
             else:
                 branch, joint = '│', '├─'
-            lines.append(Text(f'\n {branch}', style = 'yellow').join([Text(f' {joint}', style = 'yellow') + Text(k, style = 'default')] + line))
+            lines.append(Text(f'\n {branch}', style='yellow').join(
+                [Text(f' {joint}', style='yellow') + Text(k, style='default')] + line))
         return Text('\n').join(lines)
 
     def iop(self, other: Tree[_LeafT], op: Callable[[_LeafT, _LeafT], _LeafT]) -> Tree[_LeafT]:
         if isinstance(other, Tree):
             if not (self.leaf == other.leaf):
-                raise TypeError(f'cannot operate on trees with different leaf `{self.leaf}()` and `{other.leaf}()`')
+                raise TypeError(
+                    f'cannot operate on trees with different leaf `{self.leaf}()` and `{other.leaf}()`')
             for k, v in other.items():
                 if isinstance(v, Tree):
                     self[(k, )].iop(v, op)
@@ -111,7 +116,7 @@ class Tree(dict[str], Generic[_LeafT]):
     def from_dict(self, tree: dict, depth: int = float('inf')):
         for k, v in tree.items():
             if isinstance(v, dict) and depth > 1:
-                self[(k, )].from_dict(v, depth = depth - 1)
+                self[(k, )].from_dict(v, depth=depth - 1)
             else:
                 self[k] = self.leaf(v) if self.leaf else v
         return self

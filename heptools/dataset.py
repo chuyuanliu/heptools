@@ -10,15 +10,17 @@ from .protocols import DefaultEncoder, alias
 __all__ = ['File', 'FileList', 'Dataset',
            'DatasetError']
 
+
 class DatasetError(Exception):
     __module__ = Exception.__module__
 
+
 class File:
-    def  __init__(self,
-                  data: dict | File = None,
-                  site: str | list[str] = None,
-                  path: str = None,
-                  nevents: int = None):
+    def __init__(self,
+                 data: dict | File = None,
+                 site: str | list[str] = None,
+                 path: str = None,
+                 nevents: int = None):
         if data is None:
             data = {}
         self.excluded = False
@@ -33,6 +35,7 @@ class File:
 
     def __json__(self):
         return {'path': self.path, 'nevents': self.nevents, 'site': [*self.site]}
+
 
 @alias('copy')
 class FileList:
@@ -77,7 +80,8 @@ class FileList:
                 if f.path in merged._files:
                     exist = merged._files[f.path]
                     if f.nevents != exist.nevents:
-                        raise DatasetError(f'conflicting nevents {f.nevents} vs {exist.nevents} for file "{f.path}"')
+                        raise DatasetError(
+                            f'conflicting nevents {f.nevents} vs {exist.nevents} for file "{f.path}"')
                     exist.site = exist.site.union(f.site)
                     exist.excluded = exist.excluded and f.excluded
                 else:
@@ -90,7 +94,7 @@ class FileList:
             if not f.excluded:
                 yield f
 
-    def __str__(self): # TODO rich, __repr__
+    def __str__(self):  # TODO rich, __repr__
         v, u = Metric.add(self.nevents)
         nf = self.nfiles
         return f'[nevents] {v[0]:0.1f}{u[0]}/{v[1]:0.1f}{u[1]} [nfiles] {nf[0]}/{nf[1]}'
@@ -100,13 +104,14 @@ class FileList:
             f.excluded = False
         return self
 
+
 class Dataset:
     _metadata = ('source', 'dataset', 'year', 'era', 'tier')
 
     def __init__(self) -> None:
         self._tree = Tree(FileList)
 
-    def __str__(self): # TODO rich, __repr__
+    def __str__(self):  # TODO rich, __repr__
         return str(self._tree)
 
     def update(self,
@@ -140,13 +145,14 @@ class Dataset:
                 yield meta, file
 
     @classmethod
-    def load(cls, path = None):
+    def load(cls, path=None):
         self = cls()
-        self._tree.from_dict(json.load(open(path, 'r')), depth = len(self._metadata))
+        self._tree.from_dict(json.load(open(path, 'r')),
+                             depth=len(self._metadata))
         return self
 
     def save(self, path: str):
-        json.dump(self._tree, open(path, 'w'), indent = 4, cls = DefaultEncoder)
+        json.dump(self._tree, open(path, 'w'), indent=4, cls=DefaultEncoder)
 
     def reset(self):
         for _, entry in self:

@@ -1,8 +1,11 @@
 # HEP Tools
+
 A collection of tools for experimental high energy physics analysis.
 
-# Installation
-## Conda (recommend [Mamba](https://mamba.readthedocs.io/) for performance)
+## Installation
+
+### Conda (recommend [Mamba](https://mamba.readthedocs.io/) for performance)
+
 Create an environment
 
     mamba env create -f https://raw.githubusercontent.com/chuyuanliu/heptools/master/environment.yml
@@ -10,14 +13,18 @@ Create an environment
 Install without dependencies
 
     pip install --no-dependencies git+https://github.com/chuyuanliu/heptools.git@master
-## pip
+
+### pip
+
 Install all denpendencies with pip
 
     pip install git+https://github.com/chuyuanliu/heptools.git@master
 
-# Run in container
+## Run in container
+
 A docker image will be automatically built and pushed to [docker hub](https://hub.docker.com/repository/docker/chuyuanliu/heptools) when a new commit is pushed to master branch.
-## Run an ineractive shell with [Singularity(Apptainer)](https://apptainer.org/docs/user/latest/)
+
+### Run an ineractive shell with [Singularity(Apptainer)](https://apptainer.org/docs/user/latest/)
 
     singularity shell \
     -B .:/srv \
@@ -30,8 +37,11 @@ use image from [docker hub](https://hub.docker.com/repository/docker/chuyuanliu/
 use image from [unpacked.cern.ch](https://cvmfs.readthedocs.io/en/latest/cpt-containers.html#using-unpacked-cern-ch) (recommended)
 
     export HEPTOOLS_DOCKER_IMAGE="/cvmfs/unpacked.cern.ch/registry.hub.docker.com/chuyuanliu/heptools:latest"
-## Submit jobs to batch system with [HTCondor](https://htcondor.readthedocs.io/)
-### LPC
+
+### Submit jobs to batch system with [HTCondor](https://htcondor.readthedocs.io/)
+
+#### LPC
+
 Create X.509 proxy. (stored in `${X509_USER_PROXY}`)
 
     voms-proxy-init --rfc --voms cms -valid 192:00
@@ -53,15 +63,18 @@ Start a container
     ${HEPTOOLS_DOCKER_IMAGE}
 
 ## Tips
+
 change singularity (apptainer) cache dir
 
     export APPTAINER_CACHEDIR="${HOME}/nobackup/.apptainer/"
 
-# TODO
+## TODO
+
+- add:friend tree
+- add:hist utils
+- add:hist visualizer
 - doc
 - comment
-- format
 - unit test
 - plot
 - rewrite XSection
-- rewrite das using DBSClient

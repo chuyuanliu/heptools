@@ -12,8 +12,8 @@ def patch_coffea_nanoevent():
             'x': self.x,
             'y': self.y,
             'z': self.z,
-            't': self.t,},
-            with_name = 'LorentzVector'))
+            't': self.t, },
+            with_name='LorentzVector'))
 
     from ... import behavior
     for name in ['GenParticle',

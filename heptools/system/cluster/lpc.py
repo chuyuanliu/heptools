@@ -9,6 +9,7 @@ from .htcondor import HTCondor, LocalFile, Tarball, TransferInput
 
 __all__ = ['LPC']
 
+
 class LPC:
     '''
     |               |                                   |

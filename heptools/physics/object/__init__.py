@@ -11,6 +11,7 @@ from .vector import LorentzVector
 __all__ = ['with_index', 'PhysicsObjectError',
            'LorentzVector', 'Jet', 'Lepton', 'Muon']
 
+
 def with_index(data: ak.Array, index: str = None):
     if index is None:
         name = get_shape(data)[-1]
@@ -18,7 +19,8 @@ def with_index(data: ak.Array, index: str = None):
         index = f'{name}Idx'
     data = data[:]
     if not has_record(data, index):
-        data[index] = ak.local_index(data, axis = 1)
+        data[index] = ak.local_index(data, axis=1)
     return data
+
 
 patch_coffea_nanoevent()

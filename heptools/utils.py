@@ -8,12 +8,14 @@ __all__ = ['arg_set', 'arg_new',
            'astuple', 'unpack', 'unique', 'count',
            'match_any', 'ensure', 'Eval']
 
-def arg_set(arg, none = None, default = ...):
+
+def arg_set(arg, none=None, default=...):
     if arg is None:
         return none
     if arg is ...:
         return default
     return arg
+
 
 def arg_new(arg, none: Callable[[]] = lambda: None, default: Callable[[]] = lambda: ...):
     if arg is None:
@@ -22,13 +24,17 @@ def arg_new(arg, none: Callable[[]] = lambda: None, default: Callable[[]] = lamb
         return default()
     return arg
 
+
 _SeqCallT = TypeVar('_SeqCallT')
+
+
 def seqcall(*_funcs: Callable[[_SeqCallT], _SeqCallT]) -> Callable[[_SeqCallT], _SeqCallT]:
-    def func(x):
+    def wrapper(x):
         for _func in _funcs:
             x = _func(x)
         return x
-    return func
+    return wrapper
+
 
 def merge_op(op, _x, _y):
     if _x is None:
@@ -38,8 +44,10 @@ def merge_op(op, _x, _y):
     else:
         return op(_x, _y)
 
+
 def astuple(_o):
     return _o if isinstance(_o, tuple) else (_o,)
+
 
 def unpack(__iter: Iterable) -> Any:
     __next = __iter
@@ -52,14 +60,19 @@ def unpack(__iter: Iterable) -> Any:
             return __iter
     return __next
 
+
 def unique(seq: Iterable):
     return list(set(seq))
+
 
 def count(seq: Iterable, value: Any) -> int:
     return sum(1 for i in seq if i == value)
 
+
 _TargetT = TypeVar('_TargetT')
 _PatternT = TypeVar('_PatternT')
+
+
 def match_any(target: _TargetT, patterns: _PatternT | Iterable[_PatternT], match: Callable[[_TargetT, _PatternT], bool]):
     if patterns is None:
         return False
@@ -72,6 +85,7 @@ def match_any(target: _TargetT, patterns: _PatternT | Iterable[_PatternT], match
             return True
     return False
 
+
 def ensure(__str: str, __prefix: str = None, __suffix: str = None):
     if __prefix is not None and not __str.startswith(__prefix):
         __str = __prefix + __str
@@ -79,7 +93,10 @@ def ensure(__str: str, __prefix: str = None, __suffix: str = None):
         __str = __str + __suffix
     return __str
 
+
 _EvalT = TypeVar('_EvalT')
+
+
 class Eval(Generic[_EvalT]):
     _quote_arg_pattern = re.compile(r'(?P<arg>' +
                                     r'|'.join([rf'((?<={i})[^\[\]\",=]*?(?={j}))'
@@ -90,7 +107,7 @@ class Eval(Generic[_EvalT]):
 
     def __init__(self, method: Callable[[], _EvalT] | dict[str, _EvalT], *args, **kwargs):
         self.method = method
-        self.args   = args
+        self.args = args
         self.kwargs = kwargs
 
     def __call__(self, expression: str) -> _EvalT:

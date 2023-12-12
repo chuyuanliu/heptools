@@ -1,3 +1,4 @@
+# TODO use friend tree instead of partial set
 from __future__ import annotations
 
 from functools import reduce
@@ -13,8 +14,9 @@ class Selection:
     def __init__(self):
         self.filters = Tree[PartialSet]()
 
-    def add(self, selection: str, value: bool | Iterable[bool], *indices: AnyArray, default = False):
-        self.filters |= Tree().from_dict({selection: PartialSet(value, *indices, default = default)})
+    def add(self, selection: str, value: bool | Iterable[bool], *indices: AnyArray, default=False):
+        self.filters |= Tree().from_dict(
+            {selection: PartialSet(value, *indices, default=default)})
         return self
 
     def __add__(self, other: Selection) -> Selection:

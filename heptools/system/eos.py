@@ -14,8 +14,9 @@ from ..utils import arg_set, ensure
 
 __all__ = ['EOS', 'PathLike', 'save', 'load']
 
+
 class EOS:
-    _url_pattern   = re.compile(r'^[\w]+://[\w.-]+')
+    _url_pattern = re.compile(r'^[\w]+://[\w.-]+')
     _slash_pattern = re.compile(r'(?<!:)/{2,}')
 
     run: bool = True
@@ -34,7 +35,7 @@ class EOS:
                 path = path[len(default):]
         self.url = arg_set(url, '', default)
         if self.url:
-            self.url = ensure(self.url, __suffix = '/')
+            self.url = ensure(self.url, __suffix='/')
         self.path = Path(self._slash_pattern.sub('/', str(path)))
 
     @property
@@ -44,19 +45,22 @@ class EOS:
     @property
     def is_dir(self):
         if not self.is_local:
-            raise NotImplementedError(f'`{EOS.is_dir.fget.__qualname__}` only works for local files') # TODO
+            raise NotImplementedError(
+                f'`{EOS.is_dir.fget.__qualname__}` only works for local files')  # TODO
         return self.path.is_dir()
 
     @property
     def is_file(self):
         if not self.is_local:
-            raise NotImplementedError(f'`{EOS.is_file.fget.__qualname__}` only works for local files') # TODO
+            raise NotImplementedError(
+                f'`{EOS.is_file.fget.__qualname__}` only works for local files')  # TODO
         return not self.is_dir
 
     @property
     def exists(self):
         if not self.is_local:
-            raise NotImplementedError(f'`{EOS.exists.fget.__qualname__}` only works for local files') # TODO
+            raise NotImplementedError(
+                f'`{EOS.exists.fget.__qualname__}` only works for local files')  # TODO
         return self.path.exists()
 
     @classmethod
@@ -64,12 +68,13 @@ class EOS:
         args = [str(arg) for arg in args if arg]
         if cls.run:
             try:
-                output = (True, check_output(args, stderr = PIPE))
+                output = (True, check_output(args, stderr=PIPE))
             except CalledProcessError as e:
                 output = (False, e.stderr)
             except FileNotFoundError as e:
                 if os.name != 'posix':
-                    output = (False, f'unsupported OS "{os.name.upper()}"'.encode())
+                    output = (
+                        False, f'unsupported OS "{os.name.upper()}"'.encode())
                 else:
                     output = (False, str(e).encode())
         else:
@@ -83,7 +88,8 @@ class EOS:
 
     def rm(self, recursive: bool = False):
         if not self.is_local and recursive and self.client == 'xrdfs':
-            raise NotImplementedError(f'`{self.rm.__qualname__}()` does not support recursive removal of remote files using "xrdfs" client') # TODO
+            raise NotImplementedError(
+                f'`{self.rm.__qualname__}()` does not support recursive removal of remote files using "xrdfs" client')  # TODO
         return self.call('rm', '-r' if recursive else '', self.path)[0]
 
     def mkdir(self, recursive: bool = False) -> EOS:
@@ -95,7 +101,8 @@ class EOS:
 
     def walk(self) -> Generator[EOS, Any, None]:
         if not self.is_local:
-            raise NotImplementedError(f'`{self.walk.__qualname__}()` only works for local files') # TODO
+            raise NotImplementedError(
+                f'`{self.walk.__qualname__}()` only works for local files')  # TODO
         if self.is_file:
             yield self
         else:
@@ -106,7 +113,8 @@ class EOS:
 
     def scan(self) -> Generator[tuple[EOS, os.stat_result], Any, None]:
         if not self.is_local:
-            raise NotImplementedError(f'`{self.scan.__qualname__}()` only works for local files') # TODO
+            raise NotImplementedError(
+                f'`{self.scan.__qualname__}()` only works for local files')  # TODO
         if self.is_file:
             yield self, self.stat()
         else:
@@ -118,11 +126,12 @@ class EOS:
 
     def stat(self):
         if not self.is_local:
-            raise NotImplementedError(f'`{self.stat.__qualname__}()` only works for local files') # TODO
+            raise NotImplementedError(
+                f'`{self.stat.__qualname__}()` only works for local files')  # TODO
         return self.path.stat()
 
     def isin(self, other: PathLike):
-        return str(self).startswith(ensure(str(other), __suffix = '/'))
+        return str(self).startswith(ensure(str(other), __suffix='/'))
 
     def relative_to(self, other: PathLike):
         if self.url == other.url:
@@ -140,7 +149,7 @@ class EOS:
     def cp(cls, src: PathLike, dest: PathLike, parents: bool = False, overwrite: bool = False, recursive: bool = False) -> EOS:
         src, dest = EOS(src), EOS(dest)
         if parents:
-            dest.parent.mkdir(recursive = True)
+            dest.parent.mkdir(recursive=True)
         if src.is_local and dest.is_local:
             result = cls.cmd('cp',
                              '-r' if recursive else '',
@@ -148,7 +157,8 @@ class EOS:
                              src, dest)
         else:
             if recursive:
-                raise NotImplementedError(f'`{cls.cp.__qualname__}()` does not support recursive copying of remote files') # TODO
+                raise NotImplementedError(
+                    f'`{cls.cp.__qualname__}()` does not support recursive copying of remote files')  # TODO
             result = cls.cmd('xrdcp',
                              '-f' if overwrite else '',
                              src, dest)
@@ -159,14 +169,15 @@ class EOS:
     def mv(cls, src: PathLike, dest: PathLike, parents: bool = False, overwrite: bool = False, recursive: bool = False) -> EOS:
         src, dest = EOS(src), EOS(dest)
         if parents:
-            dest.parent.mkdir(recursive = True)
+            dest.parent.mkdir(recursive=True)
         if src.url == dest.url:
             result = src.call('mv',
                               '-n' if not overwrite and src.client != 'xrdfs' else '',
                               src.path, dest.path)[0]
         else:
             if recursive:
-                raise NotImplementedError(f'`{cls.mv.__qualname__}()` does not support recursive moving of remote files from different sites') # TODO
+                raise NotImplementedError(
+                    f'`{cls.mv.__qualname__}()` does not support recursive moving of remote files from different sites')  # TODO
             result = cls.cp(src, dest, parents, overwrite, recursive)
             if result:
                 result = src.rm()
@@ -206,7 +217,7 @@ class EOS:
             return self == EOS(other)
         return NotImplemented
 
-    def __str__(self): # TODO rich, __repr__
+    def __str__(self):  # TODO rich, __repr__
         return self.url + str(self.path)
 
     def __fspath__(self):
@@ -215,7 +226,9 @@ class EOS:
     def __truediv__(self, other: str):
         return self.join(other)
 
+
 PathLike = str | Path | EOS
+
 
 def open_zip(algorithm: Literal['', 'gzip', 'bz2', 'lzma'], file: PathLike, mode: str, **kwargs):
     if not algorithm:
@@ -226,16 +239,20 @@ def open_zip(algorithm: Literal['', 'gzip', 'bz2', 'lzma'], file: PathLike, mode
         default['compresslevel'] = 4
     return module.open(file, mode, **(default | kwargs))
 
+
 def save(file: PathLike, obj, algorithm: Literal['', 'gzip', 'bz2', 'lzma'] = 'gzip', **kwargs):
     file = EOS(file)
     if file.is_local:
         pickle.dump(obj, open_zip(algorithm, file, 'wb', **kwargs))
     else:
-        raise NotImplementedError(f'`{save.__qualname__}()` does not support remote files') # TODO
+        raise NotImplementedError(
+            f'`{save.__qualname__}()` does not support remote files')  # TODO
+
 
 def load(file: PathLike, algorithm: Literal['', 'gzip', 'bz2', 'lzma'] = 'gzip', **kwargs):
     file = EOS(file)
     if file.is_local:
         return pickle.load(open_zip(algorithm, file, 'rb', **kwargs))
     else:
-        raise NotImplementedError(f'`{load.__qualname__}()` does not support remote files') # TODO
+        raise NotImplementedError(
+            f'`{load.__qualname__}()` does not support remote files')  # TODO

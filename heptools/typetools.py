@@ -12,10 +12,12 @@ __all__ = ['TypeGuarded',
            'check_subclass', 'check_type', 'type_name',
            'reversed_mro']
 
+
 @runtime_checkable
 class TypeGuarded(Protocol):
     def __typeguard__(self, *args) -> bool:
         ...
+
 
 def _expand_type(__class_or_tuple):
     origin = get_origin(__class_or_tuple)
@@ -26,6 +28,7 @@ def _expand_type(__class_or_tuple):
     if isinstance(origin, TypeVar):
         origin = origin.__bound__ if origin.__bound__ is not None else Any
     return origin, args, generic
+
 
 def check_subclass(__derived, __base) -> bool:
     origin_base, args_base, _ = _expand_type(__base)
@@ -62,7 +65,7 @@ def check_subclass(__derived, __base) -> bool:
             args_base[1:] == args_derived[1:]
             and check_subclass(args_derived[0], args_base[0])),
         (Callable, lambda:
-            True) # TODO Callable
+            True)  # TODO Callable
     ):
         match count([origin_base, origin_derived], type_):
             case 2:
@@ -78,6 +81,7 @@ def check_subclass(__derived, __base) -> bool:
         if not check_subclass(args_derived[i], args_base[i]):
             return False
     return True
+
 
 def check_type(__obj, __type) -> bool:
     # object(), None, Ellipsis
@@ -125,6 +129,7 @@ def check_type(__obj, __type) -> bool:
     else:
         return isinstance(__obj, origin)
 
+
 def type_name(__type) -> str:
     if isinstance(__type, tuple | list):
         return f'({", ".join(type_name(i) for i in __type)})'
@@ -166,14 +171,16 @@ def type_name(__type) -> str:
 
 # mro
 
+
 def reversed_mro(cls, name: str):
     for base in getmro(cls)[::-1]:
         if name in vars(base):
             return base, vars(base)[name]
     raise AttributeError
 
+
 def accumulated_mro(cls, name: str, reverse: bool = False, op: Callable[[Any, Any], Any] = add):
-    return reduce(op, 
+    return reduce(op,
                   (vars(base)[name]
                    for base in getmro(cls)[::-1 if reverse else 1]
                    if name in vars(base)))

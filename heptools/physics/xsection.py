@@ -1,3 +1,5 @@
+# TODO rewrite, db, json
+
 from __future__ import annotations
 
 import re
@@ -11,7 +13,7 @@ from .coupling import Decay, Formula
 class XSectionError(Exception):
     __module__ = Exception.__module__
 
-# TODO separate to XSectionDB and XSection
+
 @dataclass
 class XSection:
     '''
@@ -43,7 +45,7 @@ class XSection:
         self = object.__new__(cls)
         if isinstance(process, str):
             process = re.compile(process)
-        self.__init__(process = process, xs = xs, decay = decay, kfactors = kfactors)
+        self.__init__(process=process, xs=xs, decay=decay, kfactors=kfactors)
         cls._all.append(self)
 
     def __new__(cls, process: str, decay: str = ..., *kfactors: str):
@@ -51,7 +53,8 @@ class XSection:
             xs = _xs(process, decay, *kfactors)
             if xs is not None:
                 return xs
-        raise XSectionError(f'the cross section of "{process}" is not recorded')
+        raise XSectionError(
+            f'the cross section of "{process}" is not recorded')
 
     def __call__(self, process: str, decay: str = ..., *kfactors: str) -> float:
         xs = None
@@ -63,7 +66,8 @@ class XSection:
             elif isinstance(xs, str):
                 xs = self._get_xs(xs.format(**match.groupdict()))
         if xs:
-            xs *= XSection._get_br(decay = self.decay if decay is ... else decay, process = process)
+            xs *= XSection._get_br(decay=self.decay if decay is ... else decay,
+                                   process=process)
             if self.kfactors and kfactors:
                 for kfactor in kfactors:
                     xs *= self.kfactors.get(kfactor, 1)

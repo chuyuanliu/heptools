@@ -19,14 +19,16 @@ class _PairLepton(_PairLorentzVector):
 class _PlotCommon:
     charge = H((-2, 3, ('charge', 'Charge')))
 
+
 class _PlotLepton(_PlotCommon, _PlotLorentzVector):
     ...
+
 
 class _PlotDiLepton(_PlotCommon, _PlotDiLorentzVector):
     ...
 
 
 class Lepton:
-    pair        = _PairLepton.pair
-    plot        = _PlotLepton
-    plot_pair   = _PlotDiLepton
+    pair = _PairLepton.pair
+    plot = _PlotLepton
+    plot_pair = _PlotDiLepton

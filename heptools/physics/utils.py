@@ -3,8 +3,9 @@ from particle.converters.bimap import DirectionalMaps
 
 __all__ = ['PDGID']
 
+
 class PDGID:
-    record, _ = DirectionalMaps('PDGID', 'LATEXNAME', converters = (int, str))
+    record, _ = DirectionalMaps('PDGID', 'LATEXNAME', converters=(int, str))
 
     @classmethod
     def latex(cls, pdgid: int) -> str:

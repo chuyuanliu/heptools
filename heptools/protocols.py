@@ -4,6 +4,7 @@ from typing import Any, Protocol, runtime_checkable
 __all__ = ['alias',
            'JSONable', 'DefaultEncoder']
 
+
 def alias(*methods: str):
     def wrapper(cls):
         for method in methods:
@@ -15,10 +16,12 @@ def alias(*methods: str):
 
 # json
 
+
 @runtime_checkable
 class JSONable(Protocol):
     def __json__(self) -> Any:
         ...
+
 
 class DefaultEncoder(json.JSONEncoder):
     def default(self, __obj):

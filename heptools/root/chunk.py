@@ -1,3 +1,6 @@
+# TODO reader/writer start stop point uuid?
+# TODO merge root files
+# TODO use ak.form for lazy read
 from __future__ import annotations
 
 from typing import overload
@@ -22,12 +25,15 @@ class Chunk:
     @overload
     def __init__(self, path: PathLike, size: int):
         ...
+
     @overload
     def __init__(self, path: PathLike, start: int, stop: int):
         ...
+
     @overload
     def __init__(self, path: PathLike, tree: str):
         ...
+
     def __init__(self, path: PathLike, first: int, second: int = None):
         self.path = path
         if second is None:
@@ -44,17 +50,17 @@ class Chunk:
     def __len__(self):
         return self.stop - self.start
 
-    def iterate(self, tree: str, branches = None, step: int = None):
+    def iterate(self, tree: str, branches=None, step: int = None):
         if step is None:
             step = len(self)
         start = self.start
         while start < self.stop:
             end = min(start + step, self.stop)
             with uproot.open(**self._kwargs) as f:
-                yield f[tree].arrays(branches, entry_start = start, entry_stop = end)
+                yield f[tree].arrays(branches, entry_start=start, entry_stop=end)
             start = end
 
-    def __repr__(self): # TODO __repr__
+    def __repr__(self):  # TODO __repr__
         return f'<{self.path}:[{self.start},{self.stop})>'
 
     @staticmethod

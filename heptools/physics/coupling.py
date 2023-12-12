@@ -1,3 +1,4 @@
+# TODO rewrite, db, json
 '''
     kappa-framework
 '''
@@ -19,6 +20,7 @@ from ..utils import unpack
 class CouplingError(Exception):
     __module__ = Exception.__module__
 
+
 class Coupling:
     def __init__(self, kappas: list[str]):
         self.kappas = kappas
@@ -27,12 +29,14 @@ class Coupling:
     def append(self, couplings: np.ndarray):
         couplings = np.asarray(couplings)
         if couplings.shape[-1] != len(self.kappas):
-            raise CouplingError(f'coupling shape {couplings.shape} does not match (, {len(self.kappas)})')
-        self.couplings = np.concatenate((self.couplings, couplings), axis = 0)
+            raise CouplingError(
+                f'coupling shape {couplings.shape} does not match (, {len(self.kappas)})')
+        self.couplings = np.concatenate((self.couplings, couplings), axis=0)
         return self
 
     def meshgrid(self, default: float = 1, **kwargs):
-        self.append(np.stack(np.meshgrid(*[kwargs.get(kappa, default) for kappa in self.kappas]), axis = -1).reshape([-1, len(self.kappas)]))
+        self.append(np.stack(np.meshgrid(*[kwargs.get(kappa, default)
+                    for kappa in self.kappas]), axis=-1).reshape([-1, len(self.kappas)]))
         return self
 
     def reshape(self, kappas: list[str], default: float = 1):
@@ -45,8 +49,9 @@ class Coupling:
                 idx = self.kappas.index(kappa)
                 couplings.append(self.couplings[:, idx: idx + 1])
             except ValueError:
-                couplings.append(np.tile(default, [self.couplings.shape[0], 1]))
-        new.couplings = np.concatenate(couplings, axis = -1)
+                couplings.append(
+                    np.tile(default, [self.couplings.shape[0], 1]))
+        new.couplings = np.concatenate(couplings, axis=-1)
         return new
 
     def __iadd__(self, other: Coupling) -> Coupling:
@@ -65,35 +70,40 @@ class Coupling:
         for i in range(len(self)):
             yield self[i]
 
+
 class Diagram(ABC):
     @abstractproperty
     def diagrams(self) -> tuple[list[str], list]:
         ...
 
-    def __init__(self, basis, unit_basis_weight = True):
+    def __init__(self, basis, unit_basis_weight=True):
         self.unit_basis_weight = unit_basis_weight
         basis = np.asarray(basis)
         count = len(self.diagrams[0])
         self._basis = Coupling(self.diagrams[0]).append(basis[:, :count])
         self._intm2 = basis[:, count]
-        self._intm2_unc = basis[:, count + 1] if basis.shape[1] >= (count + 2) else self._intm2
-        self._transmat = np.linalg.pinv(self._component_scale(self._basis.couplings))
+        self._intm2_unc = basis[:, count +
+                                1] if basis.shape[1] >= (count + 2) else self._intm2
+        self._transmat = np.linalg.pinv(
+            self._component_scale(self._basis.couplings))
         _s = self._transmat.shape
         if _s[1] < _s[0]:
-            raise CouplingError(f'require more couplings ({_s[1]}/{_s[0]} provided)')
+            raise CouplingError(
+                f'require more couplings ({_s[1]}/{_s[0]} provided)')
 
     def _component_scale(self, couplings):
         couplings = np.asarray(couplings)[:, :, np.newaxis]
         diagram = np.asarray(self.diagrams[1]).T[np.newaxis, :, :]
-        idx2 = np.stack(np.tril_indices(diagram.shape[-1]), axis = -1)
-        diagram2 = np.unique(np.sum(diagram[:, :, idx2], axis = -1), axis = -1)
-        return np.product(np.power(couplings, diagram2), axis = 1)
+        idx2 = np.stack(np.tril_indices(diagram.shape[-1]), axis=-1)
+        diagram2 = np.unique(np.sum(diagram[:, :, idx2], axis=-1), axis=-1)
+        return np.product(np.power(couplings, diagram2), axis=1)
 
     def weight(self, couplings: Coupling):
         couplings = couplings.reshape(self.diagrams[0]).couplings
         weight = self._component_scale(couplings) @ self._transmat
         if self.unit_basis_weight:
-            matched_basis = (couplings == self._basis.couplings[:, np.newaxis]).all(-1).T
+            matched_basis = (
+                couplings == self._basis.couplings[:, np.newaxis]).all(-1).T
             is_basis = matched_basis.any(-1)
             weight[is_basis] = matched_basis[is_basis]
         return weight
@@ -103,6 +113,7 @@ class Diagram(ABC):
 
     def _sqrt_sumw2_intm2_unc(self, couplings: Coupling):
         return unpack(np.sqrt(self.weight(couplings)**2 @ self._intm2_unc**2))
+
 
 class Decay:
     _decays: dict[str, dict[str, FormulaBR | float]] = {}
@@ -118,24 +129,27 @@ class Decay:
         if coupling is ...:
             return Decay._widths[particle]
         else:
-            decays = [decay for decay in Decay._decays[particle].values() if isinstance(decay, FormulaBR) and decay.total]
-            return (Decay._widths[particle] - np.sum([decay.width(Coupling(decay.diagrams[0]).meshgrid()) for decay in decays])) + np.sum([decay.width(coupling) for decay in decays], axis = 0)
+            decays = [decay for decay in Decay._decays[particle].values(
+            ) if isinstance(decay, FormulaBR) and decay.total]
+            return (Decay._widths[particle] - np.sum([decay.width(Coupling(decay.diagrams[0]).meshgrid()) for decay in decays])) + np.sum([decay.width(coupling) for decay in decays], axis=0)
 
     @classmethod
     def add(cls, decay: FormulaBR | str, br: float = None, width: float = None):
         if isinstance(decay, FormulaBR):
-            br    = decay
+            br = decay
             decay = decay.decay
         else:
             if '->' not in decay:
                 if width is None:
-                    raise CouplingError(f'total width of particle "{decay}" must be provided')
+                    raise CouplingError(
+                        f'total width of particle "{decay}" must be provided')
                 br = None
                 cls._widths[decay] = width
             else:
                 if br is None:
                     if width is None:
-                        raise CouplingError(f'either BR or decay width of "{decay}" must be provided')
+                        raise CouplingError(
+                            f'either BR or decay width of "{decay}" must be provided')
                     br = width/cls.width(cls.parent(decay))
         if br is not None:
             cls._decays.setdefault(cls.parent(decay), {})[decay] = br
@@ -153,6 +167,7 @@ class Decay:
             return cls._decays[cls.parent(decay)][decay]
         except:
             raise CouplingError(f'BR({decay}) is not recorded')
+
 
 class Formula(ABC):
     @abstractproperty
@@ -181,9 +196,11 @@ class Formula(ABC):
     @overload
     def _parse_number(self, value: str) -> float:
         ...
+
     @overload
     def _parse_number(self, value: float) -> str:
         ...
+
     def _parse_number(self, value):
         if isinstance(value, str):
             return float(value.replace(self.number_separator, '.'))
@@ -197,8 +214,9 @@ class Formula(ABC):
     def __call__(self, process: str):
         ...
 
+
 class FormulaXS(Diagram, Formula):
-    def __init__(self, basis_xs, unit_basis_weight = True):
+    def __init__(self, basis_xs, unit_basis_weight=True):
         super().__init__(basis_xs, unit_basis_weight)
 
     def xs(self, couplings: Coupling):
@@ -216,18 +234,21 @@ class FormulaXS(Diagram, Formula):
     def basis_process(self):
         return self.process(self._basis)
 
+
 class FormulaBR(Diagram, Formula):
-    def __init__(self, decay: str, basis_br = None, basis_width = None, total = False, unit_basis_weight = True):
-        self.decay  = decay
+    def __init__(self, decay: str, basis_br=None, basis_width=None, total=False, unit_basis_weight=True):
+        self.decay = decay
         self.parent = Decay.parent(decay)
-        self.total  = total
+        self.total = total
         if basis_br is not None:
             basis = np.asarray(basis_br)
-            basis[:, len(self.diagrams[0])] = basis[:, len(self.diagrams[0])] * Decay.width(self.parent)
+            basis[:, len(self.diagrams[0])] = basis[:, len(
+                self.diagrams[0])] * Decay.width(self.parent)
         elif basis_width is not None:
             basis = np.asarray(basis_width)
         else:
-            raise CouplingError(f'either BR or decay width of "{decay}" must be provided')
+            raise CouplingError(
+                f'either BR or decay width of "{decay}" must be provided')
         super().__init__(basis, unit_basis_weight)
 
     def width(self, couplings: Coupling):

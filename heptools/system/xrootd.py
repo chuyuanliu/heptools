@@ -1,16 +1,18 @@
 __all__ = ['CMSAAA', 'CERNBox']
 
+
 class CMSAAA:
-    GLOBAL  = 'root://cms-xrd-global.cern.ch/'
-    US      = 'root://cmsxrootd.fnal.gov/'
+    GLOBAL = 'root://cms-xrd-global.cern.ch/'
+    US = 'root://cmsxrootd.fnal.gov/'
     '''
         - T1_US_FNAL_Disk
     '''
-    EU      = 'root://xrootd-cms.infn.it/'
+    EU = 'root://xrootd-cms.infn.it/'
     EOS_LPC = 'root://cmseos.fnal.gov/'
     '''
         - T3_US_FNALLPC
     '''
+
 
 class CERNBox:
     '''

@@ -10,6 +10,7 @@ from ..aktools import FieldLike, get_field, mul_arrays
 
 ContentLike = FieldLike | Callable | Number
 
+
 def _get_content(data: ak.Array, content: ContentLike):
     if check_type(content, FieldLike):
         return get_field(data, content)
@@ -17,9 +18,10 @@ def _get_content(data: ak.Array, content: ContentLike):
         return content(data)
     return content
 
+
 class EventWeight:
     def __init__(self):
-        self.weights     : dict[str, dict[str,  ContentLike  ]] = {}
+        self.weights: dict[str, dict[str,  ContentLike]] = {}
         self.correlations: dict[str, dict[str, dict[str, str]]] = {}
 
     def add(self, name: str, central: ContentLike = ..., **variations: ContentLike):
@@ -66,16 +68,18 @@ class EventWeight:
         ws: dict[str,  dict[str]] = {}
         for wsk, wsv in self.weights.items():
             if wsk not in exclude:
-                ws[wsk] = {wk: _get_content(events, wv) for wk, wv in wsv.items()}
-        zeros   = {wsk for wsk in ws if np.any(ws[wsk][''] == 0)}
-        mul_ws  = partial(self._multiply_weights, ws, len(events))
+                ws[wsk] = {wk: _get_content(events, wv)
+                           for wk, wv in wsv.items()}
+        zeros = {wsk for wsk in ws if np.any(ws[wsk][''] == 0)}
+        mul_ws = partial(self._multiply_weights, ws, len(events))
         weights = ak.Array({'weight': mul_ws()})
         for wsk, wsv in ws.items():
             if len(wsv) > 1:
                 weight = ak.Array({})
                 for wk, wv in wsv.items():
                     if wk:
-                        weight[wk] = mul_ws(**{wsk: wk}) if wsk in zeros else weights['weight'] * (wv / wsv[''])
+                        weight[wk] = mul_ws(
+                            **{wsk: wk}) if wsk in zeros else weights['weight'] * (wv / wsv[''])
                 weights[wsk] = weight
         for csk, csv in self.correlations.items():
             if csk not in exclude:
@@ -83,7 +87,9 @@ class EventWeight:
                 for ck, cv in csv.items():
                     if not ({*cv} & exclude):
                         empty = False
-                        weight[ck] = mul_ws(**cv) if any([k in zeros for k in cv]) else weights['weight'] * mul_arrays(*[ws[k][v] / ws[k][''] for k, v in cv.items()])
+                        weight[ck] = mul_ws(**cv) if any([k in zeros for k in cv]) else weights['weight'] * \
+                            mul_arrays(*[ws[k][v] / ws[k]['']
+                                       for k, v in cv.items()])
                 if not empty:
                     weights[csk] = weight
         return weights

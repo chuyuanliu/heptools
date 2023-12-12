@@ -15,6 +15,7 @@ dependencies:
   - graphviz
   - pip:
     - graphviz
+    - pyvis
   - rich
 # parallel
   - dask-jobqueue
