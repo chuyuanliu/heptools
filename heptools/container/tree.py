@@ -38,7 +38,7 @@ class Tree(dict[str], Generic[_LeafT]):
 
     def walk(self, *pattern: str | list[str]) -> Generator[tuple[tuple[str, ...], _LeafT]]:
         for k in self.keys():
-            if not pattern or match_any(k, pattern[0], lambda x, y: re.match(y, x) is not None):
+            if not pattern or match_any(k, pattern[0], re.match):
                 if isinstance(self[k], Tree):
                     for meta, entry in self[k].walk(*pattern[1:]):
                         yield (k, *meta), entry

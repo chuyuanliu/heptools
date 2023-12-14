@@ -4,9 +4,14 @@ import re
 from typing import Any, Callable, Generic, Iterable, Sized, TypeVar
 
 __all__ = ['arg_set', 'arg_new',
-           'seqcall', 'merge_op',
+           'SeqCall', 'seqcall', 'merge_op',
            'astuple', 'unpack', 'unique', 'count',
            'match_any', 'ensure', 'Eval']
+
+_SeqCallT = TypeVar('_SeqCallT')
+_TargetT = TypeVar('_TargetT')
+_PatternT = TypeVar('_PatternT')
+_EvalT = TypeVar('_EvalT')
 
 
 def arg_set(arg, none=None, default=...):
@@ -25,7 +30,14 @@ def arg_new(arg, none: Callable[[]] = lambda: None, default: Callable[[]] = lamb
     return arg
 
 
-_SeqCallT = TypeVar('_SeqCallT')
+class SeqCall(Generic[_SeqCallT]):
+    def __init__(self, *funcs: Callable[[_SeqCallT], _SeqCallT]):
+        self.funcs = funcs
+
+    def __call__(self, x) -> _SeqCallT:
+        for func in self.funcs:
+            x = func(x)
+        return x
 
 
 def seqcall(*_funcs: Callable[[_SeqCallT], _SeqCallT]) -> Callable[[_SeqCallT], _SeqCallT]:
@@ -69,11 +81,7 @@ def count(seq: Iterable, value: Any) -> int:
     return sum(1 for i in seq if i == value)
 
 
-_TargetT = TypeVar('_TargetT')
-_PatternT = TypeVar('_PatternT')
-
-
-def match_any(target: _TargetT, patterns: _PatternT | Iterable[_PatternT], match: Callable[[_TargetT, _PatternT], bool]):
+def match_any(target: _TargetT, patterns: _PatternT | Iterable[_PatternT], match: Callable[[_PatternT, _TargetT], bool]):
     if patterns is None:
         return False
     if patterns is ...:
@@ -81,9 +89,15 @@ def match_any(target: _TargetT, patterns: _PatternT | Iterable[_PatternT], match
     if not isinstance(patterns, Iterable) or isinstance(patterns, str):
         patterns = [patterns]
     for pattern in patterns:
-        if match(target, pattern):
+        if match(pattern, target):
             return True
     return False
+
+
+def re_match_whole(pattern: str | re.Pattern, target: str) -> bool:
+    if isinstance(pattern, str):
+        pattern = ensure(pattern, '^', '$')
+    return re.match(pattern, target)
 
 
 def ensure(__str: str, __prefix: str = None, __suffix: str = None):
@@ -92,9 +106,6 @@ def ensure(__str: str, __prefix: str = None, __suffix: str = None):
     if __suffix is not None and not __str.endswith(__suffix):
         __str = __str + __suffix
     return __str
-
-
-_EvalT = TypeVar('_EvalT')
 
 
 class Eval(Generic[_EvalT]):

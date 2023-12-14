@@ -149,7 +149,7 @@ class Skim:
         with uproot.open(f'{file}:Events', object_cache=None, array_cache=None, timeout=self.timeout) as f:
             nevents = f.num_entries
             branches = {b for b in set(f.keys()) if not match_any(
-                b, self.excluded, lambda x, y: re.match(y, x) is not None)}
+                b, self.excluded, re.match)}
         return file, nevents, branches
 
     def __call__(self, output: PathLike, inputs: list[PathLike | Chunk], selection: Callable[[ak.Array], ak.Array] = None, index_offset: int = 0, allow_multiprocessing: bool = False):

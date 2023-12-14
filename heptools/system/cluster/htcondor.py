@@ -192,7 +192,7 @@ class LocalFile(TransferInput):
         self.copied = defaultdict[EOS, list[EOS]](list)
         for src in inputs:
             src = EOS(src)
-            if not match_any(src, self._mount, lambda x, y: x.isin(y)):
+            if not match_any(src, self._mount, lambda p, t: t.isin(p)):
                 for file in src.walk():
                     dst = self._scratch / file.name
                     file.copy_to(dst)
