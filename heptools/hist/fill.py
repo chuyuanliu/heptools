@@ -26,11 +26,13 @@ class Fill:
         self._fills = {} if fills is None else fills
         self._kwargs = fill_args | {'weight': weight}
 
-    def __add__(self, other: Fill) -> Fill:
+    def __add__(self, other: Fill | hs.Template) -> Fill:
         if isinstance(other, Fill):
             fills = other._fills | self._fills
             kwargs = other._kwargs | self._kwargs
             return Fill(fills, **kwargs)
+        elif isinstance(other, hs.Template):
+            return self + other.new()
         return NotImplemented
 
     def __call__(self, events: ak.Array, hists: hs.Collection = ..., **fill_args: FillLike):
