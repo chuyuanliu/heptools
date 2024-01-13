@@ -25,14 +25,4 @@ def dask_sizeof_plugin(sizeof):
 
     @sizeof.register_lazy('heptools')
     def register_heptools():
-        from ..container import PartialSet
-
-        @sizeof.register(PartialSet)
-        def sizeof_partialset(x: PartialSet):
-            return sizeof(x._in)
-
-        from ..root import Selection
-
-        @sizeof.register(Selection)
-        def sizeof_selection(x: Selection):
-            return sizeof(x.filters)
+        ...

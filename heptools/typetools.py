@@ -103,7 +103,7 @@ def check_type(__obj, __type) -> bool:
     # Annotated
     if origin is Annotated:
         return check_type(__obj, args[0])
-    # TODO Callable
+    # TODO Callable, TypedDict
 
     if generic:
         if not isinstance(__obj, origin):
