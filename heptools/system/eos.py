@@ -135,9 +135,11 @@ class EOS:
 
     def relative_to(self, other: PathLike):
         if self.url == other.url:
-            return str(self.path.relative_to(other.path))
-        else:
-            raise ValueError(f'"{self}" is not in the subpath of "{other}"')
+            try:
+                return EOS(self.path.relative_to(other.path))
+            except ValueError:
+                ...
+        raise ValueError(f'"{self}" is not in the subpath of "{other}"')
 
     def copy_to(self, dest: PathLike, parents: bool = False, overwrite: bool = False, recursive: bool = False):
         return self.cp(self, dest, parents, overwrite, recursive)

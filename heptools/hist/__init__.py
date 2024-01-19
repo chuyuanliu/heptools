@@ -1,3 +1,8 @@
+'''
+Hist tools
+---------------
+'''
+# TODO add doc
 from .fill import Fill, FillError, FillLike
 from .hist import (AxisLike, Collection, HistError, Label, LabelLike,
                    Systematic, Template)
