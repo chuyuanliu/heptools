@@ -1,4 +1,7 @@
 name: sphinx-doc
+permissions:
+  contents: write
+
 on:
   push:
     branches:
