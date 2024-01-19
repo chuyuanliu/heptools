@@ -19,11 +19,16 @@ author = 'Chuyuan Liu'
 
 extensions = ['sphinx.ext.autodoc',
               'sphinx.ext.coverage',
-              'sphinx.ext.napoleon']
+              'sphinx.ext.napoleon',
+              'sphinx.ext.intersphinx']
 
 templates_path = ['_templates']
 exclude_patterns = []
 
+intersphinx_mapping = {
+    'uproot': ('https://uproot.readthedocs.io/en/latest/', None),
+    'awkward': ('https://awkward-array.org/doc/main/', None),
+}
 
 # -- Options for HTML output -------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#options-for-html-output

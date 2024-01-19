@@ -1,2 +1,2 @@
 .. automodule:: heptools.hist
-    :members: Collection, Template, Fill
+    :members: Collection

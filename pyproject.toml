@@ -7,11 +7,11 @@ dependencies = [
     "numpy",
     "matplotlib",
     "dask-jobqueue",
-# Scikit-HEP
+    # Scikit-HEP
     "awkward",
     "uproot",
     "hist",
-# CMS
+    # CMS
     "coffea",
     "correctionlib",
 ]

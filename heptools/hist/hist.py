@@ -98,6 +98,10 @@ def _create_axis(args: AxisLike) -> AxesMixin:
 
 
 class Collection:
+    '''
+    A collection of histograms.
+    '''
+    # TODO add doc
     current: Collection = None
 
     def __init__(self, **categories):

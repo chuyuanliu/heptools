@@ -5,29 +5,32 @@ dependencies:
   - python=3.10
   - pip
   - pycurl
-# numerical
+  # numerical
   - numpy
   - scipy
   - pandas
-# visualization
+  # visualization
   - matplotlib
   - bokeh
   - graphviz
   - pip:
-    - graphviz
-    - pyvis
+      - graphviz
+      - pyvis
   - rich
-# parallel
+  # parallel
   - dask-jobqueue
 
-# Scikit-HEP
+  # Scikit-HEP
   - awkward
   - uproot=4.3.*
   - hist
   - particle
-# CMS
+  # CMS
   - coffea=0.7.21
   - correctionlib
   - pip:
-    - dbs3-client
-    - rucio-clients # Linux
+      - dbs3-client
+      - rucio-clients # Linux
+  # doc
+  - sphinx
+  - pydata-sphinx-theme

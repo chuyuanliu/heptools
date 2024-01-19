@@ -1,4 +1,5 @@
+# TODO
 class Tree:
     """
-    TTree
+    Metadata for :class:`ROOT.TTree` like data structure.
     """

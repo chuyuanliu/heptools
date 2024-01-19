@@ -2,10 +2,7 @@
 """
 ROOT tools
 ----------
-High-level tools for ROOT file operations built on top of the following packages:
-
-- `uproot`
-- `awkward`
+High-level tools for ROOT file operations built on top of :mod:`uproot` and :class:`ak.Array`.
 """
 from .tree import Tree
 
