@@ -1,2 +1,2 @@
-.. automodule:: heptools.root
+.. autoapimodule:: heptools.root
     :members: Tree

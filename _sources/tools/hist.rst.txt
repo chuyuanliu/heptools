@@ -1,2 +1,2 @@
-.. automodule:: heptools.hist
+.. autoapimodule:: heptools.hist
     :members: Collection
