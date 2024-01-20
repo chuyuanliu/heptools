@@ -3,20 +3,20 @@
 # https://github.com/CoffeaTeam/docker-coffea-dask/blob/main/dask/Dockerfile
 FROM condaforge/mambaforge:latest
 
-RUN mamba env update -n base -f https://raw.githubusercontent.com/chuyuanliu/heptools/master/environment.yml \
- && mamba install --yes \
+RUN mamba env update -n base -f https://raw.githubusercontent.com/chuyuanliu/heptools/master/main.yml \
+    && mamba install --yes \
     -c conda-forge \
-# grid certificate
+    # grid certificate
     voms \
     ca-policy-lcg \
-# XRootD
+    # XRootD
     xrootd \
-# HTCondor
+    # HTCondor
     htcondor \
-# tini
+    # tini
     tini \
- && mamba clean --all --yes \
- && pip install --no-cache-dir --no-dependencies git+https://github.com/chuyuanliu/heptools.git@master
+    && mamba clean --all --yes \
+    && pip install --no-cache-dir --no-dependencies git+https://github.com/chuyuanliu/heptools.git@master
 RUN ln -s /opt/conda/etc/grid-security /etc/grid-security
 # rucio
 RUN mkdir -p /opt/rucio/etc/

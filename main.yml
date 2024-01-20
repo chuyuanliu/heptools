@@ -31,6 +31,3 @@ dependencies:
   - pip:
       - dbs3-client
       - rucio-clients # Linux
-  # doc
-  - sphinx
-  - pydata-sphinx-theme

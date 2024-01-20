@@ -12,11 +12,10 @@
 '''
 
 from ..correction.variations import BTagSF_Shape, PileupJetIDSF, PileupWeight
-from ..root.skim import PicoAOD
 from ..system.cluster.lpc import LPC
 from ..system.cvmfs import jsonPOG_integration
 from ..system.xrootd import CMSAAA as AAA
 from .das import DAS
 
 __all__ = ['PileupWeight', 'BTagSF_Shape', 'PileupJetIDSF',
-           'PicoAOD', 'jsonPOG_integration', 'LPC', 'AAA', 'DAS']
+           'jsonPOG_integration', 'LPC', 'AAA', 'DAS']

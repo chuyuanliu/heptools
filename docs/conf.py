@@ -1,6 +1,4 @@
-import os
-import sys
-sys.path.insert(0, os.path.abspath('..'))
+
 
 # Configuration file for the Sphinx documentation builder.
 #
@@ -20,7 +18,8 @@ author = 'Chuyuan Liu'
 extensions = ['sphinx.ext.autodoc',
               'sphinx.ext.coverage',
               'sphinx.ext.napoleon',
-              'sphinx.ext.intersphinx']
+              'sphinx.ext.intersphinx',
+              'autoapi.extension']
 
 templates_path = ['_templates']
 exclude_patterns = []
@@ -55,3 +54,9 @@ html_context = {
 html_sidebars = {
     "**": ["sidebar-nav-bs", "sidebar-ethical-ads"]
 }
+
+# -- Options for AutoAPI -------------------------------------------------
+# https://sphinx-autoapi.readthedocs.io/en/latest/reference/config.html
+autoapi_dirs = ['../heptools']
+autoapi_generate_api_docs = False
+autoapi_python_use_implicit_namespaces = True

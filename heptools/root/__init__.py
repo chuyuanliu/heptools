@@ -1,8 +1,14 @@
 # TODO
 """
-ROOT tools
-----------
-High-level tools for ROOT file operations built on top of :mod:`uproot` and :class:`ak.Array`.
+ROOT
+==================
+High-level tools for ROOT file I/O. 
+
+Depdencies
+------------------
+- :mod:`uproot`
+- :class:`ak.Array`.
+
 """
 from .tree import Tree
 

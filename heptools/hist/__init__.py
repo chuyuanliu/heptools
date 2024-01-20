@@ -1,6 +1,6 @@
 '''
-Hist tools
----------------
+Hist
+==================
 '''
 # TODO add doc
 from .fill import Fill, FillError, FillLike
