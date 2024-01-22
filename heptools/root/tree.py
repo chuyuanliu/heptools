@@ -7,6 +7,7 @@ import uproot
 
 from ..system.eos import EOS, PathLike
 from ..typetools import check_type
+from . import io as root_io
 
 
 class _ChunkMeta(type):
@@ -21,7 +22,7 @@ class _ChunkMeta(type):
         return super().__new__(cls, name, bases, dic)
 
 
-class Chunk(metaclass=_ChunkMeta):
+class Chunk(metaclass=_ChunkMeta):  # TODO
     """
     A chunk of :class:`TTree` stored in a ROOT file.
 
@@ -39,6 +40,8 @@ class Chunk(metaclass=_ChunkMeta):
         Start entry. If ``None``, set to 0.
     entry_stop : int, optional, default=None
         Stop entry. If ``None``,  set to ``num_entries``.
+    fetch : bool, optional, default=False
+        Fetch missing information from ``source`` immediately after initialization.
     """
     path: EOS
     '''~heptools.system.eos.EOS:Path to ROOT file.'''
@@ -63,6 +66,7 @@ class Chunk(metaclass=_ChunkMeta):
         num_entries: int = None,
         entry_start: int = None,
         entry_stop: int = None,
+        fetch: bool = False,
     ):
         if branches is not None:
             branches = {*branches}
@@ -81,6 +85,9 @@ class Chunk(metaclass=_ChunkMeta):
         elif check_type(source, tuple[PathLike, UUID]):
             self.path = EOS(source[0])
             self._uuid = source[1]
+
+        if fetch:
+            self._fetch()
 
     def _fetch(self):
         if any(v is None for v in (self._branches, self._num_entries, self._uuid)):
@@ -108,10 +115,8 @@ class Chunk(metaclass=_ChunkMeta):
     def iterate(cls):
         ...  # TODO yield tuple of Tree for given size
 
-# TODO based on uuid, default use ak.Array, save to root, metadata.json
 
-
-class Friend:
+class Friend:  # TODO
     """
     A tool to create and manage addtional :class:`TBranch` stored in separate ROOT files. (also known as friend :class:`TTree`)
     """
@@ -134,10 +139,8 @@ class Friend:
     def move(self):
         ...  # TODO
 
-# TODO
 
-
-class Chain:
+class Chain:  # TODO
     """
     A :class:`TChain` like object to manage multiple :class:`Chunk` and :class:`Friend`.
     """
