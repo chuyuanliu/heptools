@@ -376,18 +376,18 @@ document.write(`
 </div>
 <div class="admonition-todo admonition" id="id1">
 <p class="admonition-title">Todo</p>
-<p>Add lazy reading and schema support using <a class="reference external" href="https://coffeateam.github.io/coffea/api/coffea.nanoevents.NanoEventsFactory.html#coffea.nanoevents.NanoEventsFactory" title="(in coffea v2024.1)"><code class="xref py py-class docutils literal notranslate"><span class="pre">coffea.nanoevents.NanoEventsFactory</span></code></a>.</p>
+<p>Add lazy reading and schema support using <a class="reference external" href="https://coffeateam.github.io/coffea/api/coffea.nanoevents.NanoEventsFactory.html#coffea.nanoevents.NanoEventsFactory" title="(in coffea v0.1)"><code class="xref py py-class docutils literal notranslate"><span class="pre">coffea.nanoevents.NanoEventsFactory</span></code></a>.</p>
 </div>
 <section id="tree">
 <h2>Tree<a class="headerlink" href="#tree" title="Link to this heading">#</a></h2>
 <dl class="py class">
 <dt class="sig sig-object py" id="heptools.root.io.TreeReader">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">heptools.root.io.</span></span><span class="sig-name descname"><span class="pre">TreeReader</span></span><a class="reference external" href="https://github.com/chuyuanliu/heptools/tree/master/heptools/root/io.py#L91-L98"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#heptools.root.io.TreeReader" title="Link to this definition">#</a></dt>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">heptools.root.io.</span></span><span class="sig-name descname"><span class="pre">TreeReader</span></span><a class="reference external" href="https://github.com/chuyuanliu/heptools/tree/master/heptools/root/io.py#L154-L161"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#heptools.root.io.TreeReader" title="Link to this definition">#</a></dt>
 <dd></dd></dl>
 
 <dl class="py class">
 <dt class="sig sig-object py" id="heptools.root.io.TreeWriter">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">heptools.root.io.</span></span><span class="sig-name descname"><span class="pre">TreeWriter</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">name</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'Events'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">parents</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">basket_size</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/chuyuanliu/heptools/tree/master/heptools/root/io.py#L22-L88"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#heptools.root.io.TreeWriter" title="Link to this definition">#</a></dt>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">heptools.root.io.</span></span><span class="sig-name descname"><span class="pre">TreeWriter</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">name</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'Events'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">parents</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">basket_size</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/chuyuanliu/heptools/tree/master/heptools/root/io.py#L27-L151"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#heptools.root.io.TreeWriter" title="Link to this definition">#</a></dt>
 <dd><p><code class="xref py py-func docutils literal notranslate"><span class="pre">uproot.recreate()</span></code> with remote file support and <code class="xref py py-class docutils literal notranslate"><span class="pre">TBasket</span></code> size control.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -399,9 +399,20 @@ document.write(`
 </ul>
 </dd>
 </dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="heptools.root.io.TreeWriter.tree">
+<span class="sig-name descname"><span class="pre">tree</span></span><a class="headerlink" href="#heptools.root.io.TreeWriter.tree" title="Link to this definition">#</a></dt>
+<dd><p>Created <code class="xref py py-class docutils literal notranslate"><span class="pre">TTree</span></code>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference internal" href="tree.html#heptools.root.tree.Chunk" title="heptools.root.tree.Chunk"><em>Chunk</em></a></p>
+</dd>
+</dl>
+</dd></dl>
+
 <dl class="py method">
 <dt class="sig sig-object py" id="heptools.root.io.TreeWriter.extend">
-<span class="sig-name descname"><span class="pre">extend</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/chuyuanliu/heptools/tree/master/heptools/root/io.py#L79-L88"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#heptools.root.io.TreeWriter.extend" title="Link to this definition">#</a></dt>
+<span class="sig-name descname"><span class="pre">extend</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/chuyuanliu/heptools/tree/master/heptools/root/io.py#L119-L151"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#heptools.root.io.TreeWriter.extend" title="Link to this definition">#</a></dt>
 <dd><p>Extend the <code class="xref py py-class docutils literal notranslate"><span class="pre">TTree</span></code> with <code class="docutils literal notranslate"><span class="pre">data</span></code>.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -464,6 +475,7 @@ document.write(`
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#tree">Tree</a><ul class="nav section-nav flex-column">
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#heptools.root.io.TreeReader"><code class="docutils literal notranslate"><span class="pre">TreeReader</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#heptools.root.io.TreeWriter"><code class="docutils literal notranslate"><span class="pre">TreeWriter</span></code></a><ul class="nav section-nav flex-column">
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#heptools.root.io.TreeWriter.tree"><code class="docutils literal notranslate"><span class="pre">TreeWriter.tree</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#heptools.root.io.TreeWriter.extend"><code class="docutils literal notranslate"><span class="pre">TreeWriter.extend()</span></code></a></li>
 </ul>
 </li>
