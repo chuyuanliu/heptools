@@ -11,4 +11,5 @@ Tree
 
 .. autoapiclass:: heptools.root.io.TreeWriter
     :members:
+    :special-members: __call__, __enter__, __exit__
 
