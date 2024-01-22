@@ -13,7 +13,8 @@ ROOT file I/O based on :func:`uproot.open` \(:func:`uproot.reading.open`\) and :
 from __future__ import annotations
 
 import gc
-from typing import TYPE_CHECKING
+import re
+from typing import TYPE_CHECKING, Any, Callable, Iterable
 
 import awkward as ak
 import uproot
@@ -33,8 +34,6 @@ class TreeWriter:
 
     Parameters
     ----------
-    path : PathLike
-        Path to output file.
     name : str, optional, default='Events'
         Name of tree.
     parents : bool, optional, default=True
@@ -50,25 +49,41 @@ class TreeWriter:
 
     def __init__(
             self,
-            path: PathLike,
             name: str = 'Events',
             parents: bool = True,
             basket_size: int = None,):
-        self._path = EOS(path)
         self._name = name
         self._parents = parents
         self._basket_size = basket_size
         self.tree: tree.Chunk = None
         self._reset()
 
+    def __call__(self, path: PathLike):
+        """
+        Set output path.
+
+        Parameters
+        ----------
+        path : PathLike
+            Path to output ROOT file.
+        """
+        self._path = EOS(path)
+        return self
+
     def __enter__(self):
+        """
+        Open a temporary local ROOT file for writing.
+        """
         self.tree = None
         self._temp = self._path.local_temp(dir='.')
         self._file = uproot.recreate(self._temp)
         return self
 
-    def __exit__(self, exc_type, exc_val, exc_tb):
-        if exc_type is None:
+    def __exit__(self, *exc):
+        """
+        If no exception is raised, move the temporary file to the output path and store :class:`~heptools.root.tree.Chunk` information to :data:`tree`.
+        """
+        if not any(exc):
             self._flush()
             self._file.close()
             self.tree = tree.Chunk(
@@ -88,6 +103,7 @@ class TreeWriter:
         return sum(len(b) for b in self._buffer)
 
     def _reset(self):
+        self._path = None
         self._temp = None
         self._file = None
         self._buffer = None if self._basket_size is None else []
@@ -155,9 +171,22 @@ class TreeWriter:
 
 
 class TreeReader:  # TODO
-    ...
+    def __init__(
+        self,
+        transform: Callable = None,
+        select_branch: Iterable[str | re.Pattern] = None,
+        skip_branch: Iterable[str | re.Pattern] = None,
+    ):
+        self._transform = transform
+        self._select_branch = select_branch
+        self._skip_branch = skip_branch
 
-    def array(self):
+    def array(
+        self,
+        source: tree.Chunk,
+        entry_start: int = None,
+        entry_stop: int = None,
+    ):
         ...  # TODO
 
     def dataframe(self):

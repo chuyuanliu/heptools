@@ -104,12 +104,9 @@ class Chunk(metaclass=_ChunkMeta):  # TODO
     def __len__(self):
         return self.entry_stop - self.entry_start
 
-    def array(self):
-        ...  # TODO
-
     @classmethod
     def from_path(cls, *paths: str, threads: int = 1):
-        ...
+        ...  # TODO
 
     @classmethod
     def iterate(cls):
