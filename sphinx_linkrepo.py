@@ -5,6 +5,7 @@ An alternative to :mod:`sphinx.ext.linkcode` based on :mod:`autoapi.extension` a
 from __future__ import annotations
 
 import os
+from urllib.parse import urljoin
 
 import sphinx
 from autoapi.extension import viewcode_follow_imported
@@ -57,7 +58,7 @@ def doctree_read(app: Sphinx, doctree: Node) -> None:
             if importname in locations:
                 path, start, end = locations[importname]
                 path = os.path.relpath(path, app.srcdir)
-                url = f'{os.path.normpath(os.path.join(repourl, path))}#L{start}-L{end}'
+                url = f'{urljoin(repourl, path)}#L{start}-L{end}'
                 if url not in urls:
                     urls.add(url)
                     inline = nodes.inline(
