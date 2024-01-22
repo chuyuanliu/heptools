@@ -9,6 +9,7 @@ import importlib
 import os
 import pickle
 import re
+import tempfile
 from datetime import datetime
 from pathlib import Path
 from subprocess import PIPE, CalledProcessError, check_output
@@ -176,6 +177,8 @@ class EOS:
     @classmethod
     def mv(cls, src: PathLike, dest: PathLike, parents: bool = False, overwrite: bool = False, recursive: bool = False) -> EOS:
         src, dest = EOS(src), EOS(dest)
+        if src == dest:
+            return dest
         if parents:
             dest.parent.mkdir(recursive=True)
         if src.host == dest.host:
@@ -233,6 +236,9 @@ class EOS:
 
     def __truediv__(self, other: str):
         return self.join(other)
+
+    def local_temp(self, dir=None):
+        return EOS(tempfile.mkstemp(suffix=f'_{self.name}', dir=dir)[1])
 
 
 PathLike = str | EOS | os.PathLike

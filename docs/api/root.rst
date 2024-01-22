@@ -8,4 +8,5 @@ ROOT
 .. toctree::
     :hidden:
 
+    root/io
     root/tree

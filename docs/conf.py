@@ -46,6 +46,7 @@ intersphinx_mapping = {
     'awkward': ('https://awkward-array.org/doc/stable/', None),
     'numpy': ('https://numpy.org/doc/stable/', None),
     'pandas': ('https://pandas.pydata.org/docs/', None),
+    'coffea': ('https://coffeateam.github.io/coffea/', None),
 }
 
 # -- Options for HTML output -------------------------------------------------
@@ -72,11 +73,17 @@ html_context = {
     "github_version": "master",
     "doc_path": "docs",
 }
-# -- Options for AutoDoc -------------------------------------------------
+
+# -- Options for todo -------------------------------------------------
+# https://www.sphinx-doc.org/en/master/usage/extensions/todo.html
+todo_include_todos = True
+
+# -- Options for autodoc -------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/extensions/autodoc.html
 autodoc_typehints = 'description'
+autodoc_member_order = 'bysource'
 
-# -- Options for AutoAPI -------------------------------------------------
+# -- Options for autoapi -------------------------------------------------
 # https://sphinx-autoapi.readthedocs.io/en/latest/reference/config.html
 autoapi_dirs = ['../heptools']
 # use autodoc style directives
