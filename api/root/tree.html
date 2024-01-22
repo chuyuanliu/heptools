@@ -42,7 +42,7 @@
     <script>DOCUMENTATION_OPTIONS.pagename = 'api/root/tree';</script>
     <link rel="index" title="Index" href="../../genindex.html" />
     <link rel="search" title="Search" href="../../search.html" />
-    <link rel="prev" title="ROOT" href="../root.html" />
+    <link rel="prev" title="Basic I/O" href="io.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
   </head>
@@ -129,9 +129,16 @@
 <nav class="navbar-nav">
   <ul class="bd-navbar-elements navbar-nav">
     
+                    <li class="nav-item">
+                      <a class="nav-link nav-internal" href="../../guide.html">
+                        User guide
+                      </a>
+                    </li>
+                
+
                     <li class="nav-item current active">
                       <a class="nav-link nav-internal" href="../../api.html">
-                        API
+                        API reference
                       </a>
                     </li>
                 
@@ -233,9 +240,16 @@ document.write(`
 <nav class="navbar-nav">
   <ul class="bd-navbar-elements navbar-nav">
     
+                    <li class="nav-item">
+                      <a class="nav-link nav-internal" href="../../guide.html">
+                        User guide
+                      </a>
+                    </li>
+                
+
                     <li class="nav-item current active">
                       <a class="nav-link nav-internal" href="../../api.html">
-                        API
+                        API reference
                       </a>
                     </li>
                 
@@ -288,6 +302,7 @@ document.write(`
   <div class="bd-toc-item navbar-nav"><ul class="current nav bd-sidenav">
 <li class="toctree-l1"><a class="reference internal" href="../eos.html">EOS</a></li>
 <li class="toctree-l1 current active has-children"><a class="reference internal" href="../root.html">ROOT</a><input checked class="toctree-checkbox" id="toctree-checkbox-1" name="toctree-checkbox-1" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-1"><i class="fa-solid fa-chevron-down"></i></label><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="io.html">Basic I/O</a></li>
 <li class="toctree-l2 current active"><a class="current reference internal" href="#">Tree</a></li>
 </ul>
 </li>
@@ -329,7 +344,7 @@ document.write(`
       </a>
     </li>
     
-    <li class="breadcrumb-item"><a href="../../api.html" class="nav-link">API</a></li>
+    <li class="breadcrumb-item"><a href="../../api.html" class="nav-link">API reference</a></li>
     
     
     <li class="breadcrumb-item"><a href="../root.html" class="nav-link">ROOT</a></li>
@@ -351,26 +366,181 @@ document.write(`
 <div id="searchbox"></div>
                 <article class="bd-article">
                   
-  <section id="tree">
-<h1>Tree<a class="headerlink" href="#tree" title="Link to this heading">#</a></h1>
+  <section id="module-heptools.root.tree">
+<span id="tree"></span><h1>Tree<a class="headerlink" href="#module-heptools.root.tree" title="Link to this heading">#</a></h1>
 <dl class="py class">
-<dt class="sig sig-object py" id="heptools.root.Tree">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">heptools.root.</span></span><span class="sig-name descname"><span class="pre">Tree</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">source</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">num_entries</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">branches</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/chuyuanliu/heptools/tree/master/heptools/root/tree.py#L10-L49"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#heptools.root.Tree" title="Link to this definition">#</a></dt>
-<dd><p><code class="xref py py-class docutils literal notranslate"><span class="pre">ROOT.TTree</span></code> like data structure.</p>
+<dt class="sig sig-object py" id="heptools.root.tree.Chunk">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">heptools.root.tree.</span></span><span class="sig-name descname"><span class="pre">Chunk</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">source</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">name</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'Events'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">branches</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">num_entries</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">entry_start</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">entry_stop</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/chuyuanliu/heptools/tree/master/heptools/root/tree.py#L24-L109"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#heptools.root.tree.Chunk" title="Link to this definition">#</a></dt>
+<dd><p>A chunk of <code class="xref py py-class docutils literal notranslate"><span class="pre">TTree</span></code> stored in a ROOT file.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>source</strong> (<em>PathLike</em><em>, </em><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#tuple" title="(in Python v3.12)"><em>tuple</em></a><em>[</em><em>PathLike</em><em>, </em><a class="reference external" href="https://docs.python.org/3/library/uuid.html#uuid.UUID" title="(in Python v3.12)"><em>UUID</em></a><em>]</em><em>, </em><a class="reference external" href="https://awkward-array.org/doc/stable/reference/generated/ak.Array.html#ak.Array" title="(in Awkward Array v2.5)"><em>ak.Array</em></a><em>, </em><a class="reference external" href="https://pandas.pydata.org/docs/reference/api/pandas.DataFrame.html#pandas.DataFrame" title="(in pandas v2.2.0)"><em>pandas.DataFrame</em></a><em>, </em><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.12)"><em>dict</em></a><em>[</em><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.12)"><em>str</em></a><em>, </em><a class="reference external" href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v1.26)"><em>numpy.ndarray</em></a><em> | </em><a class="reference external" href="https://awkward-array.org/doc/stable/reference/generated/ak.Array.html#ak.Array" title="(in Awkward Array v2.5)"><em>ak.Array</em></a><em> | </em><a class="reference external" href="https://pandas.pydata.org/docs/reference/api/pandas.Series.html#pandas.Series" title="(in pandas v2.2.0)"><em>pandas.Series</em></a><em>]</em>) – <p>Source of data.</p>
-<ul>
-<li><p>path to ROOT file with optional UUID</p></li>
-<li><p>data supported by <a class="reference external" href="https://uproot.readthedocs.io/en/stable/uproot.writing.writable.WritableTree.html#uproot.writing.writable.WritableTree" title="(in Uproot)"><code class="xref py py-class docutils literal notranslate"><span class="pre">uproot.writing.writable.WritableTree</span></code></a></p></li>
-</ul>
-</p></li>
-<li><p><strong>num_entries</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.12)"><em>int</em></a><em>, </em><em>optional</em><em>, </em><em>default=None</em>) – Number of entries. If <code class="docutils literal notranslate"><span class="pre">None</span></code>, infer from <code class="docutils literal notranslate"><span class="pre">source</span></code>.</p></li>
-<li><p><strong>branches</strong> (<a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Iterable" title="(in Python v3.12)"><em>Iterable</em></a><em>[</em><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.12)"><em>str</em></a><em>]</em><em>, </em><em>optional</em><em>, </em><em>default=None</em>) – Name of branches. If <code class="docutils literal notranslate"><span class="pre">None</span></code>, infer from <code class="docutils literal notranslate"><span class="pre">source</span></code>.</p></li>
+<li><p><strong>source</strong> (<em>PathLike</em><em>, </em><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#tuple" title="(in Python v3.12)"><em>tuple</em></a><em>[</em><em>PathLike</em><em>, </em><a class="reference external" href="https://docs.python.org/3/library/uuid.html#uuid.UUID" title="(in Python v3.12)"><em>UUID</em></a><em>]</em>) – Path to ROOT file with optional UUID</p></li>
+<li><p><strong>name</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.12)"><em>str</em></a><em>, </em><em>optional</em><em>, </em><em>default='Events'</em>) – Name of <code class="xref py py-class docutils literal notranslate"><span class="pre">TTree</span></code>.</p></li>
+<li><p><strong>branches</strong> (<a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Iterable" title="(in Python v3.12)"><em>Iterable</em></a><em>[</em><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.12)"><em>str</em></a><em>]</em><em>, </em><em>optional</em><em>, </em><em>default=None</em>) – Name of branches. If <code class="docutils literal notranslate"><span class="pre">None</span></code>, read from <code class="docutils literal notranslate"><span class="pre">source</span></code>.</p></li>
+<li><p><strong>num_entries</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.12)"><em>int</em></a><em>, </em><em>optional</em><em>, </em><em>default=None</em>) – Number of entries. If <code class="docutils literal notranslate"><span class="pre">None</span></code>, read from <code class="docutils literal notranslate"><span class="pre">source</span></code>.</p></li>
+<li><p><strong>entry_start</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.12)"><em>int</em></a><em>, </em><em>optional</em><em>, </em><em>default=None</em>) – Start entry. If <code class="docutils literal notranslate"><span class="pre">None</span></code>, set to 0.</p></li>
+<li><p><strong>entry_stop</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.12)"><em>int</em></a><em>, </em><em>optional</em><em>, </em><em>default=None</em>) – Stop entry. If <code class="docutils literal notranslate"><span class="pre">None</span></code>,  set to <code class="docutils literal notranslate"><span class="pre">num_entries</span></code>.</p></li>
 </ul>
 </dd>
 </dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="heptools.root.tree.Chunk.path">
+<span class="sig-name descname"><span class="pre">path</span></span><a class="reference external" href="https://github.com/chuyuanliu/heptools/tree/master/heptools/root/tree.py#L43-L43"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#heptools.root.tree.Chunk.path" title="Link to this definition">#</a></dt>
+<dd><p>Path to ROOT file.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference internal" href="../eos.html#heptools.system.eos.EOS" title="heptools.system.eos.EOS"><em>EOS</em></a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="heptools.root.tree.Chunk.uuid">
+<span class="sig-name descname"><span class="pre">uuid</span></span><a class="reference external" href="https://github.com/chuyuanliu/heptools/tree/master/heptools/root/tree.py#L45-L45"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#heptools.root.tree.Chunk.uuid" title="Link to this definition">#</a></dt>
+<dd><p>UUID of ROOT file.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/uuid.html#uuid.UUID" title="(in Python v3.12)"><em>UUID</em></a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="heptools.root.tree.Chunk.name">
+<span class="sig-name descname"><span class="pre">name</span></span><a class="reference external" href="https://github.com/chuyuanliu/heptools/tree/master/heptools/root/tree.py#L47-L47"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#heptools.root.tree.Chunk.name" title="Link to this definition">#</a></dt>
+<dd><p>Name of <code class="xref py py-class docutils literal notranslate"><span class="pre">TTree</span></code>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.12)">str</a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="heptools.root.tree.Chunk.branches">
+<span class="sig-name descname"><span class="pre">branches</span></span><a class="reference external" href="https://github.com/chuyuanliu/heptools/tree/master/heptools/root/tree.py#L49-L49"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#heptools.root.tree.Chunk.branches" title="Link to this definition">#</a></dt>
+<dd><p>Name of branches.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Set" title="(in Python v3.12)"><em>Set</em></a>[<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.12)">str</a>]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="heptools.root.tree.Chunk.num_entries">
+<span class="sig-name descname"><span class="pre">num_entries</span></span><a class="reference external" href="https://github.com/chuyuanliu/heptools/tree/master/heptools/root/tree.py#L51-L51"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#heptools.root.tree.Chunk.num_entries" title="Link to this definition">#</a></dt>
+<dd><p>Number of entries.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.12)">int</a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="heptools.root.tree.Chunk.entry_start">
+<span class="sig-name descname"><span class="pre">entry_start</span></span><a class="reference external" href="https://github.com/chuyuanliu/heptools/tree/master/heptools/root/tree.py#L53-L53"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#heptools.root.tree.Chunk.entry_start" title="Link to this definition">#</a></dt>
+<dd><p>Start entry.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.12)">int</a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="heptools.root.tree.Chunk.entry_stop">
+<span class="sig-name descname"><span class="pre">entry_stop</span></span><a class="reference external" href="https://github.com/chuyuanliu/heptools/tree/master/heptools/root/tree.py#L55-L55"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#heptools.root.tree.Chunk.entry_stop" title="Link to this definition">#</a></dt>
+<dd><p>Stop entry.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.12)">int</a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="heptools.root.tree.Chunk.array">
+<span class="sig-name descname"><span class="pre">array</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference external" href="https://github.com/chuyuanliu/heptools/tree/master/heptools/root/tree.py#L100-L101"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#heptools.root.tree.Chunk.array" title="Link to this definition">#</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="heptools.root.tree.Chunk.from_path">
+<em class="property"><span class="pre">classmethod</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">from_path</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">paths</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">threads</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/chuyuanliu/heptools/tree/master/heptools/root/tree.py#L104-L105"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#heptools.root.tree.Chunk.from_path" title="Link to this definition">#</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>paths</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.12)"><em>str</em></a>) – </p></li>
+<li><p><strong>threads</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.12)"><em>int</em></a>) – </p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="heptools.root.tree.Chunk.iterate">
+<em class="property"><span class="pre">classmethod</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">iterate</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference external" href="https://github.com/chuyuanliu/heptools/tree/master/heptools/root/tree.py#L108-L109"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#heptools.root.tree.Chunk.iterate" title="Link to this definition">#</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="heptools.root.tree.Friend">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">heptools.root.tree.</span></span><span class="sig-name descname"><span class="pre">Friend</span></span><a class="reference external" href="https://github.com/chuyuanliu/heptools/tree/master/heptools/root/tree.py#L114-L135"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#heptools.root.tree.Friend" title="Link to this definition">#</a></dt>
+<dd><p>A tool to create and manage addtional <code class="xref py py-class docutils literal notranslate"><span class="pre">TBranch</span></code> stored in separate ROOT files. (also known as friend <code class="xref py py-class docutils literal notranslate"><span class="pre">TTree</span></code>)</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="heptools.root.tree.Friend.add">
+<span class="sig-name descname"><span class="pre">add</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference external" href="https://github.com/chuyuanliu/heptools/tree/master/heptools/root/tree.py#L122-L123"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#heptools.root.tree.Friend.add" title="Link to this definition">#</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="heptools.root.tree.Friend.get">
+<span class="sig-name descname"><span class="pre">get</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference external" href="https://github.com/chuyuanliu/heptools/tree/master/heptools/root/tree.py#L125-L126"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#heptools.root.tree.Friend.get" title="Link to this definition">#</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="heptools.root.tree.Friend.dump">
+<span class="sig-name descname"><span class="pre">dump</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference external" href="https://github.com/chuyuanliu/heptools/tree/master/heptools/root/tree.py#L128-L129"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#heptools.root.tree.Friend.dump" title="Link to this definition">#</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="heptools.root.tree.Friend.merge">
+<span class="sig-name descname"><span class="pre">merge</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference external" href="https://github.com/chuyuanliu/heptools/tree/master/heptools/root/tree.py#L131-L132"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#heptools.root.tree.Friend.merge" title="Link to this definition">#</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="heptools.root.tree.Friend.move">
+<span class="sig-name descname"><span class="pre">move</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference external" href="https://github.com/chuyuanliu/heptools/tree/master/heptools/root/tree.py#L134-L135"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#heptools.root.tree.Friend.move" title="Link to this definition">#</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="heptools.root.tree.Chain">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">heptools.root.tree.</span></span><span class="sig-name descname"><span class="pre">Chain</span></span><a class="reference external" href="https://github.com/chuyuanliu/heptools/tree/master/heptools/root/tree.py#L140-L155"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#heptools.root.tree.Chain" title="Link to this definition">#</a></dt>
+<dd><p>A <code class="xref py py-class docutils literal notranslate"><span class="pre">TChain</span></code> like object to manage multiple <a class="reference internal" href="#heptools.root.tree.Chunk" title="heptools.root.tree.Chunk"><code class="xref py py-class docutils literal notranslate"><span class="pre">Chunk</span></code></a> and <a class="reference internal" href="#heptools.root.tree.Friend" title="heptools.root.tree.Friend"><code class="xref py py-class docutils literal notranslate"><span class="pre">Friend</span></code></a>.</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="heptools.root.tree.Chain.append">
+<span class="sig-name descname"><span class="pre">append</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference external" href="https://github.com/chuyuanliu/heptools/tree/master/heptools/root/tree.py#L145-L146"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#heptools.root.tree.Chain.append" title="Link to this definition">#</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="heptools.root.tree.Chain.extend">
+<span class="sig-name descname"><span class="pre">extend</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference external" href="https://github.com/chuyuanliu/heptools/tree/master/heptools/root/tree.py#L148-L149"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#heptools.root.tree.Chain.extend" title="Link to this definition">#</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="heptools.root.tree.Chain.add_friend">
+<span class="sig-name descname"><span class="pre">add_friend</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference external" href="https://github.com/chuyuanliu/heptools/tree/master/heptools/root/tree.py#L151-L152"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#heptools.root.tree.Chain.add_friend" title="Link to this definition">#</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="heptools.root.tree.Chain.iterate">
+<span class="sig-name descname"><span class="pre">iterate</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference external" href="https://github.com/chuyuanliu/heptools/tree/master/heptools/root/tree.py#L154-L155"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#heptools.root.tree.Chain.iterate" title="Link to this definition">#</a></dt>
+<dd></dd></dl>
+
 </dd></dl>
 
 </section>
@@ -386,12 +556,12 @@ document.write(`
                   
 <div class="prev-next-area">
     <a class="left-prev"
-       href="../root.html"
+       href="io.html"
        title="previous page">
       <i class="fa-solid fa-angle-left"></i>
       <div class="prev-next-info">
         <p class="prev-next-subtitle">previous</p>
-        <p class="prev-next-title">ROOT</p>
+        <p class="prev-next-title">Basic I/O</p>
       </div>
     </a>
 </div>
@@ -412,7 +582,34 @@ document.write(`
   </div>
   <nav class="bd-toc-nav page-toc" aria-labelledby="pst-page-navigation-heading-2">
     <ul class="visible nav section-nav flex-column">
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#heptools.root.Tree"><code class="docutils literal notranslate"><span class="pre">Tree</span></code></a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#heptools.root.tree.Chunk"><code class="docutils literal notranslate"><span class="pre">Chunk</span></code></a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#heptools.root.tree.Chunk.path"><code class="docutils literal notranslate"><span class="pre">Chunk.path</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#heptools.root.tree.Chunk.uuid"><code class="docutils literal notranslate"><span class="pre">Chunk.uuid</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#heptools.root.tree.Chunk.name"><code class="docutils literal notranslate"><span class="pre">Chunk.name</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#heptools.root.tree.Chunk.branches"><code class="docutils literal notranslate"><span class="pre">Chunk.branches</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#heptools.root.tree.Chunk.num_entries"><code class="docutils literal notranslate"><span class="pre">Chunk.num_entries</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#heptools.root.tree.Chunk.entry_start"><code class="docutils literal notranslate"><span class="pre">Chunk.entry_start</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#heptools.root.tree.Chunk.entry_stop"><code class="docutils literal notranslate"><span class="pre">Chunk.entry_stop</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#heptools.root.tree.Chunk.array"><code class="docutils literal notranslate"><span class="pre">Chunk.array()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#heptools.root.tree.Chunk.from_path"><code class="docutils literal notranslate"><span class="pre">Chunk.from_path()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#heptools.root.tree.Chunk.iterate"><code class="docutils literal notranslate"><span class="pre">Chunk.iterate()</span></code></a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#heptools.root.tree.Friend"><code class="docutils literal notranslate"><span class="pre">Friend</span></code></a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#heptools.root.tree.Friend.add"><code class="docutils literal notranslate"><span class="pre">Friend.add()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#heptools.root.tree.Friend.get"><code class="docutils literal notranslate"><span class="pre">Friend.get()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#heptools.root.tree.Friend.dump"><code class="docutils literal notranslate"><span class="pre">Friend.dump()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#heptools.root.tree.Friend.merge"><code class="docutils literal notranslate"><span class="pre">Friend.merge()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#heptools.root.tree.Friend.move"><code class="docutils literal notranslate"><span class="pre">Friend.move()</span></code></a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#heptools.root.tree.Chain"><code class="docutils literal notranslate"><span class="pre">Chain</span></code></a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#heptools.root.tree.Chain.append"><code class="docutils literal notranslate"><span class="pre">Chain.append()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#heptools.root.tree.Chain.extend"><code class="docutils literal notranslate"><span class="pre">Chain.extend()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#heptools.root.tree.Chain.add_friend"><code class="docutils literal notranslate"><span class="pre">Chain.add_friend()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#heptools.root.tree.Chain.iterate"><code class="docutils literal notranslate"><span class="pre">Chain.iterate()</span></code></a></li>
+</ul>
+</li>
 </ul>
   </nav></div>
 

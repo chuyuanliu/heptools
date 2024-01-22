@@ -1,9 +1,8 @@
 **********************
-API reference
+User guide
 **********************
 
 .. toctree::
    :maxdepth: 2
 
-   api/eos
-   api/root
+   guide/performance

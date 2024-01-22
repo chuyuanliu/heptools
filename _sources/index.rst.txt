@@ -7,6 +7,10 @@ Welcome to HEP tools's documentation!
 =====================================
 User guide
 ----------
+.. toctree::
+   :maxdepth: 2
+
+   guide
 
 Examples
 --------
