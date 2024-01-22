@@ -4,7 +4,7 @@
 
 Memory Usage
 ============
-:class:`ak.Array` (or :class:`ak.Record`) works as a view of the original data with a structure given by :func:`ak.Array.layout`. Let's start with a simple array:
+:class:`ak.Array` (or :class:`ak.Record`) works as a view of the original data with a structure given by :attr:`ak.Array.layout`. Let's start with a simple array:
 
 .. code-block:: python
 
