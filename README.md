@@ -70,11 +70,10 @@ change singularity (apptainer) cache dir
 
 ## TODO
 
+- check: use TYPE_CHECKING to avoid circular import, unused import
 - add:friend tree
 - add:hist utils
 - add:hist visualizer
-- doc
+- rewrite: XSection
 - comment
 - unit test
-- plot
-- rewrite XSection
