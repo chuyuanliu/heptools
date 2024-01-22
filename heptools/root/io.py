@@ -6,6 +6,9 @@ ROOT file I/O based on :func:`uproot.open` \(:func:`uproot.reading.open`\) and :
 
 .. todo::
     Add lazy reading and schema support using :class:`coffea.nanoevents.NanoEventsFactory`.
+
+.. todo::
+    Consider migrating to `fsspec-xrootd <https://coffeateam.github.io/fsspec-xrootd/>`_
 """
 from __future__ import annotations
 

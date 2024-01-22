@@ -9,8 +9,6 @@ RUN mamba env update -n base -f https://raw.githubusercontent.com/chuyuanliu/hep
     # grid certificate
     voms \
     ca-policy-lcg \
-    # XRootD
-    xrootd \
     # HTCondor
     htcondor \
     # tini

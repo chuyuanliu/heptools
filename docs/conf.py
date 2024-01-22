@@ -47,6 +47,7 @@ intersphinx_mapping = {
     'numpy': ('https://numpy.org/doc/stable/', None),
     'pandas': ('https://pandas.pydata.org/docs/', None),
     'coffea': ('https://coffeateam.github.io/coffea/', None),
+    'XRootD': ('https://xrootd.slac.stanford.edu/doc/doxygen/5.6.4/python/', None),
 }
 
 # -- Options for HTML output -------------------------------------------------

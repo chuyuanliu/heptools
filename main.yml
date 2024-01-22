@@ -20,6 +20,9 @@ dependencies:
   # parallel
   - dask-jobqueue
 
+  # XRootD
+  - xrootd
+  - fsspec-xrootd
   # Scikit-HEP
   - awkward
   - uproot=4.3.*

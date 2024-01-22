@@ -1,7 +1,11 @@
 # TODO wildcard
 # TODO docstring
 """
-An interface to EOS and NFS operations.
+An interface to operate on both local filesystem and EOS (or other XRootD supported system).
+
+.. todo::
+    Consider migrating to :mod:`os`, :mod:`shutil` and :class:`XRootD.client.FileSystem`.
+
 """
 from __future__ import annotations
 
