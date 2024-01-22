@@ -1,4 +1,8 @@
 # TODO wildcard
+# TODO docstring
+"""
+An interface to EOS and NFS operations.
+"""
 from __future__ import annotations
 
 import importlib
@@ -27,20 +31,22 @@ class EOS:
     def __init__(self, path: PathLike, url: str = ...):
         default = ''
         if isinstance(path, EOS):
-            default, path = path.url, path.path
-        elif isinstance(path, str):
+            default, path = path.host, path.path
+        elif not isinstance(path, Path):
+            if isinstance(path, os.PathLike):
+                path = os.fspath(path)
             match = self._url_pattern.match(path)
             if match:
                 default = match.group(0)
                 path = path[len(default):]
-        self.url = arg_set(url, '', default)
-        if self.url:
-            self.url = ensure(self.url, __suffix='/')
+        self.host = arg_set(url, '', default)
+        if self.host:
+            self.host = ensure(self.host, __suffix='/')
         self.path = Path(self._slash_pattern.sub('/', str(path)))
 
     @property
     def is_local(self):
-        return not self.url
+        return not self.host
 
     @property
     def is_dir(self):
@@ -83,7 +89,7 @@ class EOS:
         return output
 
     def call(self, executable: str, *args):
-        eos = () if self.is_local else (self.client, self.url)
+        eos = () if self.is_local else (self.client, self.host)
         return self.cmd(*eos, executable, *args)
 
     def rm(self, recursive: bool = False):
@@ -97,7 +103,7 @@ class EOS:
             return self
 
     def join(self, *other: str):
-        return EOS(self.path.joinpath(*other), self.url)
+        return EOS(self.path.joinpath(*other), self.host)
 
     def walk(self) -> Generator[EOS, Any, None]:
         if not self.is_local:
@@ -107,7 +113,7 @@ class EOS:
             yield self
         else:
             for root, _, files in os.walk(self.path):
-                root = EOS(root, self.url)
+                root = EOS(root, self.host)
                 for file in files:
                     yield root / file
 
@@ -122,7 +128,7 @@ class EOS:
                 if entry.is_dir():
                     yield from EOS(entry.path).scan()
                 else:
-                    yield EOS(entry.path, self.url), entry.stat()
+                    yield EOS(entry.path, self.host), entry.stat()
 
     def stat(self):
         if not self.is_local:
@@ -134,7 +140,7 @@ class EOS:
         return str(self).startswith(ensure(str(other), __suffix='/'))
 
     def relative_to(self, other: PathLike):
-        if self.url == other.url:
+        if self.host == other.host:
             try:
                 return EOS(self.path.relative_to(other.path))
             except ValueError:
@@ -172,7 +178,7 @@ class EOS:
         src, dest = EOS(src), EOS(dest)
         if parents:
             dest.parent.mkdir(recursive=True)
-        if src.url == dest.url:
+        if src.host == dest.host:
             result = src.call('mv',
                               '-n' if not overwrite and src.client != 'xrdfs' else '',
                               src.path, dest.path)[0]
@@ -207,20 +213,20 @@ class EOS:
 
     @property
     def parent(self):
-        return EOS(self.path.parent, self.url)
+        return EOS(self.path.parent, self.host)
 
     def __hash__(self):
-        return hash((self.url, self.path))
+        return hash((self.host, self.path))
 
     def __eq__(self, other):
         if isinstance(other, EOS):
-            return self.url == other.url and self.path == other.path
+            return self.host == other.host and self.path == other.path
         elif isinstance(other, str | Path):
             return self == EOS(other)
         return NotImplemented
 
     def __str__(self):  # TODO rich, __repr__
-        return self.url + str(self.path)
+        return self.host + str(self.path)
 
     def __fspath__(self):
         return str(self)
@@ -229,7 +235,10 @@ class EOS:
         return self.join(other)
 
 
-PathLike = str | Path | EOS
+PathLike = str | EOS | os.PathLike
+"""
+:class:`str`, :class:`EOS` or :class:`os.PathLike`
+"""
 
 
 def open_zip(algorithm: Literal['', 'gzip', 'bz2', 'lzma'], file: PathLike, mode: str, **kwargs):

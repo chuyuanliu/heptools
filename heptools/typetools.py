@@ -31,6 +31,8 @@ def _expand_type(__class_or_tuple):
 
 
 def check_subclass(__derived, __base) -> bool:
+    # TODO Callable, TypedDict
+
     origin_base, args_base, _ = _expand_type(__base)
     origin_derived, args_derived, _ = _expand_type(__derived)
 
@@ -65,7 +67,7 @@ def check_subclass(__derived, __base) -> bool:
             args_base[1:] == args_derived[1:]
             and check_subclass(args_derived[0], args_base[0])),
         (Callable, lambda:
-            True)  # TODO Callable
+            True)  # FIXME compare args
     ):
         match count([origin_base, origin_derived], type_):
             case 2:
@@ -84,6 +86,8 @@ def check_subclass(__derived, __base) -> bool:
 
 
 def check_type(__obj, __type) -> bool:
+    # TODO Callable, TypedDict
+
     # object(), None, Ellipsis
     if __type.__class__ is object or __type is None or __type is ...:
         return __obj is __type
@@ -103,7 +107,6 @@ def check_type(__obj, __type) -> bool:
     # Annotated
     if origin is Annotated:
         return check_type(__obj, args[0])
-    # TODO Callable, TypedDict
 
     if generic:
         if not isinstance(__obj, origin):
@@ -131,6 +134,8 @@ def check_type(__obj, __type) -> bool:
 
 
 def type_name(__type) -> str:
+    # TODO TypedDict
+
     if isinstance(__type, tuple | list):
         return f'({", ".join(type_name(i) for i in __type)})'
 
