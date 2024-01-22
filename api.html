@@ -8,7 +8,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>Tools &#8212; HEP tools  documentation</title>
+    <title>API &#8212; HEP tools  documentation</title>
   
   
   
@@ -39,10 +39,10 @@
     <script src="_static/documentation_options.js?v=5929fcd5"></script>
     <script src="_static/doctools.js?v=888ff710"></script>
     <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
-    <script>DOCUMENTATION_OPTIONS.pagename = 'tools';</script>
+    <script>DOCUMENTATION_OPTIONS.pagename = 'api';</script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
-    <link rel="next" title="Hist" href="tools/hist.html" />
+    <link rel="next" title="EOS" href="api/eos.html" />
     <link rel="prev" title="Welcome to HEP tools’s documentation!" href="index.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
@@ -132,7 +132,7 @@
     
                     <li class="nav-item current active">
                       <a class="nav-link nav-internal" href="#">
-                        Tools
+                        API
                       </a>
                     </li>
                 
@@ -236,7 +236,7 @@ document.write(`
     
                     <li class="nav-item current active">
                       <a class="nav-link nav-internal" href="#">
-                        Tools
+                        API
                       </a>
                     </li>
                 
@@ -287,10 +287,11 @@ document.write(`
      aria-label="Section Navigation">
   <p class="bd-links__title" role="heading" aria-level="1">Section Navigation</p>
   <div class="bd-toc-item navbar-nav"><ul class="nav bd-sidenav">
-<li class="toctree-l1"><a class="reference internal" href="tools/hist.html">Hist</a></li>
-
-<li class="toctree-l1"><a class="reference internal" href="tools/root.html">ROOT</a></li>
-
+<li class="toctree-l1"><a class="reference internal" href="api/eos.html">EOS</a></li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="api/root.html">ROOT</a><input checked class="toctree-checkbox" id="toctree-checkbox-1" name="toctree-checkbox-1" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-1"><i class="fa-solid fa-chevron-down"></i></label><ul>
+<li class="toctree-l2"><a class="reference internal" href="api/root/tree.html">Tree</a></li>
+</ul>
+</li>
 </ul>
 </div>
 </nav></div>
@@ -328,7 +329,7 @@ document.write(`
         <i class="fa-solid fa-home"></i>
       </a>
     </li>
-    <li class="breadcrumb-item active" aria-current="page">Tools</li>
+    <li class="breadcrumb-item active" aria-current="page">API</li>
   </ul>
 </nav>
 </div>
@@ -345,25 +346,16 @@ document.write(`
 <div id="searchbox"></div>
                 <article class="bd-article">
                   
-  <section id="tools">
-<h1>Tools<a class="headerlink" href="#tools" title="Link to this heading">#</a></h1>
+  <section id="api">
+<h1>API<a class="headerlink" href="#api" title="Link to this heading">#</a></h1>
 <div class="toctree-wrapper compound">
 <ul>
-<li class="toctree-l1"><a class="reference internal" href="tools/hist.html">Hist</a></li>
-<li class="toctree-l1"><a class="reference internal" href="tools/hist.html#heptools.hist.Collection"><code class="docutils literal notranslate"><span class="pre">Collection</span></code></a><ul>
-<li class="toctree-l2"><a class="reference internal" href="tools/hist.html#heptools.hist.Collection.add"><code class="docutils literal notranslate"><span class="pre">Collection.add()</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="tools/hist.html#heptools.hist.Collection.auto_fill"><code class="docutils literal notranslate"><span class="pre">Collection.auto_fill()</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="tools/hist.html#heptools.hist.Collection.cd"><code class="docutils literal notranslate"><span class="pre">Collection.cd()</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="tools/hist.html#heptools.hist.Collection.current"><code class="docutils literal notranslate"><span class="pre">Collection.current</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="tools/hist.html#heptools.hist.Collection.duplicate_axes"><code class="docutils literal notranslate"><span class="pre">Collection.duplicate_axes()</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="tools/hist.html#heptools.hist.Collection.output"><code class="docutils literal notranslate"><span class="pre">Collection.output</span></code></a></li>
+<li class="toctree-l1"><a class="reference internal" href="api/eos.html">EOS</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="api/eos.html#heptools.system.eos.PathLike"><code class="docutils literal notranslate"><span class="pre">PathLike</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="api/eos.html#heptools.system.eos.EOS"><code class="docutils literal notranslate"><span class="pre">EOS</span></code></a></li>
 </ul>
 </li>
-<li class="toctree-l1"><a class="reference internal" href="tools/root.html">ROOT</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="tools/root.html#depdencies">Depdencies</a></li>
-</ul>
-</li>
-<li class="toctree-l1"><a class="reference internal" href="tools/root.html#heptools.root.Tree"><code class="docutils literal notranslate"><span class="pre">Tree</span></code></a></li>
+<li class="toctree-l1"><a class="reference internal" href="api/root.html">ROOT</a></li>
 </ul>
 </div>
 </section>
@@ -388,11 +380,11 @@ document.write(`
       </div>
     </a>
     <a class="right-next"
-       href="tools/hist.html"
+       href="api/eos.html"
        title="next page">
       <div class="prev-next-info">
         <p class="prev-next-subtitle">next</p>
-        <p class="prev-next-title">Hist</p>
+        <p class="prev-next-title">EOS</p>
       </div>
       <i class="fa-solid fa-angle-right"></i>
     </a>
@@ -410,7 +402,7 @@ document.write(`
 
   
   <div class="tocsection editthispage">
-    <a href="https://github.com/chuyuanliu/heptools/edit/master/docs/tools.rst">
+    <a href="https://github.com/chuyuanliu/heptools/edit/master/docs/api.rst">
       <i class="fa-solid fa-pencil"></i>
       
       
@@ -425,7 +417,7 @@ document.write(`
   <div class="sidebar-secondary-item">
 
   <div class="tocsection sourcelink">
-    <a href="_sources/tools.rst.txt">
+    <a href="_sources/api.rst.txt">
       <i class="fa-solid fa-file-lines"></i> Show Source
     </a>
   </div>

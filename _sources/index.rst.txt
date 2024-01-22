@@ -5,8 +5,15 @@
 
 Welcome to HEP tools's documentation!
 =====================================
-.. toctree::
-   :maxdepth: 2
-   :caption: Contents:
+User guide
+----------
 
-   tools
+Examples
+--------
+
+API reference
+-------------
+.. toctree::
+   :maxdepth: 1
+
+   api

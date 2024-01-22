@@ -39,10 +39,11 @@
     <script src="../_static/documentation_options.js?v=5929fcd5"></script>
     <script src="../_static/doctools.js?v=888ff710"></script>
     <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
-    <script>DOCUMENTATION_OPTIONS.pagename = 'tools/root';</script>
+    <script>DOCUMENTATION_OPTIONS.pagename = 'api/root';</script>
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
-    <link rel="prev" title="Hist" href="hist.html" />
+    <link rel="next" title="Tree" href="root/tree.html" />
+    <link rel="prev" title="EOS" href="eos.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
   </head>
@@ -130,8 +131,8 @@
   <ul class="bd-navbar-elements navbar-nav">
     
                     <li class="nav-item current active">
-                      <a class="nav-link nav-internal" href="../tools.html">
-                        Tools
+                      <a class="nav-link nav-internal" href="../api.html">
+                        API
                       </a>
                     </li>
                 
@@ -234,8 +235,8 @@ document.write(`
   <ul class="bd-navbar-elements navbar-nav">
     
                     <li class="nav-item current active">
-                      <a class="nav-link nav-internal" href="../tools.html">
-                        Tools
+                      <a class="nav-link nav-internal" href="../api.html">
+                        API
                       </a>
                     </li>
                 
@@ -286,10 +287,11 @@ document.write(`
      aria-label="Section Navigation">
   <p class="bd-links__title" role="heading" aria-level="1">Section Navigation</p>
   <div class="bd-toc-item navbar-nav"><ul class="current nav bd-sidenav">
-<li class="toctree-l1"><a class="reference internal" href="hist.html">Hist</a></li>
-
-<li class="toctree-l1 current active"><a class="current reference internal" href="#">ROOT</a></li>
-
+<li class="toctree-l1"><a class="reference internal" href="eos.html">EOS</a></li>
+<li class="toctree-l1 current active has-children"><a class="current reference internal" href="#">ROOT</a><input checked class="toctree-checkbox" id="toctree-checkbox-1" name="toctree-checkbox-1" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-1"><i class="fa-solid fa-chevron-down"></i></label><ul>
+<li class="toctree-l2"><a class="reference internal" href="root/tree.html">Tree</a></li>
+</ul>
+</li>
 </ul>
 </div>
 </nav></div>
@@ -328,7 +330,7 @@ document.write(`
       </a>
     </li>
     
-    <li class="breadcrumb-item"><a href="../tools.html" class="nav-link">Tools</a></li>
+    <li class="breadcrumb-item"><a href="../api.html" class="nav-link">API</a></li>
     
     <li class="breadcrumb-item active" aria-current="page">ROOT</li>
   </ul>
@@ -347,23 +349,16 @@ document.write(`
 <div id="searchbox"></div>
                 <article class="bd-article">
                   
-  <section id="root">
-<span id="module-heptools.root"></span><h1>ROOT<a class="headerlink" href="#root" title="Link to this heading">#</a></h1>
-<p>High-level tools for ROOT file I/O.</p>
-<section id="depdencies">
-<h2>Depdencies<a class="headerlink" href="#depdencies" title="Link to this heading">#</a></h2>
-<ul class="simple">
-<li><p><a class="reference external" href="https://uproot.readthedocs.io/en/latest/uproot.html#module-uproot" title="(in Uproot)"><code class="xref py py-mod docutils literal notranslate"><span class="pre">uproot</span></code></a></p></li>
-<li><p><a class="reference external" href="https://awkward-array.org/doc/main/reference/generated/ak.Array.html#ak.Array" title="(in Awkward Array v2.5)"><code class="xref py py-class docutils literal notranslate"><span class="pre">ak.Array</span></code></a>.</p></li>
-</ul>
+  <section id="module-heptools.root">
+<span id="root"></span><h1>ROOT<a class="headerlink" href="#module-heptools.root" title="Link to this heading">#</a></h1>
+<p>High-level tools for ROOT file I/O built on top of <a class="reference external" href="https://uproot.readthedocs.io/en/stable/uproot.html#module-uproot" title="(in Uproot)"><code class="xref py py-mod docutils literal notranslate"><span class="pre">uproot</span></code></a>.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p><a class="reference external" href="https://pandas.pydata.org/docs/index.html#module-pandas" title="(in pandas v2.2.0)"><code class="xref py py-mod docutils literal notranslate"><span class="pre">pandas</span></code></a> will not be imported unless necessary.</p>
+</div>
+<div class="toctree-wrapper compound">
+</div>
 </section>
-</section>
-<dl class="py class">
-<dt class="sig sig-object py" id="heptools.root.Tree">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">heptools.root.</span></span><span class="sig-name descname"><span class="pre">Tree</span></span><a class="headerlink" href="#heptools.root.Tree" title="Link to this definition">#</a></dt>
-<dd><p>Metadata for <code class="xref py py-class docutils literal notranslate"><span class="pre">ROOT.TTree</span></code> like data structure.</p>
-</dd></dl>
-
 
 
                 </article>
@@ -376,13 +371,22 @@ document.write(`
                   
 <div class="prev-next-area">
     <a class="left-prev"
-       href="hist.html"
+       href="eos.html"
        title="previous page">
       <i class="fa-solid fa-angle-left"></i>
       <div class="prev-next-info">
         <p class="prev-next-subtitle">previous</p>
-        <p class="prev-next-title">Hist</p>
+        <p class="prev-next-title">EOS</p>
       </div>
+    </a>
+    <a class="right-next"
+       href="root/tree.html"
+       title="next page">
+      <div class="prev-next-info">
+        <p class="prev-next-subtitle">next</p>
+        <p class="prev-next-title">Tree</p>
+      </div>
+      <i class="fa-solid fa-angle-right"></i>
     </a>
 </div>
                 </footer>
@@ -395,27 +399,10 @@ document.write(`
 
 
   <div class="sidebar-secondary-item">
-<div
-    id="pst-page-navigation-heading-2"
-    class="page-toc tocsection onthispage">
-    <i class="fa-solid fa-list"></i> On this page
-  </div>
-  <nav class="bd-toc-nav page-toc" aria-labelledby="pst-page-navigation-heading-2">
-    <ul class="visible nav section-nav flex-column">
-<li class="toc-h1 nav-item toc-entry"><a class="reference internal nav-link" href="#">ROOT</a><ul class="visible nav section-nav flex-column">
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#depdencies">Depdencies</a></li>
-</ul>
-</li>
-<li class="toc-h1 nav-item toc-entry"><a class="reference internal nav-link" href="#heptools.root.Tree"><code class="docutils literal notranslate"><span class="pre">Tree</span></code></a></li>
-</ul>
-
-  </nav></div>
-
-  <div class="sidebar-secondary-item">
 
   
   <div class="tocsection editthispage">
-    <a href="https://github.com/chuyuanliu/heptools/edit/master/docs/tools/root.rst">
+    <a href="https://github.com/chuyuanliu/heptools/edit/master/docs/api/root.rst">
       <i class="fa-solid fa-pencil"></i>
       
       
@@ -430,7 +417,7 @@ document.write(`
   <div class="sidebar-secondary-item">
 
   <div class="tocsection sourcelink">
-    <a href="../_sources/tools/root.rst.txt">
+    <a href="../_sources/api/root.rst.txt">
       <i class="fa-solid fa-file-lines"></i> Show Source
     </a>
   </div>
