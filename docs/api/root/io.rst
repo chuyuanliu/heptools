@@ -4,7 +4,7 @@ Basic I/O
 
 .. autoapimodule:: heptools.root.io 
 
-Tree
+:class:`TTree`
 ===============================
 
 .. autoapiclass:: heptools.root.io.TreeReader

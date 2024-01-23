@@ -1,11 +1,10 @@
-# TODO wildcard
 # TODO docstring
 """
 An interface to operate on both local filesystem and EOS (or other XRootD supported system).
 
 .. todo::
-    Consider migrating to :mod:`os`, :mod:`shutil` and :class:`XRootD.client.FileSystem`.
-
+    - Consider migrating to :mod:`os`, :mod:`shutil` and :class:`XRootD.client.FileSystem`.
+    - Use :func:`os.path.normpath`, :func:`glob.glob`
 """
 from __future__ import annotations
 
@@ -19,7 +18,8 @@ from pathlib import Path
 from subprocess import PIPE, CalledProcessError, check_output
 from typing import Any, Generator, Literal
 
-from ..utils import arg_set, ensure
+from ..utils import arg_set
+from ..utils.string import ensure
 
 __all__ = ['EOS', 'PathLike', 'save', 'load']
 

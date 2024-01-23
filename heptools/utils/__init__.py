@@ -3,15 +3,9 @@ from __future__ import annotations
 import re
 from typing import Any, Callable, Generic, Iterable, Sized, TypeVar
 
-__all__ = ['arg_set', 'arg_new',
-           'SeqCall', 'seqcall', 'merge_op',
+__all__ = ['arg_set', 'arg_new', 'seqcall', 'merge_op',
            'astuple', 'unpack', 'unique', 'count',
-           'match_any', 'ensure', 'Eval']
-
-_SeqCallT = TypeVar('_SeqCallT')
-_TargetT = TypeVar('_TargetT')
-_PatternT = TypeVar('_PatternT')
-_EvalT = TypeVar('_EvalT')
+           'Eval', 'match_any']
 
 
 def arg_set(arg, none=None, default=...):
@@ -30,22 +24,17 @@ def arg_new(arg, none: Callable[[]] = lambda: None, default: Callable[[]] = lamb
     return arg
 
 
-class SeqCall(Generic[_SeqCallT]):
-    def __init__(self, *funcs: Callable[[_SeqCallT], _SeqCallT]):
-        self.funcs = funcs
+_SeqCallT = TypeVar('_SeqCallT')
 
-    def __call__(self, x) -> _SeqCallT:
-        for func in self.funcs:
+
+class seqcall(Generic[_SeqCallT]):
+    def __init__(self, *funcs: Callable[[_SeqCallT], _SeqCallT]):
+        self._funcs = funcs
+
+    def __call__(self, x: _SeqCallT) -> _SeqCallT:
+        for func in self._funcs:
             x = func(x)
         return x
-
-
-def seqcall(*_funcs: Callable[[_SeqCallT], _SeqCallT]) -> Callable[[_SeqCallT], _SeqCallT]:
-    def wrapper(x):
-        for _func in _funcs:
-            x = _func(x)
-        return x
-    return wrapper
 
 
 def merge_op(op, _x, _y):
@@ -81,31 +70,7 @@ def count(seq: Iterable, value: Any) -> int:
     return sum(1 for i in seq if i == value)
 
 
-def match_any(target: _TargetT, patterns: _PatternT | Iterable[_PatternT], match: Callable[[_PatternT, _TargetT], bool]):
-    if patterns is None:
-        return False
-    if patterns is ...:
-        return True
-    if not isinstance(patterns, Iterable) or isinstance(patterns, str):
-        patterns = [patterns]
-    for pattern in patterns:
-        if match(pattern, target):
-            return True
-    return False
-
-
-def re_match_whole(pattern: str | re.Pattern, target: str) -> bool:
-    if isinstance(pattern, str):
-        pattern = ensure(pattern, '^', '$')
-    return re.match(pattern, target)
-
-
-def ensure(__str: str, __prefix: str = None, __suffix: str = None):
-    if __prefix is not None and not __str.startswith(__prefix):
-        __str = __prefix + __str
-    if __suffix is not None and not __str.endswith(__suffix):
-        __str = __str + __suffix
-    return __str
+_EvalT = TypeVar('_EvalT')
 
 
 class Eval(Generic[_EvalT]):
@@ -126,3 +91,23 @@ class Eval(Generic[_EvalT]):
 
     def __getitem__(self, expression: str) -> _EvalT:
         return eval(re.sub(self._eval_call_pattern, rf'self.method[\g<arg>]', re.sub(self._quote_arg_pattern, r'"\g<arg>"', expression)))
+
+
+_TargetT = TypeVar('_TargetT')
+_PatternT = TypeVar('_PatternT')
+
+
+def match_any(target: _TargetT, patterns: _PatternT | Iterable[_PatternT], match: Callable[[_PatternT, _TargetT], bool]):
+    """
+    Use :mod:`re` instead when matching :class:`str`.
+    """
+    if patterns is None:
+        return False
+    if patterns is ...:
+        return True
+    if not isinstance(patterns, Iterable) or isinstance(patterns, str):
+        patterns = [patterns]
+    for pattern in patterns:
+        if match(pattern, target):
+            return True
+    return False

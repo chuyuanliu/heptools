@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import re
 from copy import deepcopy
 from typing import Callable, Iterable, overload
 
@@ -11,7 +10,8 @@ from hist.axis import (AxesMixin, Boolean, IntCategory, Integer, Regular,
 
 from ..aktools import AnyInt, FieldLike, RealNumber, get_field
 from ..typetools import check_type
-from ..utils import astuple, match_any, re_match_whole
+from ..utils import astuple
+from ..utils.regex import compile_any_wholeword, match_single
 from . import fill as fs
 
 
@@ -98,10 +98,6 @@ def _create_axis(args: AxisLike) -> AxesMixin:
 
 
 class Collection:
-    '''
-    A collection of histograms.
-    '''
-    # TODO add doc
     current: Collection = None
 
     def __init__(self, **categories):
@@ -185,12 +181,12 @@ class Template:
             name: LabelLike,
             fill: FieldLike = ...,
             bins: dict[str | tuple[str, str], AxisArgs] = None,
-            skip: Iterable[str | re.Pattern] = None,
+            skip: Iterable[str] = None,
             **fill_args: fs.LazyFill):
         self._name = Label(name)
         self._data = fill
         self._bins = bins.copy() if bins is not None else {}
-        self._skip = list(skip) if skip is not None else []
+        self._skip = compile_any_wholeword(skip)
         self._fill_args = fill_args
 
         self._fills = fs.Fill()
@@ -243,7 +239,7 @@ class Template:
         if self._parent is not None:
             skip |= self._parent.skip(self.hist_name(name))
         if not skip:
-            skip |= match_any(name, self._skip, re_match_whole)
+            skip |= match_single(self._skip, name)
         return skip
 
     def new(self, name: str = None, parent: Template = None):
@@ -288,6 +284,7 @@ class Template:
             self.hist_name(name, nested=True), *axes, **_kwargs)
 
     def _wrap(self, func: Callable):
+        # TODO make it picklable
         return lambda x: func(get_field(x, self.data))
 
     @classmethod
