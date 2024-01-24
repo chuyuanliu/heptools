@@ -74,6 +74,8 @@ html_context = {
     "github_version": "master",
     "doc_path": "docs",
 }
+# -- Options for napoleon -------------------------------------------------
+napoleon_use_rtype = False
 
 # -- Options for todo -------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/extensions/todo.html
@@ -81,7 +83,7 @@ todo_include_todos = True
 
 # -- Options for autodoc -------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/extensions/autodoc.html
-autodoc_typehints = 'description'
+autodoc_typehints = 'none'
 autodoc_member_order = 'bysource'
 
 # -- Options for autoapi -------------------------------------------------

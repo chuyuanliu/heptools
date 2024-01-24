@@ -12,7 +12,7 @@ from . import io as root_io
 
 class _ChunkMeta(type):
     def _get(self, attr):
-        if getattr(self, attr) is None:
+        if getattr(self, attr) is ...:
             self._fetch()
         return getattr(self, attr)
 
@@ -32,14 +32,14 @@ class Chunk(metaclass=_ChunkMeta):  # TODO
         Path to ROOT file with optional UUID
     name : str, optional, default='Events'
         Name of :class:`TTree`.
-    branches : ~typing.Iterable[str], optional, default=None
-        Name of branches. If ``None``, read from ``source``.
-    num_entries : int, optional, default=None
-        Number of entries. If ``None``, read from ``source``.
-    entry_start : int, optional, default=None
-        Start entry. If ``None``, set to 0.
-    entry_stop : int, optional, default=None
-        Stop entry. If ``None``,  set to ``num_entries``.
+    branches : ~typing.Iterable[str], optional
+        Name of branches. If not given, read from ``source``.
+    num_entries : int, optional
+        Number of entries. If not given, read from ``source``.
+    entry_start : int, optional
+        Start entry. If not given, set to ``0``.
+    entry_stop : int, optional
+        Stop entry. If not given, set to ``num_entries``.
     fetch : bool, optional, default=False
         Fetch missing information from ``source`` immediately after initialization.
     """
@@ -62,23 +62,22 @@ class Chunk(metaclass=_ChunkMeta):  # TODO
         self,
         source: PathLike | tuple[PathLike, UUID],
         name: str = 'Events',
-        branches: Iterable[str] = None,
-        num_entries: int = None,
-        entry_start: int = None,
-        entry_stop: int = None,
+        branches: Iterable[str] = ...,
+        num_entries: int = ...,
+        entry_start: int = ...,
+        entry_stop: int = ...,
         fetch: bool = False,
     ):
-        if branches is not None:
+        if branches is not ...:
             branches = {*branches}
 
         self.name = name
-        self.path = None
-        self.entry_start = entry_start or 0
+        self.entry_start = 0 if entry_start is ... else entry_start
 
-        self._uuid = None
+        self._uuid = ...,
         self._branches = branches
         self._num_entries = num_entries
-        self._entry_stop = entry_stop or num_entries
+        self._entry_stop = num_entries if entry_stop is ... else entry_stop
 
         if check_type(source, PathLike):
             self.path = EOS(source)
@@ -90,15 +89,15 @@ class Chunk(metaclass=_ChunkMeta):  # TODO
             self._fetch()
 
     def _fetch(self):
-        if any(v is None for v in (self._branches, self._num_entries, self._uuid)):
+        if any(v is ... for v in (self._branches, self._num_entries, self._uuid)):
             with uproot.open(self.path) as file:
                 tree = file[self.name]
-                if self._branches is None:
+                if self._branches is ...:
                     self._branches = {*tree.keys()}
-                if self._num_entries is None:
+                if self._num_entries is ...:
                     self._num_entries = tree.num_entries
                     self._entry_stop = self._entry_stop or self._num_entries
-                if self._uuid is None:
+                if self._uuid is ...:
                     self._uuid = file.file.uuid
 
     def __len__(self):
