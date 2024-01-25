@@ -8,7 +8,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>EOS &#8212; HEP tools  documentation</title>
+    <title>Type Alias &#8212; HEP tools  documentation</title>
   
   
   
@@ -39,11 +39,11 @@
     <script src="../_static/documentation_options.js?v=5929fcd5"></script>
     <script src="../_static/doctools.js?v=888ff710"></script>
     <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
-    <script>DOCUMENTATION_OPTIONS.pagename = 'api/eos';</script>
+    <script>DOCUMENTATION_OPTIONS.pagename = 'api/alias';</script>
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
-    <link rel="next" title="ROOT" href="root.html" />
-    <link rel="prev" title="Type Alias" href="alias.html" />
+    <link rel="next" title="EOS" href="eos.html" />
+    <link rel="prev" title="API reference" href="../api.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
   </head>
@@ -301,8 +301,8 @@ document.write(`
      aria-label="Section Navigation">
   <p class="bd-links__title" role="heading" aria-level="1">Section Navigation</p>
   <div class="bd-toc-item navbar-nav"><ul class="current nav bd-sidenav">
-<li class="toctree-l1"><a class="reference internal" href="alias.html">Type Alias</a></li>
-<li class="toctree-l1 current active"><a class="current reference internal" href="#">EOS</a></li>
+<li class="toctree-l1 current active"><a class="current reference internal" href="#">Type Alias</a></li>
+<li class="toctree-l1"><a class="reference internal" href="eos.html">EOS</a></li>
 <li class="toctree-l1 has-children"><a class="reference internal" href="root.html">ROOT</a><input checked class="toctree-checkbox" id="toctree-checkbox-1" name="toctree-checkbox-1" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-1"><i class="fa-solid fa-chevron-down"></i></label><ul>
 <li class="toctree-l2"><a class="reference internal" href="root/io.html">Basic I/O</a></li>
 <li class="toctree-l2"><a class="reference internal" href="root/tree.html">Tree</a></li>
@@ -348,7 +348,7 @@ document.write(`
     
     <li class="breadcrumb-item"><a href="../api.html" class="nav-link">API reference</a></li>
     
-    <li class="breadcrumb-item active" aria-current="page">EOS</li>
+    <li class="breadcrumb-item active" aria-current="page">Type Alias</li>
   </ul>
 </nav>
 </div>
@@ -365,20 +365,29 @@ document.write(`
 <div id="searchbox"></div>
                 <article class="bd-article">
                   
-  <section id="module-heptools.system.eos">
-<span id="eos"></span><h1>EOS<a class="headerlink" href="#module-heptools.system.eos" title="Link to this heading">#</a></h1>
-<p>An interface to operate on both local filesystem and EOS (or other XRootD supported system).</p>
-<div class="admonition-todo admonition" id="id1">
-<p class="admonition-title">Todo</p>
-<ul class="simple">
-<li><p>Consider migrating to <a class="reference external" href="https://docs.python.org/3/library/os.html#module-os" title="(in Python v3.12)"><code class="xref py py-mod docutils literal notranslate"><span class="pre">os</span></code></a>, <a class="reference external" href="https://docs.python.org/3/library/shutil.html#module-shutil" title="(in Python v3.12)"><code class="xref py py-mod docutils literal notranslate"><span class="pre">shutil</span></code></a> and <a class="reference external" href="https://xrootd.slac.stanford.edu/doc/doxygen/5.6.4/python/modules/client/filesystem.html#XRootD.client.FileSystem" title="(in pyxrootd vcurrent)"><code class="xref py py-class docutils literal notranslate"><span class="pre">XRootD.client.FileSystem</span></code></a>.</p></li>
-<li><p>Use <a class="reference external" href="https://docs.python.org/3/library/os.path.html#os.path.normpath" title="(in Python v3.12)"><code class="xref py py-func docutils literal notranslate"><span class="pre">os.path.normpath()</span></code></a>, <a class="reference external" href="https://docs.python.org/3/library/glob.html#glob.glob" title="(in Python v3.12)"><code class="xref py py-func docutils literal notranslate"><span class="pre">glob.glob()</span></code></a></p></li>
-</ul>
-</div>
-<dl class="py class">
-<dt class="sig sig-object py" id="heptools.system.eos.EOS">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">heptools.system.eos.</span></span><span class="sig-name descname"><span class="pre">EOS</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">url</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">...</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/chuyuanliu/heptools/tree/master/heptools/system/eos.py#L27-L249"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#heptools.system.eos.EOS" title="Link to this definition">#</a></dt>
-<dd></dd></dl>
+  <section id="type-alias">
+<h1>Type Alias<a class="headerlink" href="#type-alias" title="Link to this heading">#</a></h1>
+<dl class="py data">
+<dt class="sig sig-object py" id="heptools.root.io.RecordLike">
+<span class="sig-prename descclassname"><span class="pre">heptools.root.io.</span></span><span class="sig-name descname"><span class="pre">RecordLike</span></span><a class="reference external" href="https://github.com/chuyuanliu/heptools/tree/master/heptools/root/io.py#L38-L39"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#heptools.root.io.RecordLike" title="Link to this definition">#</a></dt>
+<dd><p>A mapping from string to array-like object. All array-like objects must have the same length.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference external" href="https://awkward-array.org/doc/stable/reference/generated/ak.Array.html#ak.Array" title="(in Awkward Array v2.5)">ak.Array</a>, <a class="reference external" href="https://pandas.pydata.org/docs/reference/api/pandas.DataFrame.html#pandas.DataFrame" title="(in pandas v2.2.0)">pandas.DataFrame</a>, <a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.12)">dict</a>[<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.12)">str</a>, <a class="reference external" href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v1.26)">numpy.ndarray</a> | <a class="reference external" href="https://pandas.pydata.org/docs/reference/api/pandas.Series.html#pandas.Series" title="(in pandas v2.2.0)">pandas.Series</a> | <a class="reference external" href="https://awkward-array.org/doc/stable/reference/generated/ak.Array.html#ak.Array" title="(in Awkward Array v2.5)">ak.Array</a>]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="heptools.system.eos.PathLike">
+<span class="sig-prename descclassname"><span class="pre">heptools.system.eos.</span></span><span class="sig-name descname"><span class="pre">PathLike</span></span><a class="reference external" href="https://github.com/chuyuanliu/heptools/tree/master/heptools/system/eos.py#L252-L252"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#heptools.system.eos.PathLike" title="Link to this definition">#</a></dt>
+<dd><p>A str or path-like object with <code class="xref py py-meth docutils literal notranslate"><span class="pre">__fspath__()</span></code> method.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.12)">str</a>, <a class="reference internal" href="eos.html#heptools.system.eos.EOS" title="heptools.system.eos.EOS"><em>EOS</em></a>, <a class="reference external" href="https://docs.python.org/3/library/os.html#os.PathLike" title="(in Python v3.12)">os.PathLike</a></p>
+</dd>
+</dl>
+</dd></dl>
 
 </section>
 
@@ -393,20 +402,20 @@ document.write(`
                   
 <div class="prev-next-area">
     <a class="left-prev"
-       href="alias.html"
+       href="../api.html"
        title="previous page">
       <i class="fa-solid fa-angle-left"></i>
       <div class="prev-next-info">
         <p class="prev-next-subtitle">previous</p>
-        <p class="prev-next-title">Type Alias</p>
+        <p class="prev-next-title">API reference</p>
       </div>
     </a>
     <a class="right-next"
-       href="root.html"
+       href="eos.html"
        title="next page">
       <div class="prev-next-info">
         <p class="prev-next-subtitle">next</p>
-        <p class="prev-next-title">ROOT</p>
+        <p class="prev-next-title">EOS</p>
       </div>
       <i class="fa-solid fa-angle-right"></i>
     </a>
@@ -428,7 +437,8 @@ document.write(`
   </div>
   <nav class="bd-toc-nav page-toc" aria-labelledby="pst-page-navigation-heading-2">
     <ul class="visible nav section-nav flex-column">
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#heptools.system.eos.EOS"><code class="docutils literal notranslate"><span class="pre">EOS</span></code></a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#heptools.root.io.RecordLike"><code class="docutils literal notranslate"><span class="pre">RecordLike</span></code></a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#heptools.system.eos.PathLike"><code class="docutils literal notranslate"><span class="pre">PathLike</span></code></a></li>
 </ul>
   </nav></div>
 
@@ -436,7 +446,7 @@ document.write(`
 
   
   <div class="tocsection editthispage">
-    <a href="https://github.com/chuyuanliu/heptools/edit/master/docs/api/eos.rst">
+    <a href="https://github.com/chuyuanliu/heptools/edit/master/docs/api/alias.rst">
       <i class="fa-solid fa-pencil"></i>
       
       
@@ -451,7 +461,7 @@ document.write(`
   <div class="sidebar-secondary-item">
 
   <div class="tocsection sourcelink">
-    <a href="../_sources/api/eos.rst.txt">
+    <a href="../_sources/api/alias.rst.txt">
       <i class="fa-solid fa-file-lines"></i> Show Source
     </a>
   </div>
