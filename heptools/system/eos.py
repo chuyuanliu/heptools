@@ -144,13 +144,13 @@ class EOS:
     def isin(self, other: PathLike):
         return str(self).startswith(ensure(str(other), __suffix='/'))
 
-    def relative_to(self, other: PathLike):
+    def relative_to(self, other: PathLike) -> str:
         if self.host == other.host:
-            try:
-                return EOS(self.path.relative_to(other.path))
-            except ValueError:
-                ...
+            return os.path.relpath(self.path, other.path)
         raise ValueError(f'"{self}" is not in the subpath of "{other}"')
+
+    def cd(self, relative: str):
+        return EOS(os.path.normpath(os.path.join(self, relative)), self.host)
 
     def copy_to(self, dest: PathLike, parents: bool = False, overwrite: bool = False, recursive: bool = False):
         return self.cp(self, dest, parents, overwrite, recursive)
@@ -222,6 +222,10 @@ class EOS:
     def parent(self):
         return EOS(self.path.parent, self.host)
 
+    @property
+    def parts(self):
+        return self.path.parts
+
     def __hash__(self):
         return hash((self.host, self.path))
 
@@ -247,7 +251,7 @@ class EOS:
 
 PathLike = str | EOS | os.PathLike
 """
-:class:`str`, :class:`EOS` or :class:`os.PathLike`
+str, ~heptools.system.eos.EOS, os.PathLike: A str or path-like object with :meth:`__fspath__` method.
 """
 
 

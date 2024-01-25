@@ -1,8 +1,4 @@
-import json
-from typing import Any, Protocol, runtime_checkable
-
-__all__ = ['alias',
-           'JSONable', 'DefaultEncoder']
+__all__ = ['alias']
 
 
 def alias(*methods: str):
@@ -13,20 +9,3 @@ def alias(*methods: str):
             setattr(cls, f'__{method}__', getattr(cls, method))
         return cls
     return wrapper
-
-# json
-
-
-@runtime_checkable
-class JSONable(Protocol):
-    def __json__(self) -> Any:
-        ...
-
-
-class DefaultEncoder(json.JSONEncoder):
-    def default(self, __obj):
-        if isinstance(__obj, JSONable):
-            return __obj.__json__()
-        return super().default(__obj)
-
-# TODO print rich text

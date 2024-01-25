@@ -1,6 +1,15 @@
 """
 ROOT file I/O based on :func:`uproot.reading.open` and :func:`uproot.writing.writable.recreate`.
 
+.. note::
+    Readers will use the following default options for :func:`uproot.open`:
+    
+    .. code-block:: python
+
+        object_cache=None
+        array_cache=None
+        timeout=3 * 60
+
 .. warning::
     Writers will always overwrite the output file if it exists.
 
@@ -13,18 +22,35 @@ ROOT file I/O based on :func:`uproot.reading.open` and :func:`uproot.writing.wri
 from __future__ import annotations
 
 import gc
-from typing import TYPE_CHECKING, Callable
+from typing import TYPE_CHECKING, Callable, Literal
 
 import awkward as ak
 import uproot
 
 from ..system.eos import EOS, PathLike
 from . import tree
-from ._utils import fetch_backend
+from ._backend import fetch_backend
 
 if TYPE_CHECKING:
     import numpy as np
     import pandas as pd
+
+    RecordLike = ak.Array | pd.DataFrame | dict[str,
+                                                np.ndarray | pd.Series | ak.Array]
+    """
+    ak.Array, pandas.DataFrame, dict[str, numpy.ndarray | pandas.Series | ak.Array]: A mapping from string to array-like object. All array-like objects must have the same length.
+    """
+
+
+class _Reader:
+    _default_options = {
+        'object_cache': None,
+        'array_cache': None,
+        'timeout': 3 * 60,
+    }
+
+    def __init__(self, **options):
+        self._options = self._default_options | options
 
 
 class TreeWriter:
@@ -72,7 +98,7 @@ class TreeWriter:
 
         Returns
         -------
-        self: TreeWriter
+        TreeWriter:``self``
         """
         self._path = EOS(path)
         return self
@@ -83,7 +109,7 @@ class TreeWriter:
 
         Returns
         -------
-        self: TreeWriter
+        TreeWriter:``self``
         """
         self.tree = None
         self._temp = self._path.local_temp(dir='.')
@@ -151,18 +177,18 @@ class TreeWriter:
 
     def extend(
             self,
-            data: ak.Array | pd.DataFrame | dict[str, ak.Array | pd.Series | np.ndarray]):
+            data: RecordLike):
         """
-        Extend the :class:`TTree` with ``data``.
+        Extend the :class:`TTree` with ``data`` using :meth:`uproot.writing.writable.WritableTree.extend`.
 
         Parameters
         ----------
-        data : ak.Array, pandas.DataFrame, dict[str, numpy.ndarray | ak.Array | pandas.Series]
-            Data passed to :meth:`uproot.writing.writable.WritableTree.extend`.
+        data : RecordLike
+            Data to extend.
 
         Returns
         -------
-        self: TreeWriter
+        TreeWriter:``self``
         """
         backend = fetch_backend(data)
         if self._basket_size is ...:
@@ -189,7 +215,7 @@ class TreeWriter:
         return self
 
 
-class TreeReader:
+class TreeReader(_Reader):
     """
     Read data from :class:`~heptools.root.tree.Chunk`.
 
@@ -206,85 +232,112 @@ class TreeReader:
         filter_branch: Callable[[set[str]], set[str]] = None,
         **options,
     ):
+        super().__init__(**options)
         self._filter = filter_branch
-        self._options = options
 
     def arrays(
         self,
         source: tree.Chunk,
-        entry_start: int = None,
-        entry_stop: int = None,
         **options,
-    ) -> ak.Array | pd.DataFrame | dict[str, np.ndarray]:
+    ) -> RecordLike:
         """
-        Read data into arrays. A offset will be applied to ``entry_start`` and ``entry_stop`` based on ``source.entry_start``.
+        Read data into arrays.
 
         Parameters
         ----------
         source : ~heptools.root.tree.Chunk
-            Source : A chunk of :class:`TTree`.
-        entry_start : int, optional
-            Entry start. If not given, read from the beginning of ``source``.
-        entry_stop : int, optional
-            Entry stop. If not given, read to the end of ``source``.
+            Chunk of :class:`TTree`.
         **options : dict, optional
             Additional options passed to :meth:`uproot.behaviors.TBranch.HasBranches.arrays`.
 
         Returns
         -------
-        ak.Array, pandas.DataFrame, dict[str, numpy.ndarray]
+        RecordLike
             Data read from :class:`TTree`.
         """
-        offset = source.entry_start
-        if entry_start is None:
-            entry_start = 0
-        if entry_stop is None:
-            entry_stop = len(source)
         branches = source.branches
         if self._filter is not None:
             branches = self._filter(branches)
         with uproot.open(source.path, **self._options) as file:
             return file[source.name].arrays(
                 expressions=branches,
-                entry_start=entry_start + offset,
-                entry_stop=entry_stop + offset,
+                entry_start=source.entry_start,
+                entry_stop=source.entry_stop,
                 **options)
+
+    def concat(
+        self,
+        *sources: tree.Chunk,
+        library: Literal['ak', 'pd', 'np'] = 'ak',
+        **options,
+    ) -> RecordLike:
+        """
+        Read multiple ``sources`` into one array.
+
+        .. todo::
+            Add :mod:`multiprocessing` support.
+
+        - :func:`ak.concatenate` is used for ``library='ak'``
+        - :func:`pandas.concat` is used for ``library='pd'``.
+
+        Parameters
+        ----------
+        sources : tuple[~heptools.root.tree.Chunk]
+            One or more chunks of :class:`TTree`.
+        **options : dict, optional
+            Additional options passed to :meth:`arrays`.
+
+        Returns
+        -------
+        RecordLike
+            Concatenated data.
+        """
+        options['library'] = library
+        if len(sources) == 1:
+            return self.arrays(sources[0], **options)
+        if library == 'ak':
+            return ak.concatenate([self.arrays(s, **options) for s in sources])
+        elif library == 'pd':
+            import pandas as pd
+            return pd.concat(
+                [self.arrays(s, **options) for s in sources],
+                ignore_index=True,
+                sort=False,
+                copy=False)
+        elif library == 'np':
+            raise NotImplementedError
+        else:
+            raise ValueError(f'Unknown library {library}.')
 
     def Array(
         self,
-        source: tree.Chunk,
-        entry_start: int = None,
-        entry_stop: int = None,
+        *source: tree.Chunk,
         **options,
     ) -> ak.Array:
         """
-        Read data into :class:`ak.Array`. Equivalent to :meth:`arrays` with ``library='ak'``.
+        Read data into :class:`ak.Array`. Equivalent to :meth:`concat` with ``library='ak'``.
         """
         options['library'] = 'ak'
-        return self.arrays(source, entry_start, entry_stop, **options)
+        return self.concat(*source, **options)
 
     def DataFrame(
         self,
-        source: tree.Chunk,
-        entry_start: int = None,
-        entry_stop: int = None,
+        *source: tree.Chunk,
         **options,
     ) -> pd.DataFrame:
         """
-        Read data into :class:`pandas.DataFrame`. Equivalent to :meth:`arrays` with ``library='pd'``.
+        Read data into :class:`pandas.DataFrame`. Equivalent to :meth:`concat` with ``library='pd'``.
         """
         options['library'] = 'pd'
-        return self.arrays(source, entry_start, entry_stop, **options)
+        return self.concat(*source, **options)
 
     def NDArray(
         self,
         source: tree.Chunk,
-        entry_start: int = None,
-        entry_stop: int = None,
         **options,
     ) -> dict[str, np.ndarray]:
         """
         Read data into :class:`dict` of :class:`numpy.ndarray`. Equivalent to :meth:`arrays` with ``library='np'``.
         """
         options['library'] = 'np'
-        return self.arrays(source, entry_start, entry_stop, **options)
+        return self.arrays(source, **options)

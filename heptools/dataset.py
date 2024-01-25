@@ -5,7 +5,8 @@ from typing import Callable, Iterable, Literal
 
 from .benchmark.unit import Metric
 from .container import Tree
-from .protocols import DefaultEncoder, alias
+from .protocols import alias
+from .utils.json import DefaultEncoder
 
 __all__ = ['File', 'FileList', 'Dataset',
            'DatasetError']

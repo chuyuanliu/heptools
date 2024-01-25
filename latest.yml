@@ -10,3 +10,4 @@ dependencies:
   - pyarrow
   - uproot
   - awkward
+  - awkward-pandas
