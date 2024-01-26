@@ -24,14 +24,14 @@ from __future__ import annotations
 import gc
 from typing import TYPE_CHECKING, Callable, Literal
 
-import awkward as ak
 import uproot
 
 from ..system.eos import EOS, PathLike
 from . import tree
-from ._backend import concat, fetch_backend, length
+from ._backend import concat_record, len_record, record_backend, slice_record
 
 if TYPE_CHECKING:
+    import awkward as ak
     import numpy as np
     import pandas as pd
 
@@ -136,7 +136,7 @@ class TreeWriter:
 
     @property
     def _buffer_size(self):
-        return sum(length(b) for b in self._buffer)
+        return sum(len_record(b, self._backend) for b in self._buffer)
 
     def _reset(self):
         self._path = None
@@ -150,7 +150,7 @@ class TreeWriter:
             data = self._buffer
             self._buffer = None
         else:
-            data = concat(self._buffer, library=self._backend)
+            data = concat_record(self._buffer, library=self._backend)
             self._buffer = []
         if data is not None and len(data) > 0:
             if self._backend == 'ak':
@@ -178,11 +178,20 @@ class TreeWriter:
         -------
         TreeWriter:``self``
         """
-        backend = fetch_backend(data)
-        if backend is None or backend == 'dict':
+        backend = record_backend(data)
+        if backend not in ('ak', 'pd', 'np'):
             raise TypeError(
                 f'Unsupported data backend {type(data)}.')
-        size = length(data)
+        if self._basket_size is ...:
+            self._backend = backend
+        else:
+            if self._backend is None:
+                self._backend = backend
+            else:
+                if backend != self._backend:
+                    raise TypeError(
+                        f'Inconsistent data backend, expected {self._backend}, given {backend}.')
+        size = len_record(data, self._backend)
         if size == 0:
             return
         elif size == None:
@@ -193,16 +202,11 @@ class TreeWriter:
             self._buffer = data
             self._flush()
         else:
-            if self._backend is None:
-                self._backend = backend
-            else:
-                if backend != self._backend:
-                    raise TypeError(
-                        f'Inconsistent data backend, expected {self._backend}, given {backend}.')
             start = 0
-            while start < length(data):
+            while start < len_record(data, self._backend):
                 diff = self._basket_size - self._buffer_size
-                self._buffer.append(data[start: start + diff])
+                self._buffer.append(slice_record(
+                    data, start, start + diff, library=self._backend))
                 start += diff
                 if self._buffer_size >= self._basket_size:
                     self._flush()
@@ -293,7 +297,7 @@ class TreeReader(_Reader):
         if len(sources) == 1:
             return self.arrays(sources[0], **options)
         if library in ('ak', 'pd', 'np'):
-            return concat(
+            return concat_record(
                 [self.arrays(s, **options) for s in sources],
                 library=library)
         else:

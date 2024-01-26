@@ -14,10 +14,10 @@ def fetch_imported(**modules):
     return imported
 
 
-def fetch_backend(data, abbr=True):
+def record_backend(data, abbr=True):
     mod = fetch_imported(ak='awkward', pd='pandas', np='numpy')
     if isinstance(data, dict):
-        backends = {*map(fetch_backend, data.values())}
+        backends = {*map(record_backend, data.values())}
         if len(backends) == 1:
             if backends.pop() == 'npy':
                 return 'np' if abbr else 'numpy'
@@ -39,7 +39,7 @@ def fetch_backend(data, abbr=True):
         pass
 
 
-def concat(data: list, library: Literal['ak', 'pd', 'np']):
+def concat_record(data: list, library: Literal['ak', 'pd', 'np']):
     if len(data) == 0:
         return None
     if len(data) == 1:
@@ -64,11 +64,19 @@ def concat(data: list, library: Literal['ak', 'pd', 'np']):
         raise ValueError(f'Unknown library {library}.')
 
 
-def length(data):
-    backend = fetch_backend(data, abbr=True)
-    if backend in ('ak', 'pd'):
+def slice_record(data, start: int, stop: int, library: Literal['ak', 'pd', 'np'] = ...):
+    if library is ...:
+        library = record_backend(data, abbr=True)
+    if library in ('ak', 'pd'):
+        return data[start:stop]
+    elif library in ('np', 'dict'):
+        return {k: v[start:stop] for k, v in data.items()}
+
+
+def len_record(data, library: Literal['ak', 'pd', 'np'] = ...):
+    if library is ...:
+        library = record_backend(data, abbr=True)
+    if library in ('ak', 'pd'):
         return len(data)
-    elif backend in ('np', 'dict'):
-        lengths = {*map(len, data.values())}
-        if len(lengths) == 1:
-            return lengths.pop()
+    elif library in ('np', 'dict'):
+        return len(next(iter(data.values())))
