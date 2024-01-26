@@ -29,16 +29,15 @@ import uproot
 
 from ..system.eos import EOS, PathLike
 from . import tree
-from ._backend import fetch_backend
+from ._backend import concat, fetch_backend, length
 
 if TYPE_CHECKING:
     import numpy as np
     import pandas as pd
 
-    RecordLike = ak.Array | pd.DataFrame | dict[str,
-                                                np.ndarray | pd.Series | ak.Array]
+    RecordLike = ak.Array | pd.DataFrame | dict[str, np.ndarray]
     """
-    ak.Array, pandas.DataFrame, dict[str, numpy.ndarray | pandas.Series | ak.Array]: A mapping from string to array-like object. All array-like objects must have the same length.
+    ak.Array, pandas.DataFrame, dict[str, numpy.ndarray]: A mapping from string to array-like object. All array-like objects must have the same length.
     """
 
 
@@ -64,7 +63,7 @@ class TreeWriter:
     parents : bool, optional, default=True
         Create parent directories if not exist.
     basket_size : int, optional
-        If not given, a new :class:`TBasket` will be created for each :meth:`extend` call. Otherwise, a buffer will be used to fix the size of :class:`TBasket`. Only available when the data passed to :meth:`extend` is always :class:`ak.Array` or :class:`pandas.DataFrame`.
+        If not given, a new :class:`TBasket` will be created for each :meth:`extend` call. Otherwise, a buffer will be used to fix the size of :class:`TBasket`.
     **options: dict, optional
         Additional options passed to :func:`uproot.recreate`.
     Attributes
@@ -137,7 +136,7 @@ class TreeWriter:
 
     @property
     def _buffer_size(self):
-        return sum(len(b) for b in self._buffer)
+        return sum(length(b) for b in self._buffer)
 
     def _reset(self):
         self._path = None
@@ -151,21 +150,10 @@ class TreeWriter:
             data = self._buffer
             self._buffer = None
         else:
-            if self._buffer_size == 0:
-                data = None
-            else:
-                if self._backend == 'awkward':
-                    import awkward as ak
-                    data = ak.concatenate(self._buffer)
-                elif self._backend == 'pandas':
-                    import pandas as pd
-                    data = pd.concat(self._buffer,
-                                     ignore_index=True,
-                                     sort=False,
-                                     copy=False)
+            data = concat(self._buffer, library=self._backend)
             self._buffer = []
         if data is not None and len(data) > 0:
-            if self._backend == 'awkward':
+            if self._backend == 'ak':
                 if data.layout.minmax_depth[1] > 1:
                     data = {k: data[k] for k in data.fields}
             if self._name not in self._file:
@@ -184,13 +172,22 @@ class TreeWriter:
         Parameters
         ----------
         data : RecordLike
-            Data to extend.
+            Data to extend. Using :class:`dict` of :class:`numpy.ndarray` may result in slightly worse performance.
 
         Returns
         -------
         TreeWriter:``self``
         """
         backend = fetch_backend(data)
+        if backend is None or backend == 'dict':
+            raise TypeError(
+                f'Unsupported data backend {type(data)}.')
+        size = length(data)
+        if size == 0:
+            return
+        elif size == None:
+            raise ValueError(
+                'The extended data does not have a well-defined length.')
         if self._basket_size is ...:
             self._backend = backend
             self._buffer = data
@@ -198,15 +195,12 @@ class TreeWriter:
         else:
             if self._backend is None:
                 self._backend = backend
-                if self._backend not in {'awkward', 'pandas'}:
-                    raise TypeError(
-                        f'Fixed basket size is only available for ak.Array or pd.DataFrame, given {self._backend}.')
             else:
                 if backend != self._backend:
                     raise TypeError(
                         f'Inconsistent data backend, expected {self._backend}, given {backend}.')
             start = 0
-            while start < len(data):
+            while start < length(data):
                 diff = self._basket_size - self._buffer_size
                 self._buffer.append(data[start: start + diff])
                 start += diff
@@ -278,12 +272,15 @@ class TreeReader(_Reader):
             Add :mod:`multiprocessing` support.
 
         - :func:`ak.concatenate` is used for ``library='ak'``
-        - :func:`pandas.concat` is used for ``library='pd'``.
+        - :func:`pandas.concat` is used for ``library='pd'``
+        - :func:`numpy.concatenate` is used for ``library='np'``
 
         Parameters
         ----------
         sources : tuple[~heptools.root.tree.Chunk]
             One or more chunks of :class:`TTree`.
+        library : {'ak', 'pd', 'np'}, optional, default='ak'
+            The library used to represent arrays. ``ak`` for :class:`ak.Array`, ``pd`` for :class:`pandas.DataFrame`, ``np`` for :class:`dict` of :class:`numpy.ndarray`.
         **options : dict, optional
             Additional options passed to :meth:`arrays`.
 
@@ -295,17 +292,10 @@ class TreeReader(_Reader):
         options['library'] = library
         if len(sources) == 1:
             return self.arrays(sources[0], **options)
-        if library == 'ak':
-            return ak.concatenate([self.arrays(s, **options) for s in sources])
-        elif library == 'pd':
-            import pandas as pd
-            return pd.concat(
+        if library in ('ak', 'pd', 'np'):
+            return concat(
                 [self.arrays(s, **options) for s in sources],
-                ignore_index=True,
-                sort=False,
-                copy=False)
-        elif library == 'np':
-            raise NotImplementedError
+                library=library)
         else:
             raise ValueError(f'Unknown library {library}.')
 
@@ -333,11 +323,11 @@ class TreeReader(_Reader):
 
     def NDArray(
         self,
-        source: tree.Chunk,
+        *source: tree.Chunk,
         **options,
     ) -> dict[str, np.ndarray]:
         """
-        Read data into :class:`dict` of :class:`numpy.ndarray`. Equivalent to :meth:`arrays` with ``library='np'``.
+        Read data into :class:`dict` of :class:`numpy.ndarray`. Equivalent to :meth:`concat` with ``library='np'``.
         """
         options['library'] = 'np'
-        return self.arrays(source, **options)
+        return self.concat(*source, **options)
