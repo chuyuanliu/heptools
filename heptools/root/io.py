@@ -284,7 +284,7 @@ class TreeReader(_Reader):
         sources : tuple[~heptools.root.tree.Chunk]
             One or more chunks of :class:`TTree`.
         library : {'ak', 'pd', 'np'}, optional, default='ak'
-            The library used to represent arrays. ``ak`` for :class:`ak.Array`, ``pd`` for :class:`pandas.DataFrame`, ``np`` for :class:`dict` of :class:`numpy.ndarray`.
+            The library used to represent arrays. ``ak`` for :class:`ak.Array`, ``pd`` for :class:`pandas.DataFrame` and ``np`` for :class:`dict` of :class:`numpy.ndarray`.
         **options : dict, optional
             Additional options passed to :meth:`arrays`.
 
