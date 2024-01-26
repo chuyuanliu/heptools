@@ -275,16 +275,16 @@ class TreeReader(_Reader):
         .. todo::
             Add :mod:`multiprocessing` support.
 
-        - :func:`ak.concatenate` is used for ``library='ak'``
-        - :func:`pandas.concat` is used for ``library='pd'``
-        - :func:`numpy.concatenate` is used for ``library='np'``
+        - ``library='ak'``: return :class:`ak.Array` and use :func:`ak.concatenate`.
+        - ``library='pd'``: return :class:`pandas.DataFrame` and use :func:`pandas.concat`. 
+        - ``library='np'``: return :class:`dict` of :class:`numpy.ndarray` and use :func:`numpy.concatenate`.
 
         Parameters
         ----------
         sources : tuple[~heptools.root.tree.Chunk]
             One or more chunks of :class:`TTree`.
-        library : {'ak', 'pd', 'np'}, optional, default='ak'
-            The library used to represent arrays. ``ak`` for :class:`ak.Array`, ``pd`` for :class:`pandas.DataFrame` and ``np`` for :class:`dict` of :class:`numpy.ndarray`.
+        library : ~typing.Literal['ak', 'np', 'pd'], optional, default='ak'
+            The library used to represent arrays.
         **options : dict, optional
             Additional options passed to :meth:`arrays`.
 

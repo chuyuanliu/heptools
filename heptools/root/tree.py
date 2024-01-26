@@ -498,8 +498,8 @@ class Friend:
         ----------
         target : Chunk
             A chunk of :class:`TTree`.
-        library : {'ak', 'pd', 'np'}, optional, default='ak'
-            The library used to represent arrays. ``ak`` for :class:`ak.Array`, ``pd`` for :class:`pandas.DataFrame` and ``np`` for :class:`dict` of :class:`numpy.ndarray`.
+        library : ~typing.Literal['ak', 'np', 'pd'], optional, default='ak'
+            The library used to represent arrays.
         """
         series = self._data[target]
         start = target.entry_start
