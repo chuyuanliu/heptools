@@ -6,9 +6,9 @@ ROOT file I/O based on :func:`uproot.reading.open` and :func:`uproot.writing.wri
     
     .. code-block:: python
 
-        object_cache=None
-        array_cache=None
-        timeout=3 * 60
+        object_cache = None
+        array_cache = None
+        timeout = 180
 
 .. warning::
     Writers will always overwrite the output file if it exists.

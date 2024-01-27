@@ -5,7 +5,7 @@ import bisect
 from collections import defaultdict, deque
 from functools import partial
 from threading import Thread
-from typing import Iterable, Literal
+from typing import TYPE_CHECKING, Iterable, Literal
 from uuid import UUID
 
 import uproot
@@ -14,6 +14,11 @@ from ..system.eos import EOS, PathLike
 from ..typetools import check_type
 from . import io as root_io
 from ._backend import concat_record, record_backend, slice_record
+
+if TYPE_CHECKING:
+    import awkward as ak
+    import numpy as np
+    import pandas as pd
 
 
 class _ChunkMeta(type):
@@ -171,7 +176,7 @@ class Chunk(metaclass=_ChunkMeta):
             json_dict['entry_stop'] = self.entry_stop
         return json_dict
 
-    def copy(self):
+    def deepcopy(self):
         """
         Returns
         -------
@@ -209,7 +214,7 @@ class Chunk(metaclass=_ChunkMeta):
         if invalid:
             raise ValueError(
                 f'The slice is not a subset of the chunk [{start},{stop}) \u2284 [{self.entry_start},{self._entry_stop})')
-        chunk = self.copy()
+        chunk = self.deepcopy()
         chunk.entry_start = start
         chunk._entry_stop = stop
         return chunk
@@ -310,32 +315,32 @@ class Chunk(metaclass=_ChunkMeta):
 
 
 class _FriendItem:
-    def __init__(self, start: int, end: int, chunk: Chunk = None):
+    def __init__(self, start: int, stop: int, chunk: Chunk = None):
         self.start = start
-        self.end = end
+        self.stop = stop
         self.chunk = chunk
 
     def __lt__(self, other):
         if isinstance(other, _FriendItem):
-            return self.end <= other.start
+            return self.stop <= other.start
         return NotImplemented
 
     def __len__(self):
-        return self.end - self.start
+        return self.stop - self.start
 
     def __repr__(self):
-        return f'[{self.start},{self.end})'
+        return f'[{self.start},{self.stop})'
 
     def __json__(self):
         return {
             'start': self.start,
-            'end': self.end,
+            'stop': self.stop,
             'chunk': self.chunk,
         }
 
     @classmethod
     def from_json(cls, data: dict):
-        return cls(data['start'], data['end'], data['chunk'])
+        return cls(data['start'], data['stop'], data['chunk'])
 
 
 class Friend:
@@ -356,16 +361,18 @@ class Friend:
     - :meth:`__repr__`
     - :meth:`__json__`
     """
+    name: str
+    '''str:Name of the collection.'''
 
     def __init__(self, name: str):
-        self._name = name
+        self.name = name
         self._branches: set[str] = None
         self._data: defaultdict[Chunk, list[_FriendItem]] = defaultdict(list)
 
     def __iadd__(self, other) -> Friend:
         if isinstance(other, Friend):
             msg = 'Cannot merge friend trees with different {attr}'
-            if self._name != other._name:
+            if self.name != other.name:
                 raise ValueError(
                     msg.format(attr='names'))
             if self._branches != other._branches:
@@ -379,22 +386,20 @@ class Friend:
 
     def __add__(self, other) -> Friend:
         if isinstance(other, Friend):
-            friend = Friend(self._name)
-            friend._branches = self._branches.copy()
-            friend += self
+            friend = self.copy()
             friend += other
             return friend
         return NotImplemented
 
     def __repr__(self):
-        text = f'Friend:{self._name}\nTBranches:{self._branches}'
+        text = f'Friend:{self.name}\nTBranches:{self._branches}'
         for k, v in self._data.items():
             text += f'\n{k}:{v}'
         return text
 
     def __json__(self):
         return {
-            'name': self._name,
+            'name': self.name,
             'branches': list(self._branches) if self._branches is not None else self._branches,
             'data': [*self._data.items()],
         }
@@ -423,7 +428,7 @@ class Friend:
     def _name_dump(self, target: Chunk, item: _FriendItem):
         if target not in self._dump_name:
             names = {
-                'name': self._name,
+                'name': self.name,
                 'uuid': str(target.uuid),
                 'tree': target.name,
             }
@@ -435,7 +440,7 @@ class Friend:
             for i in range(len(parts)):
                 names[f'path{i}'] = parts[i]
             self._dump_name[target] = names
-        return self._dump_name[target] | {'start': item.start, 'end': item.end}
+        return self._dump_name[target] | {'start': item.start, 'stop': item.stop}
 
     def _check_item(self, item: _FriendItem):
         if len(item.chunk) != len(item):
@@ -456,7 +461,7 @@ class Friend:
             series.append(item)
         else:
             exist = series[idx]
-            if item.end <= exist.start:
+            if item.stop <= exist.start:
                 series.insert(idx, item)
             else:
                 raise ValueError(
@@ -490,7 +495,7 @@ class Friend:
         self,
         target: Chunk,
         library: Literal['ak', 'pd', 'np'] = 'ak',
-    ) -> root_io.RecordLike:  # TODO add typehint alias
+    ) -> root_io.RecordLike:
         """
         Get the friend :class:`TTree` for ``target``.
 
@@ -503,18 +508,18 @@ class Friend:
         """
         series = self._data[target]
         start = target.entry_start
-        end = target.entry_stop
+        stop = target.entry_stop
         chunks = deque()
         for i in range(bisect.bisect_left(series, _FriendItem(target.entry_start, target.entry_stop)), len(series)):
-            if start >= end:
+            if start >= stop:
                 break
             item = series[i]
             if item.start > start:
                 raise ValueError(
-                    f'Friend {self._name} does not have the entries [{start},{item.start}) for {target}')
+                    f'Friend {self.name} does not have the entries [{start},{item.start}) for {target}')
             else:
                 chunk_start = start - item.start
-                start = min(end, item.end)
+                start = min(stop, item.stop)
                 chunk_end = start - item.start
                 if isinstance(item.chunk, Chunk):
                     chunks.append(item.chunk.slice(chunk_start, chunk_end))
@@ -540,11 +545,89 @@ class Friend:
                 data.append(chunk)
         return concat_record(data, library=library)
 
+    def Array(
+        self,
+        target: Chunk,
+    ) -> ak.Array:
+        """
+        Get the friend :class:`TTree` for ``target`` in :class:`ak.Array`. Equivalent to :meth:`get` with ``library='ak'``.
+        """
+        return self.get(target, library='ak')
+
+    def DataFrame(
+        self,
+        target: Chunk,
+    ) -> pd.DataFrame:
+        """
+        Get the friend :class:`TTree` for ``target`` in :class:`pandas.DataFrame`. Equivalent to :meth:`get` with ``library='pd'``.
+        """
+        return self.get(target, library='pd')
+
+    def NDArray(
+        self,
+        target: Chunk,
+    ) -> dict[str, np.ndarray]:
+        """
+        Get the friend :class:`TTree` for ``target`` in :class:`dict` of :class:`numpy.ndarray`. Equivalent to :meth:`get` with ``library='np'``.
+        """
+        return self.get(target, library='np')
+
     def dump(
         self,
-        name: str,
-        path: PathLike = ...,
+        naming: str,
+        basepath: PathLike = ...,
     ):
+        """
+        Dump all in-memory data to ROOT files with a given ``naming`` rule.
+
+        Parameters
+        ----------
+        naming : str
+            Naming rule for each chunk. See below for details.
+        basepath: PathLike, optional
+            Base path to store all dumped files. See below for details.
+
+        Notes
+        -----
+        Each dumped file will be stored in ``{basepath}/{naming}``. If ``basepath`` is not given, the corresponding ``target.path.parent`` will be used. :meth:`str.format` is used to construct the file name from ``naming``. The following keys are available:
+
+        - ``{name}``: :data:`name`.
+        - ``{uuid}``: ``target.uuid``
+        - ``{tree}``: ``target.name``
+        - ``{start}``: ``target.entry_start``
+        - ``{stop}``: ``target.entry_stop``
+        - ``{path0}``, ``{path1}``, ... : ``target.path.parts`` without suffixes in reversed order.
+
+        where the ``target`` is the one passed to :meth:`add`.
+
+        .. warning::
+            This method will not check if each chunk will get a unique name. An oversimplified rule may cause chunks to be overwritten.
+
+        Examples
+        --------
+        The naming rule works as follows:
+
+        .. code-block:: python
+
+            >>> friend = Friend('test')
+            >>> friend.add(
+            >>>     Chunk(
+            >>>         source=('root://host.1//a/b/c/target.root', uuid),
+            >>>         name='Events',
+            >>>         entry_start=100,
+            >>>         entry_stop=200,
+            >>>     ),
+            >>>     data
+            >>> )
+            >>> friend.dump(
+            >>>     '{name}_{path0}_{uuid}_{tree}_{start}_{stop}.root')
+            >>> # write to root://host.1//a/b/c/test_target_uuid_Events_100_200.root
+            >>> # or
+            >>> friend.dump(
+            >>>     '{path2}/{path1}/{name}_{uuid}_{start}_{stop}.root',
+            >>>     'root://host.2//x/y/z/')
+            >>> # write to root://host.2//x/y/z/b/c/test_uuid_100_200.root
+            """
         ...  # TODO
 
     def merge(self):
@@ -556,6 +639,19 @@ class Friend:
     @classmethod
     def from_json(cls, data: dict):  # TODO
         ...
+
+    def copy(self):
+        """
+        Returns
+        -------
+        Friend
+            A shallow copy of ``self``. 
+        """
+        friend = Friend(self.name)
+        friend._branches = self._branches.copy()
+        for k, vs in self._data.items():
+            friend._data[k] = vs.copy()
+        return friend
 
 
 class Chain:  # TODO
