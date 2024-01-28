@@ -589,7 +589,7 @@ class Friend:
 
         Notes
         -----
-        Each dumped file will be stored in ``{basepath}/{naming}``. If ``basepath`` is not given, the corresponding ``target.path.parent`` will be used. :meth:`str.format` is used to construct the file name from ``naming``. The following keys are available:
+        Each dumped file will be stored in ``{basepath}/{naming.format{**keys}}``. If ``basepath`` is not given, the corresponding ``target.path.parent`` will be used. The following keys are available:
 
         - ``{name}``: :data:`name`.
         - ``{uuid}``: ``target.uuid``
@@ -601,7 +601,7 @@ class Friend:
         where the ``target`` is the one passed to :meth:`add`.
 
         .. warning::
-            This method will not check if each chunk will get a unique name. An oversimplified rule may cause chunks to be overwritten.
+            The generated path is not guaranteed to be unique. If multiple chunks are dumped to the same path, the last one will overwrite the previous ones.
 
         Examples
         --------
