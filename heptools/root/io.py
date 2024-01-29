@@ -63,7 +63,7 @@ class TreeWriter:
     parents : bool, optional, default=True
         Create parent directories if not exist.
     basket_size : int, optional
-        If not given, a new :class:`TBasket` will be created for each :meth:`extend` call. Otherwise, a buffer will be used to fix the size of :class:`TBasket`.
+        Size of :class:`TBasket`. If not given, a new :class:`TBasket` will be created for each :meth:`extend` call.
     **options: dict, optional
         Additional options passed to :func:`uproot.recreate`.
     Attributes
@@ -97,7 +97,7 @@ class TreeWriter:
 
         Returns
         -------
-        TreeWriter:``self``
+        self: TreeWriter
         """
         self._path = EOS(path)
         return self
@@ -108,7 +108,7 @@ class TreeWriter:
 
         Returns
         -------
-        TreeWriter:``self``
+        self: TreeWriter
         """
         self.tree = None
         self._temp = self._path.local_temp(dir='.')
@@ -172,11 +172,11 @@ class TreeWriter:
         Parameters
         ----------
         data : RecordLike
-            Data to extend. Using :class:`dict` of :class:`numpy.ndarray` may result in slightly worse performance.
+            Data to extend.
 
         Returns
         -------
-        TreeWriter:``self``
+        self: TreeWriter
         """
         backend = record_backend(data)
         if backend not in ('ak', 'pd', 'np'):

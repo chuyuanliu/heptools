@@ -62,7 +62,7 @@ class Chunk(metaclass=_ChunkMeta):
     name: str
     '''str:Name of :class:`TTree`.'''
     branches: set[str]
-    '''~typing.Set[str]:Name of branches.'''
+    '''set[str]:Name of branches.'''
     num_entries: int
     '''int:Number of entries.'''
     entry_start: int
