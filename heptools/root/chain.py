@@ -64,7 +64,7 @@ class Friend:
     - :meth:`__json__`
     """
     name: str
-    '''str:Name of the collection.'''
+    '''str : Name of the collection.'''
 
     def __init__(self, name: str):
         self.name = name
@@ -181,7 +181,7 @@ class Friend:
         ----------
         target : Chunk
             A chunk of :class:`TTree`.
-        data : RecordLike, Chunk
+        data : RecordLike or Chunk
             Addtional branches added to ``target``.
         """
         item = _FriendItem(target.entry_start, target.entry_stop, data)

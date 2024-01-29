@@ -30,7 +30,7 @@ class Chunk(metaclass=_ChunkMeta):
 
     Parameters
     ----------
-    source : PathLike, tuple[PathLike, ~uuid.UUID]
+    source : PathLike or tuple[PathLike, ~uuid.UUID]
         Path to ROOT file with optional UUID
     name : str, optional, default='Events'
         Name of :class:`TTree`.
@@ -56,23 +56,23 @@ class Chunk(metaclass=_ChunkMeta):
     - :meth:`__json__`
     """
     path: EOS
-    '''~heptools.system.eos.EOS:Path to ROOT file.'''
+    '''~heptools.system.eos.EOS : Path to ROOT file.'''
     uuid: UUID
-    '''~uuid.UUID:UUID of ROOT file.'''
+    '''~uuid.UUID : UUID of ROOT file.'''
     name: str
-    '''str:Name of :class:`TTree`.'''
+    '''str : Name of :class:`TTree`.'''
     branches: set[str]
-    '''set[str]:Name of branches.'''
+    '''set[str] : Name of branches.'''
     num_entries: int
-    '''int:Number of entries.'''
+    '''int : Number of entries.'''
     entry_start: int
-    '''int:Start entry.'''
+    '''int : Start entry.'''
     entry_stop: int
-    '''int:Stop entry.'''
+    '''int : Stop entry.'''
 
     @property
     def offset(self):
-        '''int:Equal to ``entry_start``.'''
+        '''int : Equal to ``entry_start``.'''
         return self.entry_start
 
     def __init__(
@@ -171,7 +171,7 @@ class Chunk(metaclass=_ChunkMeta):
         """
         Parameters
         ----------
-        **kwargs: dict, optional
+        **kwargs : dict, optional
             Override ``entry_start``, ``entry_stop`` or ``branches``.
 
         Returns

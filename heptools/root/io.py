@@ -97,7 +97,7 @@ class TreeWriter:
 
         Returns
         -------
-        self: TreeWriter
+        self : TreeWriter
         """
         self._path = EOS(path)
         return self
@@ -108,7 +108,7 @@ class TreeWriter:
 
         Returns
         -------
-        self: TreeWriter
+        self : TreeWriter
         """
         self.tree = None
         self._temp = self._path.local_temp(dir='.')
@@ -176,7 +176,7 @@ class TreeWriter:
 
         Returns
         -------
-        self: TreeWriter
+        self : TreeWriter
         """
         backend = record_backend(data)
         if backend not in ('ak', 'pd', 'np'):
