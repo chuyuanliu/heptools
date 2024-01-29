@@ -13,3 +13,12 @@ Basic I/O
 
 .. autoapiclass:: heptools.root.io.TreeReader
     :members:
+
+:mod:`dask`
+==============================================================
+
+.. autoapifunction:: heptools.root.merge.resize
+
+.. autoapifunction:: heptools.root.merge.merge
+
+.. autoapifunction:: heptools.root.merge.clean
