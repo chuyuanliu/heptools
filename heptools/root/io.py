@@ -27,7 +27,7 @@ from typing import TYPE_CHECKING, Callable, Literal
 import uproot
 
 from ..system.eos import EOS, PathLike
-from . import tree
+from .chunk import Chunk
 from ._backend import concat_record, len_record, record_backend, slice_record
 
 if TYPE_CHECKING:
@@ -68,7 +68,7 @@ class TreeWriter:
         Additional options passed to :func:`uproot.recreate`.
     Attributes
     ----------
-    tree : ~heptools.root.tree.Chunk
+    tree : ~heptools.root.chunk.Chunk
         Created :class:`TTree`.
     """
 
@@ -83,7 +83,7 @@ class TreeWriter:
         self._basket_size = basket_size
         self._options = options
 
-        self.tree: tree.Chunk = None
+        self.tree: Chunk = None
         self._reset()
 
     def __call__(self, path: PathLike):
@@ -117,12 +117,12 @@ class TreeWriter:
 
     def __exit__(self, *exc):
         """
-        If no exception is raised, move the temporary file to the output path and store :class:`~heptools.root.tree.Chunk` information to :data:`tree`.
+        If no exception is raised, move the temporary file to the output path and store :class:`~.chunk.Chunk` information to :data:`tree`.
         """
         if not any(exc):
             self._flush()
             self._file.close()
-            self.tree = tree.Chunk(
+            self.tree = Chunk(
                 source=self._temp,
                 name=self._name,
                 fetch=True)
@@ -215,7 +215,7 @@ class TreeWriter:
 
 class TreeReader(_Reader):
     """
-    Read data from :class:`~heptools.root.tree.Chunk`.
+    Read data from :class:`~.chunk.Chunk`.
 
     Parameters
     ----------
@@ -235,7 +235,7 @@ class TreeReader(_Reader):
 
     def arrays(
         self,
-        source: tree.Chunk,
+        source: Chunk,
         **options,
     ) -> RecordLike:
         """
@@ -243,7 +243,7 @@ class TreeReader(_Reader):
 
         Parameters
         ----------
-        source : ~heptools.root.tree.Chunk
+        source : ~heptools.root.chunk.Chunk
             Chunk of :class:`TTree`.
         **options : dict, optional
             Additional options passed to :meth:`uproot.behaviors.TBranch.HasBranches.arrays`.
@@ -265,7 +265,7 @@ class TreeReader(_Reader):
 
     def concat(
         self,
-        *sources: tree.Chunk,
+        *sources: Chunk,
         library: Literal['ak', 'pd', 'np'] = 'ak',
         **options,
     ) -> RecordLike:
@@ -281,7 +281,7 @@ class TreeReader(_Reader):
 
         Parameters
         ----------
-        sources : tuple[~heptools.root.tree.Chunk]
+        sources : tuple[~heptools.root.chunk.Chunk]
             One or more chunks of :class:`TTree`.
         library : ~typing.Literal['ak', 'np', 'pd'], optional, default='ak'
             The library used to represent arrays.
@@ -305,7 +305,7 @@ class TreeReader(_Reader):
 
     def Array(
         self,
-        *source: tree.Chunk,
+        *source: Chunk,
         **options,
     ) -> ak.Array:
         """
@@ -316,7 +316,7 @@ class TreeReader(_Reader):
 
     def DataFrame(
         self,
-        *source: tree.Chunk,
+        *source: Chunk,
         **options,
     ) -> pd.DataFrame:
         """
@@ -327,7 +327,7 @@ class TreeReader(_Reader):
 
     def NDArray(
         self,
-        *source: tree.Chunk,
+        *source: Chunk,
         **options,
     ) -> dict[str, np.ndarray]:
         """
