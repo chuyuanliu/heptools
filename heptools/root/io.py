@@ -239,7 +239,7 @@ class TreeReader(_Reader):
         **options,
     ) -> RecordLike:
         """
-        Read data into arrays.
+        Read ``source`` into array.
 
         Parameters
         ----------
@@ -270,7 +270,7 @@ class TreeReader(_Reader):
         **options,
     ) -> RecordLike:
         """
-        Read multiple ``sources`` into one array.
+        Read ``sources`` into one array. The branches of ``sources`` must be the same after filtering.
 
         .. todo::
             Add :mod:`multiprocessing` support.
@@ -302,6 +302,32 @@ class TreeReader(_Reader):
                 library=library)
         else:
             raise ValueError(f'Unknown library {library}.')
+
+    def iterate(
+        self,
+        size: int,
+        *sources: Chunk,
+        **options,
+    ):
+        """
+        Iterate over ``sources``.
+
+        Parameters
+        ----------
+        size : int
+            Number of entries to read in each iteration step.
+        sources : tuple[~heptools.root.chunk.Chunk]
+            One or more chunks of :class:`TTree`.
+        **options : dict, optional
+            Additional options passed to :meth:`concat`.
+
+        Yields
+        ------
+        RecordLike
+            Data with ``size`` entries.
+        """
+        for chunks in Chunk.partition(size, *sources):
+            yield self.concat(*chunks, **options)
 
     def Array(
         self,

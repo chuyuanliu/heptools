@@ -239,7 +239,12 @@ class Chunk(metaclass=_ChunkMeta):
         return chunks
 
     @classmethod
-    def partition(cls, size: int, *chunks: Chunk):
+    def partition(
+        cls,
+        size: int,
+        *chunks: Chunk,
+        common_branches: bool = False
+    ):
         """
         Partition ``chunks`` into groups. The sum of entries in each group is equal to ``size`` except for the last one. The order of chunks is preserved.
 
@@ -249,6 +254,8 @@ class Chunk(metaclass=_ChunkMeta):
             Size of each group.
         chunks : tuple[Chunk]
             Chunks to partition.
+        common_branches : bool, optional, default=False
+            If ``True``, only common branches of all chunks are kept.
 
         Yields
         ------
@@ -257,8 +264,9 @@ class Chunk(metaclass=_ChunkMeta):
         """
         i, start, remain = 0, 0, size
         group: list[Chunk] = []
-        common = reduce(and_, (chunk.branches for chunk in chunks))
-        chunks = [chunk.deepcopy(branches=common) for chunk in chunks]
+        if common_branches:
+            common = reduce(and_, (chunk.branches for chunk in chunks))
+            chunks = [chunk.deepcopy(branches=common) for chunk in chunks]
         while i < len(chunks):
             chunk = min(remain, len(chunks[i]) - start)
             group.append(chunks[i].slice(start, start + chunk))
