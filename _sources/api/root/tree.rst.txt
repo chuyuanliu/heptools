@@ -2,13 +2,11 @@
 Tree
 ************************
 
-.. autoapimodule:: heptools.root.tree
-
-.. autoapiclass:: heptools.root.tree.Chunk
+.. autoapiclass:: heptools.root.chunk.Chunk
    :members:
 
-.. autoapiclass:: heptools.root.tree.Friend
+.. autoapiclass:: heptools.root.chain.Friend
    :members:
 
-.. autoapiclass:: heptools.root.tree.Chain
+.. autoapiclass:: heptools.root.chain.Chain
    :members:
