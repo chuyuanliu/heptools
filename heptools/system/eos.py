@@ -219,6 +219,14 @@ class EOS:
         return self.name.split('.')[1:]
 
     @property
+    def suffix(self):
+        return self.path.suffix
+
+    @property
+    def suffixes(self):
+        return self.path.suffixes
+
+    @property
     def parent(self):
         return EOS(self.path.parent, self.host)
 

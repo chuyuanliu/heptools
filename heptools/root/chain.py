@@ -8,12 +8,14 @@ from typing import TYPE_CHECKING, Literal
 from ..system.eos import PathLike
 from ._backend import concat_record, record_backend, slice_record
 from .chunk import Chunk
-from .io import RecordLike, TreeReader
+from .io import TreeReader
 
 if TYPE_CHECKING:
     import awkward as ak
     import numpy as np
     import pandas as pd
+
+    from .io import RecordLike
 
 
 class _FriendItem:

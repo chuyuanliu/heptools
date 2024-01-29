@@ -26,9 +26,10 @@ from typing import TYPE_CHECKING, Callable, Literal
 
 import uproot
 
+from ..dask.delayed import delayed
 from ..system.eos import EOS, PathLike
-from .chunk import Chunk
 from ._backend import concat_record, len_record, record_backend, slice_record
+from .chunk import Chunk
 
 if TYPE_CHECKING:
     import awkward as ak
@@ -219,19 +220,23 @@ class TreeReader(_Reader):
 
     Parameters
     ----------
-    filter_branch : ~typing.Callable[[set[str]], set[str]], optional
-        Function to select branches. If not given, all branches will be read.
+    filter : ~typing.Callable[[set[str]], set[str]], optional
+        A function to select branches. If not given, all branches will be read.
+    transform : ~typing.Callable[[RecordLike], RecordLike], optional
+        A function to transform the data after reading. If not given, no transformation will be applied.
     **options : dict, optional
         Additional options passed to :func:`uproot.open`.
     """
 
     def __init__(
         self,
-        filter_branch: Callable[[set[str]], set[str]] = None,
+        filter: Callable[[set[str]], set[str]] = None,
+        transform: Callable[[RecordLike], RecordLike] = None,
         **options,
     ):
         super().__init__(**options)
-        self._filter = filter_branch
+        self._filter = filter
+        self._transform = transform
 
     def arrays(
         self,
@@ -257,11 +262,14 @@ class TreeReader(_Reader):
         if self._filter is not None:
             branches = self._filter(branches)
         with uproot.open(source.path, **self._options) as file:
-            return file[source.name].arrays(
+            data = file[source.name].arrays(
                 expressions=branches,
                 entry_start=source.entry_start,
                 entry_stop=source.entry_stop,
                 **options)
+            if self._transform is not None:
+                data = self._transform(data)
+            return data
 
     def concat(
         self,
@@ -305,7 +313,7 @@ class TreeReader(_Reader):
 
     def iterate(
         self,
-        size: int,
+        step: int,
         *sources: Chunk,
         **options,
     ):
@@ -314,7 +322,7 @@ class TreeReader(_Reader):
 
         Parameters
         ----------
-        size : int
+        step : int
             Number of entries to read in each iteration step.
         sources : tuple[~heptools.root.chunk.Chunk]
             One or more chunks of :class:`TTree`.
@@ -324,9 +332,9 @@ class TreeReader(_Reader):
         Yields
         ------
         RecordLike
-            Data with ``size`` entries.
+            Data with ``step`` entries.
         """
-        for chunks in Chunk.partition(size, *sources):
+        for chunks in Chunk.partition(step, *sources):
             yield self.concat(*chunks, **options)
 
     def Array(
@@ -361,3 +369,35 @@ class TreeReader(_Reader):
         """
         options['library'] = 'np'
         return self.concat(*source, **options)
+
+
+@delayed
+def merge_tree(
+    path: PathLike,
+    step: int,
+    *sources: Chunk,
+    writer_options: dict = None,
+    reader_options: dict = None,
+) -> list[Chunk]:
+    """
+    Merge ``sources`` into one :class:`~.chunk.Chunk`.
+
+    Parameters
+    ----------
+    path : PathLike
+        Path to output ROOT file.
+    step : int
+        Number of entries to read and write in each iteration step.
+    sources : tuple[~heptools.root.chunk.Chunk]
+        Chunks of :class:`TTree` to merge.
+    writer_options : dict, optional
+        Additional options passed to :class:`TreeWriter`.
+    reader_options : dict, optional
+        Additional options passed to :class:`TreeReader`.
+    """
+    writer_options = writer_options or {}
+    reader_options = reader_options or {}
+    with TreeWriter(**writer_options)(path) as writer:
+        for data in TreeReader(**reader_options).iterate(step, *sources):
+            writer.extend(data)
+    return writer.tree

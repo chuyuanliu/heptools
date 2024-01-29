@@ -3,7 +3,7 @@ import awkward as ak
 import numpy as np
 
 
-class ZipNanoAOD:
+class NanoAOD:
     def __init__(
             self,
             regular: bool = True,

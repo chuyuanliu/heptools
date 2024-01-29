@@ -1,154 +1,92 @@
-# TODO let dask handle the graph for merge
-from coffea.nanoevents import NanoAODSchema
-from coffea.processor import ProcessorABC, Runner, iterative_executor
-from dask import compute, delayed
+from abc import abstractmethod
 
-from heptools.benchmark.unit import Metric
-from heptools.cms import AAA, PicoAOD
-from heptools.dataset import Dataset, File, FileList
-from heptools.root import Chunk
+from coffea.processor import ProcessorABC
+
+from heptools.awkward.zip import NanoAOD
+from heptools.root.chunk import Chunk
+from heptools.root.io import merge_tree, TreeReader, TreeWriter
 from heptools.system.eos import EOS, PathLike
-from heptools.utils import ensure
-
-FILENAME = 'picoAOD'
-
-
-def _int(*values: int | str) -> tuple[int, ...]:
-    return tuple(int(Metric.remove(v)) if isinstance(v, str) else v for v in values)
+import re
+import awkward as ak
 
 
-def _cluster_skim(output: EOS, inputs: list[PathLike | Chunk], step: int, offset: int = None, selection=None):
-    skim = PicoAOD.copy()
-    skim.iterate_step = step
-    if offset is None:
-        skim.unique_index = None
-        offset = 0
+class PicoAOD(ProcessorABC):
+    def __init__(
+            self,
+            basepath: PathLike,
+            collections: list[str],
+            branches: list[str],
+            step: int = 50_000):
+        self._basepath = EOS(basepath)
+        self._step = step
+        # TODO select or skip
+        selected = [f"{collection}_.*" for collection in collections] + \
+            [f"n{collection}" for collection in collections] + branches
+        self._filter_branches = re.compile(f'^({"|".join(selected)})$')
+        self._transform = NanoAOD(regular=False, jagged=True)
 
-    local_output = EOS(output.name)
-    nevents = skim(output=local_output,
-                   inputs=inputs,
-                   selection=selection,
-                   index_offset=offset)
-    local_output.move_to(output, parents=True, overwrite=True)
+    def _filter(self, branches: set[str]):
+        return {*filter(self._filter_branches.match, branches)}
 
-    return File(
-        site='T3_US_FNALLPC',
-        path=str(output.path),
-        nevents=nevents)
+    @abstractmethod
+    def select(self, events):
+        pass
 
+    def process(self, events):
+        selected = self.select(events)
+        chunk = Chunk.from_coffea_processor(events)
+        # category = events.metadata['category'] # TODO mc, dataset, year
+        # is_mc = events.metadata['is_mc'] # TODO check
+        category = 'test'  # TODO remove
+        result = {category: {
+            'nevents': len(events),
+        }}
+        # TODO output path
+        path = self._basepath / \
+            f'{category}/picoAOD_{chunk.uuid}_{chunk.entry_start}_{chunk.entry_stop}.root'
+        with TreeWriter()(path) as writer:
+            for i, data in enumerate(TreeReader(self._filter, self._transform).iterate(self._step, chunk)):
+                writer.extend(data[selected[i*self._step:(i+1)*self._step]])
+                print(chunk.entry_start, chunk.entry_stop,
+                      f'{i*self._step} / {len(chunk)}')
+        result[category]['file'] = [writer.tree]
 
-@delayed
-def select(processor: ProcessorABC, output: EOS, inputs: dict, lazy_read_step: int, full_read_step: int):
-    selection = Runner(
-        executor=iterative_executor(),
-        schema=NanoAODSchema,
-        chunksize=lazy_read_step,
-        xrootdtimeout=3 * 60 * 60,
-    )(inputs, 'Events', processor)
-    return _cluster_skim(
-        output=output,
-        inputs=sum((v['files'] for v in inputs.values()), []),
-        step=full_read_step,
-        selection=lambda x: x[selection(
-            x['run'], x['luminosityBlock'], x['event'])],
-    )
+        return result
 
-
-@delayed
-def merge(output: EOS,
-          inputs: list[EOS],
-          full_read_step: int,
-          index_offset: int):
-    return _cluster_skim(
-        output=output,
-        inputs=inputs,
-        step=full_read_step,
-        offset=index_offset,
-    )
+    def postprocess(self, accumulator):
+        pass
 
 
-def create_picoaod_from_dataset(
-        base: PathLike,
-        datasets: Dataset,
-        lazy_read_step: int | str = '500k',
-        full_read_step: int | str = '100k',
-        **selections: ProcessorABC):
-    base = EOS(base)
-    lazy_read_step, full_read_step = _int(lazy_read_step, full_read_step)
-    outputs = []
-    for (source, dataset, year, era, _), filelist in datasets:
-        path = base / source / dataset / (year + era)
-        metadata = {
-            'source': source,
-            'year': year,
-            'era': era,
-        }
-        files: list[tuple[EOS, str]] = []
-        for file in filelist:
-            files.append((
-                EOS(file.path, AAA.US),  # TODO choose site automatically
-                f'{FILENAME}{{selection}}.chunk{len(files)}.root'
-            ))
-        for selection, processor in selections.items():
-            if selection:
-                selection = ensure(selection, '_')
-            for i, o in files:
-                outputs.append((
-                    select(
-                        processor=processor,
-                        output=path / o.format(selection=selection),
-                        inputs={
-                            dataset: {'files': [str(i)], 'metadata': metadata}},
-                        lazy_read_step=lazy_read_step,
-                        full_read_step=full_read_step,
-                    ), source, dataset, year, era, selection
-                ))
-    outputs = compute(*outputs)
-    skimmed = Dataset()
-    for (file, source, dataset, year, era, selection) in outputs:
-        skimmed.update(source, dataset, year, era,
-                       f'{FILENAME}{selection}', FileList({'files': [file]}))
-    return skimmed
+def fetch_mc_metadata(**paths: list[PathLike]):
+    ...
 
 
-def merge_chunks(
-        base: PathLike,
-        datasets: Dataset,
-        chunksize: int | str = '1M',
-        full_read_step: int | str = '100k',
+def resize(
+    path: PathLike,
+    *chunks: Chunk,
+    read_step: int,
+    chunk_size: int = ...,
+    dask: bool = False,
 ):
-    base = EOS(base)
-    chunksize, full_read_step = _int(chunksize, full_read_step)
-    outputs = []
-    for (source, dataset, year, era, tier), filelist in datasets:
-        offset = 0
-        path = base / source / dataset / (year + era)
-        files = [Chunk(EOS(f.path, AAA.EOS_LPC), f.nevents) for f in filelist]
-        if chunksize is ...:
-            chunks = [files]
-        else:
-            chunks = [*Chunk.split(chunksize, *files)]
-        for i, chunk in enumerate(chunks):
-            input = chunk
-            temp = path / f'{tier}.tmp{i}.root'
-            output = path / f'{tier}.chunk{i}.root'
-            outputs.append((
-                merge(
-                    output=temp,
-                    inputs=input,
-                    full_read_step=full_read_step,
-                    index_offset=offset,
-                ), temp, output, source, dataset, year, era, tier
-            ))
-            offset += sum(len(i) for i in chunk)
-
-    outputs = compute(*outputs)
-    for _, file in datasets.files:
-        EOS(file.path, AAA.EOS_LPC).rm()
-    merged = Dataset()
-    for (file, temp, output, source, dataset, year, era, tier) in outputs:
-        temp.move_to(output, parents=True, overwrite=True)
-        file = File(file, site='T3_US_FNALLPC', path=str(output.path))
-        merged.update(source, dataset, year, era, tier,
-                      FileList({'files': [file]}))
-    return merged
+    path = EOS(path)
+    transform = NanoAOD(regular=False, jagged=True)
+    results: list[Chunk] = []
+    if chunk_size is ...:
+        results.append(merge_tree(
+            path,
+            read_step,
+            *chunks,
+            reader_options={'transform': transform},
+            dask=dask))
+    else:
+        parent = path.parent
+        filename = f'{path.stem}.chunk{{index}}{"".join(path.suffixes)}'
+        for index, new_chunks in enumerate(Chunk.partition(chunk_size, *chunks)):
+            new_path = parent / filename.format(index=index)
+            results.append(merge_tree(
+                new_path,
+                read_step,
+                *new_chunks,
+                reader_options={'transform': transform},
+                dask=dask))
+    return results
