@@ -1,27 +1,33 @@
+import re
 from abc import abstractmethod
+from concurrent.futures import ThreadPoolExecutor
 
-from coffea.processor import ProcessorABC
+import awkward as ak
+import uproot
+from coffea.processor import ProcessorABC, accumulate
 
 from heptools.awkward.zip import NanoAOD
 from heptools.root.chunk import Chunk
-from heptools.root.io import merge_tree, TreeReader, TreeWriter
+from heptools.root.io import TreeReader, TreeWriter
 from heptools.system.eos import EOS, PathLike
-import re
-import awkward as ak
+
+_PICOAOD = 'picoAOD'
 
 
 class PicoAOD(ProcessorABC):
     def __init__(
             self,
             basepath: PathLike,
-            collections: list[str],
-            branches: list[str],
+            selected_collections: list[str],
+            selected_branches: list[str],
             step: int = 50_000):
         self._basepath = EOS(basepath)
         self._step = step
         # TODO select or skip
-        selected = [f"{collection}_.*" for collection in collections] + \
-            [f"n{collection}" for collection in collections] + branches
+        selected = (
+            [f"{collection}_.*" for collection in selected_collections] +
+            [f"n{collection}" for collection in selected_collections] +
+            selected_branches)
         self._filter_branches = re.compile(f'^({"|".join(selected)})$')
         self._transform = NanoAOD(regular=False, jagged=True)
 
@@ -36,20 +42,16 @@ class PicoAOD(ProcessorABC):
         selected = self.select(events)
         chunk = Chunk.from_coffea_processor(events)
         # category = events.metadata['category'] # TODO mc, dataset, year
-        # is_mc = events.metadata['is_mc'] # TODO check
         category = 'test'  # TODO remove
         result = {category: {
             'nevents': len(events),
         }}
-        # TODO output path
-        path = self._basepath / \
-            f'{category}/picoAOD_{chunk.uuid}_{chunk.entry_start}_{chunk.entry_stop}.root'
+        filename = f'{category}/{_PICOAOD}_{chunk.uuid}_{chunk.entry_start}_{chunk.entry_stop}.root'
+        path = self._basepath / filename
         with TreeWriter()(path) as writer:
             for i, data in enumerate(TreeReader(self._filter, self._transform).iterate(self._step, chunk)):
                 writer.extend(data[selected[i*self._step:(i+1)*self._step]])
-                print(chunk.entry_start, chunk.entry_stop,
-                      f'{i*self._step} / {len(chunk)}')
-        result[category]['file'] = [writer.tree]
+        result[category]['files'] = [writer.tree]
 
         return result
 
@@ -57,36 +59,25 @@ class PicoAOD(ProcessorABC):
         pass
 
 
-def fetch_mc_metadata(**paths: list[PathLike]):
-    ...
+def _fetch_metadata(category: str, path: PathLike):
+    with uproot.open(path) as f:
+        data = f['Runs'].arrays(
+            ['genEventCount', 'genEventSumw', 'genEventSumw2'])
+        return {
+            category: {
+                'count': ak.sum(data['genEventCount']),
+                'sumw': ak.sum(data['genEventSumw']),
+                'sumw2': ak.sum(data['genEventSumw2']),
+            }
+        }
 
 
-def resize(
-    path: PathLike,
-    *chunks: Chunk,
-    read_step: int,
-    chunk_size: int = ...,
-    dask: bool = False,
-):
-    path = EOS(path)
-    transform = NanoAOD(regular=False, jagged=True)
-    results: list[Chunk] = []
-    if chunk_size is ...:
-        results.append(merge_tree(
-            path,
-            read_step,
-            *chunks,
-            reader_options={'transform': transform},
-            dask=dask))
-    else:
-        parent = path.parent
-        filename = f'{path.stem}.chunk{{index}}{"".join(path.suffixes)}'
-        for index, new_chunks in enumerate(Chunk.partition(chunk_size, *chunks)):
-            new_path = parent / filename.format(index=index)
-            results.append(merge_tree(
-                new_path,
-                read_step,
-                *new_chunks,
-                reader_options={'transform': transform},
-                dask=dask))
-    return results
+def fetch_metadata(**paths: list[PathLike]) -> dict[str, dict[str]]:
+    count = sum(len(path) for path in paths.values())
+    with ThreadPoolExecutor(max_workers=count) as executor:
+        tasks = []
+        for category, path in paths.items():
+            for p in path:
+                tasks.append(executor.submit(_fetch_metadata, category, p))
+        results = [task.result() for task in tasks]
+    return accumulate(results)

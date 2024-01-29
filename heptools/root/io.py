@@ -26,7 +26,6 @@ from typing import TYPE_CHECKING, Callable, Literal
 
 import uproot
 
-from ..dask.delayed import delayed
 from ..system.eos import EOS, PathLike
 from ._backend import concat_record, len_record, record_backend, slice_record
 from .chunk import Chunk
@@ -369,35 +368,3 @@ class TreeReader(_Reader):
         """
         options['library'] = 'np'
         return self.concat(*source, **options)
-
-
-@delayed
-def merge_tree(
-    path: PathLike,
-    step: int,
-    *sources: Chunk,
-    writer_options: dict = None,
-    reader_options: dict = None,
-) -> list[Chunk]:
-    """
-    Merge ``sources`` into one :class:`~.chunk.Chunk`.
-
-    Parameters
-    ----------
-    path : PathLike
-        Path to output ROOT file.
-    step : int
-        Number of entries to read and write in each iteration step.
-    sources : tuple[~heptools.root.chunk.Chunk]
-        Chunks of :class:`TTree` to merge.
-    writer_options : dict, optional
-        Additional options passed to :class:`TreeWriter`.
-    reader_options : dict, optional
-        Additional options passed to :class:`TreeReader`.
-    """
-    writer_options = writer_options or {}
-    reader_options = reader_options or {}
-    with TreeWriter(**writer_options)(path) as writer:
-        for data in TreeReader(**reader_options).iterate(step, *sources):
-            writer.extend(data)
-    return writer.tree

@@ -1,8 +1,8 @@
 from __future__ import annotations
 
+from concurrent.futures import ThreadPoolExecutor
 from functools import partial, reduce
 from operator import and_
-from threading import Thread
 from typing import Iterable
 from uuid import UUID
 
@@ -229,13 +229,8 @@ class Chunk(metaclass=_ChunkMeta):
             List of chunks from ``paths``.
         """
         chunks = [Chunk(path) for path in paths]
-        threads = []
-        for chunk in chunks:
-            thread = Thread(target=chunk._fetch)
-            thread.start()
-            threads.append(thread)
-        for thread in threads:
-            thread.join()
+        with ThreadPoolExecutor(max_workers=len(chunks)) as executor:
+            executor.map(Chunk._fetch, chunks)
         return chunks
 
     @classmethod

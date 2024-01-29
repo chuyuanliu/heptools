@@ -8,6 +8,6 @@ class delayed:
             if self._delayed is None:
                 from dask import delayed
                 self._delayed = delayed(self._func)
-            return self._delayed(*args, **kwargs)
+            return self._delayed(*args, **kwargs, dask=dask)
         else:
-            return self._func(*args, **kwargs)
+            return self._func(*args, **kwargs, dask=dask)
