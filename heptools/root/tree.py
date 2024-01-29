@@ -3,7 +3,8 @@ from __future__ import annotations
 
 import bisect
 from collections import defaultdict, deque
-from functools import partial
+from functools import partial, reduce
+from operator import and_
 from threading import Thread
 from typing import TYPE_CHECKING, Iterable, Literal
 from uuid import UUID
@@ -176,8 +177,13 @@ class Chunk(metaclass=_ChunkMeta):
             json_dict['entry_stop'] = self.entry_stop
         return json_dict
 
-    def deepcopy(self):
+    def deepcopy(self, **kwargs):
         """
+        Parameters
+        ----------
+        **kwargs: dict, optional
+            Override ``entry_start``, ``entry_stop`` or ``branches``.
+
         Returns
         -------
         Chunk
@@ -188,9 +194,9 @@ class Chunk(metaclass=_ChunkMeta):
             source=path,
             name=self.name,
             num_entries=self._num_entries,
-            branches=self._branches,
-            entry_start=self.entry_start,
-            entry_stop=self._entry_stop)
+            branches=kwargs.get('branches', self._branches),
+            entry_start=kwargs.get('entry_start', self.entry_start),
+            entry_stop=kwargs.get('entry_stop', self._entry_stop))
 
     def slice(self, start: int, stop: int):
         """
@@ -204,7 +210,7 @@ class Chunk(metaclass=_ChunkMeta):
         Returns
         -------
         Chunk
-            A sliced :meth:`copy` of ``self`` from ``start`` to ``stop`` with :data:`offset` applied.
+            A sliced :meth:`deepcopy` of ``self`` from ``start`` + :data:`offset` to ``stop`` + :data:`offset`.
         """
         start += self.offset
         stop += self.offset
@@ -214,9 +220,7 @@ class Chunk(metaclass=_ChunkMeta):
         if invalid:
             raise ValueError(
                 f'The slice is not a subset of the chunk [{start},{stop}) \u2284 [{self.entry_start},{self._entry_stop})')
-        chunk = self.deepcopy()
-        chunk.entry_start = start
-        chunk._entry_stop = stop
+        chunk = self.deepcopy(entry_start=start, entry_stop=stop)
         return chunk
 
     @classmethod
@@ -263,6 +267,8 @@ class Chunk(metaclass=_ChunkMeta):
         """
         i, start, remain = 0, 0, size
         group: list[Chunk] = []
+        common = reduce(and_, (chunk.branches for chunk in chunks))
+        chunks = [chunk.deepcopy(branches=common) for chunk in chunks]
         while i < len(chunks):
             chunk = min(remain, len(chunks[i]) - start)
             group.append(chunks[i].slice(start, start + chunk))
