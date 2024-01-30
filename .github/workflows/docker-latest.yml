@@ -10,7 +10,7 @@ jobs:
   build:
     runs-on: ubuntu-latest
     concurrency:
-      group: publish_docker_image
+      group: publish_docker_image_latest
       cancel-in-progress: true
     steps:
       - name: Checkout
@@ -32,11 +32,3 @@ jobs:
           file: ./docker/stable/dockerfile
           push: true
           tags: ${{ secrets.DOCKERHUB_USERNAME }}/heptools:latest
-
-      - name: Build and push experimental
-        uses: docker/build-push-action@v4
-        with:
-          context: .
-          file: ./docker/experimental/dockerfile
-          push: true
-          tags: ${{ secrets.DOCKERHUB_USERNAME }}/heptools:exp
