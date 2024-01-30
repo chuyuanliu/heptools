@@ -279,7 +279,7 @@ class Friend:
     def dump(
         self,
         naming: str,
-        basepath: PathLike = ...,
+        base_path: PathLike = ...,
     ):
         """
         Dump all in-memory data to ROOT files with a given ``naming`` rule.
@@ -288,12 +288,12 @@ class Friend:
         ----------
         naming : str
             Naming rule for each chunk. See below for details.
-        basepath: PathLike, optional
+        base_path: PathLike, optional
             Base path to store all dumped files. See below for details.
 
         Notes
         -----
-        Each dumped file will be stored in ``{basepath}/{naming.format{**keys}}``. If ``basepath`` is not given, the corresponding ``target.path.parent`` will be used. The following keys are available:
+        Each dumped file will be stored in ``{base_path}/{naming.format{**keys}}``. If ``base_path`` is not given, the corresponding ``target.path.parent`` will be used. The following keys are available:
 
         - ``{name}``: :data:`name`.
         - ``{uuid}``: ``target.uuid``

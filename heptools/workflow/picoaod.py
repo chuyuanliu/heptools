@@ -18,11 +18,11 @@ _ROOT = '.root'
 class PicoAOD(ProcessorABC):
     def __init__(
             self,
-            basepath: PathLike,
+            base_path: PathLike,
             selected_collections: list[str],
             selected_branches: list[str],
             step: int = 50_000):
-        self._basepath = EOS(basepath)
+        self._base = EOS(base_path)
         self._step = step
         # TODO select or skip
         selected = (
@@ -47,7 +47,7 @@ class PicoAOD(ProcessorABC):
             'nevents': len(events),
         }}
         filename = f'{dataset}/{_PICOAOD}_{chunk.uuid}_{chunk.entry_start}_{chunk.entry_stop}{_ROOT}'
-        path = self._basepath / filename
+        path = self._base / filename
         with TreeWriter()(path) as writer:
             for i, data in enumerate(TreeReader(self._filter, self._transform).iterate(self._step, chunk)):
                 writer.extend(data[selected[i*self._step:(i+1)*self._step]])
@@ -84,16 +84,16 @@ def fetch_metadata(fileset: dict[str, dict[str]]) -> dict[str, dict[str]]:
 
 
 def resize(
-        basepath: PathLike,
+        base_path: PathLike,
         output: dict[str, dict[str, list[Chunk]]],
         step: int,
         chunk_size: int):
-    basepath = EOS(basepath)
+    base = EOS(base_path)
     transform = NanoAOD(regular=False, jagged=True)
     for dataset, chunks in output.items():
         files = [chunk.path for chunk in chunks['files']]
         output[dataset][files] = merge.resize(
-            basepath / dataset/f'{_PICOAOD}{_ROOT}',
+            base / dataset/f'{_PICOAOD}{_ROOT}',
             files,
             step=step,
             chunk_size=chunk_size,
