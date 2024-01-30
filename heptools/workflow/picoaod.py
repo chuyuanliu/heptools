@@ -41,17 +41,16 @@ class PicoAOD(ProcessorABC):
     def process(self, events):
         selected = self.select(events)
         chunk = Chunk.from_coffea_processor(events)
-        # category = events.metadata['category'] # TODO mc, dataset, year
-        category = 'test'  # TODO remove
-        result = {category: {
+        dataset = events.metadata['dataset']
+        result = {dataset: {
             'nevents': len(events),
         }}
-        filename = f'{category}/{_PICOAOD}_{chunk.uuid}_{chunk.entry_start}_{chunk.entry_stop}.root'
+        filename = f'{dataset}/{_PICOAOD}_{chunk.uuid}_{chunk.entry_start}_{chunk.entry_stop}.root'
         path = self._basepath / filename
         with TreeWriter()(path) as writer:
             for i, data in enumerate(TreeReader(self._filter, self._transform).iterate(self._step, chunk)):
                 writer.extend(data[selected[i*self._step:(i+1)*self._step]])
-        result[category]['files'] = [writer.tree]
+        result[dataset]['files'] = [writer.tree]
 
         return result
 
@@ -59,12 +58,12 @@ class PicoAOD(ProcessorABC):
         pass
 
 
-def _fetch_metadata(category: str, path: PathLike):
+def _fetch_metadata(dataset: str, path: PathLike):
     with uproot.open(path) as f:
         data = f['Runs'].arrays(
             ['genEventCount', 'genEventSumw', 'genEventSumw2'])
         return {
-            category: {
+            dataset: {
                 'count': ak.sum(data['genEventCount']),
                 'sumw': ak.sum(data['genEventSumw']),
                 'sumw2': ak.sum(data['genEventSumw2']),
@@ -76,8 +75,8 @@ def fetch_metadata(**paths: list[PathLike]) -> dict[str, dict[str]]:
     count = sum(len(path) for path in paths.values())
     with ThreadPoolExecutor(max_workers=count) as executor:
         tasks = []
-        for category, path in paths.items():
+        for dataset, path in paths.items():
             for p in path:
-                tasks.append(executor.submit(_fetch_metadata, category, p))
+                tasks.append(executor.submit(_fetch_metadata, dataset, p))
         results = [task.result() for task in tasks]
     return accumulate(results)

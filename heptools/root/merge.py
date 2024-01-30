@@ -118,7 +118,7 @@ def resize(
     else:
         parent = path.parent
         filename = f'{path.stem}.chunk{{index}}{"".join(path.suffixes)}'
-        chunks = [*Chunk.partition(chunk_size, *sources)]
+        chunks = [*Chunk.partition(chunk_size, *sources, common_branches=True)]
         for index, new_chunks in enumerate(chunks):
             if len(chunks) == 1:
                 new_path = path
