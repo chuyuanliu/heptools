@@ -295,7 +295,7 @@ class HTCondor:
             + kwargs.pop('job_script_prologue', []),
 
             scheduler_options={
-                'dashboard_address': f':{self._dashboard_port}',
+                'dashboard_address': self._dashboard_port,
                 'port': scheduler_port,
             } | kwargs.pop('scheduler_options', {}),
 

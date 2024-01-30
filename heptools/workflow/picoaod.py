@@ -44,7 +44,8 @@ class PicoAOD(ProcessorABC):
         chunk = Chunk.from_coffea_processor(events)
         dataset = events.metadata['dataset']
         result = {dataset: {
-            'nevents': len(events),
+            'total_events': len(events),
+            'saved_events': ak.sum(selected),
         }}
         filename = f'{dataset}/{_PICOAOD}_{chunk.uuid}_{chunk.entry_start}_{chunk.entry_stop}{_ROOT}'
         path = self._base / filename
@@ -91,10 +92,9 @@ def resize(
     base = EOS(base_path)
     transform = NanoAOD(regular=False, jagged=True)
     for dataset, chunks in output.items():
-        files = [chunk.path for chunk in chunks['files']]
-        output[dataset][files] = merge.resize(
+        output[dataset]['files'] = merge.resize(
             base / dataset/f'{_PICOAOD}{_ROOT}',
-            files,
+            *chunks['files'],
             step=step,
             chunk_size=chunk_size,
             reader_options={'transform': transform},
