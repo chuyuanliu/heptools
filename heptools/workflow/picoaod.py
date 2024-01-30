@@ -1,4 +1,4 @@
-# TODO migrate to coffea2024 https://github.com/CoffeaTeam/coffea/pull/935
+# TODO migrate to coffea2024
 import re
 from abc import abstractmethod
 from concurrent.futures import Future, ThreadPoolExecutor
@@ -17,11 +17,12 @@ _ROOT = '.root'
 
 class PicoAOD(ProcessorABC):
     def __init__(
-            self,
-            base_path: PathLike,
-            selected_collections: list[str],
-            selected_branches: list[str],
-            step: int = 50_000):
+        self,
+        base_path: PathLike,
+        selected_collections: list[str],
+        selected_branches: list[str],
+        step: int
+    ):
         self._base = EOS(base_path)
         self._step = step
         # TODO select or skip
@@ -85,10 +86,11 @@ def fetch_metadata(fileset: dict[str, dict[str]]) -> dict[str, dict[str]]:
 
 
 def resize(
-        base_path: PathLike,
-        output: dict[str, dict[str, list[Chunk]]],
-        step: int,
-        chunk_size: int):
+    base_path: PathLike,
+    output: dict[str, dict[str, list[Chunk]]],
+    step: int,
+    chunk_size: int
+):
     base = EOS(base_path)
     transform = NanoAOD(regular=False, jagged=True)
     for dataset, chunks in output.items():

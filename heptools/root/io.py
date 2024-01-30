@@ -21,7 +21,6 @@ ROOT file I/O based on :func:`uproot.reading.open` and :func:`uproot.writing.wri
 """
 from __future__ import annotations
 
-import gc
 from typing import TYPE_CHECKING, Callable, Literal
 
 import uproot
@@ -161,7 +160,6 @@ class TreeWriter:
             else:
                 self._file[self._name].extend(data)
         data = None
-        gc.collect()
 
     def extend(
             self,
