@@ -19,18 +19,21 @@ class PicoAOD(ProcessorABC):
     def __init__(
         self,
         base_path: PathLike,
-        selected_collections: list[str],
-        selected_branches: list[str],
-        step: int
+        step: int,
+        skip_collections: list[str] = None,
+        skip_branches: list[str] = None,
     ):
         self._base = EOS(base_path)
         self._step = step
-        # TODO select or skip
-        selected = (
-            [f"{collection}_.*" for collection in selected_collections] +
-            [f"n{collection}" for collection in selected_collections] +
-            selected_branches)
-        self._filter_branches = re.compile(f'^({"|".join(selected)})$')
+        if skip_collections is None:
+            skip_collections = []
+        if skip_branches is None:
+            skip_branches = []
+        skipped = (
+            [f'{collection}_.*' for collection in skip_collections] +
+            [f'n{collection}' for collection in skip_collections] +
+            skip_branches)
+        self._filter_branches = re.compile(f'^(?!({"|".join(skipped)})).*$')
         self._transform = NanoAOD(regular=False, jagged=True)
 
     def _filter(self, branches: set[str]):
