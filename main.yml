@@ -24,12 +24,12 @@ dependencies:
   - xrootd
   - fsspec-xrootd
   # Scikit-HEP
-  - awkward
-  - uproot=4.3.*
+  - awkward=1.10.3
+  - uproot=4.3.7
   - hist
   - particle
   # CMS
-  - coffea=0.7.21
+  - coffea=0.7.22
   - correctionlib
   - pip:
       - dbs3-client
