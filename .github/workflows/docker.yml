@@ -25,10 +25,18 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v2
 
-      - name: Build and push
+      - name: Build and push latest
         uses: docker/build-push-action@v4
         with:
           context: .
-          file: ./dockerfile
+          file: ./docker/stable/dockerfile
           push: true
           tags: ${{ secrets.DOCKERHUB_USERNAME }}/heptools:latest
+
+      - name: Build and push experimental
+        uses: docker/build-push-action@v4
+        with:
+          context: .
+          file: ./docker/experimental/dockerfile
+          push: true
+          tags: ${{ secrets.DOCKERHUB_USERNAME }}/heptools:exp

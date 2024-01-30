@@ -1,3 +1,4 @@
+# TODO migrate to coffea2024 https://github.com/CoffeaTeam/coffea/pull/935
 import re
 from abc import abstractmethod
 from concurrent.futures import Future, ThreadPoolExecutor
