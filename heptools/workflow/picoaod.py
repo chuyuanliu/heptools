@@ -1,17 +1,17 @@
 import re
 from abc import abstractmethod
-from concurrent.futures import ThreadPoolExecutor
+from concurrent.futures import Future, ThreadPoolExecutor
 
 import awkward as ak
 import uproot
 from coffea.processor import ProcessorABC, accumulate
 
 from heptools.awkward.zip import NanoAOD
-from heptools.root.chunk import Chunk
-from heptools.root.io import TreeReader, TreeWriter
+from heptools.root import Chunk, TreeReader, TreeWriter, merge
 from heptools.system.eos import EOS, PathLike
 
 _PICOAOD = 'picoAOD'
+_ROOT = '.root'
 
 
 class PicoAOD(ProcessorABC):
@@ -45,7 +45,7 @@ class PicoAOD(ProcessorABC):
         result = {dataset: {
             'nevents': len(events),
         }}
-        filename = f'{dataset}/{_PICOAOD}_{chunk.uuid}_{chunk.entry_start}_{chunk.entry_stop}.root'
+        filename = f'{dataset}/{_PICOAOD}_{chunk.uuid}_{chunk.entry_start}_{chunk.entry_stop}{_ROOT}'
         path = self._basepath / filename
         with TreeWriter()(path) as writer:
             for i, data in enumerate(TreeReader(self._filter, self._transform).iterate(self._step, chunk)):
@@ -71,12 +71,32 @@ def _fetch_metadata(dataset: str, path: PathLike):
         }
 
 
-def fetch_metadata(**paths: list[PathLike]) -> dict[str, dict[str]]:
-    count = sum(len(path) for path in paths.values())
+def fetch_metadata(fileset: dict[str, dict[str]]) -> dict[str, dict[str]]:
+    count = sum(len(path['files']) for path in fileset.values())
     with ThreadPoolExecutor(max_workers=count) as executor:
-        tasks = []
-        for dataset, path in paths.items():
-            for p in path:
-                tasks.append(executor.submit(_fetch_metadata, dataset, p))
+        tasks: list[Future] = []
+        for dataset, files in fileset.items():
+            for files in files['files']:
+                tasks.append(executor.submit(_fetch_metadata, dataset, files))
         results = [task.result() for task in tasks]
     return accumulate(results)
+
+
+def resize(
+        basepath: PathLike,
+        output: dict[str, dict[str, list[Chunk]]],
+        step: int,
+        chunk_size: int):
+    basepath = EOS(basepath)
+    transform = NanoAOD(regular=False, jagged=True)
+    for dataset, chunks in output.items():
+        files = [chunk.path for chunk in chunks['files']]
+        output[dataset][files] = merge.resize(
+            basepath / dataset/f'{_PICOAOD}{_ROOT}',
+            files,
+            step=step,
+            chunk_size=chunk_size,
+            reader_options={'transform': transform},
+            dask=True,
+        )
+    return output
