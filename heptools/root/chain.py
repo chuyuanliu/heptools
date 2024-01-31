@@ -411,7 +411,7 @@ class Friend:
         """
         ...  # TODO
 
-    def move_files(self):
+    def move(self):
         ...  # TODO
 
     def report_integrity(
@@ -421,7 +421,7 @@ class Friend:
         """
         Check and report the following:
 
-        - integrity of all :class:`~.chunk.Chunk`
+        - :meth:`~.chunk.Chunk.report_integrity` for all target and friend chunks
         - mismatch in number of entries or branches
         - gaps or overlaps between friend chunks
         - in-memory data
