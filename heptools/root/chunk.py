@@ -134,7 +134,7 @@ class Chunk(metaclass=_ChunkMeta):
         Parameters
         ----------
         logger : ~logging.Logger, optional
-            The logger used to report the issues. Can be a :class:`~logging.Logger` any class with the same interface. If not given, the default logger will be used.
+            The logger used to report the issues. Can be a :class:`~logging.Logger` or any class with the same interface. If not given, the default logger will be used.
 
         Returns
         -------

@@ -13,6 +13,8 @@ from .chunk import Chunk
 from .io import TreeReader, TreeWriter
 
 if TYPE_CHECKING:
+    from logging import Logger
+
     import awkward as ak
     import numpy as np
     import pandas as pd
@@ -121,7 +123,7 @@ class Friend:
             entry_stop=None)
 
     @property
-    def _need_dump(self):
+    def _to_dump(self):
         if hasattr(self, '_dump'):
             return len(self._dump) > 0
         return False
@@ -349,7 +351,7 @@ class Friend:
             >>>     'root://host.2//x/y/z/')
             >>> # write to root://host.2//x/y/z/b/c/test_uuid_100_200.root
             """
-        if self._need_dump:
+        if self._to_dump:
             if base_path is not ...:
                 base_path = EOS(base_path)
             writer_options = writer_options or {}
@@ -380,13 +382,13 @@ class Friend:
             for v in vs:
                 if isinstance(v.chunk, Chunk):
                     files.append(v.chunk.path)
-        log.log('The following files will be deleted:')
-        log.log('\n'.join(str(f) for f in files))
         if confirm:
+            log.info('The following files will be deleted:')
+            log.warning('\n'.join(str(f) for f in files))
             confirmation = log.input(
                 f'Type "{self.name}" to confirm the deletion: ')
             if confirmation != self.name:
-                log.log('Deletion aborted.')
+                log.info('Deletion aborted.')
                 return
         with ThreadPoolExecutor(max_workers=len(files)) as executor:
             executor.map(EOS.rm, files)
@@ -396,11 +398,73 @@ class Friend:
             del self._dump
             del self._dump_name
 
-    def merge(self):
+    def merge(
+        self,
+        naming: str = '{name}_{uuid}_{start}_{stop}.root',
+        base_path: PathLike = ...,
+        reader_options: dict = None,
+        writer_options: dict = None,
+        dask: bool = False,
+    ):
+        """
+        Merge contiguous chunks into a single file.
+        """
         ...  # TODO
 
     def move_files(self):
         ...  # TODO
+
+    def report_integrity(
+        self,
+        logger: Logger = None
+    ):
+        """
+        Check and report the following:
+
+        - integrity of all :class:`~.chunk.Chunk`
+        - mismatch in number of entries or branches
+        - gaps or overlaps between friend chunks
+        - in-memory data
+
+        This method can be very expensive for large friend trees.
+
+        Parameters
+        ----------
+        logger : ~logging.Logger, optional
+            The logger used to report the issues. Can be a :class:`~logging.Logger` or any class with the same interface. If not given, the default logger will be used.
+        """
+        if logger is None:
+            logger = log
+        # TODO check below
+        for target, items in self._data.items():
+            target = target.report_integrity(logger)
+            if target is not None:
+                start = target.entry_start
+                stop = target.entry_stop
+                for item in items:
+                    if start < item.start:
+                        logger.warning(
+                            f'target "{target.path}" does not have the friend entries [{start},{item.start}) ')  # TODO check
+                    elif start > item.start:
+                        logger.error(
+                            f'target "{target.path}" has multiple friends overlapping at [{item.start}, {start})')  # TODO check
+                    start = item.stop
+                    if isinstance(item.chunk, Chunk):
+                        if item.chunk.report_integrity(logger) is not None:
+                            chunk = item.chunk
+                            if len(chunk) != len(item):
+                                logger.error(
+                                    f'friend "{chunk}" does not match the range [{item.start},{item.stop})')  # TODO check
+                            diff = self._branches - chunk.branches
+                            if diff:
+                                logger.error(
+                                    f'friend "{chunk}" does not have the following branches: {diff}')  # TODO check
+                    else:
+                        logger.warning(
+                            f'target "{target.path}" has the friend entries [{item.start},{item.stop}) in memory.')  # TODO check
+                if start < stop:
+                    logger.warning(
+                        f'target "{target.path}" does not have the friend entries [{start},{stop}) ')  # TODO check
 
     @classmethod
     def from_json(cls, data: dict):  # TODO
