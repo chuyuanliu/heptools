@@ -3,6 +3,7 @@
 import inspect
 from abc import ABC, abstractmethod
 from functools import partial
+from types import MethodType
 from typing import Callable
 
 
@@ -34,7 +35,7 @@ class OptionalDecorator(ABC):
         self._kwargs = kwargs
 
     def __get__(self, instance, owner):
-        return partial(self.__call__, instance)
+        return MethodType(self, instance)
 
     def __call__(self, *args, **kwargs):
         kwargs.setdefault(self._switch, self._default)
