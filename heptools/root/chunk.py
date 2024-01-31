@@ -201,29 +201,30 @@ class Chunk(metaclass=_ChunkMeta):
 
     def __repr__(self):
         text = f'TTree:{self.path}'
-        if self._uuid is not ...:
+        if not self._ignore(self._uuid):
             text += f'({self._uuid})'
         text += f':{self.name}'
-        if self._entry_stop is not ...:
+        if not self._ignore(self.entry_start) and not self._ignore(self._entry_stop):
             text += f'[{self.entry_start},{self._entry_stop})'
-        if self._num_entries is not ...:
+        if not self._ignore(self._num_entries):
             text += f'<- [0,{self._num_entries})'
         return text
 
     def __json__(self):
         json_dict = {
             'path': str(self.path),
-            'uuid': str(self.uuid),
             'name': self.name,
         }
-        if self.branches is not None:
-            json_dict['branches'] = list(self.branches)
-        if self.num_entries is not None:
-            json_dict['num_entries'] = self.num_entries
+        json_dict['uuid'] = None if self._uuid is ... else str(self._uuid)
+        if self._branches is not None:
+            json_dict['branches'] = None if self._branches is ... else list(
+                self._branches)
+        if self._num_entries is not None:
+            json_dict['num_entries'] = None if self._num_entries is ... else self._num_entries
+        if self._entry_stop is not None:
+            json_dict['entry_stop'] = None if self._entry_stop is ... else self._entry_stop
         if self.entry_start is not None:
             json_dict['entry_start'] = self.entry_start
-        if self.entry_stop is not None:
-            json_dict['entry_stop'] = self.entry_stop
         return json_dict
 
     def deepcopy(self, **kwargs):
@@ -351,13 +352,24 @@ class Chunk(metaclass=_ChunkMeta):
         Chunk
             Chunk from JSON data.
         """
-        return cls(
-            source=(data['path'], UUID(data['uuid'])),
-            name=data['name'],
-            branches=data.get('branches'),
-            num_entries=data.get('num_entries'),
-            entry_start=data.get('entry_start'),
-            entry_stop=data.get('entry_stop'))
+        kwargs = {
+            'name': data['name'],
+            'entry_start': data.get('entry_start'),
+        }
+        uuid = data['uuid']
+        if uuid is not None:
+            kwargs['source'] = (data['path'], UUID(uuid))
+        else:
+            kwargs['source'] = data['path']
+        for key in ('branches', 'num_entries', 'entry_stop'):
+            if key in data:
+                value = data[key]
+                if value is None:
+                    continue
+            else:
+                value = None
+            kwargs[key] = value
+        return cls(**kwargs)
 
     @classmethod
     def from_coffea_processor(cls, events):
