@@ -3,12 +3,14 @@ from __future__ import annotations
 
 import bisect
 from collections import defaultdict, deque
+from concurrent.futures import ThreadPoolExecutor
 from typing import TYPE_CHECKING, Literal
 
-from ..system.eos import PathLike
+from ..logging import log
+from ..system.eos import EOS, PathLike
 from ._backend import concat_record, record_backend, slice_record
 from .chunk import Chunk
-from .io import TreeReader
+from .io import TreeReader, TreeWriter
 
 if TYPE_CHECKING:
     import awkward as ak
@@ -198,7 +200,9 @@ class Friend:
     def get(
         self,
         target: Chunk,
+        branches: set[str] = ...,
         library: Literal['ak', 'pd', 'np'] = 'ak',
+        reader_options: dict = None,
     ) -> RecordLike:
         """
         Get the friend :class:`TTree` for ``target``.
@@ -207,8 +211,12 @@ class Friend:
         ----------
         target : Chunk
             A chunk of :class:`TTree`.
+        branches : set[str], optional
+            Branches to read. If not given, all branches will be read.
         library : ~typing.Literal['ak', 'np', 'pd'], optional, default='ak'
             The library used to represent arrays.
+        reader_options : dict, optional
+            Additional options passed to :class:`~.io.TreeReader`.
         """
         series = self._data[target]
         start = target.entry_start
@@ -235,9 +243,15 @@ class Friend:
                     chunks.append(slice_record(
                         item.chunk, chunk_start, chunk_end, library=library))
         # TODO test below
+        if branches is ...:
+            branches = self._branches
+        else:
+            branches = self._branches & branches
+        reader_options = reader_options or {}
+        reader_options['filter'] = branches.__and__
+        reader = TreeReader(**reader_options)
         data = []
         to_read = []
-        reader = TreeReader(self._branches.__and__)
         while chunks:
             chunk = chunks.popleft()
             if isinstance(chunk, Chunk):
@@ -278,8 +292,9 @@ class Friend:
 
     def dump(
         self,
-        naming: str,
+        naming: str = '{name}_{uuid}_{start}_{stop}.root',
         base_path: PathLike = ...,
+        writer_options: dict = None,
     ):
         """
         Dump all in-memory data to ROOT files with a given ``naming`` rule.
@@ -290,6 +305,8 @@ class Friend:
             Naming rule for each chunk. See below for details.
         base_path: PathLike, optional
             Base path to store all dumped files. See below for details.
+        writer_options: dict, optional
+            Additional options passed to :class:`~.io.TreeWriter`.
 
         Notes
         -----
@@ -332,7 +349,52 @@ class Friend:
             >>>     'root://host.2//x/y/z/')
             >>> # write to root://host.2//x/y/z/b/c/test_uuid_100_200.root
             """
-        ...  # TODO
+        if self._need_dump:
+            if base_path is not ...:
+                base_path = EOS(base_path)
+            writer_options = writer_options or {}
+            writer = TreeWriter(**writer_options)
+            for target, item in self._dump:
+                if base_path is ...:
+                    path = target.path.parent
+                else:
+                    path = base_path
+                path = path / naming.format(**self._name_dump(target, item))
+                with writer(path) as f:
+                    f.extend(item.chunk)
+                item.chunk = f.tree
+                self._check_item(item)
+            self._dump.clear()
+
+    def reset(self, confirm: bool = True):
+        """
+        Reset the friend tree and delete all dumped files.
+
+        Parameters
+        ----------
+        confirm : bool, optional, default=True
+            Confirm the deletion.
+        """
+        files = []
+        for vs in self._data.values():
+            for v in vs:
+                if isinstance(v.chunk, Chunk):
+                    files.append(v.chunk.path)
+        log.log('The following files will be deleted:')
+        log.log('\n'.join(str(f) for f in files))
+        if confirm:
+            confirmation = log.input(
+                f'Type "{self.name}" to confirm the deletion: ')
+            if confirmation != self.name:
+                log.log('Deletion aborted.')
+                return
+        with ThreadPoolExecutor(max_workers=len(files)) as executor:
+            executor.map(EOS.rm, files)
+        self._branches = None
+        self._data.clear()
+        if hasattr(self, '_dump'):
+            del self._dump
+            del self._dump_name
 
     def merge(self):
         ...  # TODO

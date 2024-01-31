@@ -70,8 +70,7 @@ class EOS:
     @property
     def exists(self):
         if not self.is_local:
-            raise NotImplementedError(
-                f'`{EOS.exists.fget.__qualname__}` only works for local files')  # TODO
+            return self.call('ls', self.path)[0]
         return self.path.exists()
 
     @classmethod

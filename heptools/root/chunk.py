@@ -3,13 +3,17 @@ from __future__ import annotations
 from concurrent.futures import ThreadPoolExecutor
 from functools import partial, reduce
 from operator import and_
-from typing import Iterable
+from typing import TYPE_CHECKING, Iterable
 from uuid import UUID
 
 import uproot
 
+from ..logging import log
 from ..system.eos import EOS, PathLike
 from ..typetools import check_type
+
+if TYPE_CHECKING:
+    from logging import Logger
 
 
 class _ChunkMeta(type):
@@ -19,7 +23,7 @@ class _ChunkMeta(type):
         return getattr(self, attr)
 
     def __new__(cls, name, bases, dic):
-        for attr in ('branches', 'num_entries', 'entry_stop', 'uuid'):
+        for attr in ('branches', 'num_entries', 'uuid'):
             dic[attr] = property(partial(cls._get, attr=f'_{attr}'))
         return super().__new__(cls, name, bases, dic)
 
@@ -67,8 +71,12 @@ class Chunk(metaclass=_ChunkMeta):
     '''int : Number of entries.'''
     entry_start: int
     '''int : Start entry.'''
-    entry_stop: int
-    '''int : Stop entry.'''
+    @property
+    def entry_stop(self):
+        '''int : Stop entry.'''
+        if self._entry_stop is ...:
+            self._entry_stop = self.num_entries
+        return self._entry_stop
 
     @property
     def offset(self):
@@ -105,29 +113,80 @@ class Chunk(metaclass=_ChunkMeta):
         if fetch:
             self._fetch()
 
-    def _fetch(self, force: bool = False):
-        if force or any(v is ... for v in (self._branches, self._num_entries, self._uuid)):
+    @classmethod
+    def _ignore(cls, value):
+        return value is ... or value is None
+
+    def report_integrity(
+        self,
+        logger: Logger = None
+    ):
+        """
+        Check and report the following:
+
+        - :data:`path` not exists
+        - :data:`uuid` different from file
+        - :data:`num_entries` different from file
+        - :data:`branches` not in file
+        - :data:`entry_start` out of range
+        - :data:`entry_stop` out of range
+
+        Parameters
+        ----------
+        logger : ~logging.Logger, optional
+            The logger used to report the issues. Can be a :class:`~logging.Logger` any class with the same interface. If not given, the default logger will be used.
+
+        Returns
+        -------
+        Chunk or None
+            A deep copy of ``self`` with corrected metadata. If file not exists, return ``None``.
+        """
+        if logger is None:
+            logger = log
+        if not self.path.exists:
+            logger.error(f'file not exists')
+            return None
+        else:
+            reloaded = Chunk(
+                source=self.path,
+                entry_start=self.entry_start,
+                entry_stop=self._entry_stop,
+                fetch=True)
+            if not self._ignore(self._uuid) and self._uuid != reloaded.uuid:
+                logger.error(
+                    f'UUID mismatch: {self._uuid}(stored) != {reloaded.uuid}(file)')
+            if not self._ignore(self._num_entries) and self._num_entries != reloaded.num_entries:
+                logger.error(
+                    f'number of entries mismatch: {self._num_entries}(stored) != {reloaded.num_entries}(file)')
+            if not self._ignore(self._branches):
+                diff = self._branches - reloaded.branches
+                if diff:
+                    logger.error(
+                        f'branches {diff} not in file')
+            out_of_range = False
+            if not self._ignore(self.entry_start):
+                out_of_range |= self.entry_start < 0 or self.entry_start >= reloaded.num_entries
+            else:
+                reloaded.entry_start = 0
+            if not self._ignore(self._entry_stop):
+                out_of_range |= self._entry_stop <= self.entry_start or self._entry_stop > reloaded.num_entries
+            else:
+                reloaded._entry_stop = reloaded.num_entries
+            if out_of_range:
+                logger.error(
+                    f'invalid entry range [{self.entry_start},{self._entry_stop}) <- [0,{reloaded.num_entries})')
+            return reloaded
+
+    def _fetch(self):
+        if any(v is ... for v in (self._branches, self._num_entries, self._uuid)):
             with uproot.open(self.path) as file:
                 tree = file[self.name]
-
                 if self._branches is ...:
                     self._branches = {*tree.keys()}
-
-                num_entries = tree.num_entries
                 if self._num_entries is ...:
-                    self._num_entries = num_entries
-                    if self._entry_stop is ...:
-                        self._entry_stop = num_entries
-                elif self._num_entries != num_entries:
-                    raise ValueError(
-                        f'The number of entries in the file {num_entries} does not match the stored one {self._num_entries}')
-
-                uuid = file.file.uuid
+                    self._num_entries = tree.num_entries
                 if self._uuid is ...:
-                    self._uuid = uuid
-                elif self._uuid != uuid:
-                    raise ValueError(
-                        f'The UUID of the file {uuid} does not match the stored one {self._uuid}')
+                    self._uuid = file.file.uuid
 
     def __hash__(self):
         return hash((self.uuid, self.name))
@@ -148,7 +207,7 @@ class Chunk(metaclass=_ChunkMeta):
         if self._entry_stop is not ...:
             text += f'[{self.entry_start},{self._entry_stop})'
         if self._num_entries is not ...:
-            text += f' \u2286 [0,{self._num_entries})'
+            text += f'<- [0,{self._num_entries})'
         return text
 
     def __json__(self):
@@ -209,7 +268,7 @@ class Chunk(metaclass=_ChunkMeta):
             invalid |= stop > self._entry_stop
         if invalid:
             raise ValueError(
-                f'The slice is not a subset of the chunk [{start},{stop}) \u2284 [{self.entry_start},{self._entry_stop})')
+                f'The slice is not a subset of the chunk [{start},{stop}) <- [{self.entry_start},{self._entry_stop})')
         chunk = self.deepcopy(entry_start=start, entry_stop=stop)
         return chunk
 
