@@ -4,13 +4,16 @@ from __future__ import annotations
 import bisect
 from collections import defaultdict, deque
 from concurrent.futures import ThreadPoolExecutor
-from typing import TYPE_CHECKING, Literal
 from functools import partial
+from typing import TYPE_CHECKING, Literal
+
+from ..dask.delayed import delayed
 from ..logging import log
 from ..system.eos import EOS, PathLike
 from ._backend import concat_record, record_backend, slice_record
 from .chunk import Chunk
 from .io import TreeReader, TreeWriter
+from .merge import resize
 
 if TYPE_CHECKING:
     from logging import Logger
@@ -20,6 +23,29 @@ if TYPE_CHECKING:
     import pandas as pd
 
     from .io import RecordLike
+
+
+@delayed
+def _friend_from_merge(
+    name: str,
+    branches: set[str],
+    data: dict[Chunk, list[tuple[int, int, list[Chunk]]]],
+    dask: bool
+):
+    friend = Friend(name)
+    friend._branches = branches.copy()
+    for k, vs in data.items():
+        for start, stop, chunks in vs:
+            chunks = deque(chunks)
+            while chunks:
+                chunk = chunks.popleft()
+                friend._data[k].append(_FriendItem(
+                    start, start + len(chunk), chunk))
+                start += len(chunk)
+            if start != stop:
+                raise RuntimeError(
+                    f'Failed to merge friend "{name}". The merged chunk does not cover the range [{start},{stop}) for target {k}.')
+    return friend
 
 
 class _FriendItem:
@@ -48,7 +74,7 @@ class _FriendItem:
 
     @classmethod
     def from_json(cls, data: dict):
-        return cls(data['start'], data['stop'], data['chunk'])
+        return cls(data['start'], data['stop'], Chunk.from_json(data['chunk']))
 
 
 class Friend:
@@ -72,14 +98,28 @@ class Friend:
     name: str
     '''str : Name of the collection.'''
 
+    _on_disk_error = 'Cannot perform "{func}()" on friend tree "{name}" when there is in-memory data. Call "dump()" first.'
+
+    def _on_disk(func):
+        def wrapper(self, *args, **kwargs):
+            if self._to_dump:
+                raise RuntimeError(self._on_disk_error.format(
+                    func=func.__name__, name=self.name))
+            return func(self, *args, **kwargs)
+        return wrapper
+
     def __init__(self, name: str):
         self.name = name
         self._branches: set[str] = None
         self._data: defaultdict[Chunk, list[_FriendItem]] = defaultdict(list)
 
+    @_on_disk
     def __iadd__(self, other) -> Friend:
         if isinstance(other, Friend):
-            msg = 'Cannot merge friend trees with different {attr}'
+            msg = 'Cannot add friend trees with different {attr}'
+            if other._to_dump:
+                raise RuntimeError(self._on_disk_error.format(
+                    func='__add__', name=other.name))
             if self.name != other.name:
                 raise ValueError(
                     msg.format(attr='names'))
@@ -92,6 +132,7 @@ class Friend:
             return self
         return NotImplemented
 
+    @_on_disk
     def __add__(self, other) -> Friend:
         if isinstance(other, Friend):
             friend = self.copy()
@@ -105,6 +146,7 @@ class Friend:
             text += f'\n{k}\n    {v}'
         return text
 
+    @_on_disk
     def __json__(self):
         return {
             'name': self.name,
@@ -254,15 +296,20 @@ class Friend:
         reader = TreeReader(**reader_options)
         data = []
         to_read = []
-        while chunks:
-            chunk = chunks.popleft()
-            if isinstance(chunk, Chunk):
-                to_read.append(chunk)
-            else:
-                if to_read:
-                    data.append(reader.concat(*to_read, library=library))
-                    to_read = []
+        while True:
+            chunk = None
+            if chunks:
+                chunk = chunks.popleft()
+                if isinstance(chunk, Chunk):
+                    to_read.append(chunk)
+                    continue
+            if to_read:
+                data.append(reader.concat(*to_read, library=library))
+                to_read.clear()
+            if chunk is not None:
                 data.append(chunk)
+            if not chunks:
+                break
         return concat_record(data, library=library)
 
     def Array(
@@ -294,7 +341,7 @@ class Friend:
 
     def dump(
         self,
-        naming: str = '{name}_{uuid}_{start}_{stop}.root',
+        naming: str,
         base_path: PathLike = ...,
         writer_options: dict = None,
     ):
@@ -304,9 +351,9 @@ class Friend:
         Parameters
         ----------
         naming : str
-            Naming rule for each chunk. See below for details.
+            Naming rule for the dumped files. See below for details.
         base_path: PathLike, optional
-            Base path to store all dumped files. See below for details.
+            Base path to store the dumped files. See below for details.
         writer_options: dict, optional
             Additional options passed to :class:`~.io.TreeWriter`.
 
@@ -398,9 +445,11 @@ class Friend:
             del self._dump
             del self._dump_name
 
+    @_on_disk
     def merge(
         self,
-        naming: str = '{name}_{uuid}_{start}_{stop}.root',
+        step: int,
+        naming: str,
         base_path: PathLike = ...,
         reader_options: dict = None,
         writer_options: dict = None,
@@ -408,11 +457,122 @@ class Friend:
     ):
         """
         Merge contiguous chunks into a single file.
-        """
-        ...  # TODO
 
-    def move(self):
-        ...  # TODO
+        Parameters
+        ----------
+        step : int
+            Number of entries to read and write in each iteration step.
+        naming : str
+            Naming rule for the merged files. See notes of :meth:`dump` for details.
+        base_path: PathLike, optional
+            Base path to store the merged files. See notes of :meth:`dump` for details.
+        reader_options: dict, optional
+            Additional options passed to :class:`~.io.TreeReader`.
+        writer_options: dict, optional
+            Additional options passed to :class:`~.io.TreeWriter`.
+        dask : bool, optional, default=False
+            If ``True``, return a :class:`~dask.delayed.Delayed` object.
+
+        Returns
+        -------
+        Friend or Delayed
+            A new friend tree with the merged chunks.
+        """
+        if base_path is not ...:
+            base_path = EOS(base_path)
+        self._init_dump()
+        data = defaultdict(list)
+        for target, items in self._data.items():
+            if not items:
+                continue
+            if base_path is ...:
+                base = target.path.parent
+            else:
+                base = base_path
+            start = items[0].start
+            items = deque(items)
+            to_merge: list[_FriendItem] = []
+            while True:
+                item = None
+                if to_merge:
+                    start = to_merge[-1].stop
+                if items:
+                    item = items.popleft()
+                    if start == item.start:
+                        to_merge.append(item)
+                        continue
+                if to_merge:
+                    dummy = _FriendItem(to_merge[0].start, to_merge[-1].stop)
+                    chunks = [i.chunk for i in to_merge]
+                    if len(chunks) > 1:
+                        path = base / naming.format(
+                            **self._name_dump(target, dummy))
+                        chunks = resize(
+                            path,
+                            *chunks,
+                            step=step,
+                            writer_options=writer_options,
+                            reader_options=reader_options,
+                            dask=dask)
+                    data[target].append((dummy.start, dummy.stop, chunks))
+                    to_merge.clear()
+                if item is not None:
+                    to_merge.append(item)
+                    continue
+                if not items:
+                    break
+        return _friend_from_merge(
+            name=self.name,
+            branches=self._branches,
+            data=dict(data),
+            dask=dask)
+
+    @_on_disk
+    def clone(
+        self,
+        base_path: PathLike,
+        naming: str = ...,
+    ):
+        """
+        Copy all chunks to a new location.
+
+        Parameters
+        ----------
+        base_path: PathLike
+            Base path to store the cloned files.
+        naming : str, optional
+            Naming rule for the cloned files. If not given, the original names will be used. See notes of :meth:`dump` for details.
+
+        Returns
+        -------
+        Friend
+            A new friend tree with the cloned chunks.
+        """
+        base_path = EOS(base_path)
+        friend = Friend(self.name)
+        friend._branches = self._branches.copy()
+        src = []
+        dst = []
+        self._init_dump()
+        for target, items in self._data.items():
+            if not items:
+                continue
+            for item in items:
+                chunk = item.chunk.deepcopy()
+                if naming is ...:
+                    name = chunk.path.name
+                else:
+                    name = naming.format(**self._name_dump(target, item))
+                path = base_path / name
+                src.append(chunk.path)
+                dst.append(path)
+                chunk.path = path
+                friend._data[target].append(
+                    _FriendItem(item.start, item.stop, chunk))
+        with ThreadPoolExecutor(max_workers=len(src)) as executor:
+            executor.map(
+                partial(EOS.cp, parents=True, overwrite=True), src, dst)
+        return friend
 
     def integrity(
         self,
@@ -422,6 +582,7 @@ class Friend:
         Check and report the following:
 
         - :meth:`~.chunk.Chunk.integrity` for all target and friend chunks
+        - multiple friend chunks from the same source
         - mismatch in number of entries or branches
         - gaps or overlaps between friend chunks
         - in-memory data
@@ -436,6 +597,7 @@ class Friend:
         if logger is None:
             logger = log
         checked: deque[Chunk] = deque()
+        files = set()
         for target, items in self._data.items():
             checked.append(target)
             for item in items:
@@ -469,6 +631,10 @@ class Friend:
                             if diff:
                                 logger.error(
                                     f'{friend_name}missing branches {diff}')
+                            if chunk.path in files:
+                                logger.error(
+                                    f'{friend_name}multiple friend chunks from this source')
+                            files.add(chunk.path)
                     else:
                         logger.warning(
                             f'{target_name}in-memory friend entries in [{item.start},{item.stop})')
@@ -481,9 +647,28 @@ class Friend:
                         checked.popleft()
 
     @classmethod
-    def from_json(cls, data: dict):  # TODO
-        ...
+    def from_json(cls, data: dict):
+        """
+        Create :class:`Friend` from JSON data.
 
+        Parameters
+        ----------
+        data : dict
+            JSON data.
+
+        Returns
+        -------
+        Friend
+            Friend tree from JSON data.
+        """
+        friend = cls(data['name'])
+        friend._branches = set(data['branches'])
+        for k, vs in data['data']:
+            friend._data[Chunk.from_json(k)] = [
+                _FriendItem.from_json(v) for v in vs]
+        return friend
+
+    @_on_disk
     def copy(self):
         """
         Returns
