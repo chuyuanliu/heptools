@@ -386,7 +386,7 @@ document.write(`
 </div>
 <div class="admonition-todo admonition" id="id1">
 <p class="admonition-title">Todo</p>
-<p>Add lazy reading and schema support using <a class="reference external" href="https://coffeateam.github.io/coffea/api/coffea.nanoevents.NanoEventsFactory.html#coffea.nanoevents.NanoEventsFactory" title="(in coffea v0.1)"><code class="xref py py-class docutils literal notranslate"><span class="pre">coffea.nanoevents.NanoEventsFactory</span></code></a>.</p>
+<p>Add lazy reading and schema support using <a class="reference external" href="https://coffeateam.github.io/coffea/api/coffea.nanoevents.NanoEventsFactory.html#coffea.nanoevents.NanoEventsFactory" title="(in coffea v2024.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">coffea.nanoevents.NanoEventsFactory</span></code></a>.</p>
 </div>
 <div class="admonition-todo admonition" id="id2">
 <p class="admonition-title">Todo</p>
@@ -577,11 +577,11 @@ document.write(`
 <li><p><strong>chunk_size</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.12)"><em>int</em></a><em>, </em><em>optional</em>) – Number of entries in each chunk. If not given, all entries will be merged into one chunk.</p></li>
 <li><p><strong>writer_options</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.12)"><em>dict</em></a><em>, </em><em>optional</em>) – Additional options passed to <a class="reference internal" href="#heptools.root.io.TreeWriter" title="heptools.root.io.TreeWriter"><code class="xref py py-class docutils literal notranslate"><span class="pre">TreeWriter</span></code></a>.</p></li>
 <li><p><strong>reader_options</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.12)"><em>dict</em></a><em>, </em><em>optional</em>) – Additional options passed to <a class="reference internal" href="#heptools.root.io.TreeReader" title="heptools.root.io.TreeReader"><code class="xref py py-class docutils literal notranslate"><span class="pre">TreeReader</span></code></a>.</p></li>
-<li><p><strong>dask</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.12)"><em>bool</em></a><em>, </em><em>optional</em><em>, </em><em>default=False</em>) – If <code class="docutils literal notranslate"><span class="pre">True</span></code>, return a list of <a class="reference external" href="https://docs.dask.org/en/latest/delayed-api.html#dask.delayed.Delayed" title="(in Dask)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Delayed</span></code></a> objects.</p></li>
+<li><p><strong>dask</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.12)"><em>bool</em></a><em>, </em><em>optional</em><em>, </em><em>default=False</em>) – If <code class="docutils literal notranslate"><span class="pre">True</span></code>, return a <a class="reference external" href="https://docs.dask.org/en/latest/delayed-api.html#dask.delayed.Delayed" title="(in Dask)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Delayed</span></code></a> object.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p><em>list[Chunk]</em> – Merged chunks.</p>
+<dd class="field-even"><p><em>list[Chunk] or Delayed</em> – Merged chunks.</p>
 </dd>
 </dl>
 </dd></dl>
@@ -602,7 +602,7 @@ document.write(`
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p><em>Chunk</em> – Merged chunk.</p>
+<dd class="field-even"><p><em>Chunk or Delayed</em> – Merged chunk.</p>
 </dd>
 </dl>
 </dd></dl>
@@ -620,7 +620,7 @@ document.write(`
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p><strong>merged</strong> (<em>list[Chunk]</em>)</p>
+<dd class="field-even"><p><strong>merged</strong> (<em>list[Chunk] or Delayed</em>)</p>
 </dd>
 </dl>
 </dd></dl>
