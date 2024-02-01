@@ -341,8 +341,8 @@ class Friend:
 
     def dump(
         self,
-        naming: str,
         base_path: PathLike = ...,
+        naming: str = '{name}_{uuid}_{start}_{stop}.root',
         writer_options: dict = None,
     ):
         """
@@ -350,10 +350,10 @@ class Friend:
 
         Parameters
         ----------
-        naming : str
-            Naming rule for the dumped files. See below for details.
         base_path: PathLike, optional
             Base path to store the dumped files. See below for details.
+        naming : str, optional
+            Naming rule for the dumped files. See below for details.
         writer_options: dict, optional
             Additional options passed to :class:`~.io.TreeWriter`.
 
@@ -449,8 +449,9 @@ class Friend:
     def merge(
         self,
         step: int,
-        naming: str,
+        chunk_size: int = ...,
         base_path: PathLike = ...,
+        naming: str = '{name}_{uuid}.root',
         reader_options: dict = None,
         writer_options: dict = None,
         dask: bool = False,
@@ -462,10 +463,12 @@ class Friend:
         ----------
         step : int
             Number of entries to read and write in each iteration step.
-        naming : str
-            Naming rule for the merged files. See notes of :meth:`dump` for details.
+        chunk_size : int, optional
+            Number of entries in each new chunk. If not given, all entries will be merged into one chunk.
         base_path: PathLike, optional
             Base path to store the merged files. See notes of :meth:`dump` for details.
+        naming : str, optional
+            Naming rule for the merged files. See notes of :meth:`dump` for details.
         reader_options: dict, optional
             Additional options passed to :class:`~.io.TreeReader`.
         writer_options: dict, optional
@@ -511,6 +514,7 @@ class Friend:
                             path,
                             *chunks,
                             step=step,
+                            chunk_size=chunk_size,
                             writer_options=writer_options,
                             reader_options=reader_options,
                             dask=dask)
