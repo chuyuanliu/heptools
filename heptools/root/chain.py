@@ -100,9 +100,9 @@ class Friend:
         return NotImplemented
 
     def __repr__(self):
-        text = f'Friend:{self.name}\nTBranches:{self._branches}'
+        text = f'{self.name}:{self._branches}'
         for k, v in self._data.items():
-            text += f'\n{k}:{v}'
+            text += f'\n{k}\n    {v}'
         return text
 
     def __json__(self):
@@ -192,7 +192,7 @@ class Friend:
         """
         item = _FriendItem(target.entry_start, target.entry_stop, data)
         key = self._construct_key(target)
-        if not isinstance(data, Chunk):  # TODO test
+        if not isinstance(data, Chunk):
             self._init_dump()
             self._dump.append((key, item))
         else:
@@ -414,14 +414,14 @@ class Friend:
     def move(self):
         ...  # TODO
 
-    def report_integrity(
+    def integrity(
         self,
         logger: Logger = None
     ):
         """
         Check and report the following:
 
-        - :meth:`~.chunk.Chunk.report_integrity` for all target and friend chunks
+        - :meth:`~.chunk.Chunk.integrity` for all target and friend chunks
         - mismatch in number of entries or branches
         - gaps or overlaps between friend chunks
         - in-memory data
@@ -435,36 +435,37 @@ class Friend:
         """
         if logger is None:
             logger = log
-        # TODO check below
         for target, items in self._data.items():
-            target = target.report_integrity(logger)
+            target = target.integrity(logger)
             if target is not None:
+                target_name = f'target "{target.path}"\n    '
                 start = target.entry_start
                 stop = target.entry_stop
                 for item in items:
                     if start < item.start:
                         logger.warning(
-                            f'target "{target.path}" does not have the friend entries [{start},{item.start}) ')  # TODO check
+                            f'{target_name}no friend entries in [{start},{item.start})')
                     elif start > item.start:
                         logger.error(
-                            f'target "{target.path}" has multiple friends overlapping at [{item.start}, {start})')  # TODO check
+                            f'{target_name}duplicate friend entries in [{item.start}, {start})')
                     start = item.stop
                     if isinstance(item.chunk, Chunk):
-                        if item.chunk.report_integrity(logger) is not None:
-                            chunk = item.chunk
+                        chunk = item.chunk.integrity(logger)
+                        if chunk is not None:
+                            friend_name = f'friend "{chunk.path}"\n    '
                             if len(chunk) != len(item):
                                 logger.error(
-                                    f'friend "{chunk}" does not match the range [{item.start},{item.stop})')  # TODO check
+                                    f'{friend_name}{len(chunk)} entries not fit in [{item.start},{item.stop})')
                             diff = self._branches - chunk.branches
                             if diff:
                                 logger.error(
-                                    f'friend "{chunk}" does not have the following branches: {diff}')  # TODO check
+                                    f'{friend_name}missing branches {diff}')
                     else:
                         logger.warning(
-                            f'target "{target.path}" has the friend entries [{item.start},{item.stop}) in memory.')  # TODO check
+                            f'{target_name}in-memory friend entries in [{item.start},{item.stop})')
                 if start < stop:
                     logger.warning(
-                        f'target "{target.path}" does not have the friend entries [{start},{stop}) ')  # TODO check
+                        f'{target_name}no friend entries in [{start},{stop}) ')
 
     @classmethod
     def from_json(cls, data: dict):  # TODO

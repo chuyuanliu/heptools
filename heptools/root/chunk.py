@@ -117,7 +117,7 @@ class Chunk(metaclass=_ChunkMeta):
     def _ignore(cls, value):
         return value is ... or value is None
 
-    def report_integrity(
+    def integrity(
         self,
         logger: Logger = None
     ):
@@ -143,8 +143,9 @@ class Chunk(metaclass=_ChunkMeta):
         """
         if logger is None:
             logger = log
+        chunk_name = f'chunk  "{self.path}"\n    '
         if not self.path.exists:
-            logger.error(f'file not exists')
+            logger.error(f'{chunk_name}file not exists')
             return None
         else:
             reloaded = Chunk(
@@ -154,15 +155,15 @@ class Chunk(metaclass=_ChunkMeta):
                 fetch=True)
             if not self._ignore(self._uuid) and self._uuid != reloaded.uuid:
                 logger.error(
-                    f'UUID mismatch: {self._uuid}(stored) != {reloaded.uuid}(file)')
+                    f'{chunk_name}UUID {self._uuid}(stored) != {reloaded.uuid}(file)')
             if not self._ignore(self._num_entries) and self._num_entries != reloaded.num_entries:
                 logger.error(
-                    f'number of entries mismatch: {self._num_entries}(stored) != {reloaded.num_entries}(file)')
+                    f'{chunk_name}number of entries {self._num_entries}(stored) != {reloaded.num_entries}(file)')
             if not self._ignore(self._branches):
                 diff = self._branches - reloaded.branches
                 if diff:
                     logger.error(
-                        f'branches {diff} not in file')
+                        f'{chunk_name}branches {diff} not in file')
             out_of_range = False
             if not self._ignore(self.entry_start):
                 out_of_range |= self.entry_start < 0 or self.entry_start >= reloaded.num_entries
@@ -174,7 +175,7 @@ class Chunk(metaclass=_ChunkMeta):
                 reloaded._entry_stop = reloaded.num_entries
             if out_of_range:
                 logger.error(
-                    f'invalid entry range [{self.entry_start},{self._entry_stop}) <- [0,{reloaded.num_entries})')
+                    f'{chunk_name}invalid entry range [{self.entry_start},{self._entry_stop}) <- [0,{reloaded.num_entries})')
             return reloaded
 
     def _fetch(self):
