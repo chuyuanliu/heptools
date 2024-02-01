@@ -5,7 +5,7 @@ import bisect
 from collections import defaultdict, deque
 from concurrent.futures import ThreadPoolExecutor
 from typing import TYPE_CHECKING, Literal
-
+from functools import partial
 from ..logging import log
 from ..system.eos import EOS, PathLike
 from ._backend import concat_record, record_backend, slice_record
@@ -435,8 +435,17 @@ class Friend:
         """
         if logger is None:
             logger = log
+        checked: deque[Chunk] = deque()
         for target, items in self._data.items():
-            target = target.integrity(logger)
+            checked.append(target)
+            for item in items:
+                if isinstance(item.chunk, Chunk):
+                    checked.append(item.chunk)
+        with ThreadPoolExecutor(max_workers=len(checked)) as executor:
+            checked = deque(executor.map(
+                partial(Chunk.integrity, logger=logger), checked))
+        for target, items in self._data.items():
+            target = checked.popleft()
             if target is not None:
                 target_name = f'target "{target.path}"\n    '
                 start = target.entry_start
@@ -450,7 +459,7 @@ class Friend:
                             f'{target_name}duplicate friend entries in [{item.start}, {start})')
                     start = item.stop
                     if isinstance(item.chunk, Chunk):
-                        chunk = item.chunk.integrity(logger)
+                        chunk = checked.popleft()
                         if chunk is not None:
                             friend_name = f'friend "{chunk.path}"\n    '
                             if len(chunk) != len(item):
@@ -466,6 +475,10 @@ class Friend:
                 if start < stop:
                     logger.warning(
                         f'{target_name}no friend entries in [{start},{stop}) ')
+            else:
+                for item in items:
+                    if isinstance(item.chunk, Chunk):
+                        checked.popleft()
 
     @classmethod
     def from_json(cls, data: dict):  # TODO
