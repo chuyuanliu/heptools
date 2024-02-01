@@ -12,7 +12,7 @@ def merge(
     writer_options: dict = None,
     reader_options: dict = None,
     dask: bool = False,
-) -> Chunk:
+):
     """
     Merge ``sources`` into one :class:`~.chunk.Chunk`.
 
@@ -33,7 +33,7 @@ def merge(
 
     Returns
     -------
-    Chunk
+    Chunk or Delayed
         Merged chunk.
     """
     writer_options = writer_options or {}
@@ -64,7 +64,7 @@ def clean(
 
     Returns
     -------
-    merged: list[Chunk]
+    merged: list[Chunk] or Delayed
     """
     for chunk in source:
         chunk.path.rm()
@@ -98,11 +98,11 @@ def resize(
     reader_options : dict, optional
         Additional options passed to :class:`~.io.TreeReader`.
     dask : bool, optional, default=False
-        If ``True``, return a list of :class:`~dask.delayed.Delayed` objects.
+        If ``True``, return a :class:`~dask.delayed.Delayed` object.
 
     Returns
     -------
-    list[Chunk]
+    list[Chunk] or Delayed
         Merged chunks.
     """
     path = EOS(path)

@@ -151,52 +151,52 @@ class EOS:
     def cd(self, relative: str):
         return EOS(os.path.normpath(os.path.join(self, relative)), self.host)
 
-    def copy_to(self, dest: PathLike, parents: bool = False, overwrite: bool = False, recursive: bool = False):
-        return self.cp(self, dest, parents, overwrite, recursive)
+    def copy_to(self, dst: PathLike, parents: bool = False, overwrite: bool = False, recursive: bool = False):
+        return self.cp(self, dst, parents, overwrite, recursive)
 
-    def move_to(self, dest: PathLike, parents: bool = False, overwrite: bool = False, recursive: bool = False):
-        return self.mv(self, dest, parents, overwrite, recursive)
+    def move_to(self, dst: PathLike, parents: bool = False, overwrite: bool = False, recursive: bool = False):
+        return self.mv(self, dst, parents, overwrite, recursive)
 
     @classmethod
-    def cp(cls, src: PathLike, dest: PathLike, parents: bool = False, overwrite: bool = False, recursive: bool = False) -> EOS:
-        src, dest = EOS(src), EOS(dest)
+    def cp(cls, src: PathLike, dst: PathLike, parents: bool = False, overwrite: bool = False, recursive: bool = False) -> EOS:
+        src, dst = EOS(src), EOS(dst)
         if parents:
-            dest.parent.mkdir(recursive=True)
-        if src.is_local and dest.is_local:
+            dst.parent.mkdir(recursive=True)
+        if src.is_local and dst.is_local:
             result = cls.cmd('cp',
                              '-r' if recursive else '',
                              '-n' if not overwrite else '',
-                             src, dest)
+                             src, dst)
         else:
             if recursive:
                 raise NotImplementedError(
                     f'`{cls.cp.__qualname__}()` does not support recursive copying of remote files')  # TODO
             result = cls.cmd('xrdcp',
                              '-f' if overwrite else '',
-                             src, dest)
+                             src, dst)
         if result[0]:
-            return dest
+            return dst
 
     @classmethod
-    def mv(cls, src: PathLike, dest: PathLike, parents: bool = False, overwrite: bool = False, recursive: bool = False) -> EOS:
-        src, dest = EOS(src), EOS(dest)
-        if src == dest:
-            return dest
+    def mv(cls, src: PathLike, dst: PathLike, parents: bool = False, overwrite: bool = False, recursive: bool = False) -> EOS:
+        src, dst = EOS(src), EOS(dst)
+        if src == dst:
+            return dst
         if parents:
-            dest.parent.mkdir(recursive=True)
-        if src.host == dest.host:
+            dst.parent.mkdir(recursive=True)
+        if src.host == dst.host:
             result = src.call('mv',
                               '-n' if not overwrite and src.client != 'xrdfs' else '',
-                              src.path, dest.path)[0]
+                              src.path, dst.path)[0]
         else:
             if recursive:
                 raise NotImplementedError(
                     f'`{cls.mv.__qualname__}()` does not support recursive moving of remote files from different sites')  # TODO
-            result = cls.cp(src, dest, parents, overwrite, recursive)
+            result = cls.cp(src, dst, parents, overwrite, recursive)
             if result:
                 result = src.rm()
         if result:
-            return dest
+            return dst
 
     @property
     def name(self):
