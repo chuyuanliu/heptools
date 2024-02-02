@@ -69,13 +69,19 @@ class Chunk(metaclass=_ChunkMeta):
     '''set[str] : Name of branches.'''
     num_entries: int
     '''int : Number of entries.'''
-    entry_start: int
-    '''int : Start entry.'''
+
+    @property
+    def entry_start(self):
+        '''int : Start entry.'''
+        if self._entry_start is ...:
+            return 0
+        return self._entry_start
+
     @property
     def entry_stop(self):
         '''int : Stop entry.'''
         if self._entry_stop is ...:
-            self._entry_stop = self.num_entries
+            return self.num_entries
         return self._entry_stop
 
     @property
@@ -97,12 +103,12 @@ class Chunk(metaclass=_ChunkMeta):
             branches = {*branches}
 
         self.name = name
-        self.entry_start = 0 if entry_start is ... else entry_start
+        self._entry_start = entry_start
+        self._entry_stop = entry_stop
 
         self._uuid = ...
         self._branches = branches
         self._num_entries = num_entries
-        self._entry_stop = num_entries if entry_stop is ... else entry_stop
 
         if check_type(source, PathLike):
             self.path = EOS(source)
@@ -150,7 +156,7 @@ class Chunk(metaclass=_ChunkMeta):
         else:
             reloaded = Chunk(
                 source=self.path,
-                entry_start=self.entry_start,
+                entry_start=self._entry_start,
                 entry_stop=self._entry_stop,
                 fetch=True)
             if not self._ignore(self._uuid) and self._uuid != reloaded.uuid:
@@ -165,17 +171,17 @@ class Chunk(metaclass=_ChunkMeta):
                     logger.error(
                         f'{chunk_name}branches {diff} not in file')
             out_of_range = False
-            if not self._ignore(self.entry_start):
-                out_of_range |= self.entry_start < 0 or self.entry_start >= reloaded.num_entries
+            if not self._ignore(self._entry_start):
+                out_of_range |= self._entry_start < 0 or self._entry_start >= reloaded.num_entries
             else:
-                reloaded.entry_start = 0
+                reloaded._entry_start = 0
             if not self._ignore(self._entry_stop):
-                out_of_range |= self._entry_stop <= self.entry_start or self._entry_stop > reloaded.num_entries
+                out_of_range |= self._entry_stop <= reloaded.entry_start or self._entry_stop > reloaded.num_entries
             else:
                 reloaded._entry_stop = reloaded.num_entries
             if out_of_range:
-                logger.error(
-                    f'{chunk_name}invalid entry range [{self.entry_start},{self._entry_stop}) <- [0,{reloaded.num_entries})')
+                logger.warning(
+                    f'{chunk_name}invalid entry range [0,{reloaded.num_entries}) -> [{reloaded.entry_start},{reloaded.entry_stop})')
             return reloaded
 
     def _fetch(self):
@@ -205,10 +211,10 @@ class Chunk(metaclass=_ChunkMeta):
         if not self._ignore(self._uuid):
             text += f'({self._uuid})'
         text += f':{self.name}'
-        if not self._ignore(self.entry_start) and not self._ignore(self._entry_stop):
-            text += f'[{self.entry_start},{self._entry_stop})'
         if not self._ignore(self._num_entries):
-            text += f'<- [0,{self._num_entries})'
+            text += f'[0,{self._num_entries})'
+        if not self._ignore(self._entry_start) and not self._ignore(self._entry_stop):
+            text += f' -> [{self._entry_start},{self._entry_stop})'
         return text
 
     def __json__(self):
@@ -222,10 +228,10 @@ class Chunk(metaclass=_ChunkMeta):
                 self._branches)
         if self._num_entries is not None:
             json_dict['num_entries'] = None if self._num_entries is ... else self._num_entries
+        if self._entry_start is not None:
+            json_dict['entry_start'] = None if self._entry_start is ... else self._entry_start
         if self._entry_stop is not None:
             json_dict['entry_stop'] = None if self._entry_stop is ... else self._entry_stop
-        if self.entry_start is not None:
-            json_dict['entry_start'] = self.entry_start
         return json_dict
 
     def deepcopy(self, **kwargs):
@@ -246,7 +252,7 @@ class Chunk(metaclass=_ChunkMeta):
             name=self.name,
             num_entries=self._num_entries,
             branches=kwargs.get('branches', self._branches),
-            entry_start=kwargs.get('entry_start', self.entry_start),
+            entry_start=kwargs.get('entry_start', self._entry_start),
             entry_stop=kwargs.get('entry_stop', self._entry_stop))
 
     def slice(self, start: int, stop: int):
@@ -265,12 +271,6 @@ class Chunk(metaclass=_ChunkMeta):
         """
         start += self.offset
         stop += self.offset
-        invalid = start < self.entry_start or stop < start
-        if self._entry_stop is not ...:
-            invalid |= stop > self._entry_stop
-        if invalid:
-            raise ValueError(
-                f'The slice is not a subset of the chunk [{start},{stop}) <- [{self.entry_start},{self._entry_stop})')
         chunk = self.deepcopy(entry_start=start, entry_stop=stop)
         return chunk
 
@@ -355,14 +355,13 @@ class Chunk(metaclass=_ChunkMeta):
         """
         kwargs = {
             'name': data['name'],
-            'entry_start': data.get('entry_start'),
         }
         uuid = data['uuid']
         if uuid is not None:
             kwargs['source'] = (data['path'], UUID(uuid))
         else:
             kwargs['source'] = data['path']
-        for key in ('branches', 'num_entries', 'entry_stop'):
+        for key in ('branches', 'num_entries', 'entry_start', 'entry_stop'):
             if key in data:
                 value = data[key]
                 if value is None:
