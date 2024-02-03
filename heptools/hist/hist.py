@@ -3,16 +3,16 @@ from __future__ import annotations
 from copy import deepcopy
 from typing import Callable, Iterable, overload
 
+import awkward as ak
 import numpy as np
 from hist import Hist
 from hist.axis import (AxesMixin, Boolean, IntCategory, Integer, Regular,
                        StrCategory, Variable)
 
-from ..aktools import AnyInt, FieldLike, RealNumber, get_field
+from ..aktools import (AnyArray, AnyInt, FieldLike, RealNumber, and_fields,
+                       get_field, has_record, set_field)
 from ..typetools import check_type
-from ..utils import astuple
-from ..utils.regex import compile_any_wholeword, match_single
-from . import fill as fs
+from . import template as _t
 
 
 class Label:
@@ -40,29 +40,6 @@ class Label:
 
     def __repr__(self) -> str:  # TODO __repr__
         return f'Label({self.code}, {self.display})'
-
-
-LabelLike = str | tuple[str, str] | Label
-
-RegularArgs = tuple[int, RealNumber, RealNumber]
-RegularAxis = tuple[int, RealNumber, RealNumber, LabelLike] | Regular
-IntegerArgs = tuple[int, int]
-IntegerAxis = tuple[int, int, LabelLike] | Integer
-BooleanArgs = tuple[Ellipsis] | type[Ellipsis]
-BooleanAxis = tuple[Ellipsis, LabelLike] | tuple[LabelLike] | Boolean
-StrCategoryArgs = tuple[Iterable[str]]
-StrCategoryAxis = tuple[Iterable[str], LabelLike] | StrCategory
-IntCategoryArgs = tuple[Iterable[int]]
-IntCategoryAxis = tuple[Iterable[int], LabelLike] | IntCategory
-VariableArgs = tuple[Iterable[RealNumber]]
-VariableAxis = tuple[Iterable[RealNumber], LabelLike] | Variable
-
-AxisArgs = RegularArgs | IntegerArgs | BooleanArgs | StrCategoryArgs | IntCategoryArgs | VariableArgs | AxesMixin
-AxisLike = RegularAxis | IntegerAxis | BooleanAxis | StrCategoryAxis | IntCategoryAxis | VariableAxis | AxesMixin
-
-
-class HistError(Exception):
-    __module__ = Exception.__module__
 
 
 def _default_field(_s: str):
@@ -97,8 +74,160 @@ def _create_axis(args: AxisLike) -> AxesMixin:
     raise HistError(f'cannot create axis from arguments "{args}"')
 
 
+LazyFill = FieldLike | Callable
+FillLike = LazyFill | AnyArray | RealNumber | bool
+LabelLike = str | tuple[str, str] | Label
+
+RegularArgs = tuple[int, RealNumber, RealNumber]
+RegularAxis = tuple[int, RealNumber, RealNumber, LabelLike] | Regular
+IntegerArgs = tuple[int, int]
+IntegerAxis = tuple[int, int, LabelLike] | Integer
+BooleanArgs = tuple[Ellipsis] | type[Ellipsis]
+BooleanAxis = tuple[Ellipsis, LabelLike] | tuple[LabelLike] | Boolean
+StrCategoryArgs = tuple[Iterable[str]]
+StrCategoryAxis = tuple[Iterable[str], LabelLike] | StrCategory
+IntCategoryArgs = tuple[Iterable[int]]
+IntCategoryAxis = tuple[Iterable[int], LabelLike] | IntCategory
+VariableArgs = tuple[Iterable[RealNumber]]
+VariableAxis = tuple[Iterable[RealNumber], LabelLike] | Variable
+
+AxisArgs = RegularArgs | IntegerArgs | BooleanArgs | StrCategoryArgs | IntCategoryArgs | VariableArgs | AxesMixin
+AxisLike = RegularAxis | IntegerAxis | BooleanAxis | StrCategoryAxis | IntCategoryAxis | VariableAxis | AxesMixin
+
+
+class FillError(Exception):
+    __module__ = Exception.__module__
+
+
+class HistError(Exception):
+    __module__ = Exception.__module__
+
+
+class Fill:
+    threads = 1
+
+    def __init__(self, fills: dict[str, list[str]] = None, weight='weight', **fill_args: FillLike):
+        self._fills = {} if fills is None else fills
+        self._kwargs = fill_args | {'weight': weight}
+
+    def __add__(self, other: Fill | _t.Template) -> Fill:
+        if isinstance(other, Fill):
+            fills = other._fills | self._fills
+            kwargs = other._kwargs | self._kwargs
+            return self.__class__(fills, **kwargs)
+        elif isinstance(other, _t.Template):
+            return self + other.new()
+        return NotImplemented
+
+    def __call__(self, events: ak.Array, hists: Collection = ..., **fill_args: FillLike):
+        self.fill(events, hists, **fill_args)
+
+    def __setitem__(self, key: str, value: FillLike):
+        self._kwargs[key] = value
+
+    def __getitem__(self, key: str):
+        return self._kwargs[key]
+
+    def cache(self, events: ak.Array):
+        if Collection.current is None:
+            raise FillError('no histogram collection is specified')
+        for k, v in self._kwargs.items():
+            if (isinstance(v, str)
+                    and isinstance(Collection.current._axes.get(k), StrCategory)):
+                continue
+            if check_type(v, FieldLike) and has_record(events, v) != v:
+                set_field(events, v, get_field(events, v))
+
+    def fill(self, events: ak.Array, hists: Collection = ..., **fill_args: FillLike):
+        if hists is ...:
+            if Collection.current is None:
+                raise FillError('no histogram collection is specified')
+            hists = Collection.current
+        fill_args = self._kwargs | fill_args
+        mask_categories = []
+        for category in hists._categories:
+            if category not in fill_args:
+                if isinstance(hists._axes[category], StrCategory):
+                    mask_categories.append(category)
+                else:
+                    fill_args[category] = _default_field(category)
+        for category_args in hists._generate_category_combinations(mask_categories):
+            mask = and_fields(events, *category_args.items())
+            masked = events if mask is None else events[mask]
+            if len(masked) == 0:
+                continue
+            for k, v in fill_args.items():
+                if (isinstance(v, str) and k in hists._categories) or isinstance(v, (bool, RealNumber)):
+                    category_args[k] = v
+                elif check_type(v, FieldLike):
+                    category_args[k] = get_field(masked, v)
+                elif check_type(v, AnyArray):
+                    category_args[k] = v if mask is None else v[mask]
+                elif check_type(v, Callable):
+                    category_args[k] = v(masked)
+                else:
+                    raise FillError(f'cannot fill "{k}" with "{v}"')
+            jagged_args = {}
+            counts_args = []
+            for k, v in category_args.items():
+                if isinstance(v, ak.Array):
+                    try:
+                        category_args[k] = ak.flatten(v)
+                        count = ak.num(v)
+                        for i, c in enumerate(counts_args):
+                            if ak.all(c == count):
+                                jagged_args[k] = i
+                        if k not in jagged_args:
+                            jagged_args[k] = len(counts_args)
+                            counts_args.append(count)
+                    except:
+                        continue
+            for name in self._fills:
+                fills = {
+                    k: f'{name}:{k}' if f'{name}:{k}' in category_args else k for k in self._fills[name]}
+                shape = {jagged_args[k]
+                         for k in fills.values() if k in jagged_args}
+                if len(shape) == 0:
+                    shape = None
+                elif len(shape) == 1:
+                    shape = counts_args[next(iter(shape))]
+                else:
+                    raise FillError(
+                        f'cannot fill hist "{name}" with unmatched jagged arrays {jagged_args}')
+                hist_args = {}
+                for k, v in fills.items():
+                    fill = category_args[v]
+                    if shape is not None:
+                        if v not in jagged_args and check_type(fill, AnyArray):
+                            fill = np.repeat(fill, shape)
+                    hist_args[k] = fill
+                # https://github.com/scikit-hep/boost-histogram/issues/452 #
+                if all([check_type(axis, StrCategory) for axis in hists._hists[name].axes]):
+                    try:
+                        weight = hist_args['weight']
+                        if len(weight) > 0:
+                            broadcasted = False
+                            tobroadcast = None
+                            for k, v in hist_args.items():
+                                if k != 'weight':
+                                    if check_type(v, AnyArray) and len(v) == len(weight):
+                                        broadcasted = True
+                                        break
+                                    else:
+                                        tobroadcast = k
+                            if not broadcasted and tobroadcast is not None:
+                                hist_args[tobroadcast] = np.full(
+                                    len(weight), hist_args[tobroadcast])
+                    except:
+                        continue
+                ############################################################
+                hists._hists[name].fill(**hist_args, threads=self.threads)
+
+
 class Collection:
     current: Collection = None
+    _backend_fill = Fill
+    _backend_hist = Hist
 
     def __init__(self, **categories):
         self._fills: dict[str, list[str]] = {}
@@ -108,11 +237,11 @@ class Collection:
             (*(v if isinstance(v, tuple) else (v,)), k)) for k, v in self._categories.items()}
         self.cd()
 
-    def add(self, name: str, *axes: AxisLike, **fill_args: fs.FillLike):
+    def add(self, name: str, *axes: AxisLike, **fill_args: FillLike):
         axes = [_create_axis(axis) for axis in axes]
         self._fills[name] = [_axis.name for _axis in axes]
-        self._hists[name] = Hist(*self._axes.values(),
-                                 *axes, storage='weight', label='Events')
+        self._hists[name] = self._backend_hist(*self._axes.values(),
+                                               *axes, storage='weight', label='Events')
         return self.auto_fill(name, **fill_args)
 
     def _generate_category_combinations(self, categories: list[str]) -> list[dict[str, str]]:
@@ -123,13 +252,13 @@ class Collection:
                 *(self._categories[category] for category in categories)), axis=-1).reshape((-1, len(categories)))
             return [dict(zip(categories, comb)) for comb in combs]
 
-    def auto_fill(self, name: str, **fill_args: fs.FillLike):
+    def auto_fill(self, name: str, **fill_args: FillLike):
         default_args = {k: _default_field(
             k) for k in self._fills[name] if k not in fill_args}
         fill_args = {f'{name}:{k}': v for k,
                      v in fill_args.items()} | default_args
         fills = {name: self._fills[name] + [*self._categories] + ['weight']}
-        return fs.Fill(fills, **fill_args)
+        return self._backend_fill(fills, **fill_args)
 
     def duplicate_axes(self, name: str) -> list[AxesMixin]:
         axes = []
@@ -145,176 +274,3 @@ class Collection:
     @property
     def output(self):
         return {'hists': self._hists, 'categories': {*self._categories}}
-
-
-class Template:
-    class _Hist:
-        def __init__(self, *axes: AxisLike, **fill_args: fs.LazyFill):
-            self._axes = [(
-                Label(axis.name, axis.label) if isinstance(axis, AxesMixin) else Label(axis[-1]), axis) for axis in axes
-            ]
-            self.fill_args = fill_args
-
-        def axes(self, name: str, template: Template) -> list[AxisLike]:
-            _axes = []
-            for label, axis in self._axes:
-                args = template.rebin(name, label.code)
-                if args is None:
-                    _axes.append(axis)
-                else:
-                    if isinstance(args, tuple):
-                        _axes.append((*args, label))
-                    elif args is ...:
-                        _axes.append((label,))
-                    elif isinstance(args, AxesMixin):
-                        args = deepcopy(args)
-                        args.label = label.display
-                        args.name = label.code
-                        _axes.append(args)
-            return _axes
-
-        def __repr__(self):  # TODO __repr__
-            return ', '.join(str(axis) for _, axis in self._axes)
-
-    def __init__(
-            self,
-            name: LabelLike,
-            fill: FieldLike = ...,
-            bins: dict[str | tuple[str, str], AxisArgs] = None,
-            skip: Iterable[str] = None,
-            **fill_args: fs.LazyFill):
-        self._name = Label(name)
-        self._data = fill
-        self._bins = bins.copy() if bins is not None else {}
-        self._skip = compile_any_wholeword(skip)
-        self._fill_args = fill_args
-
-        self._fills = fs.Fill()
-        self._created = False
-        self._parent: Template = None
-
-    def copy(self):
-        return self.__class__(
-            self._name,
-            self._data,
-            self._bins,
-            self._skip,
-            **self._fill_args
-        )
-
-    @property
-    def data(self):
-        if self._parent is not None:
-            return self._parent.data + self._data
-        return self._data
-
-    @property
-    def fill_args(self):
-        if self._parent is not None:
-            return self._fill_args | self._parent.fill_args
-        return self._fill_args
-
-    def hist_name(self, name: str, nested: bool = False):
-        name = f'{self._name.code}.{name}'
-        if nested and self._parent is not None:
-            return self._parent.hist_name(name, nested)
-        return name
-
-    def axis_label(self, label: str):
-        label = f'{self._name.display} {label}'
-        if self._parent is not None:
-            label = self._parent.axis_label(label)
-        return label
-
-    def rebin(self, name: str, axis: str):
-        _axis = None
-        if self._parent is not None:
-            _axis = self._parent.rebin(self.hist_name(name), axis)
-        if _axis is None:
-            _axis = self._bins.get((name, axis), self._bins.get(axis))
-        return _axis
-
-    def skip(self, name: str):
-        skip = False
-        if self._parent is not None:
-            skip |= self._parent.skip(self.hist_name(name))
-        if not skip:
-            skip |= match_single(self._skip, name)
-        return skip
-
-    def new(self, name: str = None, parent: Template = None):
-        if not self._created:
-            self._created = True
-            self._parent = parent
-            if name is not None:
-                self._name.code = name
-            self._data = astuple(
-                self._data if self._data is not ... else _default_field(self._name.code))
-            hists, templates = self.hists()
-            for name, hist in hists.items():
-                if not self.skip(name):
-                    self._add(name, *hist.axes(name, self), **hist.fill_args)
-            for name, template in templates.items():
-                if template._created:
-                    raise HistError(
-                        f'Template "{self.__class__.__name__}.{name}" has already been used')
-                template = template.copy()
-                self._fills += template.new(name, self)
-        return self._fills
-
-    def _add(self, name: str, *axes: AxisLike, **fill_args: fs.LazyFill):
-        _kwargs = {}
-        fill_args = fill_args | self.fill_args
-        axes = [_create_axis(axis) for axis in axes]
-        data = self.data
-        for axis in axes:
-            axis.label = self.axis_label(axis.label)
-            if axis.name in fill_args:
-                _fill = fill_args[axis.name]
-                if check_type(_fill, FieldLike):
-                    _fill = data + astuple(_fill)
-                elif check_type(_fill, Callable):
-                    _fill = self._wrap(_fill)
-                _kwargs[axis.name] = _fill
-            else:
-                _kwargs[axis.name] = data + _default_field(axis.name)
-        if 'weight' in fill_args:
-            _kwargs['weight'] = fill_args['weight']
-        self._fills += Collection.current.add(
-            self.hist_name(name, nested=True), *axes, **_kwargs)
-
-    def _wrap(self, func: Callable):
-        # TODO make it picklable
-        return lambda x: func(get_field(x, self.data))
-
-    @classmethod
-    def hists(cls) -> tuple[dict[str, _Hist], dict[str, Template]]:
-        hists, templates = {}, {}
-        for name in dir(cls):
-            attr = getattr(cls, name)
-            if isinstance(attr, cls._Hist):
-                hists[name] = attr
-            elif isinstance(attr, Template):
-                templates[name] = attr
-        return hists, templates
-
-    def __add__(self, other: fs.Fill | Template) -> fs.Fill:
-        if isinstance(other, Template):
-            other = other.new()
-        if isinstance(other, fs.Fill):
-            return self.new() + other
-        return NotImplemented
-
-
-class Systematic(Template):
-    def __init__(self, name: str, systs: Iterable[LabelLike], *axes: AxesMixin | tuple, weight: FieldLike = 'weight', **fill_args: FieldLike):
-        super().__init__((name, ''), (), **fill_args)
-        weight = astuple(weight)
-        if len(axes) == 0:
-            axes = Collection.current.duplicate_axes(name)
-        for _var in systs:
-            _var = Label(_var)
-            self._name.display = f'({_var.display})'
-            self._add(_var.code, *axes, weight=weight +
-                      _default_field(_var.code))
-        self._name.display = ''
