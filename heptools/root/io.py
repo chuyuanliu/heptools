@@ -21,7 +21,7 @@ ROOT file I/O based on :func:`uproot.reading.open` and :func:`uproot.writing.wri
 """
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Callable, Literal
+from typing import TYPE_CHECKING, Callable, Literal, overload
 
 import uproot
 
@@ -235,18 +235,37 @@ class TreeReader(_Reader):
         self._filter = filter
         self._transform = transform
 
+    @overload
+    def arrays(self, source: Chunk, library: Literal['ak'], **options) -> ak.Array:
+        ...
+
+    @overload
+    def arrays(self, source: Chunk, library: Literal['pd'], **options) -> pd.DataFrame:
+        ...
+
+    @overload
+    def arrays(self, source: Chunk, library: Literal['np'], **options) -> dict[str, np.ndarray]:
+        ...
+
     def arrays(
         self,
         source: Chunk,
+        library: Literal['ak', 'pd', 'np'] = 'ak',
         **options,
     ) -> RecordLike:
         """
         Read ``source`` into array.
 
+        - ``library='ak'``: return :class:`ak.Array`.
+        - ``library='pd'``: return :class:`pandas.DataFrame`. 
+        - ``library='np'``: return :class:`dict` of :class:`numpy.ndarray`.
+
         Parameters
         ----------
         source : ~heptools.root.chunk.Chunk
             Chunk of :class:`TTree`.
+        library : ~typing.Literal['ak', 'np', 'pd'], optional, default='ak'
+            The library used to represent arrays.
         **options : dict, optional
             Additional options passed to :meth:`uproot.behaviors.TBranch.HasBranches.arrays`.
 
@@ -255,6 +274,7 @@ class TreeReader(_Reader):
         RecordLike
             Data read from :class:`TTree`.
         """
+        options['library'] = library
         branches = source.branches
         if self._filter is not None:
             branches = self._filter(branches)
@@ -268,6 +288,18 @@ class TreeReader(_Reader):
                 data = self._transform(data)
             return data
 
+    @overload
+    def concat(self, *sources: Chunk, library: Literal['ak'], **options) -> ak.Array:
+        ...
+
+    @overload
+    def concat(self, *sources: Chunk, library: Literal['pd'], **options) -> pd.DataFrame:
+        ...
+
+    @overload
+    def concat(self, *sources: Chunk, library: Literal['np'], **options) -> dict[str, np.ndarray]:
+        ...
+
     def concat(
         self,
         *sources: Chunk,
@@ -280,9 +312,9 @@ class TreeReader(_Reader):
         .. todo::
             Add :mod:`multiprocessing` support.
 
-        - ``library='ak'``: return :class:`ak.Array` and use :func:`ak.concatenate`.
-        - ``library='pd'``: return :class:`pandas.DataFrame` and use :func:`pandas.concat`. 
-        - ``library='np'``: return :class:`dict` of :class:`numpy.ndarray` and use :func:`numpy.concatenate`.
+        - ``library='ak'``: use :func:`ak.concatenate`.
+        - ``library='pd'``: use :func:`pandas.concat`. 
+        - ``library='np'``: use :func:`numpy.concatenate`.
 
         Parameters
         ----------
@@ -308,10 +340,23 @@ class TreeReader(_Reader):
         else:
             raise ValueError(f'Unknown library {library}.')
 
+    @overload
+    def iterate(self, step: int, *sources: Chunk, library: Literal['ak'], **options) -> ak.Array:
+        ...
+
+    @overload
+    def iterate(self, step: int, *sources: Chunk, library: Literal['pd'], **options) -> pd.DataFrame:
+        ...
+
+    @overload
+    def iterate(self, step: int, *sources: Chunk, library: Literal['np'], **options) -> dict[str, np.ndarray]:
+        ...
+
     def iterate(
         self,
         step: int,
         *sources: Chunk,
+        library: Literal['ak', 'pd', 'np'] = 'ak',
         **options,
     ):
         """
@@ -323,6 +368,8 @@ class TreeReader(_Reader):
             Number of entries to read in each iteration step.
         sources : tuple[~heptools.root.chunk.Chunk]
             One or more chunks of :class:`TTree`.
+        library : ~typing.Literal['ak', 'np', 'pd'], optional, default='ak'
+            The library used to represent arrays.
         **options : dict, optional
             Additional options passed to :meth:`concat`.
 
@@ -331,38 +378,6 @@ class TreeReader(_Reader):
         RecordLike
             Data with ``step`` entries.
         """
+        options['library'] = library
         for chunks in Chunk.partition(step, *sources):
             yield self.concat(*chunks, **options)
-
-    def Array(
-        self,
-        *source: Chunk,
-        **options,
-    ) -> ak.Array:
-        """
-        Read data into :class:`ak.Array`. Equivalent to :meth:`concat` with ``library='ak'``.
-        """
-        options['library'] = 'ak'
-        return self.concat(*source, **options)
-
-    def DataFrame(
-        self,
-        *source: Chunk,
-        **options,
-    ) -> pd.DataFrame:
-        """
-        Read data into :class:`pandas.DataFrame`. Equivalent to :meth:`concat` with ``library='pd'``.
-        """
-        options['library'] = 'pd'
-        return self.concat(*source, **options)
-
-    def NDArray(
-        self,
-        *source: Chunk,
-        **options,
-    ) -> dict[str, np.ndarray]:
-        """
-        Read data into :class:`dict` of :class:`numpy.ndarray`. Equivalent to :meth:`concat` with ``library='np'``.
-        """
-        options['library'] = 'np'
-        return self.concat(*source, **options)

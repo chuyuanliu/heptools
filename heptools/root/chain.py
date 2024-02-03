@@ -6,11 +6,10 @@ from collections import defaultdict, deque
 from concurrent.futures import ThreadPoolExecutor
 from functools import partial
 from logging import Logger
-from typing import TYPE_CHECKING, Literal
+from typing import TYPE_CHECKING, Literal, overload
 
 from ..dask.delayed import delayed
 from ..system.eos import EOS, PathLike
-from ._backend import concat_record, record_backend, slice_record
 from .chunk import Chunk
 from .io import TreeReader, TreeWriter
 from .merge import resize
@@ -240,6 +239,19 @@ class Friend:
             self._check_item(item)
         self._insert(key, item)
 
+    @overload
+    def get(self, target: Chunk, branches: set[str] = ..., library: Literal['ak'] = 'ak', reader_options: dict = ...) -> ak.Array:
+        ...
+
+    @overload
+    def get(self, target: Chunk, branches: set[str] = ..., library: Literal['pd'] = 'pd', reader_options: dict = ...) -> pd.DataFrame:
+        ...
+
+    @overload
+    def get(self, target: Chunk, branches: set[str] = ..., library: Literal['np'] = 'np', reader_options: dict = ...) -> dict[str, np.ndarray]:
+        ...
+
+    @_on_disk
     def get(
         self,
         target: Chunk,
@@ -260,11 +272,16 @@ class Friend:
             The library used to represent arrays.
         reader_options : dict, optional
             Additional options passed to :class:`~.io.TreeReader`.
+
+        Returns
+        -------
+        RecordLike
+            An array of entries from the friend :class:`TTree`.
         """
         series = self._data[target]
         start = target.entry_start
         stop = target.entry_stop
-        chunks = deque()
+        chunks = []
         for i in range(bisect.bisect_left(series, _FriendItem(target.entry_start, target.entry_stop)), len(series)):
             if start >= stop:
                 break
@@ -276,67 +293,14 @@ class Friend:
                 chunk_start = start - item.start
                 start = min(stop, item.stop)
                 chunk_end = start - item.start
-                if isinstance(item.chunk, Chunk):
-                    chunks.append(item.chunk.slice(chunk_start, chunk_end))
-                else:
-                    backend = record_backend(item.chunk)
-                    if backend != library:
-                        raise ValueError(
-                            f'Data in {item} does not match library={library}')
-                    chunks.append(slice_record(
-                        item.chunk, chunk_start, chunk_end, library=library))
-        # TODO test below
+                chunks.append(item.chunk.slice(chunk_start, chunk_end))
         if branches is ...:
             branches = self._branches
         else:
             branches = self._branches & branches
         reader_options = reader_options or {}
         reader_options['filter'] = branches.__and__
-        reader = TreeReader(**reader_options)
-        data = []
-        to_read = []
-        while True:
-            chunk = None
-            if chunks:
-                chunk = chunks.popleft()
-                if isinstance(chunk, Chunk):
-                    to_read.append(chunk)
-                    continue
-            if to_read:
-                data.append(reader.concat(*to_read, library=library))
-                to_read.clear()
-            if chunk is not None:
-                data.append(chunk)
-            if not chunks:
-                break
-        return concat_record(data, library=library)
-
-    def Array(
-        self,
-        target: Chunk,
-    ) -> ak.Array:
-        """
-        Get the friend :class:`TTree` for ``target`` in :class:`ak.Array`. Equivalent to :meth:`get` with ``library='ak'``.
-        """
-        return self.get(target, library='ak')
-
-    def DataFrame(
-        self,
-        target: Chunk,
-    ) -> pd.DataFrame:
-        """
-        Get the friend :class:`TTree` for ``target`` in :class:`pandas.DataFrame`. Equivalent to :meth:`get` with ``library='pd'``.
-        """
-        return self.get(target, library='pd')
-
-    def NDArray(
-        self,
-        target: Chunk,
-    ) -> dict[str, np.ndarray]:
-        """
-        Get the friend :class:`TTree` for ``target`` in :class:`dict` of :class:`numpy.ndarray`. Equivalent to :meth:`get` with ``library='np'``.
-        """
-        return self.get(target, library='np')
+        return TreeReader(**reader_options).concat(*chunks, library=library)
 
     def dump(
         self,

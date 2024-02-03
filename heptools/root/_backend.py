@@ -1,4 +1,5 @@
 import sys
+from functools import partial
 from typing import Literal
 
 
@@ -17,14 +18,17 @@ def fetch_imported(**modules):
 def record_backend(data, abbr=True):
     mod = fetch_imported(ak='awkward', pd='pandas', np='numpy')
     if isinstance(data, dict):
-        backends = {*map(record_backend, data.values())}
+        backends = {*map(partial(record_backend, abbr=abbr), data.values())}
         if len(backends) == 1:
-            if backends.pop() == 'npy':
+            backends = backends.pop()
+            if backends in ('np.array', 'numpy.array'):
                 return 'np' if abbr else 'numpy'
+            else:
+                return f'dict.{backends}'
         return 'dict'
     try:
         if isinstance(data, mod.np.ndarray):
-            return 'npy' if abbr else 'numpy.array'
+            return 'np.array' if abbr else 'numpy.array'
     except:
         pass
     try:
@@ -69,8 +73,14 @@ def slice_record(data, start: int, stop: int, library: Literal['ak', 'pd', 'np']
         library = record_backend(data, abbr=True)
     if library in ('ak', 'pd'):
         return data[start:stop]
-    elif library in ('np', 'dict'):
+    elif library == 'np':
         return {k: v[start:stop] for k, v in data.items()}
+    elif library.startswith('dict'):
+        if library == 'dict':
+            return {k: slice_record(v, start, stop) for k, v in data.items()}
+        else:
+            content = library.removeprefix('dict.')
+            return {k: slice_record(v, start, stop, library=content) for k, v in data.items()}
 
 
 def len_record(data, library: Literal['ak', 'pd', 'np'] = ...):
@@ -78,5 +88,11 @@ def len_record(data, library: Literal['ak', 'pd', 'np'] = ...):
         library = record_backend(data, abbr=True)
     if library in ('ak', 'pd'):
         return len(data)
-    elif library in ('np', 'dict'):
+    elif library == 'np' or library.startswith('dict'):
         return len(next(iter(data.values())))
+
+
+def extend_record(data, library: Literal['ak', 'pd', 'np'] = ...):
+    if library is ...:
+        library = record_backend(data, abbr=True)
+    # TODO
