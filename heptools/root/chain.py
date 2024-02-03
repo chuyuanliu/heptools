@@ -5,10 +5,10 @@ import bisect
 from collections import defaultdict, deque
 from concurrent.futures import ThreadPoolExecutor
 from functools import partial
+from logging import Logger
 from typing import TYPE_CHECKING, Literal
 
 from ..dask.delayed import delayed
-from ..logging import log
 from ..system.eos import EOS, PathLike
 from ._backend import concat_record, record_backend, slice_record
 from .chunk import Chunk
@@ -16,7 +16,6 @@ from .io import TreeReader, TreeWriter
 from .merge import resize
 
 if TYPE_CHECKING:
-    from logging import Logger
 
     import awkward as ak
     import numpy as np
@@ -430,12 +429,12 @@ class Friend:
                 if isinstance(v.chunk, Chunk):
                     files.append(v.chunk.path)
         if confirm:
-            log.info('The following files will be deleted:')
-            log.warning('\n'.join(str(f) for f in files))
-            confirmation = log.input(
+            Logger.root.info('The following files will be deleted:')
+            Logger.root.warning('\n'.join(str(f) for f in files))
+            confirmation = input(
                 f'Type "{self.name}" to confirm the deletion: ')
             if confirmation != self.name:
-                log.info('Deletion aborted.')
+                Logger.root.info('Deletion aborted.')
                 return
         with ThreadPoolExecutor(max_workers=len(files)) as executor:
             executor.map(EOS.rm, files)
@@ -599,7 +598,7 @@ class Friend:
             The logger used to report the issues. Can be a :class:`~logging.Logger` or any class with the same interface. If not given, the default logger will be used.
         """
         if logger is None:
-            logger = log
+            logger = Logger.root
         checked: deque[Chunk] = deque()
         files = set()
         for target, items in self._data.items():

@@ -2,18 +2,15 @@ from __future__ import annotations
 
 from concurrent.futures import ThreadPoolExecutor
 from functools import partial, reduce
+from logging import Logger
 from operator import and_
-from typing import TYPE_CHECKING, Iterable
+from typing import Iterable
 from uuid import UUID
 
 import uproot
 
-from ..logging import log
 from ..system.eos import EOS, PathLike
 from ..typetools import check_type
-
-if TYPE_CHECKING:
-    from logging import Logger
 
 
 class _ChunkMeta(type):
@@ -148,7 +145,7 @@ class Chunk(metaclass=_ChunkMeta):
             A deep copy of ``self`` with corrected metadata. If file not exists, return ``None``.
         """
         if logger is None:
-            logger = log
+            logger = Logger.root
         chunk_name = f'chunk  "{self.path}"\n    '
         if not self.path.exists:
             logger.error(f'{chunk_name}file not exists')
