@@ -11,6 +11,7 @@ from hist.dask import Hist
 
 from .. import hist as _h
 from ..aktools import FieldLike, RealNumber, and_fields, get_field
+from ..dask.awkward import map_partitions
 from ..typetools import check_type
 
 __all__ = ['Collection', 'Fill', 'FillLike']
@@ -18,10 +19,7 @@ __all__ = ['Collection', 'Fill', 'FillLike']
 FillLike = _h.hist.LazyFill | RealNumber | bool
 
 
-def repeat(a, repeats):
-    if ak.backend(a) == 'typetracer':
-        return ak.Array(ak.Array([0]).layout.to_typetracer(forget_length=True))
-    return np.repeat(a, repeats)
+_np_repeat = map_partitions(np.repeat)
 
 
 class Fill(_h.Fill):
@@ -55,7 +53,7 @@ class Fill(_h.Fill):
             for name in self._fills:
                 fills = {}
                 to_repeat = []
-                jagged = None
+                count = None
                 for k in self._fills[name]:
                     v = category_args[f'{name}:{k}' if f'{name}:{k}' in category_args else k]
                     if isinstance(v, dak.Array):
@@ -63,13 +61,13 @@ class Fill(_h.Fill):
                         if depth == 1:
                             to_repeat.append(k)
                         elif depth > 1:
-                            if jagged is None:
-                                jagged = ak.num(v)
+                            if count is None:
+                                count = ak.num(v)
                             v = ak.flatten(v)
                     fills[k] = v
-                if jagged is not None:
+                if count is not None:
                     for k in to_repeat:
-                        fills[k] = dak.map_partitions(repeat, fills[k], jagged)
+                        fills[k] = _np_repeat(fills[k], count)
                 hists._hists[name].fill(**fills)
 
 
