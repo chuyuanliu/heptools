@@ -18,10 +18,10 @@ __all__ = ['Collection', 'Fill', 'FillLike']
 FillLike = _h.hist.LazyFill | RealNumber | bool
 
 
-def repeat(x, y):
-    if isinstance(x.layout.length, ak._nplikes.shape.UnknownLength):
-        return x
-    return np.repeat(x, y)
+def repeat(a, repeats):
+    if ak.backend(a) == 'typetracer':
+        return ak.Array(ak.Array([0]).layout.to_typetracer(forget_length=True))
+    return np.repeat(a, repeats)
 
 
 class Fill(_h.Fill):

@@ -150,7 +150,6 @@ class Template:
             self.hist_name(name, nested=True), *axes, **_kwargs)
 
     def _wrap(self, func: Callable):
-        # TODO make it picklable
         return lambda x: func(get_field(x, self.data))
 
     @classmethod
