@@ -5,10 +5,10 @@ from typing import Callable, TypeVar
 import awkward as ak
 import dask_awkward as dak
 
-_MapFuncT = TypeVar('_MapFuncT')
+_DelayedFuncT = TypeVar('_DelayedFuncT')
 
 
-class _MapPartitions:
+class _Delayed:
     def __init__(self, __func: Callable = None, shape: ak.Array | Callable[[], ak.Array] = ...):
         self._func = __func
         self._shape = (
@@ -28,11 +28,14 @@ class _MapPartitions:
         return self._func(*args, **kwargs)
 
     def __call__(self, *args, **kwargs):
-        return dak.map_partitions(self._wrapper, *args, **kwargs)
+        for arg in chain(args, kwargs.values()):
+            if isinstance(arg, dak.Array):
+                return dak.map_partitions(self._wrapper, *args, **kwargs)
+        return self._func(*args, **kwargs)
 
 
-def map_partitions(__func: _MapFuncT = None, shape: ak.Array | Callable[[], ak.Array] = ...) -> _MapFuncT:
+def delayed(__func: _DelayedFuncT = None, shape: ak.Array | Callable[[], ak.Array] = ...) -> _DelayedFuncT:
     if __func is None:
-        return partial(map_partitions, shape=shape)
+        return partial(delayed, shape=shape)
     else:
-        return wraps(__func)(_MapPartitions(__func, shape))
+        return wraps(__func)(_Delayed(__func, shape))

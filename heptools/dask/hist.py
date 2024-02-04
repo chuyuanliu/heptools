@@ -11,15 +11,15 @@ from hist.dask import Hist
 
 from .. import hist as _h
 from ..aktools import FieldLike, RealNumber, and_fields, get_field
-from ..dask.awkward import map_partitions
 from ..typetools import check_type
+from . import awkward as _dak
 
 __all__ = ['Collection', 'Fill', 'FillLike']
 
 FillLike = _h.hist.LazyFill | RealNumber | bool
 
 
-_np_repeat = map_partitions(np.repeat)
+_np_repeat = _dak.delayed(np.repeat)
 
 
 class Fill(_h.Fill):
