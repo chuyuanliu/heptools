@@ -1,9 +1,8 @@
 from __future__ import annotations
 
 from concurrent.futures import ThreadPoolExecutor
-from functools import partial, reduce
+from functools import partial
 from logging import Logger
-from operator import and_
 from typing import Iterable
 from uuid import UUID
 
@@ -274,6 +273,34 @@ class Chunk(metaclass=_ChunkMeta):
         return chunks
 
     @classmethod
+    def common(
+        cls,
+        *chunks: Chunk
+    ):
+        """
+        Find common branches of ``chunks``.
+
+        Parameters
+        ----------
+        chunks : tuple[Chunk]
+            Chunks to select common branches.
+
+        Returns
+        -------
+        list[Chunk]
+            Deep copies of ``chunks`` with only common branches.
+        """
+        chunks = [chunk.deepcopy() for chunk in chunks]
+        branches = set(chunk.branches for chunk in chunks)
+        if len(branches) == 1:
+            return chunks
+        else:
+            common = frozenset.intersection(*branches)
+            for chunk in chunks:
+                chunk._branches = common
+            return chunks
+
+    @classmethod
     def partition(
         cls,
         size: int,
@@ -299,9 +326,8 @@ class Chunk(metaclass=_ChunkMeta):
         """
         i, start, remain = 0, 0, size
         group: list[Chunk] = []
-        if common_branches:  # TODO make it seperate function
-            common = reduce(and_, (chunk.branches for chunk in chunks))
-            chunks = [chunk.deepcopy(branches=common) for chunk in chunks]
+        if common_branches:
+            chunks = cls.common(*chunks)
         while i < len(chunks):
             chunk = min(remain, len(chunks[i]) - start)
             group.append(chunks[i].slice(start, start + chunk))
@@ -316,6 +342,12 @@ class Chunk(metaclass=_ChunkMeta):
                 start = 0
         if group:
             yield group
+
+    @classmethod
+    def balance(
+
+    ):
+        ...  # TODO
 
     def to_json(self):
         """

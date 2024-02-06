@@ -26,8 +26,6 @@ ROOT file I/O based on :func:`uproot.reading.open`, :func:`uproot._dask.dask` an
 """
 from __future__ import annotations
 
-import operator as op
-from functools import reduce
 from typing import TYPE_CHECKING, Callable, Literal, overload
 
 import uproot
@@ -351,10 +349,10 @@ class TreeReader(_Reader):
             Concatenated data.
         """
         options['library'] = library
-        # TODO make optional sources branches check
         if len(sources) == 1:
             return self.arrays(sources[0], **options)
         if library in ('ak', 'pd', 'np'):
+            sources = Chunk.common(*sources)
             return concat_record(
                 [self.arrays(s, **options) for s in sources],
                 library=library)
@@ -400,8 +398,7 @@ class TreeReader(_Reader):
             Data with ``step`` entries.
         """
         options['library'] = library
-        # TODO make optional sources branches check
-        for chunks in Chunk.partition(step, *sources):
+        for chunks in Chunk.partition(step, *sources, common_branches=True):
             yield self.concat(*chunks, **options)
 
     @overload
@@ -432,8 +429,8 @@ class TreeReader(_Reader):
         DaskRecordLike
             Delayed data from :class:`TTree`.
         """
-        branches = reduce(op.and_, (s.branches for s in sources)
-                          )  # TODO make it optional
+        sources = Chunk.common(*sources)
+        branches = sources[0].branches
         if self._filter is not None:
             branches = self._filter(branches)
         options = self._dask_options | {
