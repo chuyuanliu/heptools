@@ -1,12 +1,11 @@
 from __future__ import annotations
 
+import math
 from concurrent.futures import ThreadPoolExecutor
 from functools import partial
 from logging import Logger
 from typing import Iterable
 from uuid import UUID
-
-import uproot
 
 from ..system.eos import EOS, PathLike
 from ..typetools import check_type
@@ -181,6 +180,7 @@ class Chunk(metaclass=_ChunkMeta):
 
     def _fetch(self):
         if any(v is ... for v in (self._branches, self._num_entries, self._uuid)):
+            import uproot
             with uproot.open(self.path) as file:
                 tree = file[self.name]
                 if self._branches is ...:
@@ -345,9 +345,48 @@ class Chunk(metaclass=_ChunkMeta):
 
     @classmethod
     def balance(
-
+        cls,
+        target: int,
+        *chunks: Chunk,
     ):
-        ...  # TODO
+        """
+        Split ``chunks`` into smaller pieces with ``target`` entries in each. If not possible, will try to find another size minimizing the average deviation.
+
+        Parameters
+        ----------
+        target : int
+            Target number of entries in each chunk.
+        chunks : tuple[Chunk]
+            Chunks to balance.
+
+        Returns
+        -------
+        list[Chunk]
+            Resized chunks with about ``target`` entries in each.
+        """
+        balanced: list[Chunk] = []
+        for chunk in chunks:
+            total = len(chunk)
+            if total <= target:
+                balanced.append(chunk)
+            else:
+                n = total // target
+                diff, m, size, mod = math.inf, None, None, None
+                for _m in range(n, n+2):
+                    _size = total // _m
+                    _mod = total % _m
+                    _diff = (abs(_size+1-target)*_mod +
+                             abs(_size-target)*(_m-_mod))
+                    if _diff < diff:
+                        diff, m, size, mod = _diff, _m, _size, _mod
+                start = 0
+                for i in range(m):
+                    stop = start + size
+                    if i < mod:
+                        stop += 1
+                    balanced.append(chunk.slice(start, stop))
+                    start = stop
+        return balanced
 
     def to_json(self):
         """
@@ -444,6 +483,7 @@ class Chunk(metaclass=_ChunkMeta):
         dict[str, list[Chunk]]
             A mapping from dataset names to lists of chunks using the partitions from ``datasets``.
         """
+        import uproot
         partitions: dict[str, list[Chunk]] = {}
         for dataset, files in datasets.items():
             files = files['files']
