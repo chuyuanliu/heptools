@@ -14,16 +14,19 @@ class NanoAOD:
                           tuple[set[str], dict[str, set[str]]]] = {} if cache else None
 
     def _parse_fields(self, data: ak.Array):
-        keep: set[str] = set(data.fields)
+        keep: set[str] = set(ak.fields(data))
         to_zip: dict[str, set[str]] = {}
         if self._cache is not None:
             key = frozenset(keep)
             if key in self._cache:
                 return self._cache[key]
         if self._jagged or self._regular:
-            raw = np.array(data.fields)
+            raw = np.array(ak.fields(data))
             pair = np.char.partition(raw, '_')[:, :2]
-            single: set[str] = set(pair[pair[:, 1] == ''][:, 0])
+            jagged = pair[pair[:, 1] == ''][:, 0]
+            jagged = jagged[np.char.startswith(jagged, 'n')]
+            jagged_prefix = np.char.lstrip(jagged, 'n')
+            jagged, jagged_prefix = set(jagged), set(jagged_prefix)
             _select = pair[:, 1] == '_'
             pair, raw = pair[_select][:, 0], raw[_select]
             _select = pair.argsort()
@@ -34,15 +37,12 @@ class NanoAOD:
                 zip(pair_key, np.split(raw, pair_idx[1:])))
             del pair_key, pair_idx
             if self._jagged:
-                jagged = {b for b in single if b.startswith('n')}
                 keep -= jagged
-                for prefix in jagged:
-                    prefix = prefix[1:]
+                for prefix in jagged_prefix:
                     if prefix in pair:
                         to_zip[prefix] = set(pair[prefix])
-                        del pair[prefix]
             if self._regular:
-                for prefix in pair:
+                for prefix in set(pair) - jagged_prefix:
                     to_zip[prefix] = set(pair[prefix])
             for v in to_zip.values():
                 keep -= v
@@ -55,9 +55,8 @@ class NanoAOD:
         if not to_zip:
             return data
         else:
-            zipped = {}
-            for k in keep:
-                zipped[k] = data[k]
+            kept = data[keep]
+            zipped = dict(zip(ak.fields(kept), ak.unzip(kept)))
             for k, vs in to_zip.items():
                 start = len(k) + 1
                 zipped[k] = ak.zip({v[start:]: data[v] for v in vs})
