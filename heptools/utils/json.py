@@ -1,7 +1,5 @@
-# TODO docstring
-
 import json
-from typing import Any, Protocol, runtime_checkable
+from typing import Protocol, runtime_checkable
 
 
 @runtime_checkable

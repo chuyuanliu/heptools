@@ -1,4 +1,3 @@
-# TODO add doc
 from .hist import (AxisLike, Collection, Fill, FillError, FillLike, HistError,
                    Label, LabelLike)
 from .template import Systematic, Template
