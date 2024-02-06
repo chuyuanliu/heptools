@@ -45,7 +45,7 @@ class PicoAOD(ProcessorABC):
 
     def process(self, events):
         selected = self.select(events)
-        chunk = Chunk.from_coffea_processor(events)
+        chunk = Chunk.from_coffea_events(events)
         dataset = events.metadata['dataset']
         result = {dataset: {
             'total_events': len(events),

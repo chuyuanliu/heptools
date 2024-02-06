@@ -5,6 +5,8 @@ from typing import Callable, TypeVar
 import awkward as ak
 import dask_awkward as dak
 
+from .. import awkward as _ak
+
 _DelayedFuncT = TypeVar('_DelayedFuncT')
 
 
@@ -39,3 +41,9 @@ def delayed(__func: _DelayedFuncT = None, shape: ak.Array | Callable[[], ak.Arra
         return partial(delayed, shape=shape)
     else:
         return wraps(__func)(_Delayed(__func, shape))
+
+
+def from_jsonable(*jsonables, npartitions: int = ...) -> dak.Array:
+    if npartitions is ...:
+        npartitions = len(jsonables)
+    return dak.from_awkward(_ak.from_jsonable(*jsonables), npartitions=npartitions)

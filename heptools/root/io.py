@@ -1,5 +1,5 @@
 """
-ROOT file I/O based on :func:`uproot.reading.open` and :func:`uproot.writing.writable.recreate`.
+ROOT file I/O based on :func:`uproot.reading.open`, :func:`uproot._dask.dask` and :func:`uproot.writing.writable.recreate`.
 
 .. note::
     Readers will use the following default options for :func:`uproot.open`:
@@ -21,6 +21,8 @@ ROOT file I/O based on :func:`uproot.reading.open` and :func:`uproot.writing.wri
 """
 from __future__ import annotations
 
+import operator as op
+from functools import reduce
 from typing import TYPE_CHECKING, Callable, Literal, overload
 
 import uproot
@@ -31,12 +33,21 @@ from .chunk import Chunk
 
 if TYPE_CHECKING:
     import awkward as ak
+    import dask.array as da
+    import dask_awkward as dak
     import numpy as np
     import pandas as pd
 
+if TYPE_CHECKING:
     RecordLike = ak.Array | pd.DataFrame | dict[str, np.ndarray]
     """
-    ak.Array, pandas.DataFrame, dict[str, numpy.ndarray]: A mapping from string to array-like object. All array-like objects must have the same length.
+    ak.Array, pandas.DataFrame, dict[str, numpy.ndarray]: A mapping from string to array-like object. All arrays must have same lengths.
+    """
+
+if TYPE_CHECKING:
+    DelayedRecordLike = dak.Array | dict[str, da.Array]
+    """
+    dask_awkward.Array, dict[str, dask.array.Array]: A mapping from string to array-like delayed object.  All arrays must have same lengths and partitions.
     """
 
 
@@ -236,15 +247,15 @@ class TreeReader(_Reader):
         self._transform = transform
 
     @overload
-    def arrays(self, source: Chunk, library: Literal['ak'], **options) -> ak.Array:
+    def arrays(self, source: Chunk, library: Literal['ak'] = 'ak', **options) -> ak.Array:
         ...
 
     @overload
-    def arrays(self, source: Chunk, library: Literal['pd'], **options) -> pd.DataFrame:
+    def arrays(self, source: Chunk, library: Literal['pd'] = 'pd', **options) -> pd.DataFrame:
         ...
 
     @overload
-    def arrays(self, source: Chunk, library: Literal['np'], **options) -> dict[str, np.ndarray]:
+    def arrays(self, source: Chunk, library: Literal['np'] = 'np', **options) -> dict[str, np.ndarray]:
         ...
 
     def arrays(
@@ -289,15 +300,15 @@ class TreeReader(_Reader):
             return data
 
     @overload
-    def concat(self, *sources: Chunk, library: Literal['ak'], **options) -> ak.Array:
+    def concat(self, *sources: Chunk, library: Literal['ak'] = 'ak', **options) -> ak.Array:
         ...
 
     @overload
-    def concat(self, *sources: Chunk, library: Literal['pd'], **options) -> pd.DataFrame:
+    def concat(self, *sources: Chunk, library: Literal['pd'] = 'pd', **options) -> pd.DataFrame:
         ...
 
     @overload
-    def concat(self, *sources: Chunk, library: Literal['np'], **options) -> dict[str, np.ndarray]:
+    def concat(self, *sources: Chunk, library: Literal['np'] = 'np', **options) -> dict[str, np.ndarray]:
         ...
 
     def concat(
@@ -331,6 +342,7 @@ class TreeReader(_Reader):
             Concatenated data.
         """
         options['library'] = library
+        # TODO make optional sources branches check
         if len(sources) == 1:
             return self.arrays(sources[0], **options)
         if library in ('ak', 'pd', 'np'):
@@ -341,15 +353,15 @@ class TreeReader(_Reader):
             raise ValueError(f'Unknown library {library}.')
 
     @overload
-    def iterate(self, step: int, *sources: Chunk, library: Literal['ak'], **options) -> ak.Array:
+    def iterate(self, step: int, *sources: Chunk, library: Literal['ak'] = 'ak', **options) -> ak.Array:
         ...
 
     @overload
-    def iterate(self, step: int, *sources: Chunk, library: Literal['pd'], **options) -> pd.DataFrame:
+    def iterate(self, step: int, *sources: Chunk, library: Literal['pd'] = 'pd', **options) -> pd.DataFrame:
         ...
 
     @overload
-    def iterate(self, step: int, *sources: Chunk, library: Literal['np'], **options) -> dict[str, np.ndarray]:
+    def iterate(self, step: int, *sources: Chunk, library: Literal['np'] = 'np', **options) -> dict[str, np.ndarray]:
         ...
 
     def iterate(
@@ -379,5 +391,53 @@ class TreeReader(_Reader):
             Data with ``step`` entries.
         """
         options['library'] = library
+        # TODO make optional sources branches check
         for chunks in Chunk.partition(step, *sources):
             yield self.concat(*chunks, **options)
+
+    @overload
+    def dask(self, *sources: Chunk, library: Literal['ak'] = 'ak', **options) -> dak.Array:
+        ...
+
+    @overload
+    def dask(self, *sources: Chunk, library: Literal['np'] = 'np', **options) -> dict[str, da.Array]:
+        ...
+
+    def dask(
+        self,
+        *sources: Chunk,
+        library: Literal['ak', 'np'] = 'ak',
+        **options,
+    ) -> DelayedRecordLike:
+        """
+        Read ``sources`` into delayed arrays.
+
+        Parameters
+        ----------
+        sources : tuple[~heptools.root.chunk.Chunk]
+            One or more chunks of :class:`TTree`.
+        library : ~typing.Literal['ak', 'np'], optional, default='ak'
+            The library used to represent arrays.
+        **options : dict, optional
+            Additional options passed to :func:`uproot.dask`.
+
+        Returns
+        -------
+        DaskRecordLike
+            Delayed data from :class:`TTree`.
+        """
+        branches = reduce(op.and_, (s.branches for s in sources)
+                          )  # TODO make it optional
+        if self._filter is not None:
+            branches = self._filter(branches)
+        options['library'] = library
+        options['filter_name'] = branches
+        files = []
+        for chunk in sources:
+            files.append({
+                chunk.path: {
+                    'object_path': chunk.name,
+                    'steps': [[chunk.entry_start, chunk.entry_stop]]
+                }
+            })
+        return uproot.dask(files, **options)

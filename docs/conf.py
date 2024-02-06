@@ -45,6 +45,7 @@ intersphinx_mapping = {
     'numpy': ('https://numpy.org/doc/stable/', None),
     'pandas': ('https://pandas.pydata.org/docs/', None),
     'dask': ('https://docs.dask.org/en/latest/', None),
+    'dask_awkward': ('https://dask-awkward.readthedocs.io/en/stable/', None),
     'uproot': ('https://uproot.readthedocs.io/en/stable/', None),
     'awkward': ('https://awkward-array.org/doc/stable/', None),
     'coffea': ('https://coffeateam.github.io/coffea/', None),

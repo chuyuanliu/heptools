@@ -34,7 +34,7 @@ class File:
         self.path = data.get('path', '') if path is None else path
         self.nevents = data.get('nevents', 0) if nevents is None else nevents
 
-    def __json__(self):
+    def to_json(self):
         return {'path': self.path, 'nevents': self.nevents, 'site': [*self.site]}
 
 
@@ -53,7 +53,7 @@ class FileList:
     def copy(self):
         return FileList({'files': self.files})
 
-    def __json__(self):
+    def to_json(self):
         return {'files': [*self.files]}
 
     @property

@@ -15,12 +15,13 @@ from .io import TreeReader, TreeWriter
 from .merge import resize
 
 if TYPE_CHECKING:
-
     import awkward as ak
+    import dask.array as da
+    import dask_awkward as dak
     import numpy as np
     import pandas as pd
 
-    from .io import RecordLike
+    from .io import DelayedRecordLike, RecordLike
 
 
 @delayed
@@ -63,7 +64,7 @@ class _FriendItem:
     def __repr__(self):
         return f'[{self.start},{self.stop})'
 
-    def __json__(self):
+    def to_json(self):
         return {
             'start': self.start,
             'stop': self.stop,
@@ -91,7 +92,6 @@ class Friend:
     - :meth:`__iadd__`
     - :meth:`__add__`
     - :meth:`__repr__`
-    - :meth:`__json__`
     """
     name: str
     '''str : Name of the collection.'''
@@ -143,14 +143,6 @@ class Friend:
         for k, v in self._data.items():
             text += f'\n{k}\n    {v}'
         return text
-
-    @_on_disk
-    def __json__(self):
-        return {
-            'name': self.name,
-            'branches': list(self._branches) if self._branches is not None else self._branches,
-            'data': [*self._data.items()],
-        }
 
     @classmethod
     def _construct_key(cls, chunk: Chunk):
@@ -240,19 +232,19 @@ class Friend:
         self._insert(key, item)
 
     @overload
-    def get(self, target: Chunk, branches: set[str] = ..., library: Literal['ak'] = 'ak', reader_options: dict = ...) -> ak.Array:
+    def arrays(self, target: Chunk, branches: set[str] = ..., library: Literal['ak'] = 'ak', reader_options: dict = None) -> ak.Array:
         ...
 
     @overload
-    def get(self, target: Chunk, branches: set[str] = ..., library: Literal['pd'] = 'pd', reader_options: dict = ...) -> pd.DataFrame:
+    def arrays(self, target: Chunk, branches: set[str] = ..., library: Literal['pd'] = 'pd', reader_options: dict = None) -> pd.DataFrame:
         ...
 
     @overload
-    def get(self, target: Chunk, branches: set[str] = ..., library: Literal['np'] = 'np', reader_options: dict = ...) -> dict[str, np.ndarray]:
+    def arrays(self, target: Chunk, branches: set[str] = ..., library: Literal['np'] = 'np', reader_options: dict = None) -> dict[str, np.ndarray]:
         ...
 
     @_on_disk
-    def get(
+    def arrays(
         self,
         target: Chunk,
         branches: set[str] = ...,
@@ -260,7 +252,7 @@ class Friend:
         reader_options: dict = None,
     ) -> RecordLike:
         """
-        Get the friend :class:`TTree` for ``target``.
+        Fetch the friend :class:`TTree` for ``target`` as arrays.
 
         Parameters
         ----------
@@ -276,7 +268,7 @@ class Friend:
         Returns
         -------
         RecordLike
-            An array of entries from the friend :class:`TTree`.
+            Arrays of entries from the friend :class:`TTree`.
         """
         series = self._data[target]
         start = target.entry_start
@@ -292,8 +284,8 @@ class Friend:
             else:
                 chunk_start = start - item.start
                 start = min(stop, item.stop)
-                chunk_end = start - item.start
-                chunks.append(item.chunk.slice(chunk_start, chunk_end))
+                chunk_stop = start - item.start
+                chunks.append(item.chunk.slice(chunk_start, chunk_stop))
         if branches is ...:
             branches = self._branches
         else:
@@ -301,6 +293,65 @@ class Friend:
         reader_options = reader_options or {}
         reader_options['filter'] = branches.__and__
         return TreeReader(**reader_options).concat(*chunks, library=library)
+
+    @overload
+    def dask(self, *targets: Chunk, branches: set[str] = ..., library: Literal['ak'] = 'ak', reader_options: dict = None) -> dak.Array:
+        ...
+
+    @overload
+    def dask(self, *targets: Chunk, branches: set[str] = ..., library: Literal['np'] = 'np', reader_options: dict = None) -> dict[str, da.Array]:
+        ...
+
+    @_on_disk
+    def dask(
+        self,
+        *targets: Chunk,
+        branches: set[str] = ...,
+        library: Literal['ak', 'np'] = 'ak',
+        reader_options: dict = None,
+    ) -> DelayedRecordLike:
+        """
+        Fetch the friend :class:`TTree` for ``targets`` as delayed arrays. The partitions will be preserved.
+
+        Parameters
+        ----------
+        targets : tuple[Chunk]
+            Partitions of target :class:`TTree`.
+        branches : set[str], optional
+            Branches to read. If not given, all branches will be read.
+        library : ~typing.Literal['ak', 'np'], optional, default='ak'
+            The library used to represent arrays.
+        reader_options : dict, optional
+            Additional options passed to :meth:`~.io.TreeReader.dask`.
+
+        Returns
+        -------
+        DelayedRecordLike
+            Delayed arrays of entries from the friend :class:`TTree`.
+        """
+        friends = []
+        for target in targets:
+            series = self._data[target]
+            start = target.entry_start
+            stop = target.entry_stop
+            item = series[bisect.bisect_left(
+                series, _FriendItem(target.entry_start, target.entry_stop))]
+            if item.start > start:
+                raise ValueError(
+                    f'Friend {self.name} does not have the entries [{start},{item.start}) for {target}')
+            elif item.stop < stop:
+                raise ValueError(
+                    f'Cannot read one partition from multiple files. Call "merge()" first.')
+            else:
+                friends.append(item.chunk.slice(
+                    start - item.start, stop - item.start))
+        if branches is ...:
+            branches = self._branches
+        else:
+            branches = self._branches & branches
+        reader_options = reader_options or {}
+        reader_options['filter'] = branches.__and__
+        return TreeReader().dask(*friends, library=library, **reader_options)
 
     def dump(
         self,
@@ -613,6 +664,22 @@ class Friend:
                     if isinstance(item.chunk, Chunk):
                         checked.popleft()
 
+    @_on_disk
+    def to_json(self):
+        """
+        Convert ``self`` to JSON data.
+
+        Returns
+        -------
+        dict
+            JSON data.
+        """
+        return {
+            'name': self.name,
+            'branches': list(self._branches) if self._branches is not None else self._branches,
+            'data': [*self._data.items()],
+        }
+
     @classmethod
     def from_json(cls, data: dict):
         """
@@ -626,7 +693,7 @@ class Friend:
         Returns
         -------
         Friend
-            Friend tree from JSON data.
+            A :class:`Friend` object from JSON data.
         """
         friend = cls(data['name'])
         friend._branches = set(data['branches'])
