@@ -61,8 +61,8 @@ class Chunk(metaclass=_ChunkMeta):
     '''~uuid.UUID : UUID of ROOT file.'''
     name: str
     '''str : Name of :class:`TTree`.'''
-    branches: set[str]
-    '''set[str] : Name of branches.'''
+    branches: frozenset[str]
+    '''frozenset[str] : Name of branches.'''
     num_entries: int
     '''int : Number of entries.'''
 
@@ -96,7 +96,7 @@ class Chunk(metaclass=_ChunkMeta):
         fetch: bool = False,
     ):
         if isinstance(branches, Iterable):
-            branches = {*branches}
+            branches = frozenset(branches)
 
         self.name = name
         self._entry_start = entry_start
@@ -185,7 +185,7 @@ class Chunk(metaclass=_ChunkMeta):
             with uproot.open(self.path) as file:
                 tree = file[self.name]
                 if self._branches is ...:
-                    self._branches = {*tree.keys()}
+                    self._branches = frozenset(tree.keys())
                 if self._num_entries is ...:
                     self._num_entries = tree.num_entries
                 if self._uuid is ...:

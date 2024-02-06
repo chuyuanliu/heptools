@@ -27,17 +27,18 @@ if TYPE_CHECKING:
 @delayed
 def _friend_from_merge(
     name: str,
-    branches: set[str],
+    branches: frozenset[str],
     data: dict[Chunk, list[tuple[int, int, list[Chunk]]]],
     dask: bool
 ):
     friend = Friend(name)
-    friend._branches = branches.copy()
+    friend._branches = frozenset(branches)
     for k, vs in data.items():
         for start, stop, chunks in vs:
             chunks = deque(chunks)
             while chunks:
                 chunk = chunks.popleft()
+                chunk._branches = friend._branches
                 friend._data[k].append(_FriendItem(
                     start, start + len(chunk), chunk))
                 start += len(chunk)
@@ -108,7 +109,7 @@ class Friend:
 
     def __init__(self, name: str):
         self.name = name
-        self._branches: set[str] = None
+        self._branches: frozenset[str] = None
         self._data: defaultdict[Chunk, list[_FriendItem]] = defaultdict(list)
 
     @_on_disk
@@ -187,12 +188,13 @@ class Friend:
             raise ValueError(
                 f'The number of entries in the chunk {item.chunk} does not match the range {item}')
         if self._branches is None:
-            self._branches = item.chunk.branches.copy()
+            self._branches = frozenset(item.chunk.branches)
         else:
             diff = self._branches - item.chunk.branches
             if diff:
                 raise ValueError(
                     f'The chunk {item.chunk} does not have the following branches: {diff}')
+        item.chunk = item.chunk.deepcopy(branches=self._branches)
 
     def _insert(self, target: Chunk, item: _FriendItem):
         series = self._data[target]
@@ -562,7 +564,7 @@ class Friend:
         """
         base_path = EOS(base_path)
         friend = Friend(self.name)
-        friend._branches = self._branches.copy()
+        friend._branches = self._branches
         src = []
         dst = []
         self._init_dump()
@@ -690,10 +692,13 @@ class Friend:
             A :class:`Friend` object from JSON data.
         """
         friend = cls(data['name'])
-        friend._branches = set(data['branches'])
+        friend._branches = frozenset(data['branches'])
         for k, vs in data['data']:
-            friend._data[Chunk.from_json(k)] = [
-                _FriendItem.from_json(v) for v in vs]
+            items = []
+            for v in vs:
+                v['chunk']['branches'] = friend._branches
+                items.append(_FriendItem.from_json(v))
+            friend._data[Chunk.from_json(k)] = items
         return friend
 
     @_on_disk
@@ -705,7 +710,7 @@ class Friend:
             A shallow copy of ``self``. 
         """
         friend = Friend(self.name)
-        friend._branches = self._branches.copy()
+        friend._branches = self._branches
         for k, vs in self._data.items():
             friend._data[k] = vs.copy()
         return friend
