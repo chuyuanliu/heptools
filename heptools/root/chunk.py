@@ -346,43 +346,48 @@ class Chunk(metaclass=_ChunkMeta):
     @classmethod
     def balance(
         cls,
-        target: int,
+        size: int,
         *chunks: Chunk,
+        common_branches: bool = False
     ):
         """
-        Split ``chunks`` into smaller pieces with ``target`` entries in each. If not possible, will try to find another size minimizing the average deviation.
+        Split ``chunks`` into smaller pieces with ``size`` entries in each. If not possible, will try to find another size minimizing the average deviation.
 
         Parameters
         ----------
-        target : int
+        size : int
             Target number of entries in each chunk.
         chunks : tuple[Chunk]
             Chunks to balance.
+        common_branches : bool, optional, default=False
+            If ``True``, only common branches of all chunks are kept.
 
         Returns
         -------
         list[Chunk]
-            Resized chunks with about ``target`` entries in each.
+            Resized chunks with about ``size`` entries in each.
         """
         balanced: list[Chunk] = []
+        if common_branches:
+            chunks = cls.common(*chunks)
         for chunk in chunks:
             total = len(chunk)
-            if total <= target:
+            if total <= size:
                 balanced.append(chunk)
             else:
-                n = total // target
-                diff, m, size, mod = math.inf, None, None, None
-                for _m in range(n, n+2):
-                    _size = total // _m
-                    _mod = total % _m
-                    _diff = (abs(_size+1-target)*_mod +
-                             abs(_size-target)*(_m-_mod))
+                n = total // size
+                diff, n_chunks, n_entries, n_remain = math.inf, None, None, None
+                for _chunks in range(n, n+2):
+                    _entries = total // _chunks
+                    _remain = total % _chunks
+                    _diff = (abs(_entries+1-size)*_remain +
+                             abs(_entries-size)*(_chunks-_remain))
                     if _diff < diff:
-                        diff, m, size, mod = _diff, _m, _size, _mod
+                        diff, n_chunks, n_entries, n_remain = _diff, _chunks, _entries, _remain
                 start = 0
-                for i in range(m):
-                    stop = start + size
-                    if i < mod:
+                for i in range(n_chunks):
+                    stop = start + n_entries
+                    if i < n_remain:
                         stop += 1
                     balanced.append(chunk.slice(start, stop))
                     start = stop
