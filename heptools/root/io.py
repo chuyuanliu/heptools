@@ -8,6 +8,11 @@ ROOT file I/O based on :func:`uproot.reading.open`, :func:`uproot._dask.dask` an
 
         object_cache = None
         array_cache = None
+
+    and the following default options for both :func:`uproot.open` and :func:`uproot.dask`:
+    
+    .. code-block:: python
+
         timeout = 180
 
 .. warning::
@@ -53,13 +58,17 @@ if TYPE_CHECKING:
 
 class _Reader:
     _default_options = {
+        'timeout': 180,
+    }
+    _open_options = {
         'object_cache': None,
         'array_cache': None,
-        'timeout': 3 * 60,
     }
+    _dask_options = {}
 
     def __init__(self, **options):
-        self._options = self._default_options | options
+        self._dask_options = self._default_options | self._dask_options | options
+        self._open_options = self._default_options | self._open_options | options
 
 
 class TreeWriter:
@@ -289,7 +298,7 @@ class TreeReader(_Reader):
         branches = source.branches
         if self._filter is not None:
             branches = self._filter(branches)
-        with uproot.open(source.path, **self._options) as file:
+        with uproot.open(source.path, **self._open_options) as file:
             data = file[source.name].arrays(
                 expressions=branches,
                 entry_start=source.entry_start,
@@ -396,18 +405,17 @@ class TreeReader(_Reader):
             yield self.concat(*chunks, **options)
 
     @overload
-    def dask(self, *sources: Chunk, library: Literal['ak'] = 'ak', **options) -> dak.Array:
+    def dask(self, *sources: Chunk, library: Literal['ak'] = 'ak') -> dak.Array:
         ...
 
     @overload
-    def dask(self, *sources: Chunk, library: Literal['np'] = 'np', **options) -> dict[str, da.Array]:
+    def dask(self, *sources: Chunk, library: Literal['np'] = 'np') -> dict[str, da.Array]:
         ...
 
     def dask(
         self,
         *sources: Chunk,
         library: Literal['ak', 'np'] = 'ak',
-        **options,
     ) -> DelayedRecordLike:
         """
         Read ``sources`` into delayed arrays.
@@ -418,8 +426,6 @@ class TreeReader(_Reader):
             One or more chunks of :class:`TTree`.
         library : ~typing.Literal['ak', 'np'], optional, default='ak'
             The library used to represent arrays.
-        **options : dict, optional
-            Additional options passed to :func:`uproot.dask`.
 
         Returns
         -------
@@ -430,8 +436,10 @@ class TreeReader(_Reader):
                           )  # TODO make it optional
         if self._filter is not None:
             branches = self._filter(branches)
-        options['library'] = library
-        options['filter_name'] = branches
+        options = self._dask_options | {
+            'library': library,
+            'filter_name': branches
+        }
         files = []
         for chunk in sources:
             files.append({

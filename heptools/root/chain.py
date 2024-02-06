@@ -6,7 +6,7 @@ from collections import defaultdict, deque
 from concurrent.futures import ThreadPoolExecutor
 from functools import partial
 from logging import Logger
-from typing import TYPE_CHECKING, Literal, overload
+from typing import TYPE_CHECKING, Callable, Literal, overload
 
 from ..dask.delayed import delayed
 from ..system.eos import EOS, PathLike
@@ -232,22 +232,22 @@ class Friend:
         self._insert(key, item)
 
     @overload
-    def arrays(self, target: Chunk, branches: set[str] = ..., library: Literal['ak'] = 'ak', reader_options: dict = None) -> ak.Array:
+    def arrays(self, target: Chunk, filter: Callable[[set[str]], set[str]] = None, library: Literal['ak'] = 'ak', reader_options: dict = None) -> ak.Array:
         ...
 
     @overload
-    def arrays(self, target: Chunk, branches: set[str] = ..., library: Literal['pd'] = 'pd', reader_options: dict = None) -> pd.DataFrame:
+    def arrays(self, target: Chunk, filter: Callable[[set[str]], set[str]] = None, library: Literal['pd'] = 'pd', reader_options: dict = None) -> pd.DataFrame:
         ...
 
     @overload
-    def arrays(self, target: Chunk, branches: set[str] = ..., library: Literal['np'] = 'np', reader_options: dict = None) -> dict[str, np.ndarray]:
+    def arrays(self, target: Chunk, filter: Callable[[set[str]], set[str]] = None, library: Literal['np'] = 'np', reader_options: dict = None) -> dict[str, np.ndarray]:
         ...
 
     @_on_disk
     def arrays(
         self,
         target: Chunk,
-        branches: set[str] = ...,
+        filter: Callable[[set[str]], set[str]] = None,
         library: Literal['ak', 'pd', 'np'] = 'ak',
         reader_options: dict = None,
     ) -> RecordLike:
@@ -258,8 +258,8 @@ class Friend:
         ----------
         target : Chunk
             A chunk of :class:`TTree`.
-        branches : set[str], optional
-            Branches to read. If not given, all branches will be read.
+        filter : ~typing.Callable[[set[str]], set[str]], optional
+            A function to select branches. If not given, all branches will be read.
         library : ~typing.Literal['ak', 'np', 'pd'], optional, default='ak'
             The library used to represent arrays.
         reader_options : dict, optional
@@ -286,27 +286,24 @@ class Friend:
                 start = min(stop, item.stop)
                 chunk_stop = start - item.start
                 chunks.append(item.chunk.slice(chunk_start, chunk_stop))
-        if branches is ...:
-            branches = self._branches
-        else:
-            branches = self._branches & branches
+        branches = self._branches if filter is None else filter(self._branches)
         reader_options = reader_options or {}
         reader_options['filter'] = branches.__and__
         return TreeReader(**reader_options).concat(*chunks, library=library)
 
     @overload
-    def dask(self, *targets: Chunk, branches: set[str] = ..., library: Literal['ak'] = 'ak', reader_options: dict = None) -> dak.Array:
+    def dask(self, *targets: Chunk, filter: Callable[[set[str]], set[str]] = None, library: Literal['ak'] = 'ak', reader_options: dict = None) -> dak.Array:
         ...
 
     @overload
-    def dask(self, *targets: Chunk, branches: set[str] = ..., library: Literal['np'] = 'np', reader_options: dict = None) -> dict[str, da.Array]:
+    def dask(self, *targets: Chunk, filter: Callable[[set[str]], set[str]] = None, library: Literal['np'] = 'np', reader_options: dict = None) -> dict[str, da.Array]:
         ...
 
     @_on_disk
     def dask(
         self,
         *targets: Chunk,
-        branches: set[str] = ...,
+        filter: Callable[[set[str]], set[str]] = None,
         library: Literal['ak', 'np'] = 'ak',
         reader_options: dict = None,
     ) -> DelayedRecordLike:
@@ -317,12 +314,12 @@ class Friend:
         ----------
         targets : tuple[Chunk]
             Partitions of target :class:`TTree`.
-        branches : set[str], optional
-            Branches to read. If not given, all branches will be read.
+        filter : ~typing.Callable[[set[str]], set[str]], optional
+            A function to select branches. If not given, all branches will be read.
         library : ~typing.Literal['ak', 'np'], optional, default='ak'
             The library used to represent arrays.
         reader_options : dict, optional
-            Additional options passed to :meth:`~.io.TreeReader.dask`.
+            Additional options passed to :class:`~.io.TreeReader`.
 
         Returns
         -------
@@ -345,13 +342,10 @@ class Friend:
             else:
                 friends.append(item.chunk.slice(
                     start - item.start, stop - item.start))
-        if branches is ...:
-            branches = self._branches
-        else:
-            branches = self._branches & branches
+        branches = self._branches if filter is None else filter(self._branches)
         reader_options = reader_options or {}
         reader_options['filter'] = branches.__and__
-        return TreeReader().dask(*friends, library=library, **reader_options)
+        return TreeReader(**reader_options).dask(*friends, library=library)
 
     def dump(
         self,
