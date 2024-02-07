@@ -338,10 +338,6 @@ class TreeReader(_Reader):
             One or more chunks of :class:`TTree`.
         library : ~typing.Literal['ak', 'np', 'pd'], optional, default='ak'
             The library used to represent arrays.
-
-            - ``library='ak'``: use :func:`ak.concatenate`.
-            - ``library='pd'``: use :func:`pandas.concat`. 
-            - ``library='np'``: use :func:`numpy.concatenate`.
         **options : dict, optional
             Additional options passed to :meth:`arrays`.
 
@@ -380,7 +376,7 @@ class TreeReader(_Reader):
         library: Literal['ak', 'pd', 'np'] = 'ak',
         mode: Literal['balance', 'partition'] = 'partition',
         **options,
-    ):
+    ) -> Generator[RecordLike, None, None]:
         """
         Iterate over ``sources``.
 
@@ -415,10 +411,9 @@ class TreeReader(_Reader):
         else:
             raise ValueError(f'Unknown mode "{mode}".')
         for chunk in chunks:
-            if isinstance(chunk, list):
-                yield self.concat(*chunk, **options)
-            else:
-                yield self.concat(chunk, **options)
+            if not isinstance(chunk, list):
+                chunk = (chunk,)
+            yield self.concat(*chunk, **options)
 
     @overload
     def dask(self, *sources: Chunk, partition: int = ..., library: Literal['ak'] = 'ak') -> dak.Array:

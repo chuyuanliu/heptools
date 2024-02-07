@@ -29,6 +29,8 @@ def record_backend(data, abbr=True, sequence=False):
             raise ValueError(f'Inconsistent backends {backends}.')
     if isinstance(data, dict):
         backends = {*map(partial(record_backend, abbr=abbr), data.values())}
+        if len(backends) == 0:
+            return 'np' if abbr else 'numpy'
         if len(backends) == 1:
             backends = backends.pop()
             if backends in ('np.array', 'numpy.array'):
@@ -59,6 +61,7 @@ def concat_record(data: list, library: Literal['ak', 'pd', 'np'] = ...):
         library = record_backend(data, abbr=True, sequence=True)
     if len(data) == 0:
         return None
+    data = [data[0], *filter(partial(len_record, library=library), data[1:])]
     if len(data) == 1:
         return data[0]
     if library == 'ak':
@@ -119,6 +122,8 @@ def len_record(data, library: Literal['ak', 'pd', 'np'] = ...):
     if library in ('ak', 'pd'):
         return len(data)
     elif library == 'np' or library.startswith('dict'):
+        if len(data) == 0:
+            return 0
         return len(next(iter(data.values())))
     else:
         raise ValueError(_unknown_msg.format(library=library))
