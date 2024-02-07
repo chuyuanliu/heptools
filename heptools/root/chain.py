@@ -10,6 +10,7 @@ from typing import TYPE_CHECKING, Callable, Literal, overload
 
 from ..dask.delayed import delayed
 from ..system.eos import EOS, PathLike
+from ._backend import concat_record
 from .chunk import Chunk
 from .io import TreeReader, TreeWriter
 from .merge import resize
@@ -254,7 +255,7 @@ class Friend:
         reader_options: dict = None,
     ) -> RecordLike:
         """
-        Fetch the friend :class:`TTree` for ``target`` as arrays.
+        Fetch the friend :class:`TTree` for ``target`` into array.
 
         Parameters
         ----------
@@ -270,7 +271,7 @@ class Friend:
         Returns
         -------
         RecordLike
-            Arrays of entries from the friend :class:`TTree`.
+            Data from friend :class:`TTree`.
         """
         series = self._data[target]
         start = target.entry_start
@@ -292,6 +293,53 @@ class Friend:
         reader_options = reader_options or {}
         reader_options['filter'] = branches.__and__
         return TreeReader(**reader_options).concat(*chunks, library=library)
+
+    @overload
+    def concat(self, *targets: Chunk, filter: Callable[[set[str]], set[str]] = None, library: Literal['ak'] = 'ak', reader_options: dict = None) -> ak.Array:
+        ...
+
+    @overload
+    def concat(self, *targets: Chunk, filter: Callable[[set[str]], set[str]] = None, library: Literal['pd'] = 'pd', reader_options: dict = None) -> pd.DataFrame:
+        ...
+
+    @overload
+    def concat(self, *targets: Chunk, filter: Callable[[set[str]], set[str]] = None, library: Literal['np'] = 'np', reader_options: dict = None) -> dict[str, np.ndarray]:
+        ...
+
+    @_on_disk
+    def concat(
+        self,
+        *targets: Chunk,
+        filter: Callable[[set[str]], set[str]] = None,
+        library: Literal['ak', 'pd', 'np'] = 'ak',
+        reader_options: dict = None
+    ) -> RecordLike:
+        """
+        Fetch the friend :class:`TTree` for ``targets`` into one array.
+
+        Parameters
+        ----------
+        targets : tuple[Chunk]
+            One or more chunks of :class:`TTree`.
+        filter : ~typing.Callable[[set[str]], set[str]], optional
+            A function to select branches. If not given, all branches will be read.
+        library : ~typing.Literal['ak', 'np', 'pd'], optional, default='ak'
+            The library used to represent arrays.
+        reader_options : dict, optional
+            Additional options passed to :class:`~.io.TreeReader`.
+
+        Returns
+        -------
+        RecordLike
+            Concatenated data.
+        """
+        if len(targets) == 1:
+            return self.arrays(targets[0], filter, library, reader_options)
+        else:
+            return concat_record(
+                [self.arrays(target, filter, library, reader_options)
+                 for target in targets],
+                library=library)
 
     @overload
     def dask(self, *targets: Chunk, filter: Callable[[set[str]], set[str]] = None, library: Literal['ak'] = 'ak', reader_options: dict = None) -> dak.Array:
@@ -721,6 +769,10 @@ class Chain:  # TODO
     A :class:`TChain` like object to manage multiple :class:`~.chunk.Chunk` and :class:`Friend`.
     """
 
+    def __init__(self):
+        self._chunks: list[Chunk] = []
+        self._friends: dict[str, tuple[Friend, bool]] = {}
+
     def append(self):
         ...  # TODO
 
@@ -731,4 +783,7 @@ class Chain:  # TODO
         ...  # TODO
 
     def iterate(self):
+        ...  # TODO
+
+    def dask(self):
         ...  # TODO
