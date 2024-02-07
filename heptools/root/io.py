@@ -302,6 +302,8 @@ class TreeReader(_Reader):
                 entry_start=source.entry_start,
                 entry_stop=source.entry_stop,
                 **options)
+            if library == 'pd':
+                data.reset_index(drop=True, inplace=True)
             if self._transform is not None:
                 data = self._transform(data)
             return data
