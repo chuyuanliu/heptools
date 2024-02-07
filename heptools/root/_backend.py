@@ -1,10 +1,14 @@
+import operator as op
 import sys
-from functools import partial
+from functools import partial, reduce
 from typing import Literal
 
 
 class _Modules:
     ...
+
+
+_unknown_msg = 'Unknown backend "{library}".'
 
 
 def fetch_imported(**modules):
@@ -15,8 +19,14 @@ def fetch_imported(**modules):
     return imported
 
 
-def record_backend(data, abbr=True):
+def record_backend(data, abbr=True, sequence=False):
     mod = fetch_imported(ak='awkward', pd='pandas', np='numpy')
+    if sequence:
+        backends = {*map(partial(record_backend, abbr=abbr), data)}
+        if len(backends) == 1:
+            return backends.pop()
+        else:
+            raise ValueError(f'Inconsistent backends {backends}.')
     if isinstance(data, dict):
         backends = {*map(partial(record_backend, abbr=abbr), data.values())}
         if len(backends) == 1:
@@ -41,9 +51,12 @@ def record_backend(data, abbr=True):
             return 'pd' if abbr else 'pandas'
     except:
         pass
+    return type(data).__name__
 
 
-def concat_record(data: list, library: Literal['ak', 'pd', 'np']):
+def concat_record(data: list, library: Literal['ak', 'pd', 'np'] = ...):
+    if library is ...:
+        library = record_backend(data, abbr=True, sequence=True)
     if len(data) == 0:
         return None
     if len(data) == 1:
@@ -53,11 +66,7 @@ def concat_record(data: list, library: Literal['ak', 'pd', 'np']):
         return ak.concatenate(data)
     elif library == 'pd':
         import pandas as pd
-        return pd.concat(
-            data,
-            ignore_index=True,
-            sort=False,
-            copy=False)
+        return pd.concat(data, ignore_index=True, sort=False, copy=False, axis=0)
     elif library == 'np':
         import numpy as np
         result = {}
@@ -65,7 +74,26 @@ def concat_record(data: list, library: Literal['ak', 'pd', 'np']):
             result[k] = np.concatenate([d[k] for d in data])
         return result
     else:
-        raise ValueError(f'Unknown library {library}.')
+        raise ValueError(_unknown_msg.format(library=library))
+
+
+def merge_record(data: list, library: Literal['ak', 'pd', 'np'] = ...):
+    if library is ...:
+        library = record_backend(data, abbr=True, sequence=True)
+    if len(data) == 0:
+        return None
+    if len(data) == 1:
+        return data[0]
+    if library == 'ak':
+        import awkward as ak
+        return ak.Array(reduce(op.or_, (dict(zip(ak.fields(arr), ak.unzip(arr))) for arr in data)))
+    elif library == 'pd':
+        import pandas as pd
+        return pd.concat(data, ignore_index=False, sort=False, copy=False, axis=1)
+    elif library == 'np' or library.startswith('dict'):
+        return reduce(op.or_, data)
+    else:
+        raise ValueError(_unknown_msg.format(library=library))
 
 
 def slice_record(data, start: int, stop: int, library: Literal['ak', 'pd', 'np'] = ...):
@@ -81,6 +109,8 @@ def slice_record(data, start: int, stop: int, library: Literal['ak', 'pd', 'np']
         else:
             content = library.removeprefix('dict.')
             return {k: slice_record(v, start, stop, library=content) for k, v in data.items()}
+    else:
+        raise ValueError(_unknown_msg.format(library=library))
 
 
 def len_record(data, library: Literal['ak', 'pd', 'np'] = ...):
@@ -90,9 +120,5 @@ def len_record(data, library: Literal['ak', 'pd', 'np'] = ...):
         return len(data)
     elif library == 'np' or library.startswith('dict'):
         return len(next(iter(data.values())))
-
-
-def extend_record(data, library: Literal['ak', 'pd', 'np'] = ...):
-    if library is ...:
-        library = record_backend(data, abbr=True)
-    # TODO
+    else:
+        raise ValueError(_unknown_msg.format(library=library))
