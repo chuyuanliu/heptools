@@ -407,16 +407,18 @@ class TreeReader(_Reader):
         """
         options['library'] = library
         if step is ...:
-            for chunk in Chunk.common(*sources):
-                yield self.arrays(chunk, **options)
+            chunks = Chunk.common(*sources)
         elif mode == 'partition':
-            for chunks in Chunk.partition(step, *sources, common_branches=True):
-                yield self.concat(*chunks, **options)
+            chunks = Chunk.partition(step, *sources, common_branches=True)
         elif mode == 'balance':
-            for chunk in Chunk.balance(step, *sources, common_branches=True):
-                yield self.arrays(chunk, **options)
+            chunks = Chunk.balance(step, *sources, common_branches=True)
         else:
             raise ValueError(f'Unknown mode "{mode}".')
+        for chunk in chunks:
+            if isinstance(chunk, list):
+                yield self.concat(*chunk, **options)
+            else:
+                yield self.concat(chunk, **options)
 
     @overload
     def dask(self, *sources: Chunk, partition: int = ..., library: Literal['ak'] = 'ak') -> dak.Array:
@@ -452,7 +454,8 @@ class TreeReader(_Reader):
         if partition is ...:
             sources = Chunk.common(*sources)
         else:
-            sources = Chunk.balance(partition, *sources, common_branches=True)
+            sources = [*Chunk.balance(
+                partition, *sources, common_branches=True)]
         branches = sources[0].branches
         if self._filter is not None:
             branches = self._filter(branches)

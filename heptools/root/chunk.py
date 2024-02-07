@@ -362,18 +362,17 @@ class Chunk(metaclass=_ChunkMeta):
         common_branches : bool, optional, default=False
             If ``True``, only common branches of all chunks are kept.
 
-        Returns
+        Yields
         -------
         list[Chunk]
             Resized chunks with about ``size`` entries in each.
         """
-        balanced: list[Chunk] = []
         if common_branches:
             chunks = cls.common(*chunks)
         for chunk in chunks:
             total = len(chunk)
             if total <= size:
-                balanced.append(chunk)
+                yield chunk
             else:
                 n = total // size
                 diff, n_chunks, n_entries, n_remain = math.inf, None, None, None
@@ -389,9 +388,8 @@ class Chunk(metaclass=_ChunkMeta):
                     stop = start + n_entries
                     if i < n_remain:
                         stop += 1
-                    balanced.append(chunk.slice(start, stop))
+                    yield chunk.slice(start, stop)
                     start = stop
-        return balanced
 
     def to_json(self):
         """
