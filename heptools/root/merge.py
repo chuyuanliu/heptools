@@ -39,7 +39,7 @@ def merge(
     writer_options = writer_options or {}
     reader_options = reader_options or {}
     with TreeWriter(**writer_options)(path) as writer:
-        for data in TreeReader(**reader_options).iterate(step, *sources):
+        for data in TreeReader(**reader_options).iterate(*sources, step=step):
             writer.extend(data)
     return writer.tree
 

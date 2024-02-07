@@ -362,21 +362,21 @@ class TreeReader(_Reader):
             raise ValueError(f'Unknown library {library}.')
 
     @overload
-    def iterate(self, step: int, *sources: Chunk, library: Literal['ak'] = 'ak', mode: Literal['balance', 'partition'] = 'partition', **options) -> Generator[ak.Array, None, None]:
+    def iterate(self, *sources: Chunk, step: int = ..., library: Literal['ak'] = 'ak', mode: Literal['balance', 'partition'] = 'partition', **options) -> Generator[ak.Array, None, None]:
         ...
 
     @overload
-    def iterate(self, step: int, *sources: Chunk, library: Literal['pd'] = 'pd', mode: Literal['balance', 'partition'] = 'partition', **options) -> Generator[pd.DataFrame, None, None]:
+    def iterate(self, *sources: Chunk, step: int = ..., library: Literal['pd'] = 'pd', mode: Literal['balance', 'partition'] = 'partition', **options) -> Generator[pd.DataFrame, None, None]:
         ...
 
     @overload
-    def iterate(self, step: int, *sources: Chunk, library: Literal['np'] = 'np', mode: Literal['balance', 'partition'] = 'partition', **options) -> Generator[dict[str, np.ndarray], None, None]:
+    def iterate(self, *sources: Chunk, step: int = ..., library: Literal['np'] = 'np', mode: Literal['balance', 'partition'] = 'partition', **options) -> Generator[dict[str, np.ndarray], None, None]:
         ...
 
     def iterate(
         self,
-        step: int,
         *sources: Chunk,
+        step: int = ...,
         library: Literal['ak', 'pd', 'np'] = 'ak',
         mode: Literal['balance', 'partition'] = 'partition',
         **options,
@@ -386,10 +386,10 @@ class TreeReader(_Reader):
 
         Parameters
         ----------
-        step : int
-            Number of entries to read in each iteration step.
         sources : tuple[~heptools.root.chunk.Chunk]
             One or more chunks of :class:`TTree`.
+        step : int, optional
+            Number of entries to read in each iteration step. If not given, the chunk size will be used and the ``mode`` will be ignored.
         library : ~typing.Literal['ak', 'np', 'pd'], optional, default='ak'
             The library used to represent arrays.
         mode : ~typing.Literal['balance', 'partition'], optional, default='partition'
@@ -406,7 +406,10 @@ class TreeReader(_Reader):
             Data with ``step`` entries.
         """
         options['library'] = library
-        if mode == 'partition':
+        if step is ...:
+            for chunk in Chunk.common(*sources):
+                yield self.arrays(chunk, **options)
+        elif mode == 'partition':
             for chunks in Chunk.partition(step, *sources, common_branches=True):
                 yield self.concat(*chunks, **options)
         elif mode == 'balance':
@@ -416,16 +419,17 @@ class TreeReader(_Reader):
             raise ValueError(f'Unknown mode "{mode}".')
 
     @overload
-    def dask(self, *sources: Chunk, library: Literal['ak'] = 'ak') -> dak.Array:
+    def dask(self, *sources: Chunk, partition: int = ..., library: Literal['ak'] = 'ak') -> dak.Array:
         ...
 
     @overload
-    def dask(self, *sources: Chunk, library: Literal['np'] = 'np') -> dict[str, da.Array]:
+    def dask(self, *sources: Chunk, partition: int = ..., library: Literal['np'] = 'np') -> dict[str, da.Array]:
         ...
 
     def dask(
         self,
         *sources: Chunk,
+        partition: int = ...,
         library: Literal['ak', 'np'] = 'ak',
     ) -> DelayedRecordLike:
         """
@@ -435,6 +439,8 @@ class TreeReader(_Reader):
         ----------
         sources : tuple[~heptools.root.chunk.Chunk]
             One or more chunks of :class:`TTree`.
+        partition: int, optional
+            If given, the ``sources`` will be splitted into smaller chunks targeting ``partition`` entries.
         library : ~typing.Literal['ak', 'np'], optional, default='ak'
             The library used to represent arrays.
 
@@ -443,7 +449,10 @@ class TreeReader(_Reader):
         DaskRecordLike
             Delayed data from :class:`TTree`.
         """
-        sources = Chunk.common(*sources)
+        if partition is ...:
+            sources = Chunk.common(*sources)
+        else:
+            sources = Chunk.balance(partition, *sources, common_branches=True)
         branches = sources[0].branches
         if self._filter is not None:
             branches = self._filter(branches)
