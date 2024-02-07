@@ -9,7 +9,7 @@ from hist.axis import StrCategory
 from hist.dask import Hist
 
 from .. import hist as _h
-from ..aktools import FieldLike, RealNumber, and_fields, get_field
+from ..aktools import FieldLike, RealNumber, and_fields, get_field, has_record
 from ..typetools import check_type
 from . import awkward as _dak
 
@@ -33,12 +33,23 @@ class Fill(_h.Fill):
         mask_categories = []
         for category in hists._categories:
             if category not in fill_args:
+                field = _h.hist._default_field(category)
+                do_mask = True
                 if isinstance(hists._axes[category], StrCategory):
+                    for value in hists._categories[category]:
+                        value = field + _h.hist._default_field(value)
+                        if value != has_record(events, value):
+                            do_mask = False
+                            break
+                else:
+                    do_mask = False
+                if do_mask:
                     mask_categories.append(category)
                 else:
-                    fill_args[category] = _h.hist._default_field(category)
+                    fill_args[category] = field
         for category_args in hists._generate_category_combinations(mask_categories):
-            mask = and_fields(events, *category_args.items())
+            mask = and_fields(
+                events, *(_h.hist._default_field(f'{k}.{v}') for k, v in category_args.items()))
             masked = events if mask is None else events[mask]
             for k, v in fill_args.items():
                 if (isinstance(v, str) and k in hists._categories) or isinstance(v, (bool, RealNumber)):

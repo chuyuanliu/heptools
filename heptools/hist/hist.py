@@ -152,7 +152,8 @@ class Fill:
                 else:
                     fill_args[category] = _default_field(category)
         for category_args in hists._generate_category_combinations(mask_categories):
-            mask = and_fields(events, *category_args.items())
+            mask = and_fields(
+                events, *(_default_field(f'{k}.{v}') for k, v in category_args.items()))
             masked = events if mask is None else events[mask]
             if len(masked) == 0:
                 continue
