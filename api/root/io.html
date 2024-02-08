@@ -378,7 +378,11 @@ document.write(`
 <span class="n">array_cache</span> <span class="o">=</span> <span class="kc">None</span>
 </pre></div>
 </div>
-<p>and the following default options for both <code class="xref py py-func docutils literal notranslate"><span class="pre">uproot.open()</span></code> and <code class="xref py py-func docutils literal notranslate"><span class="pre">uproot.dask()</span></code>:</p>
+<p>for <code class="xref py py-func docutils literal notranslate"><span class="pre">uproot.dask()</span></code>:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">open_files</span> <span class="o">=</span> <span class="kc">False</span>
+</pre></div>
+</div>
+<p>and for both:</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">timeout</span> <span class="o">=</span> <span class="mi">180</span>
 </pre></div>
 </div>
@@ -389,17 +393,13 @@ document.write(`
 </div>
 <div class="admonition-todo admonition" id="id1">
 <p class="admonition-title">Todo</p>
-<p>Add lazy reading and schema support using <a class="reference external" href="https://coffeateam.github.io/coffea/api/coffea.nanoevents.NanoEventsFactory.html#coffea.nanoevents.NanoEventsFactory" title="(in coffea v0.1)"><code class="xref py py-class docutils literal notranslate"><span class="pre">coffea.nanoevents.NanoEventsFactory</span></code></a>.</p>
-</div>
-<div class="admonition-todo admonition" id="id2">
-<p class="admonition-title">Todo</p>
 <p>Consider migrating to <a class="reference external" href="https://coffeateam.github.io/fsspec-xrootd/">fsspec-xrootd</a></p>
 </div>
 <section id="ttree">
 <h2><code class="xref py py-class docutils literal notranslate"><span class="pre">TTree</span></code><a class="headerlink" href="#ttree" title="Link to this heading">#</a></h2>
 <dl class="py class">
 <dt class="sig sig-object py" id="heptools.root.io.TreeWriter">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">heptools.root.io.</span></span><span class="sig-name descname"><span class="pre">TreeWriter</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'Events'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">parents</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">basket_size</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">...</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">options</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/chuyuanliu/heptools/tree/master/heptools/root/io.py#L72-L229"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#heptools.root.io.TreeWriter" title="Link to this definition">#</a></dt>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">heptools.root.io.</span></span><span class="sig-name descname"><span class="pre">TreeWriter</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'Events'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">parents</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">basket_size</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">...</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">options</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/chuyuanliu/heptools/tree/master/heptools/root/io.py#L77-L234"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#heptools.root.io.TreeWriter" title="Link to this definition">#</a></dt>
 <dd><p><code class="xref py py-func docutils literal notranslate"><span class="pre">uproot.recreate()</span></code> with remote file support and <code class="xref py py-class docutils literal notranslate"><span class="pre">TBasket</span></code> size control.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -424,7 +424,7 @@ document.write(`
 
 <dl class="py method">
 <dt class="sig sig-object py" id="heptools.root.io.TreeWriter.__call__">
-<span class="sig-name descname"><span class="pre">__call__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">path</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/chuyuanliu/heptools/tree/master/heptools/root/io.py#L106-L120"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#heptools.root.io.TreeWriter.__call__" title="Link to this definition">#</a></dt>
+<span class="sig-name descname"><span class="pre">__call__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">path</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/chuyuanliu/heptools/tree/master/heptools/root/io.py#L111-L125"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#heptools.root.io.TreeWriter.__call__" title="Link to this definition">#</a></dt>
 <dd><p>Set output path.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -438,7 +438,7 @@ document.write(`
 
 <dl class="py method">
 <dt class="sig sig-object py" id="heptools.root.io.TreeWriter.__enter__">
-<span class="sig-name descname"><span class="pre">__enter__</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference external" href="https://github.com/chuyuanliu/heptools/tree/master/heptools/root/io.py#L122-L133"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#heptools.root.io.TreeWriter.__enter__" title="Link to this definition">#</a></dt>
+<span class="sig-name descname"><span class="pre">__enter__</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference external" href="https://github.com/chuyuanliu/heptools/tree/master/heptools/root/io.py#L127-L138"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#heptools.root.io.TreeWriter.__enter__" title="Link to this definition">#</a></dt>
 <dd><p>Open a temporary local ROOT file for writing.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Returns<span class="colon">:</span></dt>
@@ -449,13 +449,13 @@ document.write(`
 
 <dl class="py method">
 <dt class="sig sig-object py" id="heptools.root.io.TreeWriter.__exit__">
-<span class="sig-name descname"><span class="pre">__exit__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">exc</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/chuyuanliu/heptools/tree/master/heptools/root/io.py#L135-L152"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#heptools.root.io.TreeWriter.__exit__" title="Link to this definition">#</a></dt>
+<span class="sig-name descname"><span class="pre">__exit__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">exc</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/chuyuanliu/heptools/tree/master/heptools/root/io.py#L140-L157"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#heptools.root.io.TreeWriter.__exit__" title="Link to this definition">#</a></dt>
 <dd><p>If no exception is raised, move the temporary file to the output path and store <a class="reference internal" href="tree.html#heptools.root.chunk.Chunk" title="heptools.root.chunk.Chunk"><code class="xref py py-class docutils literal notranslate"><span class="pre">Chunk</span></code></a> information to <a class="reference internal" href="#heptools.root.io.TreeWriter.tree" title="heptools.root.io.TreeWriter.tree"><code class="xref py py-data docutils literal notranslate"><span class="pre">tree</span></code></a>.</p>
 </dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="heptools.root.io.TreeWriter.extend">
-<span class="sig-name descname"><span class="pre">extend</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/chuyuanliu/heptools/tree/master/heptools/root/io.py#L182-L229"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#heptools.root.io.TreeWriter.extend" title="Link to this definition">#</a></dt>
+<span class="sig-name descname"><span class="pre">extend</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/chuyuanliu/heptools/tree/master/heptools/root/io.py#L187-L234"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#heptools.root.io.TreeWriter.extend" title="Link to this definition">#</a></dt>
 <dd><p>Extend the <code class="xref py py-class docutils literal notranslate"><span class="pre">TTree</span></code> with <code class="docutils literal notranslate"><span class="pre">data</span></code> using <a class="reference external" href="https://uproot.readthedocs.io/en/stable/uproot.writing.writable.WritableTree.html#uproot.writing.writable.WritableTree.extend" title="(in Uproot)"><code class="xref py py-meth docutils literal notranslate"><span class="pre">uproot.writing.writable.WritableTree.extend()</span></code></a>.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -471,7 +471,7 @@ document.write(`
 
 <dl class="py class">
 <dt class="sig sig-object py" id="heptools.root.io.TreeReader">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">heptools.root.io.</span></span><span class="sig-name descname"><span class="pre">TreeReader</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">filter</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">transform</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">options</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/chuyuanliu/heptools/tree/master/heptools/root/io.py#L232-L471"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#heptools.root.io.TreeReader" title="Link to this definition">#</a></dt>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">heptools.root.io.</span></span><span class="sig-name descname"><span class="pre">TreeReader</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">filter</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">transform</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">options</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/chuyuanliu/heptools/tree/master/heptools/root/io.py#L237-L474"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#heptools.root.io.TreeReader" title="Link to this definition">#</a></dt>
 <dd><p>Read data from <a class="reference internal" href="tree.html#heptools.root.chunk.Chunk" title="heptools.root.chunk.Chunk"><code class="xref py py-class docutils literal notranslate"><span class="pre">Chunk</span></code></a>.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -484,7 +484,7 @@ document.write(`
 </dl>
 <dl class="py method">
 <dt class="sig sig-object py" id="heptools.root.io.TreeReader.arrays">
-<span class="sig-name descname"><span class="pre">arrays</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">source</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">library</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'ak'</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">options</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/chuyuanliu/heptools/tree/master/heptools/root/io.py#L257-L258"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#heptools.root.io.TreeReader.arrays" title="Link to this definition">#</a></dt>
+<span class="sig-name descname"><span class="pre">arrays</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">source</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">library</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'ak'</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">options</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/chuyuanliu/heptools/tree/master/heptools/root/io.py#L262-L263"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#heptools.root.io.TreeReader.arrays" title="Link to this definition">#</a></dt>
 <dd><p>Read <code class="docutils literal notranslate"><span class="pre">source</span></code> into array.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -501,16 +501,16 @@ document.write(`
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p><em>RecordLike</em> – Data read from <code class="xref py py-class docutils literal notranslate"><span class="pre">TTree</span></code>.</p>
+<dd class="field-even"><p><em>RecordLike</em> – Data from <code class="xref py py-class docutils literal notranslate"><span class="pre">TTree</span></code>.</p>
 </dd>
 </dl>
 </dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="heptools.root.io.TreeReader.concat">
-<span class="sig-name descname"><span class="pre">concat</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">sources</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">library</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'ak'</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">options</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/chuyuanliu/heptools/tree/master/heptools/root/io.py#L312-L313"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#heptools.root.io.TreeReader.concat" title="Link to this definition">#</a></dt>
+<span class="sig-name descname"><span class="pre">concat</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">sources</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">library</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'ak'</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">options</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/chuyuanliu/heptools/tree/master/heptools/root/io.py#L317-L318"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#heptools.root.io.TreeReader.concat" title="Link to this definition">#</a></dt>
 <dd><p>Read <code class="docutils literal notranslate"><span class="pre">sources</span></code> into one array. The branches of <code class="docutils literal notranslate"><span class="pre">sources</span></code> must be the same after filtering.</p>
-<div class="admonition-todo admonition" id="id3">
+<div class="admonition-todo admonition" id="id2">
 <p class="admonition-title">Todo</p>
 <p>Add <a class="reference external" href="https://docs.python.org/3/library/multiprocessing.html#module-multiprocessing" title="(in Python v3.12)"><code class="xref py py-mod docutils literal notranslate"><span class="pre">multiprocessing</span></code></a> support.</p>
 </div>
@@ -518,25 +518,19 @@ document.write(`
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>sources</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#tuple" title="(in Python v3.12)"><em>tuple</em></a><em>[</em><a class="reference internal" href="tree.html#heptools.root.chunk.Chunk" title="heptools.root.chunk.Chunk"><em>Chunk</em></a><em>]</em>) – One or more chunks of <code class="xref py py-class docutils literal notranslate"><span class="pre">TTree</span></code>.</p></li>
-<li><p><strong>library</strong> (<a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Literal" title="(in Python v3.12)"><em>Literal</em></a><em>[</em><em>'ak'</em><em>, </em><em>'np'</em><em>, </em><em>'pd'</em><em>]</em><em>, </em><em>optional</em><em>, </em><em>default='ak'</em>) – <p>The library used to represent arrays.</p>
-<ul>
-<li><p><code class="docutils literal notranslate"><span class="pre">library='ak'</span></code>: use <a class="reference external" href="https://awkward-array.org/doc/stable/reference/generated/ak.concatenate.html#ak.concatenate" title="(in Awkward Array v2.6)"><code class="xref py py-func docutils literal notranslate"><span class="pre">ak.concatenate()</span></code></a>.</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">library='pd'</span></code>: use <a class="reference external" href="https://pandas.pydata.org/docs/reference/api/pandas.concat.html#pandas.concat" title="(in pandas v2.2.0)"><code class="xref py py-func docutils literal notranslate"><span class="pre">pandas.concat()</span></code></a>.</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">library='np'</span></code>: use <a class="reference external" href="https://numpy.org/doc/stable/reference/generated/numpy.concatenate.html#numpy.concatenate" title="(in NumPy v1.26)"><code class="xref py py-func docutils literal notranslate"><span class="pre">numpy.concatenate()</span></code></a>.</p></li>
-</ul>
-</p></li>
+<li><p><strong>library</strong> (<a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Literal" title="(in Python v3.12)"><em>Literal</em></a><em>[</em><em>'ak'</em><em>, </em><em>'np'</em><em>, </em><em>'pd'</em><em>]</em><em>, </em><em>optional</em><em>, </em><em>default='ak'</em>) – The library used to represent arrays.</p></li>
 <li><p><strong>**options</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.12)"><em>dict</em></a><em>, </em><em>optional</em>) – Additional options passed to <a class="reference internal" href="#heptools.root.io.TreeReader.arrays" title="heptools.root.io.TreeReader.arrays"><code class="xref py py-meth docutils literal notranslate"><span class="pre">arrays()</span></code></a>.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p><em>RecordLike</em> – Concatenated data.</p>
+<dd class="field-even"><p><em>RecordLike</em> – Concatenated data from <code class="xref py py-class docutils literal notranslate"><span class="pre">TTree</span></code>.</p>
 </dd>
 </dl>
 </dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="heptools.root.io.TreeReader.iterate">
-<span class="sig-name descname"><span class="pre">iterate</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">sources</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">step</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">...</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">library</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'ak'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mode</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'partition'</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">options</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/chuyuanliu/heptools/tree/master/heptools/root/io.py#L365-L366"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#heptools.root.io.TreeReader.iterate" title="Link to this definition">#</a></dt>
+<span class="sig-name descname"><span class="pre">iterate</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">sources</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">step</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">...</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">library</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'ak'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mode</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'partition'</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">options</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/chuyuanliu/heptools/tree/master/heptools/root/io.py#L366-L367"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#heptools.root.io.TreeReader.iterate" title="Link to this definition">#</a></dt>
 <dd><p>Iterate over <code class="docutils literal notranslate"><span class="pre">sources</span></code>.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -547,21 +541,21 @@ document.write(`
 <li><p><strong>mode</strong> (<a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Literal" title="(in Python v3.12)"><em>Literal</em></a><em>[</em><em>'balance'</em><em>, </em><em>'partition'</em><em>]</em><em>, </em><em>optional</em><em>, </em><em>default='partition'</em>) – <p>The mode to generate iteration steps.</p>
 <ul>
 <li><p><code class="docutils literal notranslate"><span class="pre">mode='balance'</span></code>: use <a class="reference internal" href="tree.html#heptools.root.chunk.Chunk.balance" title="heptools.root.chunk.Chunk.balance"><code class="xref py py-meth docutils literal notranslate"><span class="pre">balance()</span></code></a>. The length of output arrays is not guaranteed to be <code class="docutils literal notranslate"><span class="pre">step</span></code> but no need to concatenate.</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">mode='partition'</span></code>: use <a class="reference internal" href="tree.html#heptools.root.chunk.Chunk.partition" title="heptools.root.chunk.Chunk.partition"><code class="xref py py-meth docutils literal notranslate"><span class="pre">partition()</span></code></a>. The length of output arrays is guaranteed to be <code class="docutils literal notranslate"><span class="pre">step</span></code> except the last one but need to concatenate.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">mode='partition'</span></code>: use <a class="reference internal" href="tree.html#heptools.root.chunk.Chunk.partition" title="heptools.root.chunk.Chunk.partition"><code class="xref py py-meth docutils literal notranslate"><span class="pre">partition()</span></code></a>. The length of output arrays is guaranteed to be <code class="docutils literal notranslate"><span class="pre">step</span></code> except for the last one but need to concatenate.</p></li>
 </ul>
 </p></li>
 <li><p><strong>**options</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.12)"><em>dict</em></a><em>, </em><em>optional</em>) – Additional options passed to <a class="reference internal" href="#heptools.root.io.TreeReader.arrays" title="heptools.root.io.TreeReader.arrays"><code class="xref py py-meth docutils literal notranslate"><span class="pre">arrays()</span></code></a>.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Yields<span class="colon">:</span></dt>
-<dd class="field-even"><p><em>RecordLike</em> – Data with <code class="docutils literal notranslate"><span class="pre">step</span></code> entries.</p>
+<dd class="field-even"><p><em>RecordLike</em> – A chunk of data from <code class="xref py py-class docutils literal notranslate"><span class="pre">TTree</span></code>.</p>
 </dd>
 </dl>
 </dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="heptools.root.io.TreeReader.dask">
-<span class="sig-name descname"><span class="pre">dask</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">sources</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">partition</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">...</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">library</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'ak'</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/chuyuanliu/heptools/tree/master/heptools/root/io.py#L422-L423"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#heptools.root.io.TreeReader.dask" title="Link to this definition">#</a></dt>
+<span class="sig-name descname"><span class="pre">dask</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">sources</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">partition</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">...</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">library</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'ak'</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/chuyuanliu/heptools/tree/master/heptools/root/io.py#L424-L425"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#heptools.root.io.TreeReader.dask" title="Link to this definition">#</a></dt>
 <dd><p>Read <code class="docutils literal notranslate"><span class="pre">sources</span></code> into delayed arrays.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -572,7 +566,7 @@ document.write(`
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p><em>DaskRecordLike</em> – Delayed data from <code class="xref py py-class docutils literal notranslate"><span class="pre">TTree</span></code>.</p>
+<dd class="field-even"><p><em>DelayedRecordLike</em> – Delayed data from <code class="xref py py-class docutils literal notranslate"><span class="pre">TTree</span></code>.</p>
 </dd>
 </dl>
 </dd></dl>
