@@ -5,11 +5,12 @@ from collections import defaultdict, deque
 from concurrent.futures import ThreadPoolExecutor
 from functools import partial
 from logging import Logger
-from typing import TYPE_CHECKING, Callable, Generator, Literal, overload
+from typing import (TYPE_CHECKING, Callable, Generator, Literal, Protocol,
+                    overload)
 
 from ..dask.delayed import delayed
 from ..system.eos import EOS, PathLike
-from ._backend import concat_record, merge_record
+from ._backend import concat_record, merge_record, rename_record
 from .chunk import Chunk
 from .io import TreeReader, TreeWriter
 from .merge import resize
@@ -22,6 +23,21 @@ if TYPE_CHECKING:
     import pandas as pd
 
     from .io import DelayedRecordLike, RecordLike
+
+
+class NameMapping(Protocol):
+    def __call__(self, **keys: str) -> str:
+        ...
+
+
+def _apply_naming(naming: str | NameMapping, keys: dict[str, str]) -> str:
+    if isinstance(naming, str):
+        return naming.format(**keys)
+    elif isinstance(naming, Callable):
+        return naming(**keys)
+    else:
+        raise TypeError(
+            f'Unknown naming "{naming}"')
 
 
 @delayed
@@ -399,18 +415,18 @@ class Friend:
     def dump(
         self,
         base_path: PathLike = ...,
-        naming: str = '{name}_{uuid}_{start}_{stop}.root',
+        naming: str | NameMapping = '{name}_{uuid}_{start}_{stop}.root',
         writer_options: dict = None,
     ):
         """
-        Dump all in-memory data to ROOT files with a given ``naming`` rule.
+        Dump all in-memory data to ROOT files with a given ``naming`` format.
 
         Parameters
         ----------
         base_path: PathLike, optional
             Base path to store the dumped files. See below for details.
-        naming : str, optional
-            Naming rule for the dumped files. See below for details.
+        naming : str or ~typing.Callable, optional
+            Naming format for the dumped files. See below for details.
         writer_options: dict, optional
             Additional options passed to :class:`~.io.TreeWriter`.
 
@@ -425,14 +441,14 @@ class Friend:
         - ``{stop}``: ``target.entry_stop``
         - ``{path0}``, ``{path1}``, ... : ``target.path.parts`` without suffixes in reversed order.
 
-        where the ``target`` is the one passed to :meth:`add`.
+        where the ``target`` is the one passed to :meth:`add`. In a more general case, a :class:`~typing.Callable` can be used to generate the path.
 
         .. warning::
             The generated path is not guaranteed to be unique. If multiple chunks are dumped to the same path, the last one will overwrite the previous ones.
 
         Examples
         --------
-        The naming rule works as follows:
+        The naming format works as follows:
 
         .. code-block:: python
 
@@ -446,14 +462,17 @@ class Friend:
             >>>     ),
             >>>     data
             >>> )
+            >>> # write to root://host.1//a/b/c/test_target_uuid_Events_100_200.root
             >>> friend.dump(
             >>>     '{name}_{path0}_{uuid}_{tree}_{start}_{stop}.root')
-            >>> # write to root://host.1//a/b/c/test_target_uuid_Events_100_200.root
-            >>> # or
+            >>> # or write to root://host.2//x/y/z/b/c/test_uuid_100_200.root
             >>> friend.dump(
             >>>     '{path2}/{path1}/{name}_{uuid}_{start}_{stop}.root',
             >>>     'root://host.2//x/y/z/')
-            >>> # write to root://host.2//x/y/z/b/c/test_uuid_100_200.root
+            >>> # or write to root://host.1//a/b/c/tar_events_100_200.root
+            >>> def filename(**kwargs: str) -> str:
+            >>>     return f'{kwargs["path0"][:3]}_{kwargs["tree"]}_{kwargs["start"]}_{kwargs["stop"]}.root'.lower()
+            >>> friend.dump(filename)
             """
         if self._to_dump:
             if base_path is not ...:
@@ -465,7 +484,8 @@ class Friend:
                     path = target.path.parent
                 else:
                     path = base_path
-                path = path / naming.format(**self._name_dump(target, item))
+                path = path / _apply_naming(
+                    naming, self._name_dump(target, item))
                 with writer(path) as f:
                     f.extend(item.chunk)
                 item.chunk = f.tree
@@ -508,7 +528,7 @@ class Friend:
         step: int,
         chunk_size: int = ...,
         base_path: PathLike = ...,
-        naming: str = '{name}_{uuid}.root',
+        naming: str | NameMapping = '{name}_{uuid}.root',
         reader_options: dict = None,
         writer_options: dict = None,
         dask: bool = False,
@@ -524,8 +544,8 @@ class Friend:
             Number of entries in each new chunk. If not given, all entries will be merged into one chunk.
         base_path: PathLike, optional
             Base path to store the merged files. See notes of :meth:`dump` for details.
-        naming : str, optional
-            Naming rule for the merged files. See notes of :meth:`dump` for details.
+        naming : str or ~typing.Callable, optional
+            Naming format for the merged files. See notes of :meth:`dump` for details.
         reader_options: dict, optional
             Additional options passed to :class:`~.io.TreeReader`.
         writer_options: dict, optional
@@ -565,8 +585,8 @@ class Friend:
                     dummy = _FriendItem(to_merge[0].start, to_merge[-1].stop)
                     chunks = [i.chunk for i in to_merge]
                     if len(chunks) > 1:
-                        path = base / naming.format(
-                            **self._name_dump(target, dummy))
+                        path = base / _apply_naming(
+                            naming, self._name_dump(target, dummy))
                         chunks = resize(
                             path,
                             *chunks,
@@ -592,7 +612,7 @@ class Friend:
     def clone(
         self,
         base_path: PathLike,
-        naming: str = ...,
+        naming: str | NameMapping = ...,
     ):
         """
         Copy all chunks to a new location.
@@ -601,8 +621,8 @@ class Friend:
         ----------
         base_path: PathLike
             Base path to store the cloned files.
-        naming : str, optional
-            Naming rule for the cloned files. If not given, the original names will be used. See notes of :meth:`dump` for details.
+        naming : str or ~typing.Callable, optional
+            Naming format for the cloned files. If not given, the original names will be used. See notes of :meth:`dump` for details.
 
         Returns
         -------
@@ -623,7 +643,7 @@ class Friend:
                 if naming is ...:
                     name = chunk.path.name
                 else:
-                    name = naming.format(**self._name_dump(target, item))
+                    name = _apply_naming(naming, self._name_dump(target, item))
                 path = base_path / name
                 src.append(chunk.path)
                 dst.append(path)
@@ -767,6 +787,20 @@ class Chain:
     """
     A :class:`TChain` like object to manage multiple :class:`~.chunk.Chunk` and :class:`Friend`.
 
+    The structure of output record is given by the following pseudo code:
+
+    - ``library='ak'``:
+        .. code-block:: python
+
+            record[main.branch] = array
+            record[friend.name][friend.branch] = array
+
+    - ``library='pd', 'np'``:
+        .. code-block:: python
+
+            record[main.branch] = array
+            record[friend.branch] = array
+
     Notes
     -----
     The following special methods are implemented:
@@ -778,6 +812,7 @@ class Chain:
     def __init__(self):
         self._chunks: list[Chunk] = []
         self._friends: dict[str, Friend] = {}
+        self._rename: dict[str, str] = {}
 
     def add_chunk(self, *chunks: Chunk):
         """
@@ -795,7 +830,11 @@ class Chain:
         self._chunks.extend(chunks)
         return self
 
-    def add_friend(self, *friends: Friend):
+    def add_friend(
+        self,
+        *friends: Friend,
+        renaming: str | NameMapping = None
+    ):
         """
         Add new :class:`Friend` to this chain or merge to the existing ones.
 
@@ -803,10 +842,19 @@ class Chain:
         ----------
         friends : tuple[Friend]
             Friends to add or merge.
+        renaming : str or ~typing.Callable, optional
+            If given, the branches in the friend trees will be renamed. See below for available keys.
 
         Returns
         -------
         self: Chain
+
+        Notes
+        -----
+        The following keys are available for renaming:
+
+        - ``{friend}``: :data:`Friend.name`
+        - ``{branch}``: branch name
         """
         for friend in friends:
             name = friend.name
@@ -814,6 +862,9 @@ class Chain:
                 self._friends[name] = self._friends[name] + friend
             else:
                 self._friends[name] = friend
+        if renaming is not None:
+            for friend in friends:
+                self._rename[friend.name] = renaming
         return self
 
     def copy(self):
@@ -846,6 +897,9 @@ class Chain:
             chain += other
             return chain
         return NotImplemented
+
+    def _rename_wrapper(self, branch: str, friend: str) -> str:
+        return _apply_naming(self._rename[friend], {'friend': friend, 'branch': branch})
 
     @overload
     def iterate(self, step: int = ..., library: Literal['ak'] = 'ak', mode: Literal['balance', 'partition'] = 'partition', reader_options: dict = None) -> Generator[ak.Array, None, None]:
@@ -898,18 +952,30 @@ class Chain:
         for chunk in chunks:
             if not isinstance(chunk, list):
                 chunk = (chunk,)
-            yield merge_record([
-                reader.concat(*chunk, library=library),
-                *(friend.concat(
+            main = reader.concat(*chunk, library=library)
+            friends = {}
+            for name, friend in self._friends.items():
+                friend = friend.concat(
                     *chunk,
                     filter=reader_options.get('filter'),
                     library=library,
                     reader_options=reader_options)
-                    for friend in self._friends.values())],
-                library=library)
+                if name in self._rename:
+                    friend = rename_record(
+                        friend,
+                        partial(self._rename_wrapper, friend=name),
+                        library=library)
+                friends[name] = friend
+            if library == 'ak':
+                for name, friend in friends.items():
+                    if len(friend.fields) > 0:
+                        main[name] = friend
+                yield main
+            else:
+                yield merge_record([main, *friends.values()], library=library)
 
     @overload
-    def dask(self, partition: int = ..., library: Literal['ak'] = 'ak', reader_options: dict = None) -> tuple[dak.Array, dict[str, dak.Array]]:
+    def dask(self, partition: int = ..., library: Literal['ak'] = 'ak', reader_options: dict = None) -> dak.Array:
         ...
 
     @overload
@@ -925,8 +991,8 @@ class Chain:
         """
         Read chunks and friend trees into delayed arrays.
 
-        .. todo::
-            Merge friend arrays when using ``library='ak'``.
+        .. warning::
+            The ``renaming`` option will be ignored when using ``library='ak'``.
 
         Parameters
         ----------
@@ -940,9 +1006,7 @@ class Chain:
         Returns
         -------
         main : DelayedRecordLike
-            Delayed data from main :class:`TTree`.
-        friends : dict[str, DelayedRecordLike], optional
-            Delayed data from friend :class:`TTree` with friend names as keys. When using ``library='np'``, the ``friends`` will be merged to ``main``
+            Delayed data from main and friend :class:`TTree`.
         """
         if partition is ...:
             partitions = Chunk.common(*self._chunks)
@@ -952,14 +1016,23 @@ class Chain:
         reader_options = reader_options or {}
         reader = TreeReader(**reader_options)
         main = reader.dask(*partitions, library=library)
-        friends = {
-            name: friend.dask(
+        friends = {}
+        for name, friend in self._friends.items():
+            friend = friend.dask(
                 *partitions,
                 filter=reader_options.get('filter'),
                 library=library,
                 reader_options=reader_options)
-            for name, friend in self._friends.items()}
+            if library != 'ak' and name in self._rename:
+                friend = rename_record(
+                    friend,
+                    partial(self._rename_wrapper, friend=name),
+                    library=library)
+            friends[name] = friend
         if library == 'ak':
-            return main, friends
-        elif library == 'np':
+            for name, friend in friends.items():
+                if len(friend.fields) > 0:
+                    main[name] = friend
+            return main
+        else:
             return merge_record([main, *friends.values()], library=library)

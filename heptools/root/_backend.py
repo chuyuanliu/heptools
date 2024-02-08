@@ -127,3 +127,17 @@ def len_record(data, library: Literal['ak', 'pd', 'np'] = ...):
         return len(next(iter(data.values())))
     else:
         raise ValueError(_unknown_msg.format(library=library))
+
+
+def rename_record(data, mapping, library: Literal['ak', 'pd', 'np'] = ...):
+    if library is ...:
+        library = record_backend(data, abbr=True)
+    if library == 'ak':
+        import awkward as ak
+        return ak.zip(dict(zip(map(mapping, ak.fields(data)), ak.unzip(data))), depth_limit=1)
+    elif library == 'pd':
+        return data.rename(columns=mapping, copy=False)
+    elif library == 'np' or library.startswith('dict'):
+        return dict(zip(map(mapping, data.keys()), data.values()))
+    else:
+        raise ValueError(_unknown_msg.format(library=library))
