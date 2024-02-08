@@ -9,7 +9,13 @@ ROOT file I/O based on :func:`uproot.reading.open`, :func:`uproot._dask.dask` an
         object_cache = None
         array_cache = None
 
-    and the following default options for both :func:`uproot.open` and :func:`uproot.dask`:
+    for :func:`uproot.dask`:
+
+    .. code-block:: python
+
+        open_files = False
+
+    and for both:
     
     .. code-block:: python
 
@@ -17,9 +23,6 @@ ROOT file I/O based on :func:`uproot.reading.open`, :func:`uproot._dask.dask` an
 
 .. warning::
     Writers will always overwrite the output file if it exists.
-
-.. todo::
-    Add lazy reading and schema support using :class:`coffea.nanoevents.NanoEventsFactory`.
 
 .. todo::
     Consider migrating to `fsspec-xrootd <https://coffeateam.github.io/fsspec-xrootd/>`_
@@ -55,14 +58,16 @@ if TYPE_CHECKING:
 
 
 class _Reader:
-    _default_options = {
-        'timeout': 180,
-    }
     _open_options = {
         'object_cache': None,
         'array_cache': None,
     }
-    _dask_options = {}
+    _dask_options = {
+        'open_files': False,
+    }
+    _default_options = {
+        'timeout': 180,
+    }
 
     def __init__(self, **options):
         self._dask_options = self._default_options | self._dask_options | options
@@ -290,7 +295,7 @@ class TreeReader(_Reader):
         Returns
         -------
         RecordLike
-            Data read from :class:`TTree`.
+            Data from :class:`TTree`.
         """
         options['library'] = library
         branches = source.branches
@@ -344,7 +349,7 @@ class TreeReader(_Reader):
         Returns
         -------
         RecordLike
-            Concatenated data.
+            Concatenated data from :class:`TTree`.
         """
         options['library'] = library
         if len(sources) == 1:
@@ -392,14 +397,14 @@ class TreeReader(_Reader):
             The mode to generate iteration steps.
 
             - ``mode='balance'``: use :meth:`~.chunk.Chunk.balance`. The length of output arrays is not guaranteed to be ``step`` but no need to concatenate.
-            - ``mode='partition'``: use :meth:`~.chunk.Chunk.partition`. The length of output arrays is guaranteed to be ``step`` except the last one but need to concatenate.
+            - ``mode='partition'``: use :meth:`~.chunk.Chunk.partition`. The length of output arrays is guaranteed to be ``step`` except for the last one but need to concatenate.
         **options : dict, optional
             Additional options passed to :meth:`arrays`.
 
         Yields
         ------
         RecordLike
-            Data with ``step`` entries.
+            A chunk of data from :class:`TTree`.
         """
         options['library'] = library
         if step is ...:
@@ -443,7 +448,7 @@ class TreeReader(_Reader):
 
         Returns
         -------
-        DaskRecordLike
+        DelayedRecordLike
             Delayed data from :class:`TTree`.
         """
         if partition is ...:

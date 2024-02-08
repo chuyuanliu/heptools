@@ -276,7 +276,7 @@ class Chunk(metaclass=_ChunkMeta):
     def common(
         cls,
         *chunks: Chunk
-    ):
+    ) -> list[Chunk]:
         """
         Find common branches of ``chunks``.
 

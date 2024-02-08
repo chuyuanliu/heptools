@@ -89,7 +89,7 @@ def merge_record(data: list, library: Literal['ak', 'pd', 'np'] = ...):
         return data[0]
     if library == 'ak':
         import awkward as ak
-        return ak.Array(reduce(op.or_, (dict(zip(ak.fields(arr), ak.unzip(arr))) for arr in data)))
+        return ak.zip(reduce(op.or_, (dict(zip(ak.fields(arr), ak.unzip(arr))) for arr in data)), depth_limit=1)
     elif library == 'pd':
         import pandas as pd
         return pd.concat(data, ignore_index=False, sort=False, copy=False, axis=1)

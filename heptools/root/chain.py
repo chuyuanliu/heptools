@@ -1,4 +1,3 @@
-# TODO
 from __future__ import annotations
 
 import bisect
@@ -6,11 +5,11 @@ from collections import defaultdict, deque
 from concurrent.futures import ThreadPoolExecutor
 from functools import partial
 from logging import Logger
-from typing import TYPE_CHECKING, Callable, Literal, overload
+from typing import TYPE_CHECKING, Callable, Generator, Literal, overload
 
 from ..dask.delayed import delayed
 from ..system.eos import EOS, PathLike
-from ._backend import concat_record
+from ._backend import concat_record, merge_record
 from .chunk import Chunk
 from .io import TreeReader, TreeWriter
 from .merge import resize
@@ -91,8 +90,8 @@ class Friend:
     -----
     The following special methods are implemented:
 
-    - :meth:`__iadd__`
-    - :meth:`__add__`
+    - :meth:`__iadd__` :class:`Friend`
+    - :meth:`__add__` :class:`Friend`
     - :meth:`__repr__`
     """
     name: str
@@ -764,26 +763,203 @@ class Friend:
         return friend
 
 
-class Chain:  # TODO
+class Chain:
     """
     A :class:`TChain` like object to manage multiple :class:`~.chunk.Chunk` and :class:`Friend`.
+
+    Notes
+    -----
+    The following special methods are implemented:
+
+    - :meth:`__iadd__` :class:`~.chunk.Chunk`, :class:`Friend`, :class:`Chain`
+    - :meth:`__add__` :class:`Chain`
     """
 
     def __init__(self):
         self._chunks: list[Chunk] = []
-        self._friends: dict[str, tuple[Friend, bool]] = {}
+        self._friends: dict[str, Friend] = {}
 
-    def append(self):
-        ...  # TODO
+    def add_chunk(self, *chunks: Chunk):
+        """
+        Add :class:`~.chunk.Chunk` to this chain.
 
-    def extend(self):
-        ...  # TODO
+        Parameters
+        ----------
+        chunks : tuple[Chunk]
+            Chunks to add.
 
-    def add_friend(self):
-        ...  # TODO
+        Returns
+        -------
+        self: Chain
+        """
+        self._chunks.extend(chunks)
+        return self
 
-    def iterate(self):
-        ...  # TODO
+    def add_friend(self, *friends: Friend):
+        """
+        Add new :class:`Friend` to this chain or merge to the existing ones.
 
-    def dask(self):
-        ...  # TODO
+        Parameters
+        ----------
+        friends : tuple[Friend]
+            Friends to add or merge.
+
+        Returns
+        -------
+        self: Chain
+        """
+        for friend in friends:
+            name = friend.name
+            if name in self._friends:
+                self._friends[name] = self._friends[name] + friend
+            else:
+                self._friends[name] = friend
+        return self
+
+    def copy(self):
+        """
+        Returns
+        -------
+        Chain
+            A shallow copy of ``self``.
+        """
+        chain = Chain()
+        chain._chunks += self._chunks
+        chain._friends |= self._friends
+        return chain
+
+    def __iadd__(self, other) -> Chain:
+        if isinstance(other, Chunk):
+            return self.add_chunk(other)
+        elif isinstance(other, Friend):
+            return self.add_friend(other)
+        elif isinstance(other, Chain):
+            return (self
+                    .add_chunk(*other._chunks)
+                    .add_friend(*other._friends.values()))
+        else:
+            return NotImplemented
+
+    def __add__(self, other) -> Chain:
+        if isinstance(other, Chain):
+            chain = self.copy()
+            chain += other
+            return chain
+        return NotImplemented
+
+    @overload
+    def iterate(self, step: int = ..., library: Literal['ak'] = 'ak', mode: Literal['balance', 'partition'] = 'partition', reader_options: dict = None) -> Generator[ak.Array, None, None]:
+        ...
+
+    @overload
+    def iterate(self, step: int = ..., library: Literal['pd'] = 'pd', mode: Literal['balance', 'partition'] = 'partition', reader_options: dict = None) -> Generator[pd.DataFrame, None, None]:
+        ...
+
+    @overload
+    def iterate(self, step: int = ..., library: Literal['np'] = 'np', mode: Literal['balance', 'partition'] = 'partition', reader_options: dict = None) -> Generator[dict[str, np.ndarray], None, None]:
+        ...
+
+    def iterate(
+        self,
+        step: int = ...,
+        library: Literal['ak', 'pd', 'np'] = 'ak',
+        mode: Literal['balance', 'partition'] = 'partition',
+        reader_options: dict = None,
+    ) -> Generator[RecordLike, None, None]:
+        """
+        Iterate over chunks and friend trees.
+
+        Parameters
+        ----------
+        step : int, optional
+            Number of entries to read in each iteration step. If not given, the chunk size will be used and the ``mode`` will be ignored.
+        library : ~typing.Literal['ak', 'np', 'pd'], optional, default='ak'
+            The library used to represent arrays.
+        mode : ~typing.Literal['balance', 'partition'], optional, default='partition'
+            The mode to generate iteration steps. See :meth:`~.io.TreeReader.iterate` for details.
+        reader_options : dict, optional
+            Additional options passed to :class:`~.io.TreeReader`.
+
+        Yields
+        ------
+        RecordLike
+            A chunk of merged data from main and friend :class:`TTree`.
+        """
+        if step is ...:
+            chunks = Chunk.common(*self._chunks)
+        elif mode == 'partition':
+            chunks = Chunk.partition(step, *self._chunks, common_branches=True)
+        elif mode == 'balance':
+            chunks = Chunk.balance(step, *self._chunks, common_branches=True)
+        else:
+            raise ValueError(f'Unknown mode "{mode}"')
+        reader_options = reader_options or {}
+        reader = TreeReader(**reader_options)
+        for chunk in chunks:
+            if not isinstance(chunk, list):
+                chunk = (chunk,)
+            yield merge_record([
+                reader.concat(*chunk, library=library),
+                *(friend.concat(
+                    *chunk,
+                    filter=reader_options.get('filter'),
+                    library=library,
+                    reader_options=reader_options)
+                    for friend in self._friends.values())],
+                library=library)
+
+    @overload
+    def dask(self, partition: int = ..., library: Literal['ak'] = 'ak', reader_options: dict = None) -> tuple[dak.Array, dict[str, dak.Array]]:
+        ...
+
+    @overload
+    def dask(self, partition: int = ..., library: Literal['np'] = 'np', reader_options: dict = None) -> dict[str, da.Array]:
+        ...
+
+    def dask(
+        self,
+        partition: int = ...,
+        library: Literal['ak', 'np'] = 'ak',
+        reader_options: dict = None,
+    ) -> DelayedRecordLike:
+        """
+        Read chunks and friend trees into delayed arrays.
+
+        .. todo::
+            Merge friend arrays when using ``library='ak'``.
+
+        Parameters
+        ----------
+        partition: int, optional
+            If given, the ``sources`` will be splitted into smaller chunks targeting ``partition`` entries.
+        library : ~typing.Literal['ak', 'np'], optional, default='ak'
+            The library used to represent arrays.
+        reader_options : dict, optional
+            Additional options passed to :class:`~.io.TreeReader`.
+
+        Returns
+        -------
+        main : DelayedRecordLike
+            Delayed data from main :class:`TTree`.
+        friends : dict[str, DelayedRecordLike], optional
+            Delayed data from friend :class:`TTree` with friend names as keys. When using ``library='np'``, the ``friends`` will be merged to ``main``
+        """
+        if partition is ...:
+            partitions = Chunk.common(*self._chunks)
+        else:
+            partitions = [*Chunk.balance(
+                partition, *self._chunks, common_branches=True)]
+        reader_options = reader_options or {}
+        reader = TreeReader(**reader_options)
+        main = reader.dask(*partitions, library=library)
+        friends = {
+            name: friend.dask(
+                *partitions,
+                filter=reader_options.get('filter'),
+                library=library,
+                reader_options=reader_options)
+            for name, friend in self._friends.items()}
+        if library == 'ak':
+            return main, friends
+        elif library == 'np':
+            return merge_record([main, *friends.values()], library=library)
