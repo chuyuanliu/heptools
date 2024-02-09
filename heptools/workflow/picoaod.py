@@ -1,7 +1,7 @@
 # TODO migrate to coffea2024
 import re
 from abc import abstractmethod
-from concurrent.futures import Future, ThreadPoolExecutor
+from concurrent.futures import Future, ProcessPoolExecutor
 
 import awkward as ak
 import uproot
@@ -50,6 +50,7 @@ class PicoAOD(ProcessorABC):
         result = {dataset: {
             'total_events': len(events),
             'saved_events': ak.sum(selected),
+            'source': [(chunk.entry_start, chunk.entry_stop, str(chunk.path))]
         }}
         filename = f'{dataset}/{_PICOAOD}_{chunk.uuid}_{chunk.entry_start}_{chunk.entry_stop}{_ROOT}'
         path = self._base / filename
@@ -77,13 +78,12 @@ def _fetch_metadata(dataset: str, path: PathLike):
         }
 
 
-def fetch_metadata(fileset: dict[str, dict[str]]) -> dict[str, dict[str]]:
-    count = sum(len(path['files']) for path in fileset.values())
-    with ThreadPoolExecutor(max_workers=count) as executor:
+def fetch_metadata(fileset: dict[str, dict[str]], n_process: int = None) -> dict[str, dict[str]]:
+    with ProcessPoolExecutor(max_workers=n_process) as executor:
         tasks: list[Future] = []
         for dataset, files in fileset.items():
-            for files in files['files']:
-                tasks.append(executor.submit(_fetch_metadata, dataset, files))
+            for file in files['files']:
+                tasks.append(executor.submit(_fetch_metadata, dataset, file))
         results = [task.result() for task in tasks]
     return accumulate(results)
 
