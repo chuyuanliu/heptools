@@ -25,7 +25,7 @@ __all__ = ['EOS', 'PathLike', 'save', 'load']
 
 
 class EOS:
-    _url_pattern = re.compile(r'^[\w]+://[\w.-]+')
+    _url_pattern = re.compile(r'^[\w]+://[\w.\-:]+')
     _slash_pattern = re.compile(r'(?<!:)/{2,}')
 
     run: bool = True
