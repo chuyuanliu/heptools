@@ -19,4 +19,6 @@ jobs:
     with:
       tag: ml
   docs:
+    permissions:
+      contents: write
     uses: ./.github/workflows/sphinx.yml

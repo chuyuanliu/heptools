@@ -6,8 +6,6 @@ on:
 jobs:
   build-sphinx-docs:
     runs-on: ubuntu-latest
-    permissions:
-      contents: write
     concurrency:
       group: publish_sphinx_doc
       cancel-in-progress: true
