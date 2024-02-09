@@ -10,14 +10,17 @@ jobs:
     uses: ./.github/workflows/docker.yml
     with:
       tag: latest
+    secrets: inherit
   docker-image-exp:
     uses: ./.github/workflows/docker.yml
     with:
       tag: exp
+    secrets: inherit
   docker-image-ml:
     uses: ./.github/workflows/docker.yml
     with:
       tag: ml
+    secrets: inherit
   docs:
     permissions:
       contents: write
