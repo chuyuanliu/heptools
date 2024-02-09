@@ -1,13 +1,10 @@
-name: sphinx-doc
+name: Build with Sphinx and deploy to GitHub Pages
 
 on:
-  push:
-    branches:
-      - "master"
-  pull_request:
+  workflow_call:
 
 jobs:
-  docs:
+  build-sphinx-docs:
     runs-on: ubuntu-latest
     permissions:
       contents: write

@@ -1,0 +1,22 @@
+name: docker-image
+
+on:
+  push:
+    branches:
+      - "master"
+
+jobs:
+  docker-image-latest:
+    uses: ./.github/workflows/docker.yml
+    with:
+      tag: latest
+  docker-image-exp:
+    uses: ./.github/workflows/docker.yml
+    with:
+      tag: exp
+  docker-image-ml:
+    uses: ./.github/workflows/docker.yml
+    with:
+      tag: ml
+  docs:
+    uses: ./.github/workflows/sphinx.yml
