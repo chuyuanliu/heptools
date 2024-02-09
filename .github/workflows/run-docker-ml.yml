@@ -1,4 +1,4 @@
-name: docker-image
+name: Build Docker image for machine learning
 
 on:
   push:
@@ -9,7 +9,7 @@ on:
 
 jobs:
   docker-image-ml:
-    uses: ./.github/workflows/jobs/docker.yml
+    uses: ./.github/workflows/job-docker.yml
     with:
       tag: ml
     secrets: inherit
