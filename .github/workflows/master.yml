@@ -7,21 +7,16 @@ on:
 
 jobs:
   docker-image-latest:
-    uses: ./.github/workflows/docker.yml
+    uses: ./.github/workflows/jobs/docker.yml
     with:
       tag: latest
     secrets: inherit
   docker-image-exp:
-    uses: ./.github/workflows/docker.yml
+    uses: ./.github/workflows/jobs/docker.yml
     with:
       tag: exp
-    secrets: inherit
-  docker-image-ml:
-    uses: ./.github/workflows/docker.yml
-    with:
-      tag: ml
     secrets: inherit
   docs:
     permissions:
       contents: write
-    uses: ./.github/workflows/sphinx.yml
+    uses: ./.github/workflows/jobs/sphinx.yml

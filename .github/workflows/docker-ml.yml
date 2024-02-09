@@ -1,0 +1,15 @@
+name: docker-image
+
+on:
+  push:
+    branches:
+      - "master"
+    paths:
+      - "docker/ml/Dockerfile"
+
+jobs:
+  docker-image-ml:
+    uses: ./.github/workflows/jobs/docker.yml
+    with:
+      tag: ml
+    secrets: inherit
