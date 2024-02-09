@@ -189,6 +189,7 @@ class Chunk(metaclass=_ChunkMeta):
                     self._num_entries = tree.num_entries
                 if self._uuid is ...:
                     self._uuid = file.file.uuid
+        return self
 
     def __hash__(self):
         return hash((self.uuid, self.name))
@@ -271,8 +272,8 @@ class Chunk(metaclass=_ChunkMeta):
         """
         chunks = [Chunk(path, name) for path, name in paths]
         with ProcessPoolExecutor(max_workers=n_process) as executor:
-            executor.map(Chunk._fetch, chunks)
-        return chunks
+            chunks = executor.map(Chunk._fetch, chunks)
+        return [*chunks]
 
     @classmethod
     def common(

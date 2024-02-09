@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import bisect
 from collections import defaultdict, deque
-from concurrent.futures import ProcessPoolExecutor
+from concurrent.futures import ThreadPoolExecutor
 from functools import partial
 from logging import Logger
 from typing import (TYPE_CHECKING, Callable, Generator, Literal, Protocol,
@@ -492,7 +492,7 @@ class Friend:
                 self._check_item(item)
             self._dump.clear()
 
-    def reset(self, confirm: bool = True, n_processes: int = None):
+    def reset(self, confirm: bool = True):
         """
         Reset the friend tree and delete all dumped files.
 
@@ -500,8 +500,6 @@ class Friend:
         ----------
         confirm : bool, optional, default=True
             Confirm the deletion.
-        n_processes : int, optional
-            Number of processes to use.
 
         """
         files = []
@@ -517,7 +515,7 @@ class Friend:
             if confirmation != self.name:
                 Logger.root.info('Deletion aborted.')
                 return
-        with ProcessPoolExecutor(max_workers=n_processes) as executor:
+        with ThreadPoolExecutor(max_workers=len(files)) as executor:
             executor.map(EOS.rm, files)
         self._branches = None
         self._data.clear()
@@ -616,7 +614,6 @@ class Friend:
         self,
         base_path: PathLike,
         naming: str | NameMapping = ...,
-        n_processes: int = None,
     ):
         """
         Copy all chunks to a new location.
@@ -627,8 +624,6 @@ class Friend:
             Base path to store the cloned files.
         naming : str or ~typing.Callable, optional
             Naming format for the cloned files. If not given, the original names will be used. See notes of :meth:`dump` for details.
-        n_processes : int, optional
-            Number of processes to use.
 
         Returns
         -------
@@ -656,7 +651,7 @@ class Friend:
                 chunk.path = path
                 friend._data[target].append(
                     _FriendItem(item.start, item.stop, chunk))
-        with ProcessPoolExecutor(max_workers=n_processes) as executor:
+        with ThreadPoolExecutor(max_workers=len(src)) as executor:
             executor.map(
                 partial(EOS.cp, parents=True, overwrite=True), src, dst)
         return friend
@@ -664,7 +659,6 @@ class Friend:
     def integrity(
         self,
         logger: Logger = None,
-        n_processes: int = None,
     ):
         """
         Check and report the following:
@@ -681,8 +675,6 @@ class Friend:
         ----------
         logger : ~logging.Logger, optional
             The logger used to report the issues. Can be a :class:`~logging.Logger` or any class with the same interface. If not given, the default logger will be used.
-        n_processes : int, optional
-            Number of processes to use.
         """
         if logger is None:
             logger = Logger.root
@@ -693,7 +685,7 @@ class Friend:
             for item in items:
                 if isinstance(item.chunk, Chunk):
                     checked.append(item.chunk)
-        with ProcessPoolExecutor(max_workers=n_processes) as executor:
+        with ThreadPoolExecutor(max_workers=len(checked)) as executor:
             checked = deque(executor.map(
                 partial(Chunk.integrity, logger=logger), checked))
         for target, items in self._data.items():
