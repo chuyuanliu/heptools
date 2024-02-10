@@ -35,6 +35,6 @@ jobs:
         uses: docker/build-push-action@v4
         with:
           context: .
-          file: ./docker/${{ inputs.tag }}/Dockerfile
+          file: ./docker/${{ inputs.tag }}.Dockerfile
           push: true
           tags: ${{ secrets.DOCKERHUB_USERNAME }}/heptools:${{ inputs.tag }}
