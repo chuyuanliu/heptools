@@ -111,12 +111,18 @@ def integrity_check(
                 chunks = sorted(outputs[file], key=lambda x: x[0])
                 if ns is not None:
                     chunks.append((ns[file], ns[file]))
-                start = 0
+                merged = []
+                start, stop = 0, 0
                 for _start, _stop in chunks:
-                    if _start != start:
+                    if _start != stop:
+                        if start != stop:
+                            merged.append([start, stop])
+                        start = _start
                         logging.error(
-                            f'Missing chunk: [{start}, {_start}) in "{file}"')
-                    start = _stop
+                            f'Missing chunk: [{stop}, {_start}) in "{file}"')
+                    stop = _stop
+                output[dataset]['source'][str(file)] = merged
+    return output
 
 
 def resize(
