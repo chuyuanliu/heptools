@@ -21,13 +21,6 @@ jobs:
       tag: exp
     secrets: inherit
 
-  docker-image-latest:
-    needs: docker-image-base
-    uses: ./.github/workflows/job-docker.yml
-    with:
-      tag: latest
-    secrets: inherit
-
   docker-image-ml:
     needs: docker-image-base
     uses: ./.github/workflows/job-docker.yml
