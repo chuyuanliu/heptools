@@ -1,0 +1,16 @@
+name: Build and Deploy Documentation
+
+on:
+  push:
+    branches:
+      - master
+    paths:
+      - "heptools/**"
+      - "docs/**"
+      - "sphinx_linkrepo.py"
+
+jobs:
+  docs:
+    permissions:
+      contents: write
+    uses: ./.github/workflows/job-sphinx.yml

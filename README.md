@@ -68,6 +68,10 @@ change singularity (apptainer) cache dir
 
     export APPTAINER_CACHEDIR="${HOME}/nobackup/.apptainer/"
 
+change singularity (apptainer) temp dir
+
+    export APPTAINER_TMPDIR="${HOME}/nobackup/.apptainer/"
+
 ## TODO
 
 - check: use TYPE_CHECKING to avoid circular import, unused import

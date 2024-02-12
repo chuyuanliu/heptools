@@ -1,9 +1,15 @@
-name: Default workflows for master branch
+name: Build Docker images
 
 on:
   push:
     branches:
       - "master"
+    paths:
+      - "heptools/**"
+      - "setup.cfg"
+      - "pyproject.toml"
+      - "docker/exp*"
+      - "docker/latest*"
 
 jobs:
   docker-image-latest:
@@ -16,7 +22,3 @@ jobs:
     with:
       tag: exp
     secrets: inherit
-  docs:
-    permissions:
-      contents: write
-    uses: ./.github/workflows/job-sphinx.yml
