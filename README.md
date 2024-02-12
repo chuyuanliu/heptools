@@ -90,9 +90,8 @@ export APPTAINER_TMPDIR="${HOME}/nobackup/.apptainer/"
 ## TODO
 
 - check: use TYPE_CHECKING to avoid circular import, unused import
-- add:friend tree
 - add:hist utils
-- add:hist visualizer
 - rewrite: XSection
+- doc
 - comment
 - unit test
