@@ -1,6 +1,6 @@
 FROM condaforge/mambaforge:latest
 
-RUN mamba env update -n base -f https://raw.githubusercontent.com/chuyuanliu/heptools/master/docker/base.yml \
+RUN mamba env update -n base -f https://raw.githubusercontent.com/chuyuanliu/heptools/master/docker/ml.yml \
     && mamba install --yes \
     -c conda-forge \
     # grid certificate
