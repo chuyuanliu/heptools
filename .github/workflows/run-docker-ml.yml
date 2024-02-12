@@ -6,6 +6,7 @@ on:
       - "master"
     paths:
       - "docker/ml.Dockerfile"
+      - "docker/ml.env.yml"
 
 jobs:
   docker-image-ml:
