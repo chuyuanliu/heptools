@@ -1,15 +1,10 @@
-name: heptools-exp
+name: heptools-dev
 channels:
   - conda-forge
-  - pytorch
-  - nvidia
 dependencies:
   - python=3.10
   - pip
   - pycurl
-  # machine learning
-  - pytorch::pytorch
-  - pytorch::pytorch-cuda=12.1
   # numerical
   - numpy
   - scipy
@@ -22,7 +17,18 @@ dependencies:
   - pip:
       - graphviz
   - rich
+  # parallel
+  - dask
+  - dask-jobqueue
+  - dask-awkward
+  - dask-histogram
+  # benchmarks
+  - scalene
   # Scikit-HEP
+  - coffea
   - uproot
   - awkward
   - awkward-pandas
+  - hist
+  - particle
+  - correctionlib

@@ -7,7 +7,7 @@ jobs:
   build-sphinx-docs:
     runs-on: ubuntu-latest
     concurrency:
-      group: publish_sphinx_doc
+      group: build_sphinx_docs
       cancel-in-progress: true
     steps:
       - name: Checkout

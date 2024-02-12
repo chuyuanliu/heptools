@@ -1,0 +1,36 @@
+name: Build base Docker image
+
+on:
+  push:
+    branches:
+      - master
+    paths:
+      - "docker/base.*"
+
+jobs:
+  docker-image-base:
+    uses: ./.github/workflows/job-docker.yml
+    with:
+      tag: base
+    secrets: inherit
+
+  docker-image-exp:
+    needs: docker-image-base
+    uses: ./.github/workflows/job-docker.yml
+    with:
+      tag: exp
+    secrets: inherit
+
+  docker-image-latest:
+    needs: docker-image-base
+    uses: ./.github/workflows/job-docker.yml
+    with:
+      tag: latest
+    secrets: inherit
+
+  docker-image-ml:
+    needs: docker-image-base
+    uses: ./.github/workflows/job-docker.yml
+    with:
+      tag: ml
+    secrets: inherit

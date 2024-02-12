@@ -1,0 +1,9 @@
+name: ml
+channels:
+  - conda-forge
+  - pytorch
+  - nvidia
+dependencies:
+  # machine learning
+  - pytorch::pytorch
+  - pytorch::pytorch-cuda=12.1

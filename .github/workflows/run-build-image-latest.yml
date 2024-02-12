@@ -1,24 +1,18 @@
-name: Build Docker images
+name: Build Docker image with heptools
 
 on:
   push:
     branches:
-      - "master"
+      - master
     paths:
+      - "docker/latest.*"
       - "heptools/**"
       - "setup.cfg"
       - "pyproject.toml"
-      - "docker/exp*"
-      - "docker/latest*"
 
 jobs:
   docker-image-latest:
     uses: ./.github/workflows/job-docker.yml
     with:
       tag: latest
-    secrets: inherit
-  docker-image-exp:
-    uses: ./.github/workflows/job-docker.yml
-    with:
-      tag: exp
     secrets: inherit

@@ -3,10 +3,9 @@ name: Build Docker image for machine learning
 on:
   push:
     branches:
-      - "master"
+      - master
     paths:
-      - "docker/ml.Dockerfile"
-      - "docker/ml.env.yml"
+      - "docker/ml.*"
 
 jobs:
   docker-image-ml:

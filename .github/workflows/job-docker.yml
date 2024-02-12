@@ -16,7 +16,7 @@ jobs:
   build-docker-image:
     runs-on: ubuntu-latest
     concurrency:
-      group: publish_docker_image_${{ inputs.tag }}
+      group: build_docker_image_${{ inputs.tag }}
       cancel-in-progress: true
     steps:
       - name: Checkout
