@@ -14,7 +14,7 @@ dependencies:
   - bokeh
   - graphviz
   - pip:
-      - graphviz
+    - graphviz
   - rich
   # parallel
   - dask

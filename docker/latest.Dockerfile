@@ -1,6 +1,3 @@
-# syntax=docker/dockerfile:1
-# https://github.com/CoffeaTeam/docker-coffea-base/blob/main/base/Dockerfile
-# https://github.com/CoffeaTeam/docker-coffea-dask/blob/main/dask/Dockerfile
 FROM condaforge/mambaforge:latest
 
 RUN mamba env update -n base -f https://raw.githubusercontent.com/chuyuanliu/heptools/master/docker/latest.yml \

@@ -1,4 +1,4 @@
-name: heptools-dev
+name: heptools-exp
 channels:
   - conda-forge
 dependencies:
@@ -15,7 +15,7 @@ dependencies:
   - bokeh
   - graphviz
   - pip:
-      - graphviz
+    - graphviz
   - rich
   # parallel
   - dask
