@@ -4,25 +4,6 @@ channels:
   - pytorch
   - nvidia
 dependencies:
-  - python=3.10
-  - pip
-  - pycurl
-  # numerical
-  - numpy
-  - scipy
-  - pandas
-  - pyarrow
-  # visualization
-  - matplotlib
-  - bokeh
-  - graphviz
-  - pip:
-    - graphviz
-  - rich
-  # Scikit-HEP
-  - uproot
-  - awkward
-  - awkward-pandas
   # machine learning
   - pytorch::pytorch
   - pytorch::pytorch-cuda=12.1

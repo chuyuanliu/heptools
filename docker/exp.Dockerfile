@@ -1,26 +1,4 @@
-FROM condaforge/mambaforge:latest
+FROM chuyuanliu/heptools:base
 
-RUN mamba env update -n base -f https://raw.githubusercontent.com/chuyuanliu/heptools/master/docker/exp.yml \
-    && mamba install --yes \
-    -c conda-forge \
-    # grid certificate
-    voms \
-    ca-policy-lcg \
-    # HTCondor
-    htcondor \
-    # XRootD
-    xrootd \
-    fsspec-xrootd \
-    # tini
-    tini \
-    && mamba clean --all --yes \
-    && pip install --no-cache-dir \
-    # DB
-    dbs3-client \
-    rucio-clients \
-    && pip install --no-cache-dir --no-dependencies git+https://github.com/chuyuanliu/heptools.git@master
-RUN ln -s /opt/conda/etc/grid-security /etc/grid-security
-# rucio
-RUN mkdir -p /opt/rucio/etc/
-RUN wget -O /opt/rucio/etc/rucio.cfg https://raw.githubusercontent.com/dmwm/CMSRucio/master/docker/CMSRucioClient/rucio-prod.cfg
+RUN pip install --no-cache-dir --no-dependencies git+https://github.com/chuyuanliu/heptools.git@master
 ENTRYPOINT ["tini", "-g", "--"]
