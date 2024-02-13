@@ -22,7 +22,7 @@ jobs:
     secrets: inherit
 
   docker-image-latest:
-    needs: docker-image-exp
+    needs: docker-image-base
     uses: ./.github/workflows/job-docker.yml
     with:
       tag: latest

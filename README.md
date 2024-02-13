@@ -75,15 +75,10 @@ singularity shell -B .:/srv -B /cvmfs -B /uscmst1b_scratch/lpc1 -B $(readlink ${
 
 ## Tips
 
-change singularity (apptainer) cache dir
+change singularity (apptainer) cache and temp dir
 
 ```bash
 export APPTAINER_CACHEDIR="${HOME}/nobackup/.apptainer/"
-```
-
-change singularity (apptainer) temp dir
-
-```bash
 export APPTAINER_TMPDIR="${HOME}/nobackup/.apptainer/"
 ```
 
