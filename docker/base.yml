@@ -10,6 +10,7 @@ dependencies:
   - scipy
   - pandas
   - pyarrow
+  - numba
   # visualization
   - matplotlib
   - bokeh
