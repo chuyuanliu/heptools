@@ -8,4 +8,3 @@ These documents describe the potential performance issues and best practices for
     :hidden:
 
     performance/awkward
-    performance/root_io
