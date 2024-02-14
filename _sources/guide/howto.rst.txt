@@ -4,4 +4,4 @@ How-to
 .. toctree::
     :hidden:
 
-    howto/friend_tree.rst
+    howto/construct_friend_tree.rst

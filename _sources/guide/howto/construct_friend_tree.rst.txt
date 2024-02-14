@@ -1,6 +1,6 @@
-**************************************
-Construct :class:`~.root.chain.Friend`
-**************************************
+**********************************************
+Construct :class:`~.root.chain.Friend` Tree
+**********************************************
 
 Basic Usage
 ======================
@@ -37,10 +37,9 @@ Then, the data can be retrieved by calling :meth:`~.root.chain.Friend.arrays`.
     with open("friend.json", "r") as f:
         friend = Friend.from_json(json.load(f))
     # fetch the metadata of the target tree
-    target = Chunk(source=path, name=name, fetch=True)
+    target = Chunk(source=target_tree_path, name=target_tree_name, fetch=True)
     # retrieve branches
     branches = friend.arrays(target)
-    # now you can use the branches as you like
 
 You can also attach an existing tree as a friend.
 
@@ -82,7 +81,7 @@ The friend tree can be used inside coffea processors. For example,
     # run the processor
     friend = ... # run the processor in a way you like
     # (optional) merge the friend chunks to improve reading performance
-    merged_friend = friend.merge()
+    merged_friend = friend.merge(step=100_000)
     # save the friend tree to a json file
     with open("friend.json", "w") as f:
         json.dump(merged_friend, f, cls=DefaultEncoder)
@@ -93,7 +92,7 @@ For a large dataset, you can use dask to merge.
 
     import dask
 
-    merged_friend, = dask.compute(friend.merge(dask=True))
+    merged_friend, = dask.compute(friend.merge(step=100_000, dask=True))
 
 Then, the data can be retrieved in other processors. For example,
 
@@ -115,5 +114,6 @@ Then, the data can be retrieved in other processors. For example,
 
 With ``coffea>=2023.12.0``
 ===========================
-# TODO steps: match partition, convert to array, convert back and add up.
-# TODO steps: match partition, read from friend
+# TODO construct: match partition, convert to array, convert back and add up.
+
+# TODO retrieve: match partition, read from friend

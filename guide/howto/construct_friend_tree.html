@@ -8,7 +8,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>Construct Friend &#8212; HEP tools  documentation</title>
+    <title>Construct Friend Tree &#8212; HEP tools  documentation</title>
   
   
   
@@ -39,7 +39,7 @@
     <script src="../../_static/documentation_options.js?v=5929fcd5"></script>
     <script src="../../_static/doctools.js?v=888ff710"></script>
     <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
-    <script>DOCUMENTATION_OPTIONS.pagename = 'guide/howto/friend_tree';</script>
+    <script>DOCUMENTATION_OPTIONS.pagename = 'guide/howto/construct_friend_tree';</script>
     <link rel="index" title="Index" href="../../genindex.html" />
     <link rel="search" title="Search" href="../../search.html" />
     <link rel="next" title="Performance" href="../performance.html" />
@@ -302,7 +302,7 @@ document.write(`
   <p class="bd-links__title" role="heading" aria-level="1">Section Navigation</p>
   <div class="bd-toc-item navbar-nav"><ul class="current nav bd-sidenav">
 <li class="toctree-l1 current active has-children"><a class="reference internal" href="../howto.html">How-to</a><input checked class="toctree-checkbox" id="toctree-checkbox-1" name="toctree-checkbox-1" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-1"><i class="fa-solid fa-chevron-down"></i></label><ul class="current">
-<li class="toctree-l2 current active"><a class="current reference internal" href="#">Construct <code class="xref py py-class docutils literal notranslate"><span class="pre">Friend</span></code></a></li>
+<li class="toctree-l2 current active"><a class="current reference internal" href="#">Construct <code class="xref py py-class docutils literal notranslate"><span class="pre">Friend</span></code> Tree</a></li>
 </ul>
 </li>
 <li class="toctree-l1 has-children"><a class="reference internal" href="../performance.html">Performance</a><input checked class="toctree-checkbox" id="toctree-checkbox-2" name="toctree-checkbox-2" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-2"><i class="fa-solid fa-chevron-down"></i></label><ul>
@@ -369,8 +369,8 @@ document.write(`
 <div id="searchbox"></div>
                 <article class="bd-article">
                   
-  <section id="construct-friend">
-<h1>Construct <a class="reference internal" href="../../api/root/tree.html#heptools.root.chain.Friend" title="heptools.root.chain.Friend"><code class="xref py py-class docutils literal notranslate"><span class="pre">Friend</span></code></a><a class="headerlink" href="#construct-friend" title="Link to this heading">#</a></h1>
+  <section id="construct-friend-tree">
+<h1>Construct <a class="reference internal" href="../../api/root/tree.html#heptools.root.chain.Friend" title="heptools.root.chain.Friend"><code class="xref py py-class docutils literal notranslate"><span class="pre">Friend</span></code></a> Tree<a class="headerlink" href="#construct-friend-tree" title="Link to this heading">#</a></h1>
 <section id="basic-usage">
 <h2>Basic Usage<a class="headerlink" href="#basic-usage" title="Link to this heading">#</a></h2>
 <p>To construct a friend tree from scratch, you can follow the example below.</p>
@@ -401,10 +401,9 @@ document.write(`
 <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="s2">&quot;friend.json&quot;</span><span class="p">,</span> <span class="s2">&quot;r&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
     <span class="n">friend</span> <span class="o">=</span> <span class="n">Friend</span><span class="o">.</span><span class="n">from_json</span><span class="p">(</span><span class="n">json</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">f</span><span class="p">))</span>
 <span class="c1"># fetch the metadata of the target tree</span>
-<span class="n">target</span> <span class="o">=</span> <span class="n">Chunk</span><span class="p">(</span><span class="n">source</span><span class="o">=</span><span class="n">path</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="n">name</span><span class="p">,</span> <span class="n">fetch</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="n">target</span> <span class="o">=</span> <span class="n">Chunk</span><span class="p">(</span><span class="n">source</span><span class="o">=</span><span class="n">target_tree_path</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="n">target_tree_name</span><span class="p">,</span> <span class="n">fetch</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 <span class="c1"># retrieve branches</span>
 <span class="n">branches</span> <span class="o">=</span> <span class="n">friend</span><span class="o">.</span><span class="n">arrays</span><span class="p">(</span><span class="n">target</span><span class="p">)</span>
-<span class="c1"># now you can use the branches as you like</span>
 </pre></div>
 </div>
 <p>You can also attach an existing tree as a friend.</p>
@@ -443,7 +442,7 @@ document.write(`
 <span class="c1"># run the processor</span>
 <span class="n">friend</span> <span class="o">=</span> <span class="o">...</span> <span class="c1"># run the processor in a way you like</span>
 <span class="c1"># (optional) merge the friend chunks to improve reading performance</span>
-<span class="n">merged_friend</span> <span class="o">=</span> <span class="n">friend</span><span class="o">.</span><span class="n">merge</span><span class="p">()</span>
+<span class="n">merged_friend</span> <span class="o">=</span> <span class="n">friend</span><span class="o">.</span><span class="n">merge</span><span class="p">(</span><span class="n">step</span><span class="o">=</span><span class="mi">100_000</span><span class="p">)</span>
 <span class="c1"># save the friend tree to a json file</span>
 <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="s2">&quot;friend.json&quot;</span><span class="p">,</span> <span class="s2">&quot;w&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
     <span class="n">json</span><span class="o">.</span><span class="n">dump</span><span class="p">(</span><span class="n">merged_friend</span><span class="p">,</span> <span class="n">f</span><span class="p">,</span> <span class="bp">cls</span><span class="o">=</span><span class="n">DefaultEncoder</span><span class="p">)</span>
@@ -452,7 +451,7 @@ document.write(`
 <p>For a large dataset, you can use dask to merge.</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">dask</span>
 
-<span class="n">merged_friend</span><span class="p">,</span> <span class="o">=</span> <span class="n">dask</span><span class="o">.</span><span class="n">compute</span><span class="p">(</span><span class="n">friend</span><span class="o">.</span><span class="n">merge</span><span class="p">(</span><span class="n">dask</span><span class="o">=</span><span class="kc">True</span><span class="p">))</span>
+<span class="n">merged_friend</span><span class="p">,</span> <span class="o">=</span> <span class="n">dask</span><span class="o">.</span><span class="n">compute</span><span class="p">(</span><span class="n">friend</span><span class="o">.</span><span class="n">merge</span><span class="p">(</span><span class="n">step</span><span class="o">=</span><span class="mi">100_000</span><span class="p">,</span> <span class="n">dask</span><span class="o">=</span><span class="kc">True</span><span class="p">))</span>
 </pre></div>
 </div>
 <p>Then, the data can be retrieved in other processors. For example,</p>
@@ -474,8 +473,8 @@ document.write(`
 </section>
 <section id="with-coffea-2023-12-0">
 <h2>With <code class="docutils literal notranslate"><span class="pre">coffea&gt;=2023.12.0</span></code><a class="headerlink" href="#with-coffea-2023-12-0" title="Link to this heading">#</a></h2>
-<p># TODO steps: match partition, convert to array, convert back and add up.
-# TODO steps: match partition, read from friend</p>
+<p># TODO construct: match partition, convert to array, convert back and add up.</p>
+<p># TODO retrieve: match partition, read from friend</p>
 </section>
 </section>
 
@@ -535,7 +534,7 @@ document.write(`
 
   
   <div class="tocsection editthispage">
-    <a href="https://github.com/chuyuanliu/heptools/edit/master/docs/guide/howto/friend_tree.rst">
+    <a href="https://github.com/chuyuanliu/heptools/edit/master/docs/guide/howto/construct_friend_tree.rst">
       <i class="fa-solid fa-pencil"></i>
       
       
@@ -550,7 +549,7 @@ document.write(`
   <div class="sidebar-secondary-item">
 
   <div class="tocsection sourcelink">
-    <a href="../../_sources/guide/howto/friend_tree.rst.txt">
+    <a href="../../_sources/guide/howto/construct_friend_tree.rst.txt">
       <i class="fa-solid fa-file-lines"></i> Show Source
     </a>
   </div>
