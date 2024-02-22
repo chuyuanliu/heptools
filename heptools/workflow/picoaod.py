@@ -70,14 +70,21 @@ class PicoAOD(ProcessorABC):
 
 @delayed
 def _fetch_metadata(dataset: str, path: PathLike, dask: bool = False):
-    with uproot.open(path) as f:
-        data = f['Runs'].arrays(
-            ['genEventCount', 'genEventSumw', 'genEventSumw2'])
+    try:
+        with uproot.open(path) as f:
+            data = f['Runs'].arrays(
+                ['genEventCount', 'genEventSumw', 'genEventSumw2'])
+            return {
+                dataset: {
+                    'count': float(ak.sum(data['genEventCount'])),
+                    'sumw': float(ak.sum(data['genEventSumw'])),
+                    'sumw2': float(ak.sum(data['genEventSumw2'])),
+                }
+            }
+    except:
         return {
             dataset: {
-                'count': float(ak.sum(data['genEventCount'])),
-                'sumw': float(ak.sum(data['genEventSumw'])),
-                'sumw2': float(ak.sum(data['genEventSumw2'])),
+                'bad_files': [str(path)]
             }
         }
 
