@@ -63,7 +63,7 @@ def unpack(__iter: Iterable) -> Any:
 
 
 def unique(seq: Iterable):
-    return list(set(seq))
+    return list(dict.fromkeys(seq))
 
 
 def count(seq: Iterable, value: Any) -> int:
