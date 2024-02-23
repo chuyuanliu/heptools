@@ -4,7 +4,7 @@ from inspect import getmro
 from operator import add
 from types import UnionType
 from typing import (Annotated, Any, Literal, Protocol, TypeVar, Union,
-                    get_args, get_origin, runtime_checkable)
+                    get_args, get_origin, get_type_hints, runtime_checkable)
 
 from .utils import count, unique
 
@@ -135,7 +135,8 @@ def check_type(__obj, __type) -> bool:
 
 def type_name(__type) -> str:
     # TODO TypedDict
-
+    if isinstance(__type, str):
+        return __type
     if isinstance(__type, tuple | list):
         return f'({", ".join(type_name(i) for i in __type)})'
 
@@ -173,6 +174,26 @@ def type_name(__type) -> str:
     if args:
         args = f'[{", ".join(args)}]'
     return f'{type_name(origin)}{args}'
+
+
+def get_partial_type_hints(cls, include_extras: bool = False):
+    try:
+        return get_type_hints(cls, include_extras=include_extras)
+    except:
+        if not hasattr(cls, '__annotations__'):
+            return {}
+
+        class dummy:
+            __annotations__ = {}
+        hints = {}
+        for k, v in cls.__annotations__.items():
+            dummy.__annotations__ = {k: v}
+            try:
+                hints[k] = get_type_hints(
+                    dummy, include_extras=include_extras)[k]
+            except:
+                hints[k] = v
+        return hints
 
 # mro
 
