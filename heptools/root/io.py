@@ -143,14 +143,18 @@ class TreeWriter:
         """
         if not any(exc):
             self._flush()
+            empty = self._name not in self._file
             self._file.close()
-            self.tree = Chunk(
-                source=self._temp,
-                name=self._name,
-                fetch=True)
-            self.tree.path = self._path
-            self._temp.move_to(
-                self._path, parents=self._parents, overwrite=True)
+            if not empty:
+                self.tree = Chunk(
+                    source=self._temp,
+                    name=self._name,
+                    fetch=True)
+                self.tree.path = self._path
+                self._temp.move_to(
+                    self._path, parents=self._parents, overwrite=True)
+            else:
+                self._temp.rm()
         else:
             self._file.close()
             self._temp.rm()
