@@ -4,6 +4,8 @@ from abc import abstractmethod
 from concurrent.futures import Future, ProcessPoolExecutor
 
 import awkward as ak
+import numpy as np
+import numpy.typing as npt
 import uproot
 from coffea.processor import ProcessorABC
 
@@ -34,34 +36,44 @@ class PicoAOD(ProcessorABC):
             [f'{collection}_.*' for collection in skip_collections] +
             [f'n{collection}' for collection in skip_collections] +
             skip_branches)
-        self._filter_branches = re.compile(f'^(?!({"|".join(skipped)})).*$')
+        self._filter_branches = re.compile(f'^(?!({"|".join(skipped)})$).*$')
         self._transform = NanoAOD(regular=False, jagged=True)
 
     def _filter(self, branches: set[str]):
         return {*filter(self._filter_branches.match, branches)}
 
     @abstractmethod
-    def select(self, events):
+    def select(self, events: ak.Array) -> npt.ArrayLike:
         pass
 
-    def process(self, events):
+    def process(self, events: ak.Array):
         selected = self.select(events)
         chunk = Chunk.from_coffea_events(events)
         dataset = events.metadata['dataset']
         result = {dataset: {
             'total_events': len(events),
             'saved_events': int(ak.sum(selected)),
+            'files': [],
             'source': {
                 f'{chunk.path}': [(chunk.entry_start, chunk.entry_stop)]
             }
         }}
-        filename = f'{dataset}/{_PICOAOD}_{chunk.uuid}_{chunk.entry_start}_{chunk.entry_stop}{_ROOT}'
-        path = self._base / filename
-        with TreeWriter()(path) as writer:
-            for i, data in enumerate(TreeReader(self._filter, self._transform).iterate(chunk, step=self._step)):
-                writer.extend(data[selected[i*self._step:(i+1)*self._step]])
-        result[dataset]['files'] = [writer.tree]
-
+        if result[dataset]['saved_events'] > 0:
+            filename = f'{dataset}/{_PICOAOD}_{chunk.uuid}_{chunk.entry_start}_{chunk.entry_stop}{_ROOT}'
+            path = self._base / filename
+            reader = TreeReader(self._filter, self._transform)
+            with TreeWriter()(path) as writer:
+                for i, chunks in enumerate(Chunk.partition(self._step, chunk, common_branches=True)):
+                    _selected = selected[i*self._step:(i+1)*self._step]
+                    _range = np.arange(len(_selected))[_selected]
+                    _start, _stop = _range[0], _range[-1]+1
+                    _chunk = chunks[0].slice(_start, _stop)
+                    _selected = _selected[_start:_stop]
+                    if len(_chunk) > 0:
+                        data = reader.arrays(_chunk)
+                        writer.extend(data[_selected])
+            if writer.tree is not None:
+                result[dataset]['files'].append(writer.tree)
         return result
 
     def postprocess(self, accumulator):
