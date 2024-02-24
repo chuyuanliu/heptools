@@ -131,6 +131,8 @@ def integrity_check(
     if diff:
         logging.error(f'The whole dataset is missing: {diff}')
     for dataset in fileset:
+        if len(output[dataset]['files']):
+            logging.warning(f'No file is saved for "{dataset}"')
         inputs = map(EOS, fileset[dataset]['files'])
         outputs = {EOS(k): v for k, v in output[dataset]['source'].items()}
         ns = None if num_entries is None else {
@@ -167,12 +169,13 @@ def resize(
     base = EOS(base_path)
     transform = NanoAOD(regular=False, jagged=True)
     for dataset, chunks in output.items():
-        output[dataset]['files'] = merge.resize(
-            base / dataset/f'{_PICOAOD}{_ROOT}',
-            *chunks['files'],
-            step=step,
-            chunk_size=chunk_size,
-            reader_options={'transform': transform},
-            dask=True,
-        )
+        if len(chunks['files']) > 0:
+            output[dataset]['files'] = merge.resize(
+                base / dataset/f'{_PICOAOD}{_ROOT}',
+                *chunks['files'],
+                step=step,
+                chunk_size=chunk_size,
+                reader_options={'transform': transform},
+                dask=True,
+            )
     return output
