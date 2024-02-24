@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import math
-from concurrent.futures import ProcessPoolExecutor
 from functools import partial
 from logging import Logger
 from typing import Iterable
@@ -270,6 +269,8 @@ class Chunk(metaclass=_ChunkMeta):
         list[Chunk]
             List of chunks from ``paths``.
         """
+        from concurrent.futures import ProcessPoolExecutor
+
         chunks = [Chunk(path, name) for path, name in paths]
         with ProcessPoolExecutor(max_workers=n_process) as executor:
             chunks = executor.map(Chunk._fetch, chunks)
