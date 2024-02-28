@@ -66,12 +66,13 @@ class PicoAOD(ProcessorABC):
                 for i, chunks in enumerate(Chunk.partition(self._step, chunk, common_branches=True)):
                     _selected = selected[i*self._step:(i+1)*self._step]
                     _range = np.arange(len(_selected))[_selected]
+                    if len(_range) == 0:
+                        continue
                     _start, _stop = _range[0], _range[-1]+1
                     _chunk = chunks[0].slice(_start, _stop)
                     _selected = _selected[_start:_stop]
-                    if len(_chunk) > 0:
-                        data = reader.arrays(_chunk)
-                        writer.extend(data[_selected])
+                    data = reader.arrays(_chunk)
+                    writer.extend(data[_selected])
             if writer.tree is not None:
                 result[dataset]['files'].append(writer.tree)
         return result
