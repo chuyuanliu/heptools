@@ -90,7 +90,7 @@ class Variation(_Correction, ABC):
         super().__init__(file)
 
     def __new__(cls, *args, **kwargs):
-        self = object().__new__(cls)
+        self = super().__new__(cls)
         try:
             self.__init__(*args, **kwargs)
         except CorrectionError:

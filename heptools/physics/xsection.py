@@ -42,7 +42,7 @@ class XSection:
 
     @classmethod
     def add(cls, process: Formula | re.Pattern | str, xs: float | str = None, decay: str = '', kfactors: dict[str, float] = None):
-        self = object.__new__(cls)
+        self = super().__new__(cls)
         if isinstance(process, str):
             process = re.compile(process)
         self.__init__(process=process, xs=xs, decay=decay, kfactors=kfactors)
