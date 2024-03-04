@@ -83,6 +83,11 @@ class AutoRetry(Generic[_RetryFuncP, _RetryFuncReturnT]):
         if delay is not ...:
             self._delay = delay
 
+    def __get__(self, instance, owner):
+        if instance is None:
+            return self
+        return MethodType(self, instance)
+
     def __call__(self, *args: _RetryFuncP.args, **kwargs: _RetryFuncP.kwargs) -> _RetryFuncReturnT:
         for i in range(self._max):
             try:
