@@ -19,6 +19,7 @@ from typing import Any, Generator, Literal
 
 from ..utils import arg_set
 from ..utils.string import ensure
+from ..utils.wrapper import retry
 
 __all__ = ['EOS', 'PathLike', 'EOSError', 'save', 'load']
 
@@ -82,6 +83,7 @@ class EOS:
         return self.path.exists()
 
     @classmethod
+    @retry(1)
     def cmd(cls, *args) -> tuple[bool, bytes]:
         args = [str(arg) for arg in args if arg]
         if cls.run:
@@ -101,6 +103,10 @@ class EOS:
         if not cls.allow_fail and not output[0]:
             raise EOSError(args, output[1])
         return output
+
+    @classmethod
+    def set_retry(cls, max: int = ..., delay: float = ...):
+        cls.cmd.set(max=max, delay=delay)
 
     def call(self, executable: str, *args):
         eos = () if self.is_local else (self.client, self.host)

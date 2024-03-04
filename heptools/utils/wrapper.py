@@ -73,6 +73,16 @@ class AutoRetry(Generic[_RetryFuncP, _RetryFuncReturnT]):
         self._reset = reset
         self._skip = (*skip,)
 
+    def set(
+        self,
+        max: int = ...,
+        delay: float = ...,
+    ):
+        if max is not ...:
+            self._max = max
+        if delay is not ...:
+            self._delay = delay
+
     def __call__(self, *args: _RetryFuncP.args, **kwargs: _RetryFuncP.kwargs) -> _RetryFuncReturnT:
         for i in range(self._max):
             try:
