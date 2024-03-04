@@ -25,7 +25,12 @@ ROOT file I/O based on :func:`uproot.reading.open`, :func:`uproot._dask.dask` an
     Writers will always overwrite the output file if it exists.
 
 .. todo::
-    Consider migrating to `fsspec-xrootd <https://coffeateam.github.io/fsspec-xrootd/>`_
+    Test `fsspec-xrootd <https://coffeateam.github.io/fsspec-xrootd/>`_
+
+.. todo::
+    Test :func:`uproot.writing._dask_write.dask_write`
+    Use :func:`dask_awkward.new_scalar_object` to return object.
+
 """
 from __future__ import annotations
 
