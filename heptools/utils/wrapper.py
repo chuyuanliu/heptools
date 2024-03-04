@@ -1,8 +1,11 @@
+from __future__ import annotations
+
 import inspect
+import time
 from abc import ABC, abstractmethod
 from functools import partial
 from types import MethodType
-from typing import Callable
+from typing import Callable, Concatenate, Generic, Iterable, ParamSpec, TypeVar
 
 
 class OptionalDecorator(ABC):
@@ -43,3 +46,62 @@ class OptionalDecorator(ABC):
             return self._decorated(*args, **kwargs)
         else:
             return self._func(*args, **kwargs)
+
+
+_RetryFuncT = TypeVar('_RetryFuncT', bound=Callable)
+_RetryFuncP = ParamSpec('_RetryFuncP')
+_RetryFuncReturnT = TypeVar('_RetryFuncReturnT')
+
+
+class AutoRetry(Generic[_RetryFuncP, _RetryFuncReturnT]):
+    def __init__(
+        self,
+        func: Callable[
+            _RetryFuncP, _RetryFuncReturnT],
+        max: int,
+        delay: float = 0,
+        handler: Callable[
+            Concatenate[Exception, _RetryFuncP], _RetryFuncReturnT] = None,
+        reset: Callable[
+            _RetryFuncP, None] = None,
+        skip: Iterable[Exception] = (),
+    ):
+        self._func = func
+        self._max = max
+        self._delay = delay
+        self._handler = handler
+        self._reset = reset
+        self._skip = (*skip,)
+
+    def __call__(self, *args: _RetryFuncP.args, **kwargs: _RetryFuncP.kwargs) -> _RetryFuncReturnT:
+        for i in range(self._max):
+            try:
+                return self._func(*args, **kwargs)
+            except Exception as e:
+                if self._reset is not None:
+                    self._reset(*args, **kwargs)
+                if (i == self._max - 1) or any(isinstance(e, t) for t in self._skip):
+                    if self._handler is not None:
+                        return self._handler(e, *args, **kwargs)
+                    else:
+                        raise
+                time.sleep(self._delay)
+
+
+def retry(
+    max: int,
+    delay: float = 0,
+    handler: Callable[
+        Concatenate[Exception, _RetryFuncP], _RetryFuncReturnT] = None,
+    reset: Callable[
+        _RetryFuncP, None] = None,
+    skip: Iterable[Exception] = (),
+) -> Callable[[_RetryFuncT], _RetryFuncT]:
+    return partial(
+        AutoRetry,
+        max=max,
+        delay=delay,
+        handler=handler,
+        reset=reset,
+        skip=skip,
+    )
