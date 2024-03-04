@@ -3,7 +3,6 @@
 An interface to operate on both local filesystem and EOS (or other XRootD supported system).
 
 .. todo::
-    - Consider migrating to :mod:`os`, :mod:`shutil` and :class:`XRootD.client.FileSystem`.
     - Use :func:`os.path.normpath`, :func:`glob.glob`
 """
 from __future__ import annotations
@@ -21,7 +20,15 @@ from typing import Any, Generator, Literal
 from ..utils import arg_set
 from ..utils.string import ensure
 
-__all__ = ['EOS', 'PathLike', 'save', 'load']
+__all__ = ['EOS', 'PathLike', 'EOSError', 'save', 'load']
+
+
+class EOSError(Exception):
+    __module__ = Exception.__module__
+
+    def __init__(self, cmd: list[str], stderr: bytes, *args):
+        msg = f'Operation failed\n  Command: {" ".join(cmd)}\n  Message: {stderr.decode()}'
+        super().__init__(msg, *args)
 
 
 class EOS:
@@ -29,6 +36,7 @@ class EOS:
     _slash_pattern = re.compile(r'(?<!:)/{2,}')
 
     run: bool = True
+    allow_fail: bool = False
     client: Literal['eos', 'xrdfs'] = 'xrdfs'
 
     history: list[tuple[datetime, str, tuple[bool, bytes]]] = []
@@ -90,6 +98,8 @@ class EOS:
         else:
             output = (True, b'')
         cls.history.append((datetime.now(), ' '.join(args), output))
+        if not cls.allow_fail and not output[0]:
+            raise EOSError(args, output[1])
         return output
 
     def call(self, executable: str, *args):
