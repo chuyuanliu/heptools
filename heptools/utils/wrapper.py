@@ -89,13 +89,15 @@ class AutoRetry(Generic[_RetryFuncP, _RetryFuncReturnT]):
         return MethodType(self, instance)
 
     def __call__(self, *args: _RetryFuncP.args, **kwargs: _RetryFuncP.kwargs) -> _RetryFuncReturnT:
-        for i in range(self._max):
+        i = 0
+        while i < self._max:
+            i += 1
             try:
                 return self._func(*args, **kwargs)
             except Exception as e:
                 if self._reset is not None:
                     self._reset(*args, **kwargs)
-                if (i == self._max - 1) or any(isinstance(e, t) for t in self._skip):
+                if (i == self._max) or any(isinstance(e, t) for t in self._skip):
                     if self._handler is not None:
                         return self._handler(e, *args, **kwargs)
                     else:
