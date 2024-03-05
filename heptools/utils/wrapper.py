@@ -3,9 +3,19 @@ from __future__ import annotations
 import inspect
 import time
 from abc import ABC, abstractmethod
-from functools import partial
+from functools import partial, wraps
 from types import MethodType
 from typing import Callable, Concatenate, Generic, Iterable, ParamSpec, TypeVar
+
+
+class Wrapper:
+    def __init__(self, cls, *args, **kwargs):
+        self._cls = cls
+        self._args = args
+        self._kwargs = kwargs
+
+    def __call__(self, __func):
+        return wraps(__func)(self._cls(__func, *self._args, **self._kwargs))
 
 
 class OptionalDecorator(ABC):
@@ -24,10 +34,16 @@ class OptionalDecorator(ABC):
         return super().__new__(cls)
 
     def __init__(self, __func, **kwargs):
-        signature = inspect.signature(__func)
+        __sig = __func
+        if hasattr(__func, '__wrapped__'):
+            __sig = __func.__wrapped__
+        elif hasattr(__func, '__call__'):
+            __sig = __func.__call__
+        signature = inspect.signature(__sig)
+        name = __sig.__name__
         if self._switch not in signature.parameters:
             raise ValueError(
-                f'Function "{__func.__name__}{signature}" must have a parameter "{self._switch}: bool"')
+                f'Function "{name}{signature}" must have a parameter "{self._switch}: bool"')
         self._func = __func
         self._decorated = None
         self._default = signature.parameters[self._switch].default
@@ -36,6 +52,8 @@ class OptionalDecorator(ABC):
         self._kwargs = kwargs
 
     def __get__(self, instance, owner):
+        if instance is None:
+            return self
         return MethodType(self, instance)
 
     def __call__(self, *args, **kwargs):
@@ -114,7 +132,7 @@ def retry(
         _RetryFuncP, None] = None,
     skip: Iterable[Exception] = (),
 ) -> Callable[[_RetryFuncT], _RetryFuncT]:
-    return partial(
+    return Wrapper(
         AutoRetry,
         max=max,
         delay=delay,
