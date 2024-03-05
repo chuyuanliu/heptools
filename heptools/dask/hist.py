@@ -11,14 +11,14 @@ from hist.dask import Hist
 from .. import hist as _h
 from ..aktools import FieldLike, RealNumber, and_fields, get_field, has_record
 from ..typetools import check_type
-from . import awkward as _dak
+from . import awkward as dakext
 
 __all__ = ['Collection', 'Fill', 'FillLike']
 
 FillLike = _h.hist.LazyFill | RealNumber | bool
 
 
-_np_repeat = _dak.delayed(np.repeat)
+_np_repeat = dakext.delayed(np.repeat)
 
 
 class Fill(_h.Fill):
@@ -67,7 +67,7 @@ class Fill(_h.Fill):
                 for k in self._fills[name]:
                     v = category_args[f'{name}:{k}' if f'{name}:{k}' in category_args else k]
                     if isinstance(v, dak.Array):
-                        depth = v._meta.layout.minmax_depth[0]
+                        depth = v._meta.layout.minmax_depth[1]
                         if depth == 1:
                             to_repeat.append(k)
                         elif depth > 1:

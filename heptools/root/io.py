@@ -185,7 +185,8 @@ class TreeWriter:
             self._buffer = []
         if data is not None and len(data) > 0:
             if self._backend == 'ak':
-                if data.layout.minmax_depth[1] > 1:
+                from .. import awkward as akext
+                if akext.is_.jagged(data):
                     data = {k: data[k] for k in data.fields}
             if self._name not in self._file:
                 self._file[self._name] = data
