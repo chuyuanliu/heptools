@@ -4,7 +4,7 @@ import inspect
 import time
 from abc import ABC, abstractmethod
 from functools import partial, wraps
-from types import MethodType
+from types import FunctionType, MethodType
 from typing import Callable, Concatenate, Generic, Iterable, ParamSpec, TypeVar
 
 
@@ -34,8 +34,9 @@ class OptionalDecorator(ABC):
         return super().__new__(cls)
 
     def __init__(self, __func, **kwargs):
-        __sig = __func
-        if hasattr(__func, '__wrapped__'):
+        if isinstance(__func, FunctionType):
+            __sig = __func
+        elif hasattr(__func, '__wrapped__'):
             __sig = __func.__wrapped__
         elif hasattr(__func, '__call__'):
             __sig = __func.__call__
