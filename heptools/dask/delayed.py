@@ -1,6 +1,6 @@
 from typing import TypeVar
 
-from ..utils.wrapper import OptionalDecorator, Wrapper
+from ..utils.wrapper import OptionalDecorator
 
 _DelayedFuncT = TypeVar('_DelayedFuncT')
 
@@ -16,4 +16,4 @@ class _Delayed(OptionalDecorator):
 
 
 def delayed(__func: _DelayedFuncT) -> _DelayedFuncT:
-    return Wrapper(_Delayed)(__func)
+    return _Delayed(__func)
