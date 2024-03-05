@@ -29,11 +29,12 @@ class selected:
         padded[np.repeat(selection, padded_count)] = array
         return ak.unflatten(padded, padded_count)
 
-    def _pad(self, array: npt.NDArray | tuple[npt.NDArray, npt.NDArray], selection: npt.NDArray) -> npt.NDArray:
+    def _pad(self, array: npt.NDArray | tuple[npt.NDArray, npt.NDArray], selection: npt.NDArray):
         if isinstance(array, tuple):
-            return self._pad_jagged(*array, selection)
+            padded = self._pad_jagged(*array, selection)
         else:
-            return self._pad_regular(array, selection)
+            padded = self._pad_regular(array, selection)
+        return ak.Array(padded)
 
     def __call__(
         self,
@@ -42,9 +43,8 @@ class selected:
     ) -> ak.Array:
         selection = np.asarray(selection, dtype=bool)
         if ak.fields(array):
-            padded = {
+            return ak.zip({
                 name: self._pad(arr, selection)
-                for name, arr in to_numpy(array).items()}
+                for name, arr in to_numpy(array).items()})
         else:
-            padded = self._pad(ak.to_numpy(array), selection)
-        return ak.Array(padded)
+            return self._pad(ak.to_numpy(array), selection)
