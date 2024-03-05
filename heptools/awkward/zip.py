@@ -1,9 +1,12 @@
+import re
 from itertools import groupby
 
 import awkward as ak
 
 
 class NanoAOD:
+    _count_pattern = re.compile(f'^n[A-Z]\w+$')
+
     def __init__(
         self,
         *selected: str,
@@ -32,8 +35,8 @@ class NanoAOD:
                     key=lambda x: x[0]),
                 key=lambda x: x[0])}
             keys = set(fields)
-            jagged = set(filter(lambda x: x[0] == 'n', to_keep))
-            to_keep -= jagged
+            jagged = set(
+                filter(lambda x: self._count_pattern.match(x) is not None, to_keep))
             jagged = set(map(lambda x: x[1:], jagged)) & keys
             regular = keys - jagged
             prefixes = {'jagged': jagged, 'regular': regular}
@@ -45,6 +48,8 @@ class NanoAOD:
                         to_zip[prefix] = frozenset(
                             map('_'.join, fields[prefix]))
                         to_keep -= to_zip[prefix]
+                        if k == 'jagged':
+                            to_keep.remove(f'n{prefix}')
         if self._cache is not None:
             self._cache[key] = to_keep, to_zip
         return to_keep, to_zip
