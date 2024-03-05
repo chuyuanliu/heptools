@@ -36,6 +36,8 @@ class OptionalDecorator(ABC):
     def __init__(self, __func, **kwargs):
         if isinstance(__func, FunctionType):
             __sig = __func
+        elif isinstance(__func, type):
+            __sig = __func.__init__
         elif hasattr(__func, '__wrapped__'):
             __sig = __func.__wrapped__
         elif hasattr(__func, '__call__'):
@@ -56,6 +58,9 @@ class OptionalDecorator(ABC):
         if instance is None:
             return self
         return MethodType(self, instance)
+
+    def __getattr__(self, __name: str):
+        return getattr(self._func, __name)
 
     def __call__(self, *args, **kwargs):
         kwargs.setdefault(self._switch, self._default)
