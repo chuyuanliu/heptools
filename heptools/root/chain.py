@@ -85,7 +85,7 @@ class _FriendItem:
         return {
             'start': self.start,
             'stop': self.stop,
-            'chunk': self.chunk,
+            'chunk': self.chunk.deepcopy(branches=None),
         }
 
     @classmethod
