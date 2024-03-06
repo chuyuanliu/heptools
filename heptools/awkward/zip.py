@@ -5,7 +5,7 @@ import awkward as ak
 
 
 class NanoAOD:
-    _count_pattern = re.compile(f'^n[A-Z]\w+$')
+    _count_pattern = re.compile(r'^n[A-Z]\w+$')
 
     def __init__(
         self,

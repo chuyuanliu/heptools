@@ -36,7 +36,7 @@ class PicoAOD(ProcessorABC):
             [f'{collection}_.*' for collection in skip_collections] +
             [f'n{collection}' for collection in skip_collections] +
             skip_branches)
-        self._filter_branches = re.compile(f'^(?!({"|".join(skipped)})$).*$')
+        self._filter_branches = re.compile(rf'^(?!({"|".join(skipped)})$).*$')
         self._transform = NanoAOD(regular=False, jagged=True)
 
     def _filter(self, branches: set[str]):
