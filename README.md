@@ -1,5 +1,9 @@
 # HEP Tools
 
+[![Documentation](https://img.shields.io/badge/docs-latest-blue)](https://chuyuanliu.github.io/heptools/)
+[![Docker Image](https://img.shields.io/badge/docker-latest-blue?logo=docker)](https://hub.docker.com/repository/docker/chuyuanliu/heptools)
+![Python Version](https://img.shields.io/badge/python-3.10-blue?logo=python)
+
 A collection of tools for experimental high energy physics analysis.
 
 ## Installation
