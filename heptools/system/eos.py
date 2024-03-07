@@ -33,7 +33,7 @@ class EOSError(Exception):
 
 
 class EOS:
-    _url_pattern = re.compile(r'^[\w]+://[^/]+')
+    _host_pattern = re.compile(r'^[\w]+://[^/]+')
     _slash_pattern = re.compile(r'(?<!:)/{2,}')
 
     run: bool = True
@@ -42,18 +42,18 @@ class EOS:
 
     history: list[tuple[datetime, str, tuple[bool, bytes]]] = []
 
-    def __init__(self, path: PathLike, url: str = ...):
+    def __init__(self, path: PathLike, host: str = ...):
         default = ''
         if isinstance(path, EOS):
             default, path = path.host, path.path
         elif not isinstance(path, Path):
             if isinstance(path, os.PathLike):
                 path = os.fspath(path)
-            match = self._url_pattern.match(path)
+            match = self._host_pattern.match(path)
             if match:
                 default = match.group(0)
                 path = path[len(default):]
-        self.host = arg_set(url, '', default)
+        self.host = arg_set(host, '', default)
         if self.host:
             self.host = ensure(self.host, __suffix='/')
         self.path = Path(self._slash_pattern.sub('/', str(path)))
@@ -111,6 +111,13 @@ class EOS:
     def call(self, executable: str, *args):
         eos = () if self.is_local else (self.client, self.host)
         return self.cmd(*eos, executable, *args)
+
+    def ls(self) -> list[EOS]:  # TODO test and improve
+        files = self.call('ls', self.path)[1].decode().split('\n')
+        if self.is_local or self.client == 'eos':
+            return [self/f for f in files if f]
+        else:
+            return [EOS(f, self.host) for f in files if f]
 
     def rm(self, recursive: bool = False):
         if not self.is_local and recursive and self.client == 'xrdfs':
@@ -261,6 +268,9 @@ class EOS:
 
     def __str__(self):  # TODO rich, __repr__
         return self.host + str(self.path)
+
+    def __repr__(self):
+        return str(self)
 
     def __fspath__(self):
         return str(self)
