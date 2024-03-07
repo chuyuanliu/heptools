@@ -112,7 +112,7 @@ class EOS:
         eos = () if self.is_local else (self.client, self.host)
         return self.cmd(*eos, executable, *args)
 
-    def ls(self) -> list[EOS]:  # TODO test and improve
+    def ls(self):  # TODO test and improve
         files = self.call('ls', self.path)[1].decode().split('\n')
         if self.is_local or self.client == 'eos':
             return [self/f for f in files if f]
