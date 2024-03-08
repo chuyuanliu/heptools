@@ -47,9 +47,8 @@ class SelectSkip:
         self,
         select: MultiPattern = True,
         skip: MultiPattern = False,
-        logic: Literal['and', 'or'] = 'and',
-        method: Callable[[MultiPattern],
-                         CompiledPattern] = compile_any_wholeword,
+        logic: Literal["and", "or"] = "and",
+        method: Callable[[MultiPattern], CompiledPattern] = compile_any_wholeword,
     ):
         self._select = method(select)
         self._skip = method(skip)
@@ -58,7 +57,7 @@ class SelectSkip:
     def __call__(self, *strings: str) -> set[str]:
         select = filter_unique(self._select, *strings)
         skip = filter_unique(self._skip, *strings)
-        if self._logic == 'or':
+        if self._logic == "or":
             return {*strings} - (skip - select)
-        elif self._logic == 'and':
+        elif self._logic == "and":
             return select - skip

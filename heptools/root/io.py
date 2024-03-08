@@ -32,6 +32,7 @@ ROOT file I/O based on :func:`uproot.reading.open`, :func:`uproot._dask.dask` an
     Use :func:`dask_awkward.new_scalar_object` to return object.
 
 """
+
 from __future__ import annotations
 
 from typing import TYPE_CHECKING, Callable, Generator, Literal, overload
@@ -64,14 +65,14 @@ if TYPE_CHECKING:
 
 class _Reader:
     _open_options = {
-        'object_cache': None,
-        'array_cache': None,
+        "object_cache": None,
+        "array_cache": None,
     }
     _dask_options = {
-        'open_files': False,
+        "open_files": False,
     }
     _default_options = {
-        'timeout': 180,
+        "timeout": 180,
     }
 
     def __init__(self, **options):
@@ -100,11 +101,12 @@ class TreeWriter:
     """
 
     def __init__(
-            self,
-            name: str = 'Events',
-            parents: bool = True,
-            basket_size: int = ...,
-            **options):
+        self,
+        name: str = "Events",
+        parents: bool = True,
+        basket_size: int = ...,
+        **options,
+    ):
         self._name = name
         self._parents = parents
         self._basket_size = basket_size
@@ -138,7 +140,7 @@ class TreeWriter:
         self : TreeWriter
         """
         self.tree = None
-        self._temp = self._path.local_temp(dir='.')
+        self._temp = self._path.local_temp(dir=".")
         self._file = uproot.recreate(self._temp, **self._options)
         return self
 
@@ -151,13 +153,9 @@ class TreeWriter:
             empty = self._name not in self._file
             self._file.close()
             if not empty:
-                self.tree = Chunk(
-                    source=self._temp,
-                    name=self._name,
-                    fetch=True)
+                self.tree = Chunk(source=self._temp, name=self._name, fetch=True)
                 self.tree.path = self._path
-                self._temp.move_to(
-                    self._path, parents=self._parents, overwrite=True)
+                self._temp.move_to(self._path, parents=self._parents, overwrite=True)
             else:
                 self._temp.rm()
         else:
@@ -184,8 +182,9 @@ class TreeWriter:
             data = concat_record(self._buffer, library=self._backend)
             self._buffer = []
         if data is not None and len(data) > 0:
-            if self._backend == 'ak':
+            if self._backend == "ak":
                 from .. import awkward as akext
+
                 if akext.is_.jagged(data):
                     data = {k: data[k] for k in data.fields}
             if self._name not in self._file:
@@ -194,9 +193,7 @@ class TreeWriter:
                 self._file[self._name].extend(data)
         data = None
 
-    def extend(
-            self,
-            data: RecordLike):
+    def extend(self, data: RecordLike):
         """
         Extend the :class:`TTree` with ``data`` using :meth:`uproot.writing.writable.WritableTree.extend`.
 
@@ -210,9 +207,8 @@ class TreeWriter:
         self : TreeWriter
         """
         backend = record_backend(data)
-        if backend not in ('ak', 'pd', 'np'):
-            raise TypeError(
-                f'Unsupported data backend {type(data)}.')
+        if backend not in ("ak", "pd", "np"):
+            raise TypeError(f"Unsupported data backend {type(data)}.")
         if self._basket_size is ...:
             self._backend = backend
         else:
@@ -221,13 +217,13 @@ class TreeWriter:
             else:
                 if backend != self._backend:
                     raise TypeError(
-                        f'Inconsistent data backend, expected {self._backend}, given {backend}.')
+                        f"Inconsistent data backend, expected {self._backend}, given {backend}."
+                    )
         size = len_record(data, self._backend)
         if size == 0:
             return
         elif size == None:
-            raise ValueError(
-                'The extended data does not have a well-defined length.')
+            raise ValueError("The extended data does not have a well-defined length.")
         if self._basket_size is ...:
             self._backend = backend
             self._buffer = data
@@ -236,8 +232,9 @@ class TreeWriter:
             start = 0
             while start < len_record(data, self._backend):
                 diff = self._basket_size - self._buffer_size
-                self._buffer.append(slice_record(
-                    data, start, start + diff, library=self._backend))
+                self._buffer.append(
+                    slice_record(data, start, start + diff, library=self._backend)
+                )
                 start += diff
                 if self._buffer_size >= self._basket_size:
                     self._flush()
@@ -269,21 +266,24 @@ class TreeReader(_Reader):
         self._transform = transform
 
     @overload
-    def arrays(self, source: Chunk, library: Literal['ak'] = 'ak', **options) -> ak.Array:
-        ...
+    def arrays(
+        self, source: Chunk, library: Literal["ak"] = "ak", **options
+    ) -> ak.Array: ...
 
     @overload
-    def arrays(self, source: Chunk, library: Literal['pd'] = 'pd', **options) -> pd.DataFrame:
-        ...
+    def arrays(
+        self, source: Chunk, library: Literal["pd"] = "pd", **options
+    ) -> pd.DataFrame: ...
 
     @overload
-    def arrays(self, source: Chunk, library: Literal['np'] = 'np', **options) -> dict[str, np.ndarray]:
-        ...
+    def arrays(
+        self, source: Chunk, library: Literal["np"] = "np", **options
+    ) -> dict[str, np.ndarray]: ...
 
     def arrays(
         self,
         source: Chunk,
-        library: Literal['ak', 'pd', 'np'] = 'ak',
+        library: Literal["ak", "pd", "np"] = "ak",
         **options,
     ) -> RecordLike:
         """
@@ -297,7 +297,7 @@ class TreeReader(_Reader):
             The library used to represent arrays.
 
             - ``library='ak'``: return :class:`ak.Array`.
-            - ``library='pd'``: return :class:`pandas.DataFrame`. 
+            - ``library='pd'``: return :class:`pandas.DataFrame`.
             - ``library='np'``: return :class:`dict` of :class:`numpy.ndarray`.
         **options : dict, optional
             Additional options passed to :meth:`uproot.behaviors.TBranch.HasBranches.arrays`.
@@ -307,7 +307,7 @@ class TreeReader(_Reader):
         RecordLike
             Data from :class:`TTree`.
         """
-        options['library'] = library
+        options["library"] = library
         branches = source.branches
         if self._filter is not None:
             branches = self._filter(branches)
@@ -316,29 +316,33 @@ class TreeReader(_Reader):
                 expressions=branches,
                 entry_start=source.entry_start,
                 entry_stop=source.entry_stop,
-                **options)
-            if library == 'pd':
+                **options,
+            )
+            if library == "pd":
                 data.reset_index(drop=True, inplace=True)
             if self._transform is not None:
                 data = self._transform(data)
             return data
 
     @overload
-    def concat(self, *sources: Chunk, library: Literal['ak'] = 'ak', **options) -> ak.Array:
-        ...
+    def concat(
+        self, *sources: Chunk, library: Literal["ak"] = "ak", **options
+    ) -> ak.Array: ...
 
     @overload
-    def concat(self, *sources: Chunk, library: Literal['pd'] = 'pd', **options) -> pd.DataFrame:
-        ...
+    def concat(
+        self, *sources: Chunk, library: Literal["pd"] = "pd", **options
+    ) -> pd.DataFrame: ...
 
     @overload
-    def concat(self, *sources: Chunk, library: Literal['np'] = 'np', **options) -> dict[str, np.ndarray]:
-        ...
+    def concat(
+        self, *sources: Chunk, library: Literal["np"] = "np", **options
+    ) -> dict[str, np.ndarray]: ...
 
     def concat(
         self,
         *sources: Chunk,
-        library: Literal['ak', 'pd', 'np'] = 'ak',
+        library: Literal["ak", "pd", "np"] = "ak",
         **options,
     ) -> RecordLike:
         """
@@ -361,35 +365,53 @@ class TreeReader(_Reader):
         RecordLike
             Concatenated data from :class:`TTree`.
         """
-        options['library'] = library
+        options["library"] = library
         if len(sources) == 1:
             return self.arrays(sources[0], **options)
-        if library in ('ak', 'pd', 'np'):
+        if library in ("ak", "pd", "np"):
             sources = Chunk.common(*sources)
             return concat_record(
-                [self.arrays(s, **options) for s in sources],
-                library=library)
+                [self.arrays(s, **options) for s in sources], library=library
+            )
         else:
-            raise ValueError(f'Unknown library {library}.')
+            raise ValueError(f"Unknown library {library}.")
 
     @overload
-    def iterate(self, *sources: Chunk, step: int = ..., library: Literal['ak'] = 'ak', mode: Literal['balance', 'partition'] = 'partition', **options) -> Generator[ak.Array, None, None]:
-        ...
+    def iterate(
+        self,
+        *sources: Chunk,
+        step: int = ...,
+        library: Literal["ak"] = "ak",
+        mode: Literal["balance", "partition"] = "partition",
+        **options,
+    ) -> Generator[ak.Array, None, None]: ...
 
     @overload
-    def iterate(self, *sources: Chunk, step: int = ..., library: Literal['pd'] = 'pd', mode: Literal['balance', 'partition'] = 'partition', **options) -> Generator[pd.DataFrame, None, None]:
-        ...
+    def iterate(
+        self,
+        *sources: Chunk,
+        step: int = ...,
+        library: Literal["pd"] = "pd",
+        mode: Literal["balance", "partition"] = "partition",
+        **options,
+    ) -> Generator[pd.DataFrame, None, None]: ...
 
     @overload
-    def iterate(self, *sources: Chunk, step: int = ..., library: Literal['np'] = 'np', mode: Literal['balance', 'partition'] = 'partition', **options) -> Generator[dict[str, np.ndarray], None, None]:
-        ...
+    def iterate(
+        self,
+        *sources: Chunk,
+        step: int = ...,
+        library: Literal["np"] = "np",
+        mode: Literal["balance", "partition"] = "partition",
+        **options,
+    ) -> Generator[dict[str, np.ndarray], None, None]: ...
 
     def iterate(
         self,
         *sources: Chunk,
         step: int = ...,
-        library: Literal['ak', 'pd', 'np'] = 'ak',
-        mode: Literal['balance', 'partition'] = 'partition',
+        library: Literal["ak", "pd", "np"] = "ak",
+        mode: Literal["balance", "partition"] = "partition",
         **options,
     ) -> Generator[RecordLike, None, None]:
         """
@@ -416,12 +438,12 @@ class TreeReader(_Reader):
         RecordLike
             A chunk of data from :class:`TTree`.
         """
-        options['library'] = library
+        options["library"] = library
         if step is ...:
             chunks = Chunk.common(*sources)
-        elif mode == 'partition':
+        elif mode == "partition":
             chunks = Chunk.partition(step, *sources, common_branches=True)
-        elif mode == 'balance':
+        elif mode == "balance":
             chunks = Chunk.balance(step, *sources, common_branches=True)
         else:
             raise ValueError(f'Unknown mode "{mode}".')
@@ -431,18 +453,20 @@ class TreeReader(_Reader):
             yield self.concat(*chunk, **options)
 
     @overload
-    def dask(self, *sources: Chunk, partition: int = ..., library: Literal['ak'] = 'ak') -> dak.Array:
-        ...
+    def dask(
+        self, *sources: Chunk, partition: int = ..., library: Literal["ak"] = "ak"
+    ) -> dak.Array: ...
 
     @overload
-    def dask(self, *sources: Chunk, partition: int = ..., library: Literal['np'] = 'np') -> dict[str, da.Array]:
-        ...
+    def dask(
+        self, *sources: Chunk, partition: int = ..., library: Literal["np"] = "np"
+    ) -> dict[str, da.Array]: ...
 
     def dask(
         self,
         *sources: Chunk,
         partition: int = ...,
-        library: Literal['ak', 'np'] = 'ak',
+        library: Literal["ak", "np"] = "ak",
     ) -> DelayedRecordLike:
         """
         Read ``sources`` into delayed arrays.
@@ -464,21 +488,19 @@ class TreeReader(_Reader):
         if partition is ...:
             sources = Chunk.common(*sources)
         else:
-            sources = [*Chunk.balance(
-                partition, *sources, common_branches=True)]
+            sources = [*Chunk.balance(partition, *sources, common_branches=True)]
         branches = sources[0].branches
         if self._filter is not None:
             branches = self._filter(branches)
-        options = self._dask_options | {
-            'library': library,
-            'filter_name': branches
-        }
+        options = self._dask_options | {"library": library, "filter_name": branches}
         files = []
         for chunk in sources:
-            files.append({
-                chunk.path: {
-                    'object_path': chunk.name,
-                    'steps': [[chunk.entry_start, chunk.entry_stop]]
+            files.append(
+                {
+                    chunk.path: {
+                        "object_path": chunk.name,
+                        "steps": [[chunk.entry_start, chunk.entry_stop]],
+                    }
                 }
-            })
+            )
         return uproot.dask(files, **options)

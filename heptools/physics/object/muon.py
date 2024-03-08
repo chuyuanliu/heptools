@@ -3,25 +3,21 @@ from .lepton import DiLepton, _PairLepton, _PlotDiLepton, _PlotLepton
 
 
 @register_behavior
-class DiMuon(DiLepton):
-    ...
+class DiMuon(DiLepton): ...
 
 
 class _PairMuon(_PairLepton):
-    name = 'DiMuon'
-    type_check = {'Muon', 'DiMuon'}
+    name = "DiMuon"
+    type_check = {"Muon", "DiMuon"}
 
 
-class _PlotCommon:
-    ...
+class _PlotCommon: ...
 
 
-class _PlotMuon(_PlotCommon, _PlotLepton):
-    ...
+class _PlotMuon(_PlotCommon, _PlotLepton): ...
 
 
-class _PlotDiMuon(_PlotCommon, _PlotDiLepton):
-    ...
+class _PlotDiMuon(_PlotCommon, _PlotDiLepton): ...
 
 
 class Muon:

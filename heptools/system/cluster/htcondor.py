@@ -20,8 +20,12 @@ from ...utils import match_any, unpack
 from ..cvmfs import unpacked_cern_ch
 from ..eos import EOS, PathLike, load, save
 
-__all__ = ['TransferInput', 'Tarball', 'LocalFile',
-           'HTCondor']
+__all__ = [
+    "TransferInput",
+    "Tarball",
+    "LocalFile",
+    "HTCondor",
+]
 
 
 class TransferInput(ABC):
@@ -32,20 +36,16 @@ class TransferInput(ABC):
         TransferInput._scratch = EOS(path).mkdir(recursive=True)
 
     @abstractproperty
-    def inputs(self) -> list[str]:
-        ...
+    def inputs(self) -> list[str]: ...
 
     @abstractproperty
-    def tree(self) -> Tree[list[str]]:
-        ...
+    def tree(self) -> Tree[list[str]]: ...
 
     @abstractproperty
-    def prologue(self) -> list[str]:
-        ...
+    def prologue(self) -> list[str]: ...
 
     @abstractmethod
-    def clean(self):
-        ...
+    def clean(self): ...
 
 
 class Tarball(TransferInput):
@@ -62,22 +62,27 @@ class Tarball(TransferInput):
     def tree(self):
         unpacked = Tree(list[str])
         for src, dst, _ in self.files:
-            unpacked[unpack((*str(dst).split('/'), ))
-                     ].append((str(src), self.tarball.name))
+            unpacked[unpack((*str(dst).split("/"),))].append(
+                (str(src), self.tarball.name)
+            )
         return unpacked
 
     @property
     def prologue(self):
-        return [f'tar -xzf {self.tarball.name}', f'rm {self.tarball.name}']
+        return [f"tar -xzf {self.tarball.name}", f"rm {self.tarball.name}"]
 
     def clean(self):
         if not self.cached:
             self.tarball.rm()
 
     @classmethod
-    def set_base(cls, path: PathLike = ..., enable_cache: bool = True, metadata: str = '.cache'):
-        cls._base = (cls._scratch if path is ... else EOS(
-            path)).mkdir(recursive=True)
+    def set_base(
+        cls,
+        path: PathLike = ...,
+        enable_cache: bool = True,
+        metadata: str = ".cache",
+    ):
+        cls._base = (cls._scratch if path is ... else EOS(path)).mkdir(recursive=True)
         cls._cache = {}
         cls._cache_path = None
         if enable_cache and cls._base is not None:
@@ -105,10 +110,16 @@ class Tarball(TransferInput):
                     cls._cache.pop(cache).rm()
             save(cls._cache_path, cls._cache)
 
-    def __init__(self, *inputs: PathLike | tuple[PathLike, PathLike], algorithm: Literal['gz', 'bz2', 'xz'] = 'gz', compresslevel: int = 4):
+    def __init__(
+        self,
+        *inputs: PathLike | tuple[PathLike, PathLike],
+        algorithm: Literal["gz", "bz2", "xz"] = "gz",
+        compresslevel: int = 4,
+    ):
         if self._base is None:
             raise NotADirectoryError(
-                f'call `{self.set_base.__qualname__}()` before creating <{Tarball.__qualname__}>')
+                f"call `{self.set_base.__qualname__}()` before creating <{Tarball.__qualname__}>"
+            )
         files: list[tuple[EOS, EOS, int]] = []
         for src in inputs:
             if isinstance(src, tuple):
@@ -117,20 +128,22 @@ class Tarball(TransferInput):
                 src = EOS(src)
                 dst = EOS(src.name)
             else:
-                raise TypeError(f'invalid type <{type(src)}>')
+                raise TypeError(f"invalid type <{type(src)}>")
             if not (src.is_local and dst.is_local):
                 raise ValueError(f'cannot use remote path "{src}" -> "{dst}"')
             for path, stat in src.scan():
                 mtime = stat.st_mtime_ns
                 files.append((path, dst / path.relative_to(src), mtime))
         if len(files) == 0:
-            raise FileNotFoundError(f'no file found in {inputs}')
+            raise FileNotFoundError(f"no file found in {inputs}")
         self.files = frozenset(files)
         self.tarball = self._cache.get(self)
         self.cached = self._cache_path is not None
         if self.tarball is None:
-            self.tarball = self._base / f'{uuid.uuid4()}.tar.{algorithm}'
-            with tarfile.open(self.tarball, f'w:{algorithm}', compresslevel=compresslevel) as tar:
+            self.tarball = self._base / f"{uuid.uuid4()}.tar.{algorithm}"
+            with tarfile.open(
+                self.tarball, f"w:{algorithm}", compresslevel=compresslevel
+            ) as tar:
                 for src, dst, _ in self.files:
                     tar.add(src, arcname=dst)
             if self.cached:
@@ -208,43 +221,48 @@ class HTCondor:
     def random_port(cls, *ports: int) -> tuple[int, ...]:
         ports = np.asarray(ports)
         used = np.unique(ports[~np.isin(ports, [..., None])])
-        required = (ports == ...)
+        required = ports == ...
         ports[required] = np.random.choice(
-            np.setdiff1d(
-                np.arange(cls.open_ports[0], cls.open_ports[1] + 1), used),
-            np.sum(required))
+            np.setdiff1d(np.arange(cls.open_ports[0], cls.open_ports[1] + 1), used),
+            np.sum(required),
+        )
         return (*ports,)
 
-    def __init__(self,
-                 name: str = 'dask',
-                 cores: int = 1,
-                 memory: int | str = ...,
-                 disk: int | str = '40GB',
-                 image: str = 'chuyuanliu/heptools:latest',
-                 log: PathLike = ...,
-                 scheduler_port: int = ...,
-                 dashboard_port: int = ...,
-                 inputs: Iterable[PathLike | tuple[PathLike,
-                                                   PathLike] | TransferInput] = None,
-                 **kwargs):
-        ''' optional args
-            - `job_extra_directives: dict[str]`
-            - `job_script_prologue: list[str]`
-            - `scheduler_options: dict[str]`
-            - `worker_extra_args: list[str]`
-        '''
+    def __init__(
+        self,
+        name: str = "dask",
+        cores: int = 1,
+        memory: int | str = ...,
+        disk: int | str = "40GB",
+        image: str = "chuyuanliu/heptools:latest",
+        log: PathLike = ...,
+        scheduler_port: int = ...,
+        dashboard_port: int = ...,
+        inputs: Iterable[PathLike | tuple[PathLike, PathLike] | TransferInput] = None,
+        **kwargs,
+    ):
+        """optional args
+        - `job_extra_directives: dict[str]`
+        - `job_script_prologue: list[str]`
+        - `scheduler_options: dict[str]`
+        - `worker_extra_args: list[str]`
+        """
         if memory is ...:
-            memory = f'{cores * 2}GB'
+            memory = f"{cores * 2}GB"
 
         if log is ...:
-            log = TransferInput._scratch / 'condor_logs'
+            log = TransferInput._scratch / "condor_logs"
         if log is not None:
-            log = str(EOS(log).join(datetime.now().strftime(
-                f'{name}__%Y_%m_%d__%H_%M_%S')).mkdir(recursive=True))
+            log = str(
+                EOS(log)
+                .join(datetime.now().strftime(f"{name}__%Y_%m_%d__%H_%M_%S"))
+                .mkdir(recursive=True)
+            )
         self._log = log
 
         scheduler_port, self._dashboard_port = self.random_port(
-            scheduler_port, dashboard_port)
+            scheduler_port, dashboard_port
+        )
         mid_port = sum(self.open_ports) // 2
 
         if inputs is None:
@@ -267,44 +285,43 @@ class HTCondor:
         if len(files) > 0:
             self._inputs.append(LocalFile(*files))
 
-        self._excecutable = TransferInput._scratch / f'condor_exec.exe'
-        with open(self._excecutable, 'w') as f:
-            f.write('\n'.join(['#!/bin/bash', 'eval $2']))
+        self._excecutable = TransferInput._scratch / f"condor_exec.exe"
+        with open(self._excecutable, "w") as f:
+            f.write("\n".join(["#!/bin/bash", "eval $2"]))
         HTCondorJob.executable = str(self._excecutable)
 
         self._cluster = HTCondorCluster(
             cores=cores,
             memory=memory,
             disk=disk,
-            local_directory='/srv',
+            local_directory="/srv",
             log_directory=self._log,
-            python='python',
-
+            python="python",
             job_extra_directives={
-                'batch_name': name,
-                'use_x509userproxy': True,
-                'should_transfer_files': 'YES',
-                'when_to_transfer_output': 'ON_EXIT_OR_EVICT',
-                'initialdir': str(self._log),
-                'transfer_input_files': ','.join(set(sum([input.inputs for input in self._inputs], []))),
-                '+SingularityImage': f'"{unpacked_cern_ch(image)}"',
-            } | kwargs.pop('job_extra_directives', {}),
-
-            job_script_prologue=sum(
-                [input.prologue for input in self._inputs], [])
-            + kwargs.pop('job_script_prologue', []),
-
+                "batch_name": name,
+                "use_x509userproxy": True,
+                "should_transfer_files": "YES",
+                "when_to_transfer_output": "ON_EXIT_OR_EVICT",
+                "initialdir": str(self._log),
+                "transfer_input_files": ",".join(
+                    set(sum([input.inputs for input in self._inputs], []))
+                ),
+                "+SingularityImage": f'"{unpacked_cern_ch(image)}"',
+            }
+            | kwargs.pop("job_extra_directives", {}),
+            job_script_prologue=sum([input.prologue for input in self._inputs], [])
+            + kwargs.pop("job_script_prologue", []),
             scheduler_options={
-                'dashboard_address': self._dashboard_port,
-                'port': scheduler_port,
-            } | kwargs.pop('scheduler_options', {}),
-
+                "dashboard_address": self._dashboard_port,
+                "port": scheduler_port,
+            }
+            | kwargs.pop("scheduler_options", {}),
             worker_extra_args=[
-                f'--worker-port {self.open_ports[0]}:{mid_port}',
-                f'--nanny-port {mid_port}:{self.open_ports[1]}'
-            ] + kwargs.pop('worker_extra_args', []),
-
-            **kwargs
+                f"--worker-port {self.open_ports[0]}:{mid_port}",
+                f"--nanny-port {mid_port}:{self.open_ports[1]}",
+            ]
+            + kwargs.pop("worker_extra_args", []),
+            **kwargs,
         )
 
     @property
@@ -315,28 +332,30 @@ class HTCondor:
         raw = sum([input.tree for input in self._inputs], Tree(list[str]))
         tree = Tree(Text)
         for path, files in raw.walk():
-            args = {'style': 'default'}
+            args = {"style": "default"}
             if len(files) > 1:
-                args['style'] = 'red'
+                args["style"] = "red"
             text = Text(**args)
             for file in files:
                 if isinstance(file, str):
-                    text += Text('  ' + file + '\n', **args)
+                    text += Text("  " + file + "\n", **args)
                 elif isinstance(file, tuple):
-                    text += Text(f'  {file[0]} -> {file[1]}\n', **args)
+                    text += Text(f"  {file[0]} -> {file[1]}\n", **args)
             tree[unpack(path)] += text
         return tree
 
     def dashboard(self, local_port=...):
         if self._dashboard_port is None:
-            return ''
+            return ""
         else:
             if local_port is ...:
                 local_port = self._dashboard_port
-            return '\n'.join([
-                f'python -m webbrowser "http://localhost:{local_port}"',
-                f'ssh -L {local_port}:localhost:{self._dashboard_port} {getpass.getuser()}@{socket.gethostname()}'
-            ])
+            return "\n".join(
+                [
+                    f'python -m webbrowser "http://localhost:{local_port}"',
+                    f"ssh -L {local_port}:localhost:{self._dashboard_port} {getpass.getuser()}@{socket.gethostname()}",
+                ]
+            )
 
     def clean(self):
         self._excecutable.rm()
@@ -345,9 +364,9 @@ class HTCondor:
 
     @property
     def log(self):
-        logs = {'log': [], 'err': [], 'out': []}
+        logs = {"log": [], "err": [], "out": []}
         for file in EOS(self._log).walk():
             ext = file.extension
             if ext in logs:
-                logs[ext].append(open(file, 'r').read())
+                logs[ext].append(open(file, "r").read())
         return logs

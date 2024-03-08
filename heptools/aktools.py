@@ -13,10 +13,30 @@ from .partition import Partition
 from .typetools import check_type
 from .utils import astuple
 
-__all__ = ['FieldLike', 'AnyArray', 'RealNumber', 'AnyInt', 'AnyFloat',
-           'has_record', 'get_field', 'set_field', 'update_fields',
-           'get_shape' 'foreach', 'partition', 'between', 'where', 'sort',
-           'or_arrays', 'or_fields', 'and_arrays', 'and_fields', 'add_arrays', 'add_fields', 'mul_arrays', 'mul_arrays']
+__all__ = [
+    "FieldLike",
+    "AnyArray",
+    "RealNumber",
+    "AnyInt",
+    "AnyFloat",
+    "has_record",
+    "get_field",
+    "set_field",
+    "update_fields",
+    "get_shape" "foreach",
+    "partition",
+    "between",
+    "where",
+    "sort",
+    "or_arrays",
+    "or_fields",
+    "and_arrays",
+    "and_fields",
+    "add_arrays",
+    "add_fields",
+    "mul_arrays",
+    "mul_arrays",
+]
 
 AnyInt = int | np.integer
 AnyFloat = float | np.floating
@@ -55,8 +75,8 @@ def get_field(data: Array, field: FieldLike):
 
 def set_field(data: Array, field: FieldLike, value: Array):
     field = astuple(field)
-    parent = field[:len(has_record(data, field)) + 1]
-    nested = field[len(parent):]
+    parent = field[: len(has_record(data, field)) + 1]
+    nested = field[len(parent) :]
     if nested:
         for level in reversed(nested):
             value = ak.zip({level: value})
@@ -75,6 +95,7 @@ def update_fields(data: Array, new: Array, *fields: FieldLike):
     for field in fields:
         set_field(data, field, get_field(new, field))
 
+
 # shape
 
 
@@ -88,13 +109,14 @@ def get_shape(data: AnyArray) -> list[str]:
             try:
                 _type = _type.type
                 _str = str(_type)
-                shape[-1] = shape[-1].removesuffix(f' * {_str}')
+                shape[-1] = shape[-1].removesuffix(f" * {_str}")
                 shape.append(_str)
             except AttributeError:
                 _type = None
         return shape
     else:
         return [type(data).__name__]
+
 
 # slice
 
@@ -103,8 +125,7 @@ def foreach(data: Array) -> tuple[Array, ...]:
     dim = len(get_shape(data)) - 2
     count = np.unique(ak.ravel(ak.num(data, axis=dim)))
     if not len(count) == 1:
-        raise IndexError(
-            f'the length of the last axis must be uniform (got {count})')
+        raise IndexError(f"the length of the last axis must be uniform (got {count})")
     slices = tuple(slice(None) for _ in range(dim))
     return tuple(data[slices + (i,)] for i in range(count[0]))
 
@@ -112,13 +133,19 @@ def foreach(data: Array) -> tuple[Array, ...]:
 def partition(data: Array, groups: int, members: int) -> tuple[Array, ...]:
     _sizes = ak.num(data)
     if not ak.all(_sizes >= groups * members):
-        raise ValueError(
-            f'not enough data to partition into {groups}×{members}')
-    _combs = ak.Array([Partition(i, groups, members).combination[0]
-                      for i in range(ak.max(_sizes) + 1)])[_sizes]
-    _combs = tuple(ak.unflatten(data[ak.flatten(
-        _combs[:, :, :, i], axis=2)], groups, axis=1) for i in range(members))
+        raise ValueError(f"not enough data to partition into {groups}×{members}")
+    _combs = ak.Array(
+        [
+            Partition(i, groups, members).combination[0]
+            for i in range(ak.max(_sizes) + 1)
+        ]
+    )[_sizes]
+    _combs = tuple(
+        ak.unflatten(data[ak.flatten(_combs[:, :, :, i], axis=2)], groups, axis=1)
+        for i in range(members)
+    )
     return _combs
+
 
 # reduce
 
@@ -154,11 +181,16 @@ def where(default: Array, *conditions: tuple[Array, Any]) -> Array:
     return default
 
 
-def sort(data: Array, value: FieldLike | Callable[[Array], Array], axis: int = -1, ascending: bool = False) -> Array:
+def sort(
+    data: Array,
+    value: FieldLike | Callable[[Array], Array],
+    axis: int = -1,
+    ascending: bool = False,
+) -> Array:
     if check_type(value, FieldLike):
         value = get_field(data, value)
     elif isinstance(value, Callable):
         value = value(data)
     else:
-        raise TypeError(f'cannot sort by <{type(value).__name__}>')
+        raise TypeError(f"cannot sort by <{type(value).__name__}>")
     return data[ak.argsort(value, axis=axis, ascending=ascending)]

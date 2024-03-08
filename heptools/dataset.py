@@ -8,8 +8,12 @@ from .container import Tree
 from .protocols import alias
 from .utils.json import DefaultEncoder
 
-__all__ = ['File', 'FileList', 'Dataset',
-           'DatasetError']
+__all__ = [
+    "File",
+    "FileList",
+    "Dataset",
+    "DatasetError",
+]
 
 
 class DatasetError(Exception):
@@ -17,11 +21,13 @@ class DatasetError(Exception):
 
 
 class File:
-    def __init__(self,
-                 data: dict | File = None,
-                 site: str | list[str] = None,
-                 path: str = None,
-                 nevents: int = None):
+    def __init__(
+        self,
+        data: dict | File = None,
+        site: str | list[str] = None,
+        path: str = None,
+        nevents: int = None,
+    ):
         if data is None:
             data = {}
         self.excluded = False
@@ -30,20 +36,20 @@ class File:
         if isinstance(data, File):
             self.excluded = data.excluded
             data = data.__dict__
-        self.site = frozenset(data.get('site', []) if site is None else site)
-        self.path = data.get('path', '') if path is None else path
-        self.nevents = data.get('nevents', 0) if nevents is None else nevents
+        self.site = frozenset(data.get("site", []) if site is None else site)
+        self.path = data.get("path", "") if path is None else path
+        self.nevents = data.get("nevents", 0) if nevents is None else nevents
 
     def to_json(self):
-        return {'path': self.path, 'nevents': self.nevents, 'site': [*self.site]}
+        return {"path": self.path, "nevents": self.nevents, "site": [*self.site]}
 
 
-@alias('copy')
+@alias("copy")
 class FileList:
     def __init__(self, data: dict = None):
         if data is None:
             data = {}
-        files = [File(f) for f in data.get('files', [])]
+        files = [File(f) for f in data.get("files", [])]
         self._files = {f.path: f for f in files}
 
     @property
@@ -51,10 +57,10 @@ class FileList:
         return self._files.values()
 
     def copy(self):
-        return FileList({'files': self.files})
+        return FileList({"files": self.files})
 
     def to_json(self):
-        return {'files': [*self.files]}
+        return {"files": [*self.files]}
 
     @property
     def nfiles(self) -> tuple[int, int]:
@@ -62,7 +68,9 @@ class FileList:
 
     @property
     def nevents(self) -> tuple[int, int]:
-        return sum(f.nevents for f in self.files if not f.excluded), sum(f.nevents for f in self.files)
+        return sum(f.nevents for f in self.files if not f.excluded), sum(
+            f.nevents for f in self.files
+        )
 
     def sublist(self, file: Callable[[File], bool] = None):
         sub = self.copy()
@@ -74,7 +82,7 @@ class FileList:
 
     def __add__(self, other: FileList | File) -> FileList:
         if isinstance(other, File):
-            other = FileList({'files': [other]})
+            other = FileList({"files": [other]})
         if isinstance(other, FileList):
             merged = self.copy()
             for f in other.files:
@@ -82,7 +90,8 @@ class FileList:
                     exist = merged._files[f.path]
                     if f.nevents != exist.nevents:
                         raise DatasetError(
-                            f'conflicting nevents {f.nevents} vs {exist.nevents} for file "{f.path}"')
+                            f'conflicting nevents {f.nevents} vs {exist.nevents} for file "{f.path}"'
+                        )
                     exist.site = exist.site.union(f.site)
                     exist.excluded = exist.excluded and f.excluded
                 else:
@@ -98,7 +107,7 @@ class FileList:
     def __str__(self):  # TODO rich, __repr__
         v, u = Metric.add(self.nevents)
         nf = self.nfiles
-        return f'[nevents] {v[0]:0.1f}{u[0]}/{v[1]:0.1f}{u[1]} [nfiles] {nf[0]}/{nf[1]}'
+        return f"[nevents] {v[0]:0.1f}{u[0]}/{v[1]:0.1f}{u[1]} [nfiles] {nf[0]}/{nf[1]}"
 
     def reset(self):
         for f in self.files:
@@ -107,7 +116,7 @@ class FileList:
 
 
 class Dataset:
-    _metadata = ('source', 'dataset', 'year', 'era', 'tier')
+    _metadata = ("source", "dataset", "year", "era", "tier")
 
     def __init__(self) -> None:
         self._tree = Tree(FileList)
@@ -115,15 +124,27 @@ class Dataset:
     def __str__(self):  # TODO rich, __repr__
         return str(self._tree)
 
-    def update(self,
-               source: Literal['Data', 'MC'], dataset: str,
-               year: str, era: str,
-               tier: str, files: FileList):
+    def update(
+        self,
+        source: Literal["Data", "MC"],
+        dataset: str,
+        year: str,
+        era: str,
+        tier: str,
+        files: FileList,
+    ):
         self._tree[source, dataset, year, era, tier] += files.copy()
 
-    def subset(self, filelist: Callable[[FileList], bool] = None, file: Callable[[File], bool] = None, **kwarg: str | list[str]):
+    def subset(
+        self,
+        filelist: Callable[[FileList], bool] = None,
+        file: Callable[[File], bool] = None,
+        **kwarg: str | list[str],
+    ):
         subset = Dataset()
-        for meta, entry in self._tree.walk(*(kwarg.get(k, ...) for k in self._metadata)):
+        for meta, entry in self._tree.walk(
+            *(kwarg.get(k, ...) for k in self._metadata)
+        ):
             entry = entry.sublist(file)
             if filelist is None or filelist(entry):
                 subset.update(*meta, entry)
@@ -148,12 +169,11 @@ class Dataset:
     @classmethod
     def load(cls, path=None):
         self = cls()
-        self._tree.from_dict(json.load(open(path, 'r')),
-                             depth=len(self._metadata))
+        self._tree.from_dict(json.load(open(path, "r")), depth=len(self._metadata))
         return self
 
     def save(self, path: str):
-        json.dump(self._tree, open(path, 'w'), indent=4, cls=DefaultEncoder)
+        json.dump(self._tree, open(path, "w"), indent=4, cls=DefaultEncoder)
 
     def reset(self):
         for _, entry in self:

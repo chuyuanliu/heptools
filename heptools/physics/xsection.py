@@ -16,11 +16,12 @@ class XSectionError(Exception):
 
 @dataclass
 class XSection:
-    '''
-        [pb]
-        - PDG https://pdg.lbl.gov/
-        - GenXsecAnalyzer https://twiki.cern.ch/twiki/bin/viewauth/CMS/HowToGenXSecAnalyzer
-    '''
+    """
+    [pb]
+    - PDG https://pdg.lbl.gov/
+    - GenXsecAnalyzer https://twiki.cern.ch/twiki/bin/viewauth/CMS/HowToGenXSecAnalyzer
+    """
+
     _all: ClassVar[list[XSection]] = []
 
     process: Formula | re.Pattern
@@ -41,7 +42,13 @@ class XSection:
         return Eval(cls)(xs)
 
     @classmethod
-    def add(cls, process: Formula | re.Pattern | str, xs: float | str = None, decay: str = '', kfactors: dict[str, float] = None):
+    def add(
+        cls,
+        process: Formula | re.Pattern | str,
+        xs: float | str = None,
+        decay: str = "",
+        kfactors: dict[str, float] = None,
+    ):
         self = super().__new__(cls)
         if isinstance(process, str):
             process = re.compile(process)
@@ -53,8 +60,7 @@ class XSection:
             xs = _xs(process, decay, *kfactors)
             if xs is not None:
                 return xs
-        raise XSectionError(
-            f'the cross section of "{process}" is not recorded')
+        raise XSectionError(f'the cross section of "{process}" is not recorded')
 
     def __call__(self, process: str, decay: str = ..., *kfactors: str) -> float:
         xs = None
@@ -66,8 +72,9 @@ class XSection:
             elif isinstance(xs, str):
                 xs = self._get_xs(xs.format(**match.groupdict()))
         if xs:
-            xs *= XSection._get_br(decay=self.decay if decay is ... else decay,
-                                   process=process)
+            xs *= XSection._get_br(
+                decay=self.decay if decay is ... else decay, process=process
+            )
             if self.kfactors and kfactors:
                 for kfactor in kfactors:
                     xs *= self.kfactors.get(kfactor, 1)

@@ -13,7 +13,11 @@ from ..aktools import FieldLike, RealNumber, and_fields, get_field, has_record
 from ..typetools import check_type
 from . import awkward as dakext
 
-__all__ = ['Collection', 'Fill', 'FillLike']
+__all__ = [
+    "Collection",
+    "Fill",
+    "FillLike",
+]
 
 FillLike = _h.hist.LazyFill | RealNumber | bool
 
@@ -27,7 +31,7 @@ class Fill(_h.Fill):
     def fill(self, events: ak.Array, hists: Collection = ..., **fill_args: FillLike):
         if hists is ...:
             if Collection.current is None:
-                raise _h.FillError('no histogram collection is specified')
+                raise _h.FillError("no histogram collection is specified")
             hists = Collection.current
         fill_args = self._kwargs | fill_args
         mask_categories = []
@@ -49,10 +53,14 @@ class Fill(_h.Fill):
                     fill_args[category] = field
         for category_args in hists._generate_category_combinations(mask_categories):
             mask = and_fields(
-                events, *(_h.hist._default_field(f'{k}.{v}') for k, v in category_args.items()))
+                events,
+                *(_h.hist._default_field(f"{k}.{v}") for k, v in category_args.items()),
+            )
             masked = events if mask is None else events[mask]
             for k, v in fill_args.items():
-                if (isinstance(v, str) and k in hists._categories) or isinstance(v, (bool, RealNumber)):
+                if (isinstance(v, str) and k in hists._categories) or isinstance(
+                    v, (bool, RealNumber)
+                ):
                     category_args[k] = v
                 elif check_type(v, FieldLike):
                     category_args[k] = get_field(masked, v)
@@ -65,7 +73,9 @@ class Fill(_h.Fill):
                 to_repeat = []
                 count = None
                 for k in self._fills[name]:
-                    v = category_args[f'{name}:{k}' if f'{name}:{k}' in category_args else k]
+                    v = category_args[
+                        f"{name}:{k}" if f"{name}:{k}" in category_args else k
+                    ]
                     if isinstance(v, dak.Array):
                         depth = v._meta.layout.minmax_depth[1]
                         if depth == 1:

@@ -7,20 +7,26 @@ import dask_awkward as dak
 
 from .. import awkward as akext
 
-_DelayedFuncT = TypeVar('_DelayedFuncT')
+_DelayedFuncT = TypeVar("_DelayedFuncT")
 
 
 class _Delayed:
-    def __init__(self, __func: Callable = None, mock: ak.Array | Callable[[], ak.Array] = ...):
+    def __init__(
+        self,
+        __func: Callable = None,
+        mock: ak.Array | Callable[[], ak.Array] = ...,
+    ):
         self._func = __func
         self._mock = (
-            mock if mock is not isinstance(mock, ak.Array)
-            else ak.Array(mock.layout.to_typetracer(forget_length=True)))
+            mock
+            if mock is not isinstance(mock, ak.Array)
+            else ak.Array(mock.layout.to_typetracer(forget_length=True))
+        )
 
     def _wrapper(self, *args, **kwargs):
         for arg in chain(args, kwargs.values()):
             if isinstance(arg, ak.Array):
-                if ak.backend(arg) == 'typetracer':
+                if ak.backend(arg) == "typetracer":
                     if self._mock is ...:
                         return arg
                     elif isinstance(self._mock, ak.Array):
@@ -36,7 +42,10 @@ class _Delayed:
         return self._func(*args, **kwargs)
 
 
-def delayed(__func: _DelayedFuncT = None, shape: ak.Array | Callable[[], ak.Array] = ...) -> _DelayedFuncT:
+def delayed(
+    __func: _DelayedFuncT = None,
+    shape: ak.Array | Callable[[], ak.Array] = ...,
+) -> _DelayedFuncT:
     if __func is None:
         return partial(delayed, shape=shape)
     else:

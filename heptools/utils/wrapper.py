@@ -21,12 +21,10 @@ class Wrapped:
 class OptionalDecorator(ABC):
     @property
     @abstractmethod
-    def _switch(cls) -> str:
-        ...
+    def _switch(cls) -> str: ...
 
     @abstractmethod
-    def _decorate(cls, __func: Callable, **kwargs) -> Callable:
-        ...
+    def _decorate(cls, __func: Callable, **kwargs) -> Callable: ...
 
     def __new__(cls, __func=None, **kwargs):
         if __func is None:
@@ -38,15 +36,16 @@ class OptionalDecorator(ABC):
             __sig = __func
         elif isinstance(__func, type):
             __sig = __func.__init__
-        elif hasattr(__func, '__wrapped__'):
+        elif hasattr(__func, "__wrapped__"):
             __sig = __func.__wrapped__
-        elif hasattr(__func, '__call__'):
+        elif hasattr(__func, "__call__"):
             __sig = __func.__call__
         signature = inspect.signature(__sig)
         name = __sig.__name__
         if self._switch not in signature.parameters:
             raise ValueError(
-                f'Function "{name}{signature}" must have a parameter "{self._switch}: bool"')
+                f'Function "{name}{signature}" must have a parameter "{self._switch}: bool"'
+            )
         wraps(__func)(self)
         self._func = __func
         self._decorated = None
@@ -73,22 +72,21 @@ class OptionalDecorator(ABC):
             return self._func(*args, **kwargs)
 
 
-_RetryFuncT = TypeVar('_RetryFuncT', bound=Callable)
-_RetryFuncP = ParamSpec('_RetryFuncP')
-_RetryFuncReturnT = TypeVar('_RetryFuncReturnT')
+_RetryFuncT = TypeVar("_RetryFuncT", bound=Callable)
+_RetryFuncP = ParamSpec("_RetryFuncP")
+_RetryFuncReturnT = TypeVar("_RetryFuncReturnT")
 
 
 class AutoRetry(Generic[_RetryFuncP, _RetryFuncReturnT]):
     def __init__(
         self,
-        func: Callable[
-            _RetryFuncP, _RetryFuncReturnT],
+        func: Callable[_RetryFuncP, _RetryFuncReturnT],
         max: int,
         delay: float = 0,
         handler: Callable[
-            Concatenate[Exception, _RetryFuncP], _RetryFuncReturnT] = None,
-        reset: Callable[
-            _RetryFuncP, None] = None,
+            Concatenate[Exception, _RetryFuncP], _RetryFuncReturnT
+        ] = None,
+        reset: Callable[_RetryFuncP, None] = None,
         skip: Iterable[Exception] = (),
     ):
         wraps(func)(self)
@@ -114,7 +112,11 @@ class AutoRetry(Generic[_RetryFuncP, _RetryFuncReturnT]):
             return self
         return MethodType(self, instance)
 
-    def __call__(self, *args: _RetryFuncP.args, **kwargs: _RetryFuncP.kwargs) -> _RetryFuncReturnT:
+    def __call__(
+        self,
+        *args: _RetryFuncP.args,
+        **kwargs: _RetryFuncP.kwargs,
+    ) -> _RetryFuncReturnT:
         i = 0
         while i < self._max:
             i += 1
@@ -134,10 +136,8 @@ class AutoRetry(Generic[_RetryFuncP, _RetryFuncReturnT]):
 def retry(
     max: int,
     delay: float = 0,
-    handler: Callable[
-        Concatenate[Exception, _RetryFuncP], _RetryFuncReturnT] = None,
-    reset: Callable[
-        _RetryFuncP, None] = None,
+    handler: Callable[Concatenate[Exception, _RetryFuncP], _RetryFuncReturnT] = None,
+    reset: Callable[_RetryFuncP, None] = None,
     skip: Iterable[Exception] = (),
 ) -> Callable[[_RetryFuncT], _RetryFuncT]:
     return partial(

@@ -1,7 +1,7 @@
 import numpy as np
 import numpy.typing as npt
 
-__all__ = ['Metric', 'Binary']
+__all__ = ["Metric", "Binary"]
 
 
 class Prefix:
@@ -14,11 +14,15 @@ class Prefix:
 
     def add(self, value: npt.NDArray):
         value = np.asarray(value, dtype=self.dtype)
-        with np.errstate(divide='ignore'):
-            power = np.floor(np.nan_to_num(
-                np.log(np.abs(value)), False, 0, 0, 0) / np.log(self.base)).astype(int)
+        with np.errstate(divide="ignore"):
+            power = np.floor(
+                np.nan_to_num(np.log(np.abs(value)), False, 0, 0, 0) / np.log(self.base)
+            ).astype(int)
         power = np.clip(power, *self.range)
-        return np.asarray(value / np.power(self.base, power), dtype=self.dtype), self.prefix[power]
+        return (
+            np.asarray(value / np.power(self.base, power), dtype=self.dtype),
+            self.prefix[power],
+        )
 
     def remove(self, value: npt.NDArray[np.unicode_]):
         value = np.asarray(value, dtype=np.unicode_)
@@ -28,8 +32,10 @@ class Prefix:
             matched = np.char.endswith(value, self.prefix[i])
             power[matched] = prefix_power
             value[matched] = np.char.rstrip(value[matched], self.prefix[i])
-        return np.asarray(value.astype(self.dtype) * np.power(self.base, power), dtype=self.dtype)
+        return np.asarray(
+            value.astype(self.dtype) * np.power(self.base, power), dtype=self.dtype
+        )
 
 
-Metric = Prefix(1000, ['', *'kMGTPEZYyzafpnμm'], (-8, 8))
-Binary = Prefix(1024, [''] + [f'{i}i' for i in 'KMGTPEZY'], (0, 8))
+Metric = Prefix(1000, ["", *"kMGTPEZYyzafpnμm"], (-8, 8))
+Binary = Prefix(1024, [""] + [f"{i}i" for i in "KMGTPEZY"], (0, 8))

@@ -3,20 +3,33 @@ from functools import reduce
 from inspect import getmro
 from operator import add
 from types import UnionType
-from typing import (Annotated, Any, Literal, Protocol, TypeVar, Union,
-                    get_args, get_origin, get_type_hints, runtime_checkable)
+from typing import (
+    Annotated,
+    Any,
+    Literal,
+    Protocol,
+    TypeVar,
+    Union,
+    get_args,
+    get_origin,
+    get_type_hints,
+    runtime_checkable,
+)
 
 from .utils import count, unique
 
-__all__ = ['TypeGuarded',
-           'check_subclass', 'check_type', 'type_name',
-           'reversed_mro']
+__all__ = [
+    "TypeGuarded",
+    "check_subclass",
+    "check_type",
+    "type_name",
+    "reversed_mro",
+]
 
 
 @runtime_checkable
 class TypeGuarded(Protocol):
-    def __typeguard__(self, *args) -> bool:
-        ...
+    def __typeguard__(self, *args) -> bool: ...
 
 
 def _expand_type(__class_or_tuple):
@@ -61,13 +74,13 @@ def check_subclass(__derived, __base) -> bool:
         return all(check_subclass(i, __base) for i in args_derived)
     # Literal, Annotated, Callable
     for type_, func in (
-        (Literal, lambda:
-            all(i in args_base for i in args_derived)),
-        (Annotated, lambda:
-            args_base[1:] == args_derived[1:]
-            and check_subclass(args_derived[0], args_base[0])),
-        (Callable, lambda:
-            True)  # FIXME compare args
+        (Literal, lambda: all(i in args_base for i in args_derived)),
+        (
+            Annotated,
+            lambda: args_base[1:] == args_derived[1:]
+            and check_subclass(args_derived[0], args_base[0]),
+        ),
+        (Callable, lambda: True),  # FIXME compare args
     ):
         match count([origin_base, origin_derived], type_):
             case 2:
@@ -145,11 +158,11 @@ def type_name(__type) -> str:
 
     if not generic:
         if origin is Any:
-            return 'Any'
+            return "Any"
         if origin is Ellipsis:
-            return '...'
+            return "..."
         if origin is None or origin is type(None):
-            return 'None'
+            return "None"
         try:
             return origin.__name__
         except:
@@ -157,43 +170,44 @@ def type_name(__type) -> str:
 
     # Union
     if origin is UnionType or origin is Union:
-        if 'None' in args:
-            args.remove('None')
+        if "None" in args:
+            args.remove("None")
             return f'Optional[{" | ".join(args)}]'
-        return ' | '.join(args)
+        return " | ".join(args)
     # Annotated
     if origin is Annotated:
         return f'[{", ".join(args[1:])}] {args[0]}'
     # Callable
     if origin is Callable:
-        return f'{args[0]} -> {args[1]}'
+        return f"{args[0]} -> {args[1]}"
     # type
     if origin is type:
-        return f'<{args[0]}>'
+        return f"<{args[0]}>"
 
     if args:
         args = f'[{", ".join(args)}]'
-    return f'{type_name(origin)}{args}'
+    return f"{type_name(origin)}{args}"
 
 
 def get_partial_type_hints(cls, include_extras: bool = False):
     try:
         return get_type_hints(cls, include_extras=include_extras)
     except:
-        if not hasattr(cls, '__annotations__'):
+        if not hasattr(cls, "__annotations__"):
             return {}
 
         class dummy:
             __annotations__ = {}
+
         hints = {}
         for k, v in cls.__annotations__.items():
             dummy.__annotations__ = {k: v}
             try:
-                hints[k] = get_type_hints(
-                    dummy, include_extras=include_extras)[k]
+                hints[k] = get_type_hints(dummy, include_extras=include_extras)[k]
             except:
                 hints[k] = v
         return hints
+
 
 # mro
 
@@ -205,8 +219,14 @@ def reversed_mro(cls, name: str):
     raise AttributeError
 
 
-def accumulated_mro(cls, name: str, reverse: bool = False, op: Callable[[Any, Any], Any] = add):
-    return reduce(op,
-                  (vars(base)[name]
-                   for base in getmro(cls)[::-1 if reverse else 1]
-                   if name in vars(base)))
+def accumulated_mro(
+    cls, name: str, reverse: bool = False, op: Callable[[Any, Any], Any] = add
+):
+    return reduce(
+        op,
+        (
+            vars(base)[name]
+            for base in getmro(cls)[:: -1 if reverse else 1]
+            if name in vars(base)
+        ),
+    )

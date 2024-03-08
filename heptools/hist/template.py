@@ -15,8 +15,16 @@ from . import hist as _h
 class Template:
     class _Hist:
         def __init__(self, *axes: _h.AxisLike, **fill_args: _h.LazyFill):
-            self._axes = [(
-                _h.Label(axis.name, axis.label) if isinstance(axis, AxesMixin) else _h.Label(axis[-1]), axis) for axis in axes
+            self._axes = [
+                (
+                    (
+                        _h.Label(axis.name, axis.label)
+                        if isinstance(axis, AxesMixin)
+                        else _h.Label(axis[-1])
+                    ),
+                    axis,
+                )
+                for axis in axes
             ]
             self.fill_args = fill_args
 
@@ -39,15 +47,16 @@ class Template:
             return _axes
 
         def __repr__(self):  # TODO __repr__
-            return ', '.join(str(axis) for _, axis in self._axes)
+            return ", ".join(str(axis) for _, axis in self._axes)
 
     def __init__(
-            self,
-            name: _h.LabelLike,
-            fill: FieldLike = ...,
-            bins: dict[str | tuple[str, str], _h.AxisArgs] = None,
-            skip: Iterable[str] = None,
-            **fill_args: _h.LazyFill):
+        self,
+        name: _h.LabelLike,
+        fill: FieldLike = ...,
+        bins: dict[str | tuple[str, str], _h.AxisArgs] = None,
+        skip: Iterable[str] = None,
+        **fill_args: _h.LazyFill,
+    ):
         self._name = _h.Label(name)
         self._data = fill
         self._bins = bins.copy() if bins is not None else {}
@@ -60,11 +69,7 @@ class Template:
 
     def copy(self):
         return self.__class__(
-            self._name,
-            self._data,
-            self._bins,
-            self._skip,
-            **self._fill_args
+            self._name, self._data, self._bins, self._skip, **self._fill_args
         )
 
     @property
@@ -80,13 +85,13 @@ class Template:
         return self._fill_args
 
     def hist_name(self, name: str, nested: bool = False):
-        name = f'{self._name.code}.{name}'
+        name = f"{self._name.code}.{name}"
         if nested and self._parent is not None:
             return self._parent.hist_name(name, nested)
         return name
 
     def axis_label(self, label: str):
-        label = f'{self._name.display} {label}'
+        label = f"{self._name.display} {label}"
         if self._parent is not None:
             label = self._parent.axis_label(label)
         return label
@@ -115,7 +120,10 @@ class Template:
             if name is not None:
                 self._name.code = name
             self._data = astuple(
-                self._data if self._data is not ... else _h._default_field(self._name.code))
+                self._data
+                if self._data is not ...
+                else _h._default_field(self._name.code)
+            )
             hists, templates = self.hists()
             for name, hist in hists.items():
                 if not self.skip(name):
@@ -123,7 +131,8 @@ class Template:
             for name, template in templates.items():
                 if template._created:
                     raise _h.HistError(
-                        f'Template "{self.__class__.__name__}.{name}" has already been used')
+                        f'Template "{self.__class__.__name__}.{name}" has already been used'
+                    )
                 template = template.copy()
                 self._fills += template.new(name, self)
         return self._fills
@@ -144,10 +153,11 @@ class Template:
                 _kwargs[axis.name] = _fill
             else:
                 _kwargs[axis.name] = data + _h._default_field(axis.name)
-        if 'weight' in fill_args:
-            _kwargs['weight'] = fill_args['weight']
+        if "weight" in fill_args:
+            _kwargs["weight"] = fill_args["weight"]
         self._fills += _h.Collection.current.add(
-            self.hist_name(name, nested=True), *axes, **_kwargs)
+            self.hist_name(name, nested=True), *axes, **_kwargs
+        )
 
     def _wrap(self, func: Callable):
         return lambda x: func(get_field(x, self.data))
@@ -172,14 +182,20 @@ class Template:
 
 
 class Systematic(Template):
-    def __init__(self, name: str, systs: Iterable[_h.LabelLike], *axes: AxesMixin | tuple, weight: FieldLike = 'weight', **fill_args: FieldLike):
-        super().__init__((name, ''), (), **fill_args)
+    def __init__(
+        self,
+        name: str,
+        systs: Iterable[_h.LabelLike],
+        *axes: AxesMixin | tuple,
+        weight: FieldLike = "weight",
+        **fill_args: FieldLike,
+    ):
+        super().__init__((name, ""), (), **fill_args)
         weight = astuple(weight)
         if len(axes) == 0:
             axes = _h.Collection.current.duplicate_axes(name)
         for _var in systs:
             _var = _h.Label(_var)
-            self._name.display = f'({_var.display})'
-            self._add(_var.code, *axes, weight=weight +
-                      _h._default_field(_var.code))
-        self._name.display = ''
+            self._name.display = f"({_var.display})"
+            self._add(_var.code, *axes, weight=weight + _h._default_field(_var.code))
+        self._name.display = ""

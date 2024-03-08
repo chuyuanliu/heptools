@@ -21,14 +21,14 @@ def _get_content(data: ak.Array, content: ContentLike):
 
 class EventWeight:
     def __init__(self):
-        self.weights: dict[str, dict[str,  ContentLike]] = {}
+        self.weights: dict[str, dict[str, ContentLike]] = {}
         self.correlations: dict[str, dict[str, dict[str, str]]] = {}
 
     def add(self, name: str, central: ContentLike = ..., **variations: ContentLike):
         if central is ...:
-            if '' not in variations:
-                raise ValueError('central value must be provided')
-        self.weights[name] = {'': central} | variations
+            if "" not in variations:
+                raise ValueError("central value must be provided")
+        self.weights[name] = {"": central} | variations
 
     def correlate(self, name: str, **variations: dict[str, str]):
         self.correlations[name] = variations
@@ -42,17 +42,19 @@ class EventWeight:
             if wsk not in exclude:
                 for wv in wsv:
                     if wv:
-                        yield f'{wsk}.{wv}'
+                        yield f"{wsk}.{wv}"
         for csk, csv in self.correlations.items():
             if csk not in exclude:
                 for ck, cv in csv.items():
                     if not ({*cv} & exclude):
-                        yield f'{csk}.{ck}'
+                        yield f"{csk}.{ck}"
 
-    def _multiply_weights(self, weights: dict[str, dict[str]], size: int, **variations: str):
+    def _multiply_weights(
+        self, weights: dict[str, dict[str]], size: int, **variations: str
+    ):
         _numbers, _arrays = 1, []
         for wsk, wsv in weights.items():
-            v = wsv[variations.get(wsk, '')]
+            v = wsv[variations.get(wsk, "")]
             if isinstance(v, Number):
                 _numbers *= v
             else:
@@ -65,21 +67,23 @@ class EventWeight:
 
     def __call__(self, events: ak.Array, *exclude: str) -> ak.Array:
         exclude = set(exclude)
-        ws: dict[str,  dict[str]] = {}
+        ws: dict[str, dict[str]] = {}
         for wsk, wsv in self.weights.items():
             if wsk not in exclude:
-                ws[wsk] = {wk: _get_content(events, wv)
-                           for wk, wv in wsv.items()}
-        zeros = {wsk for wsk in ws if np.any(ws[wsk][''] == 0)}
+                ws[wsk] = {wk: _get_content(events, wv) for wk, wv in wsv.items()}
+        zeros = {wsk for wsk in ws if np.any(ws[wsk][""] == 0)}
         mul_ws = partial(self._multiply_weights, ws, len(events))
-        weights = ak.Array({'weight': mul_ws()})
+        weights = ak.Array({"weight": mul_ws()})
         for wsk, wsv in ws.items():
             if len(wsv) > 1:
                 weight = ak.Array({})
                 for wk, wv in wsv.items():
                     if wk:
-                        weight[wk] = mul_ws(
-                            **{wsk: wk}) if wsk in zeros else weights['weight'] * (wv / wsv[''])
+                        weight[wk] = (
+                            mul_ws(**{wsk: wk})
+                            if wsk in zeros
+                            else weights["weight"] * (wv / wsv[""])
+                        )
                 weights[wsk] = weight
         for csk, csv in self.correlations.items():
             if csk not in exclude:
@@ -87,9 +91,12 @@ class EventWeight:
                 for ck, cv in csv.items():
                     if not ({*cv} & exclude):
                         empty = False
-                        weight[ck] = mul_ws(**cv) if any([k in zeros for k in cv]) else weights['weight'] * \
-                            mul_arrays(*[ws[k][v] / ws[k]['']
-                                       for k, v in cv.items()])
+                        weight[ck] = (
+                            mul_ws(**cv)
+                            if any([k in zeros for k in cv])
+                            else weights["weight"]
+                            * mul_arrays(*[ws[k][v] / ws[k][""] for k, v in cv.items()])
+                        )
                 if not empty:
                     weights[csk] = weight
         return weights

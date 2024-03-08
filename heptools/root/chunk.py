@@ -17,8 +17,8 @@ class _ChunkMeta(type):
         return getattr(self, attr)
 
     def __new__(cls, name, bases, dic):
-        for attr in ('branches', 'num_entries', 'uuid'):
-            dic[attr] = property(partial(cls._get, attr=f'_{attr}'))
+        for attr in ("branches", "num_entries", "uuid"):
+            dic[attr] = property(partial(cls._get, attr=f"_{attr}"))
         return super().__new__(cls, name, bases, dic)
 
 
@@ -52,40 +52,41 @@ class Chunk(metaclass=_ChunkMeta):
     - :meth:`__len__`
     - :meth:`__repr__`
     """
+
     path: EOS
-    '''~heptools.system.eos.EOS : Path to ROOT file.'''
+    """~heptools.system.eos.EOS : Path to ROOT file."""
     uuid: UUID
-    '''~uuid.UUID : UUID of ROOT file.'''
+    """~uuid.UUID : UUID of ROOT file."""
     name: str
-    '''str : Name of :class:`TTree`.'''
+    """str : Name of :class:`TTree`."""
     branches: frozenset[str]
-    '''frozenset[str] : Name of branches.'''
+    """frozenset[str] : Name of branches."""
     num_entries: int
-    '''int : Number of entries.'''
+    """int : Number of entries."""
 
     @property
     def entry_start(self):
-        '''int : Start entry.'''
+        """int : Start entry."""
         if self._entry_start is ...:
             return 0
         return self._entry_start
 
     @property
     def entry_stop(self):
-        '''int : Stop entry.'''
+        """int : Stop entry."""
         if self._entry_stop is ...:
             return self.num_entries
         return self._entry_stop
 
     @property
     def offset(self):
-        '''int : Equal to ``entry_start``.'''
+        """int : Equal to ``entry_start``."""
         return self.entry_start
 
     def __init__(
         self,
         source: PathLike | tuple[PathLike, UUID],
-        name: str = 'Events',
+        name: str = "Events",
         branches: Iterable[str] = ...,
         num_entries: int = ...,
         entry_start: int = ...,
@@ -116,10 +117,7 @@ class Chunk(metaclass=_ChunkMeta):
     def _ignore(cls, value):
         return value is ... or value is None
 
-    def integrity(
-        self,
-        logger: Logger = None
-    ):
+    def integrity(self, logger: Logger = None):
         """
         Check and report the following:
 
@@ -144,42 +142,54 @@ class Chunk(metaclass=_ChunkMeta):
             logger = Logger.root
         chunk_name = f'chunk  "{self.path}"\n    '
         if not self.path.exists:
-            logger.error(f'{chunk_name}file not exists')
+            logger.error(f"{chunk_name}file not exists")
             return None
         else:
             reloaded = Chunk(
                 source=self.path,
                 entry_start=self._entry_start,
                 entry_stop=self._entry_stop,
-                fetch=True)
+                fetch=True,
+            )
             if not self._ignore(self._uuid) and self._uuid != reloaded.uuid:
                 logger.error(
-                    f'{chunk_name}UUID {self._uuid}(stored) != {reloaded.uuid}(file)')
-            if not self._ignore(self._num_entries) and self._num_entries != reloaded.num_entries:
+                    f"{chunk_name}UUID {self._uuid}(stored) != {reloaded.uuid}(file)"
+                )
+            if (
+                not self._ignore(self._num_entries)
+                and self._num_entries != reloaded.num_entries
+            ):
                 logger.error(
-                    f'{chunk_name}number of entries {self._num_entries}(stored) != {reloaded.num_entries}(file)')
+                    f"{chunk_name}number of entries {self._num_entries}(stored) != {reloaded.num_entries}(file)"
+                )
             if not self._ignore(self._branches):
                 diff = self._branches - reloaded.branches
                 if diff:
-                    logger.error(
-                        f'{chunk_name}branches {diff} not in file')
+                    logger.error(f"{chunk_name}branches {diff} not in file")
             out_of_range = False
             if not self._ignore(self._entry_start):
-                out_of_range |= self._entry_start < 0 or self._entry_start >= reloaded.num_entries
+                out_of_range |= (
+                    self._entry_start < 0 or self._entry_start >= reloaded.num_entries
+                )
             else:
                 reloaded._entry_start = 0
             if not self._ignore(self._entry_stop):
-                out_of_range |= self._entry_stop <= reloaded.entry_start or self._entry_stop > reloaded.num_entries
+                out_of_range |= (
+                    self._entry_stop <= reloaded.entry_start
+                    or self._entry_stop > reloaded.num_entries
+                )
             else:
                 reloaded._entry_stop = reloaded.num_entries
             if out_of_range:
                 logger.warning(
-                    f'{chunk_name}invalid entry range [0,{reloaded.num_entries}) -> [{reloaded.entry_start},{reloaded.entry_stop})')
+                    f"{chunk_name}invalid entry range [0,{reloaded.num_entries}) -> [{reloaded.entry_start},{reloaded.entry_stop})"
+                )
             return reloaded
 
     def _fetch(self):
         if any(v is ... for v in (self._branches, self._num_entries, self._uuid)):
             import uproot
+
             with uproot.open(self.path) as file:
                 tree = file[self.name]
                 if self._branches is ...:
@@ -202,14 +212,14 @@ class Chunk(metaclass=_ChunkMeta):
         return self.entry_stop - self.entry_start
 
     def __repr__(self):
-        text = f'TTree:{self.path}'
+        text = f"TTree:{self.path}"
         if not self._ignore(self._uuid):
-            text += f'({self._uuid})'
-        text += f':{self.name}'
+            text += f"({self._uuid})"
+        text += f":{self.name}"
         if not self._ignore(self._num_entries):
-            text += f'[0,{self._num_entries})'
+            text += f"[0,{self._num_entries})"
         if not self._ignore(self._entry_start) and not self._ignore(self._entry_stop):
-            text += f' -> [{self._entry_start},{self._entry_stop})'
+            text += f" -> [{self._entry_start},{self._entry_stop})"
         return text
 
     def deepcopy(self, **kwargs):
@@ -229,9 +239,10 @@ class Chunk(metaclass=_ChunkMeta):
             source=path,
             name=self.name,
             num_entries=self._num_entries,
-            branches=kwargs.get('branches', self._branches),
-            entry_start=kwargs.get('entry_start', self._entry_start),
-            entry_stop=kwargs.get('entry_stop', self._entry_stop))
+            branches=kwargs.get("branches", self._branches),
+            entry_start=kwargs.get("entry_start", self._entry_start),
+            entry_stop=kwargs.get("entry_stop", self._entry_stop),
+        )
 
     def slice(self, start: int, stop: int):
         """
@@ -279,7 +290,7 @@ class Chunk(metaclass=_ChunkMeta):
     @classmethod
     def common(
         cls,
-        *chunks: Chunk
+        *chunks: Chunk,
     ) -> list[Chunk]:
         """
         Find common branches of ``chunks``.
@@ -309,7 +320,7 @@ class Chunk(metaclass=_ChunkMeta):
         cls,
         size: int,
         *chunks: Chunk,
-        common_branches: bool = False
+        common_branches: bool = False,
     ):
         """
         Partition ``chunks`` into groups. The sum of entries in each group is equal to ``size`` except for the last one. The order of chunks is preserved.
@@ -352,7 +363,7 @@ class Chunk(metaclass=_ChunkMeta):
         cls,
         size: int,
         *chunks: Chunk,
-        common_branches: bool = False
+        common_branches: bool = False,
     ):
         """
         Split ``chunks`` into smaller pieces with ``size`` entries in each. If not possible, will try to find another size minimizing the average deviation.
@@ -380,13 +391,19 @@ class Chunk(metaclass=_ChunkMeta):
             else:
                 n = total // size
                 diff, n_chunks, n_entries, n_remain = math.inf, None, None, None
-                for _chunks in range(n, n+2):
+                for _chunks in range(n, n + 2):
                     _entries = total // _chunks
                     _remain = total % _chunks
-                    _diff = (abs(_entries+1-size)*_remain +
-                             abs(_entries-size)*(_chunks-_remain))
+                    _diff = abs(_entries + 1 - size) * _remain + abs(
+                        _entries - size
+                    ) * (_chunks - _remain)
                     if _diff < diff:
-                        diff, n_chunks, n_entries, n_remain = _diff, _chunks, _entries, _remain
+                        diff, n_chunks, n_entries, n_remain = (
+                            _diff,
+                            _chunks,
+                            _entries,
+                            _remain,
+                        )
                 start = 0
                 for i in range(n_chunks):
                     stop = start + n_entries
@@ -405,19 +422,26 @@ class Chunk(metaclass=_ChunkMeta):
             JSON data.
         """
         json_dict = {
-            'path': str(self.path),
-            'name': self.name,
+            "path": str(self.path),
+            "name": self.name,
         }
-        json_dict['uuid'] = None if self._uuid is ... else str(self._uuid)
+        json_dict["uuid"] = None if self._uuid is ... else str(self._uuid)
         if self._branches is not None:
-            json_dict['branches'] = None if self._branches is ... else list(
-                self._branches)
+            json_dict["branches"] = (
+                None if self._branches is ... else list(self._branches)
+            )
         if self._num_entries is not None:
-            json_dict['num_entries'] = None if self._num_entries is ... else self._num_entries
+            json_dict["num_entries"] = (
+                None if self._num_entries is ... else self._num_entries
+            )
         if self._entry_start is not None:
-            json_dict['entry_start'] = None if self._entry_start is ... else self._entry_start
+            json_dict["entry_start"] = (
+                None if self._entry_start is ... else self._entry_start
+            )
         if self._entry_stop is not None:
-            json_dict['entry_stop'] = None if self._entry_stop is ... else self._entry_stop
+            json_dict["entry_stop"] = (
+                None if self._entry_stop is ... else self._entry_stop
+            )
         return json_dict
 
     @classmethod
@@ -436,14 +460,14 @@ class Chunk(metaclass=_ChunkMeta):
             A :class:`Chunk` object from JSON data.
         """
         kwargs = {
-            'name': data['name'],
+            "name": data["name"],
         }
-        uuid = data['uuid']
+        uuid = data["uuid"]
         if uuid is not None:
-            kwargs['source'] = (data['path'], UUID(uuid))
+            kwargs["source"] = (data["path"], UUID(uuid))
         else:
-            kwargs['source'] = data['path']
-        for key in ('branches', 'num_entries', 'entry_start', 'entry_stop'):
+            kwargs["source"] = data["path"]
+        for key in ("branches", "num_entries", "entry_start", "entry_stop"):
             if key in data:
                 value = data[key]
                 if value is None:
@@ -470,10 +494,11 @@ class Chunk(metaclass=_ChunkMeta):
         """
         metadata = events.metadata
         return cls(
-            source=(metadata['filename'], UUID(metadata['fileuuid'])),
-            name=metadata['treename'],
-            entry_start=metadata['entrystart'],
-            entry_stop=metadata['entrystop'])
+            source=(metadata["filename"], UUID(metadata["fileuuid"])),
+            name=metadata["treename"],
+            entry_start=metadata["entrystart"],
+            entry_stop=metadata["entrystop"],
+        )
 
     @classmethod
     def from_coffea_datasets(cls, datasets: dict) -> dict[str, list[Chunk]]:
@@ -491,14 +516,20 @@ class Chunk(metaclass=_ChunkMeta):
             A mapping from dataset names to lists of chunks using the partitions from ``datasets``.
         """
         import uproot
+
         partitions: dict[str, list[Chunk]] = {}
         for dataset, files in datasets.items():
-            files = files['files']
-            partitions[dataset] = [cls(
-                source=(path, UUID(files[path]['uuid'])),
-                name=name,
-                entry_start=start,
-                entry_stop=stop)
-                for path, name, steps in uproot._util.regularize_files(files, steps_allowed=True)
-                for start, stop in steps]
+            files = files["files"]
+            partitions[dataset] = [
+                cls(
+                    source=(path, UUID(files[path]["uuid"])),
+                    name=name,
+                    entry_start=start,
+                    entry_stop=stop,
+                )
+                for path, name, steps in uproot._util.regularize_files(
+                    files, steps_allowed=True
+                )
+                for start, stop in steps
+            ]
         return partitions

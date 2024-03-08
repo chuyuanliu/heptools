@@ -3,9 +3,18 @@ from __future__ import annotations
 import re
 from typing import Any, Callable, Generic, Iterable, Sized, TypeVar
 
-__all__ = ['arg_set', 'arg_new', 'seqcall', 'merge_op',
-           'astuple', 'unpack', 'unique', 'count',
-           'Eval', 'match_any']
+__all__ = [
+    "arg_set",
+    "arg_new",
+    "seqcall",
+    "merge_op",
+    "astuple",
+    "unpack",
+    "unique",
+    "count",
+    "Eval",
+    "match_any",
+]
 
 
 def arg_set(arg, none=None, default=...):
@@ -16,7 +25,11 @@ def arg_set(arg, none=None, default=...):
     return arg
 
 
-def arg_new(arg, none: Callable[[]] = lambda: None, default: Callable[[]] = lambda: ...):
+def arg_new(
+    arg,
+    none: Callable[[]] = lambda: None,
+    default: Callable[[]] = lambda: ...,
+):
     if arg is None:
         return none()
     if arg is ...:
@@ -24,7 +37,7 @@ def arg_new(arg, none: Callable[[]] = lambda: None, default: Callable[[]] = lamb
     return arg
 
 
-_SeqCallT = TypeVar('_SeqCallT')
+_SeqCallT = TypeVar("_SeqCallT")
 
 
 class seqcall(Generic[_SeqCallT]):
@@ -52,7 +65,11 @@ def astuple(_o):
 
 def unpack(__iter: Iterable) -> Any:
     __next = __iter
-    while isinstance(__next, Iterable) and isinstance(__next, Sized) and not isinstance(__next, str):
+    while (
+        isinstance(__next, Iterable)
+        and isinstance(__next, Sized)
+        and not isinstance(__next, str)
+    ):
         if len(__next) == 1:
             __next = next(iter(__next))
         elif len(__next) == 0:
@@ -62,7 +79,7 @@ def unpack(__iter: Iterable) -> Any:
     return __next
 
 
-_UniqueT = TypeVar('_UniqueT')
+_UniqueT = TypeVar("_UniqueT")
 
 
 def unique(seq: Iterable[_UniqueT]):
@@ -73,34 +90,58 @@ def count(seq: Iterable, value: Any) -> int:
     return sum(1 for i in seq if i == value)
 
 
-_EvalT = TypeVar('_EvalT')
+_EvalT = TypeVar("_EvalT")
 
 
 class Eval(Generic[_EvalT]):
-    _quote_arg_pattern = re.compile(r'(?P<arg>' +
-                                    r'|'.join([rf'((?<={i})[^\[\]\",=]*?(?={j}))'
-                                               for i in ['\[', ',']
-                                               for j in [',', '\]']]) +
-                                    r')')
-    _eval_call_pattern = re.compile(r'\[(?P<arg>.*?)\]')
+    _quote_arg_pattern = re.compile(
+        r"(?P<arg>"
+        + r"|".join(
+            [
+                rf"((?<={i})[^\[\]\",=]*?(?={j}))"
+                for i in ["\[", ","]
+                for j in [",", "\]"]
+            ]
+        )
+        + r")"
+    )
+    _eval_call_pattern = re.compile(r"\[(?P<arg>.*?)\]")
 
-    def __init__(self, method: Callable[[], _EvalT] | dict[str, _EvalT], *args, **kwargs):
+    def __init__(
+        self, method: Callable[[], _EvalT] | dict[str, _EvalT], *args, **kwargs
+    ):
         self.method = method
         self.args = args
         self.kwargs = kwargs
 
     def __call__(self, expression: str) -> _EvalT:
-        return eval(re.sub(self._eval_call_pattern, rf'self.method(\g<arg>,*self.args,**self.kwargs)', re.sub(self._quote_arg_pattern, r'"\g<arg>"', expression)))
+        return eval(
+            re.sub(
+                self._eval_call_pattern,
+                rf"self.method(\g<arg>,*self.args,**self.kwargs)",
+                re.sub(self._quote_arg_pattern, r'"\g<arg>"', expression),
+            )
+        )
 
     def __getitem__(self, expression: str) -> _EvalT:
-        return eval(re.sub(self._eval_call_pattern, rf'self.method[\g<arg>]', re.sub(self._quote_arg_pattern, r'"\g<arg>"', expression)))
+        return eval(
+            re.sub(
+                self._eval_call_pattern,
+                rf"self.method[\g<arg>]",
+                re.sub(self._quote_arg_pattern, r'"\g<arg>"', expression),
+            )
+        )
 
 
-_TargetT = TypeVar('_TargetT')
-_PatternT = TypeVar('_PatternT')
+_TargetT = TypeVar("_TargetT")
+_PatternT = TypeVar("_PatternT")
 
 
-def match_any(target: _TargetT, patterns: _PatternT | Iterable[_PatternT], match: Callable[[_PatternT, _TargetT], bool]):
+def match_any(
+    target: _TargetT,
+    patterns: _PatternT | Iterable[_PatternT],
+    match: Callable[[_PatternT, _TargetT], bool],
+):
     """
     Use :mod:`re` instead when matching :class:`str`.
     """

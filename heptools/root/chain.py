@@ -5,8 +5,7 @@ from collections import defaultdict, deque
 from concurrent.futures import ThreadPoolExecutor
 from functools import partial
 from logging import Logger
-from typing import (TYPE_CHECKING, Callable, Generator, Literal, Protocol,
-                    overload)
+from typing import TYPE_CHECKING, Callable, Generator, Literal, Protocol, overload
 
 from ..dask.delayed import delayed
 from ..system.eos import EOS, PathLike
@@ -26,8 +25,7 @@ if TYPE_CHECKING:
 
 
 class NameMapping(Protocol):
-    def __call__(self, **keys: str) -> str:
-        ...
+    def __call__(self, **keys: str) -> str: ...
 
 
 def _apply_naming(naming: str | NameMapping, keys: dict[str, str]) -> str:
@@ -36,8 +34,7 @@ def _apply_naming(naming: str | NameMapping, keys: dict[str, str]) -> str:
     elif isinstance(naming, Callable):
         return naming(**keys)
     else:
-        raise TypeError(
-            f'Unknown naming "{naming}"')
+        raise TypeError(f'Unknown naming "{naming}"')
 
 
 @delayed
@@ -45,7 +42,7 @@ def _friend_from_merge(
     name: str,
     branches: frozenset[str],
     data: dict[Chunk, list[tuple[int, int, list[Chunk]]]],
-    dask: bool
+    dask: bool,
 ):
     friend = Friend(name)
     friend._branches = frozenset(branches)
@@ -55,12 +52,12 @@ def _friend_from_merge(
             while chunks:
                 chunk = chunks.popleft()
                 chunk._branches = friend._branches
-                friend._data[k].append(_FriendItem(
-                    start, start + len(chunk), chunk))
+                friend._data[k].append(_FriendItem(start, start + len(chunk), chunk))
                 start += len(chunk)
             if start != stop:
                 raise RuntimeError(
-                    f'Failed to merge friend "{name}". The merged chunk does not cover the range [{start},{stop}) for target {k}.')
+                    f'Failed to merge friend "{name}". The merged chunk does not cover the range [{start},{stop}) for target {k}.'
+                )
     return friend
 
 
@@ -79,18 +76,18 @@ class _FriendItem:
         return self.stop - self.start
 
     def __repr__(self):
-        return f'[{self.start},{self.stop})'
+        return f"[{self.start},{self.stop})"
 
     def to_json(self):
         return {
-            'start': self.start,
-            'stop': self.stop,
-            'chunk': self.chunk.deepcopy(branches=None),
+            "start": self.start,
+            "stop": self.stop,
+            "chunk": self.chunk.deepcopy(branches=None),
         }
 
     @classmethod
     def from_json(cls, data: dict):
-        return cls(data['start'], data['stop'], Chunk.from_json(data['chunk']))
+        return cls(data["start"], data["stop"], Chunk.from_json(data["chunk"]))
 
 
 class Friend:
@@ -110,17 +107,20 @@ class Friend:
     - :meth:`__add__` :class:`Friend`
     - :meth:`__repr__`
     """
+
     name: str
-    '''str : Name of the collection.'''
+    """str : Name of the collection."""
 
     _on_disk_error = 'Cannot perform "{func}()" on friend tree "{name}" when there is in-memory data. Call "dump()" first.'
 
     def _on_disk(func):
         def wrapper(self, *args, **kwargs):
             if self._to_dump:
-                raise RuntimeError(self._on_disk_error.format(
-                    func=func.__name__, name=self.name))
+                raise RuntimeError(
+                    self._on_disk_error.format(func=func.__name__, name=self.name)
+                )
             return func(self, *args, **kwargs)
+
         return wrapper
 
     def __init__(self, name: str):
@@ -131,16 +131,15 @@ class Friend:
     @_on_disk
     def __iadd__(self, other) -> Friend:
         if isinstance(other, Friend):
-            msg = 'Cannot add friend trees with different {attr}'
+            msg = "Cannot add friend trees with different {attr}"
             if other._to_dump:
-                raise RuntimeError(self._on_disk_error.format(
-                    func='__add__', name=other.name))
+                raise RuntimeError(
+                    self._on_disk_error.format(func="__add__", name=other.name)
+                )
             if self.name != other.name:
-                raise ValueError(
-                    msg.format(attr='names'))
+                raise ValueError(msg.format(attr="names"))
             if self._branches != other._branches:
-                raise ValueError(
-                    msg.format(attr='branches'))
+                raise ValueError(msg.format(attr="branches"))
             for k, vs in other._data.items():
                 for v in vs:
                     self._insert(k, v)
@@ -156,9 +155,9 @@ class Friend:
         return NotImplemented
 
     def __repr__(self):
-        text = f'{self.name}:{self._branches}'
+        text = f"{self.name}:{self._branches}"
         for k, v in self._data.items():
-            text += f'\n{k}\n    {v}'
+            text += f"\n{k}\n    {v}"
         return text
 
     @classmethod
@@ -169,47 +168,50 @@ class Friend:
             num_entries=None,
             branches=None,
             entry_start=None,
-            entry_stop=None)
+            entry_stop=None,
+        )
 
     @property
     def _to_dump(self):
-        if hasattr(self, '_dump'):
+        if hasattr(self, "_dump"):
             return len(self._dump) > 0
         return False
 
     def _init_dump(self):
-        if not hasattr(self, '_dump'):
+        if not hasattr(self, "_dump"):
             self._dump: list[tuple[Chunk, _FriendItem]] = []
             self._dump_name: dict[Chunk, dict[str, str]] = {}
 
     def _name_dump(self, target: Chunk, item: _FriendItem):
         if target not in self._dump_name:
             names = {
-                'name': self.name,
-                'uuid': str(target.uuid),
-                'tree': target.name,
+                "name": self.name,
+                "uuid": str(target.uuid),
+                "tree": target.name,
             }
             parts = [*target.path.parts]
-            if parts[0] in '/\\':
+            if parts[0] in "/\\":
                 parts = parts[1:]
             parts[-1] = target.path.stem
             parts = parts[::-1]
             for i in range(len(parts)):
-                names[f'path{i}'] = parts[i]
+                names[f"path{i}"] = parts[i]
             self._dump_name[target] = names
-        return self._dump_name[target] | {'start': item.start, 'stop': item.stop}
+        return self._dump_name[target] | {"start": item.start, "stop": item.stop}
 
     def _check_item(self, item: _FriendItem):
         if len(item.chunk) != len(item):
             raise ValueError(
-                f'The number of entries in the chunk {item.chunk} does not match the range {item}')
+                f"The number of entries in the chunk {item.chunk} does not match the range {item}"
+            )
         if self._branches is None:
             self._branches = frozenset(item.chunk.branches)
         else:
             diff = self._branches - item.chunk.branches
             if diff:
                 raise ValueError(
-                    f'The chunk {item.chunk} does not have the following branches: {diff}')
+                    f"The chunk {item.chunk} does not have the following branches: {diff}"
+                )
         item.chunk = item.chunk.deepcopy(branches=self._branches)
 
     def _insert(self, target: Chunk, item: _FriendItem):
@@ -223,7 +225,8 @@ class Friend:
                 series.insert(idx, item)
             else:
                 raise ValueError(
-                    f'The new chunk {item} overlaps with the existing one {exist} when inserting into {target}')
+                    f"The new chunk {item} overlaps with the existing one {exist} when inserting into {target}"
+                )
 
     def add(
         self,
@@ -250,23 +253,38 @@ class Friend:
         self._insert(key, item)
 
     @overload
-    def arrays(self, target: Chunk, filter: Callable[[set[str]], set[str]] = None, library: Literal['ak'] = 'ak', reader_options: dict = None) -> ak.Array:
-        ...
+    def arrays(
+        self,
+        target: Chunk,
+        filter: Callable[[set[str]], set[str]] = None,
+        library: Literal["ak"] = "ak",
+        reader_options: dict = None,
+    ) -> ak.Array: ...
 
     @overload
-    def arrays(self, target: Chunk, filter: Callable[[set[str]], set[str]] = None, library: Literal['pd'] = 'pd', reader_options: dict = None) -> pd.DataFrame:
-        ...
+    def arrays(
+        self,
+        target: Chunk,
+        filter: Callable[[set[str]], set[str]] = None,
+        library: Literal["pd"] = "pd",
+        reader_options: dict = None,
+    ) -> pd.DataFrame: ...
 
     @overload
-    def arrays(self, target: Chunk, filter: Callable[[set[str]], set[str]] = None, library: Literal['np'] = 'np', reader_options: dict = None) -> dict[str, np.ndarray]:
-        ...
+    def arrays(
+        self,
+        target: Chunk,
+        filter: Callable[[set[str]], set[str]] = None,
+        library: Literal["np"] = "np",
+        reader_options: dict = None,
+    ) -> dict[str, np.ndarray]: ...
 
     @_on_disk
     def arrays(
         self,
         target: Chunk,
         filter: Callable[[set[str]], set[str]] = None,
-        library: Literal['ak', 'pd', 'np'] = 'ak',
+        library: Literal["ak", "pd", "np"] = "ak",
         reader_options: dict = None,
     ) -> RecordLike:
         """
@@ -292,13 +310,19 @@ class Friend:
         start = target.entry_start
         stop = target.entry_stop
         chunks = []
-        for i in range(bisect.bisect_left(series, _FriendItem(target.entry_start, target.entry_stop)), len(series)):
+        for i in range(
+            bisect.bisect_left(
+                series, _FriendItem(target.entry_start, target.entry_stop)
+            ),
+            len(series),
+        ):
             if start >= stop:
                 break
             item = series[i]
             if item.start > start:
                 raise ValueError(
-                    f'Friend {self.name} does not have the entries [{start},{item.start}) for {target}')
+                    f"Friend {self.name} does not have the entries [{start},{item.start}) for {target}"
+                )
             else:
                 chunk_start = start - item.start
                 start = min(stop, item.stop)
@@ -306,28 +330,43 @@ class Friend:
                 chunks.append(item.chunk.slice(chunk_start, chunk_stop))
         branches = self._branches if filter is None else filter(self._branches)
         reader_options = reader_options or {}
-        reader_options['filter'] = branches.__and__
+        reader_options["filter"] = branches.__and__
         return TreeReader(**reader_options).concat(*chunks, library=library)
 
     @overload
-    def concat(self, *targets: Chunk, filter: Callable[[set[str]], set[str]] = None, library: Literal['ak'] = 'ak', reader_options: dict = None) -> ak.Array:
-        ...
+    def concat(
+        self,
+        *targets: Chunk,
+        filter: Callable[[set[str]], set[str]] = None,
+        library: Literal["ak"] = "ak",
+        reader_options: dict = None,
+    ) -> ak.Array: ...
 
     @overload
-    def concat(self, *targets: Chunk, filter: Callable[[set[str]], set[str]] = None, library: Literal['pd'] = 'pd', reader_options: dict = None) -> pd.DataFrame:
-        ...
+    def concat(
+        self,
+        *targets: Chunk,
+        filter: Callable[[set[str]], set[str]] = None,
+        library: Literal["pd"] = "pd",
+        reader_options: dict = None,
+    ) -> pd.DataFrame: ...
 
     @overload
-    def concat(self, *targets: Chunk, filter: Callable[[set[str]], set[str]] = None, library: Literal['np'] = 'np', reader_options: dict = None) -> dict[str, np.ndarray]:
-        ...
+    def concat(
+        self,
+        *targets: Chunk,
+        filter: Callable[[set[str]], set[str]] = None,
+        library: Literal["np"] = "np",
+        reader_options: dict = None,
+    ) -> dict[str, np.ndarray]: ...
 
     @_on_disk
     def concat(
         self,
         *targets: Chunk,
         filter: Callable[[set[str]], set[str]] = None,
-        library: Literal['ak', 'pd', 'np'] = 'ak',
-        reader_options: dict = None
+        library: Literal["ak", "pd", "np"] = "ak",
+        reader_options: dict = None,
     ) -> RecordLike:
         """
         Fetch the friend :class:`TTree` for ``targets`` into one array.
@@ -352,24 +391,37 @@ class Friend:
             return self.arrays(targets[0], filter, library, reader_options)
         else:
             return concat_record(
-                [self.arrays(target, filter, library, reader_options)
-                 for target in targets],
-                library=library)
+                [
+                    self.arrays(target, filter, library, reader_options)
+                    for target in targets
+                ],
+                library=library,
+            )
 
     @overload
-    def dask(self, *targets: Chunk, filter: Callable[[set[str]], set[str]] = None, library: Literal['ak'] = 'ak', reader_options: dict = None) -> dak.Array:
-        ...
+    def dask(
+        self,
+        *targets: Chunk,
+        filter: Callable[[set[str]], set[str]] = None,
+        library: Literal["ak"] = "ak",
+        reader_options: dict = None,
+    ) -> dak.Array: ...
 
     @overload
-    def dask(self, *targets: Chunk, filter: Callable[[set[str]], set[str]] = None, library: Literal['np'] = 'np', reader_options: dict = None) -> dict[str, da.Array]:
-        ...
+    def dask(
+        self,
+        *targets: Chunk,
+        filter: Callable[[set[str]], set[str]] = None,
+        library: Literal["np"] = "np",
+        reader_options: dict = None,
+    ) -> dict[str, da.Array]: ...
 
     @_on_disk
     def dask(
         self,
         *targets: Chunk,
         filter: Callable[[set[str]], set[str]] = None,
-        library: Literal['ak', 'np'] = 'ak',
+        library: Literal["ak", "np"] = "ak",
         reader_options: dict = None,
     ) -> DelayedRecordLike:
         """
@@ -396,26 +448,30 @@ class Friend:
             series = self._data[target]
             start = target.entry_start
             stop = target.entry_stop
-            item = series[bisect.bisect_left(
-                series, _FriendItem(target.entry_start, target.entry_stop))]
+            item = series[
+                bisect.bisect_left(
+                    series, _FriendItem(target.entry_start, target.entry_stop)
+                )
+            ]
             if item.start > start:
                 raise ValueError(
-                    f'Friend {self.name} does not have the entries [{start},{item.start}) for {target}')
+                    f"Friend {self.name} does not have the entries [{start},{item.start}) for {target}"
+                )
             elif item.stop < stop:
                 raise ValueError(
-                    f'Cannot read one partition from multiple files. Call "merge()" first.')
+                    f'Cannot read one partition from multiple files. Call "merge()" first.'
+                )
             else:
-                friends.append(item.chunk.slice(
-                    start - item.start, stop - item.start))
+                friends.append(item.chunk.slice(start - item.start, stop - item.start))
         branches = self._branches if filter is None else filter(self._branches)
         reader_options = reader_options or {}
-        reader_options['filter'] = branches.__and__
+        reader_options["filter"] = branches.__and__
         return TreeReader(**reader_options).dask(*friends, library=library)
 
     def dump(
         self,
         base_path: PathLike = ...,
-        naming: str | NameMapping = '{name}_{uuid}_{start}_{stop}.root',
+        naming: str | NameMapping = "{name}_{uuid}_{start}_{stop}.root",
         writer_options: dict = None,
     ):
         """
@@ -473,7 +529,7 @@ class Friend:
             >>> def filename(**kwargs: str) -> str:
             >>>     return f'{kwargs["path0"][:3]}_{kwargs["tree"]}_{kwargs["start"]}_{kwargs["stop"]}.root'.lower()
             >>> friend.dump(filename)
-            """
+        """
         if self._to_dump:
             if base_path is not ...:
                 base_path = EOS(base_path)
@@ -484,8 +540,7 @@ class Friend:
                     path = target.path.parent
                 else:
                     path = base_path
-                path = path / _apply_naming(
-                    naming, self._name_dump(target, item))
+                path = path / _apply_naming(naming, self._name_dump(target, item))
                 with writer(path) as f:
                     f.extend(item.chunk)
                 item.chunk = f.tree
@@ -508,18 +563,17 @@ class Friend:
                 if isinstance(v.chunk, Chunk):
                     files.append(v.chunk.path)
         if confirm:
-            Logger.root.info('The following files will be deleted:')
-            Logger.root.warning('\n'.join(str(f) for f in files))
-            confirmation = input(
-                f'Type "{self.name}" to confirm the deletion: ')
+            Logger.root.info("The following files will be deleted:")
+            Logger.root.warning("\n".join(str(f) for f in files))
+            confirmation = input(f'Type "{self.name}" to confirm the deletion: ')
             if confirmation != self.name:
-                Logger.root.info('Deletion aborted.')
+                Logger.root.info("Deletion aborted.")
                 return
         with ThreadPoolExecutor(max_workers=len(files)) as executor:
             executor.map(EOS.rm, files)
         self._branches = None
         self._data.clear()
-        if hasattr(self, '_dump'):
+        if hasattr(self, "_dump"):
             del self._dump
             del self._dump_name
 
@@ -529,7 +583,7 @@ class Friend:
         step: int,
         chunk_size: int = ...,
         base_path: PathLike = ...,
-        naming: str | NameMapping = '{name}_{uuid}.root',
+        naming: str | NameMapping = "{name}_{uuid}.root",
         reader_options: dict = None,
         writer_options: dict = None,
         dask: bool = False,
@@ -587,7 +641,8 @@ class Friend:
                     chunks = [i.chunk for i in to_merge]
                     if len(chunks) > 1:
                         path = base / _apply_naming(
-                            naming, self._name_dump(target, dummy))
+                            naming, self._name_dump(target, dummy)
+                        )
                         chunks = resize(
                             path,
                             *chunks,
@@ -595,7 +650,8 @@ class Friend:
                             chunk_size=chunk_size,
                             writer_options=writer_options,
                             reader_options=reader_options,
-                            dask=dask)
+                            dask=dask,
+                        )
                     data[target].append((dummy.start, dummy.stop, chunks))
                     to_merge.clear()
                 if item is not None:
@@ -604,10 +660,8 @@ class Friend:
                 if not items:
                     break
         return _friend_from_merge(
-            name=self.name,
-            branches=self._branches,
-            data=dict(data),
-            dask=dask)
+            name=self.name, branches=self._branches, data=dict(data), dask=dask
+        )
 
     @_on_disk
     def clone(
@@ -649,11 +703,9 @@ class Friend:
                 src.append(chunk.path)
                 dst.append(path)
                 chunk.path = path
-                friend._data[target].append(
-                    _FriendItem(item.start, item.stop, chunk))
+                friend._data[target].append(_FriendItem(item.start, item.stop, chunk))
         with ThreadPoolExecutor(max_workers=len(src)) as executor:
-            executor.map(
-                partial(EOS.cp, parents=True, overwrite=True), src, dst)
+            executor.map(partial(EOS.cp, parents=True, overwrite=True), src, dst)
         return friend
 
     def integrity(
@@ -686,8 +738,9 @@ class Friend:
                 if isinstance(item.chunk, Chunk):
                     checked.append(item.chunk)
         with ThreadPoolExecutor(max_workers=len(checked)) as executor:
-            checked = deque(executor.map(
-                partial(Chunk.integrity, logger=logger), checked))
+            checked = deque(
+                executor.map(partial(Chunk.integrity, logger=logger), checked)
+            )
         for target, items in self._data.items():
             target = checked.popleft()
             if target is not None:
@@ -697,10 +750,12 @@ class Friend:
                 for item in items:
                     if start < item.start:
                         logger.warning(
-                            f'{target_name}no friend entries in [{start},{item.start})')
+                            f"{target_name}no friend entries in [{start},{item.start})"
+                        )
                     elif start > item.start:
                         logger.error(
-                            f'{target_name}duplicate friend entries in [{item.start}, {start})')
+                            f"{target_name}duplicate friend entries in [{item.start}, {start})"
+                        )
                     start = item.stop
                     if isinstance(item.chunk, Chunk):
                         chunk = checked.popleft()
@@ -708,21 +763,24 @@ class Friend:
                             friend_name = f'friend "{chunk.path}"\n    '
                             if len(chunk) != len(item):
                                 logger.error(
-                                    f'{friend_name}{len(chunk)} entries not fit in [{item.start},{item.stop})')
+                                    f"{friend_name}{len(chunk)} entries not fit in [{item.start},{item.stop})"
+                                )
                             diff = self._branches - chunk.branches
                             if diff:
-                                logger.error(
-                                    f'{friend_name}missing branches {diff}')
+                                logger.error(f"{friend_name}missing branches {diff}")
                             if chunk.path in files:
                                 logger.error(
-                                    f'{friend_name}multiple friend chunks from this source')
+                                    f"{friend_name}multiple friend chunks from this source"
+                                )
                             files.add(chunk.path)
                     else:
                         logger.warning(
-                            f'{target_name}in-memory friend entries in [{item.start},{item.stop})')
+                            f"{target_name}in-memory friend entries in [{item.start},{item.stop})"
+                        )
                 if start < stop:
                     logger.warning(
-                        f'{target_name}no friend entries in [{start},{stop}) ')
+                        f"{target_name}no friend entries in [{start},{stop}) "
+                    )
             else:
                 for item in items:
                     if isinstance(item.chunk, Chunk):
@@ -739,9 +797,11 @@ class Friend:
             JSON data.
         """
         return {
-            'name': self.name,
-            'branches': list(self._branches) if self._branches is not None else self._branches,
-            'data': [*self._data.items()],
+            "name": self.name,
+            "branches": (
+                list(self._branches) if self._branches is not None else self._branches
+            ),
+            "data": [*self._data.items()],
         }
 
     @classmethod
@@ -759,12 +819,12 @@ class Friend:
         Friend
             A :class:`Friend` object from JSON data.
         """
-        friend = cls(data['name'])
-        friend._branches = frozenset(data['branches'])
-        for k, vs in data['data']:
+        friend = cls(data["name"])
+        friend._branches = frozenset(data["branches"])
+        for k, vs in data["data"]:
             items = []
             for v in vs:
-                v['chunk']['branches'] = friend._branches
+                v["chunk"]["branches"] = friend._branches
                 items.append(_FriendItem.from_json(v))
             friend._data[Chunk.from_json(k)] = items
         return friend
@@ -775,7 +835,7 @@ class Friend:
         Returns
         -------
         Friend
-            A shallow copy of ``self``. 
+            A shallow copy of ``self``.
         """
         friend = Friend(self.name)
         friend._branches = self._branches
@@ -834,7 +894,7 @@ class Chain:
     def add_friend(
         self,
         *friends: Friend,
-        renaming: str | NameMapping = None
+        renaming: str | NameMapping = None,
     ):
         """
         Add new :class:`Friend` to this chain or merge to the existing ones.
@@ -886,9 +946,7 @@ class Chain:
         elif isinstance(other, Friend):
             return self.add_friend(other)
         elif isinstance(other, Chain):
-            return (self
-                    .add_chunk(*other._chunks)
-                    .add_friend(*other._friends.values()))
+            return self.add_chunk(*other._chunks).add_friend(*other._friends.values())
         else:
             return NotImplemented
 
@@ -900,25 +958,40 @@ class Chain:
         return NotImplemented
 
     def _rename_wrapper(self, branch: str, friend: str) -> str:
-        return _apply_naming(self._rename[friend], {'friend': friend, 'branch': branch})
+        return _apply_naming(self._rename[friend], {"friend": friend, "branch": branch})
 
     @overload
-    def iterate(self, step: int = ..., library: Literal['ak'] = 'ak', mode: Literal['balance', 'partition'] = 'partition', reader_options: dict = None) -> Generator[ak.Array, None, None]:
-        ...
+    def iterate(
+        self,
+        step: int = ...,
+        library: Literal["ak"] = "ak",
+        mode: Literal["balance", "partition"] = "partition",
+        reader_options: dict = None,
+    ) -> Generator[ak.Array, None, None]: ...
 
     @overload
-    def iterate(self, step: int = ..., library: Literal['pd'] = 'pd', mode: Literal['balance', 'partition'] = 'partition', reader_options: dict = None) -> Generator[pd.DataFrame, None, None]:
-        ...
+    def iterate(
+        self,
+        step: int = ...,
+        library: Literal["pd"] = "pd",
+        mode: Literal["balance", "partition"] = "partition",
+        reader_options: dict = None,
+    ) -> Generator[pd.DataFrame, None, None]: ...
 
     @overload
-    def iterate(self, step: int = ..., library: Literal['np'] = 'np', mode: Literal['balance', 'partition'] = 'partition', reader_options: dict = None) -> Generator[dict[str, np.ndarray], None, None]:
-        ...
+    def iterate(
+        self,
+        step: int = ...,
+        library: Literal["np"] = "np",
+        mode: Literal["balance", "partition"] = "partition",
+        reader_options: dict = None,
+    ) -> Generator[dict[str, np.ndarray], None, None]: ...
 
     def iterate(
         self,
         step: int = ...,
-        library: Literal['ak', 'pd', 'np'] = 'ak',
-        mode: Literal['balance', 'partition'] = 'partition',
+        library: Literal["ak", "pd", "np"] = "ak",
+        mode: Literal["balance", "partition"] = "partition",
         reader_options: dict = None,
     ) -> Generator[RecordLike, None, None]:
         """
@@ -942,9 +1015,9 @@ class Chain:
         """
         if step is ...:
             chunks = Chunk.common(*self._chunks)
-        elif mode == 'partition':
+        elif mode == "partition":
             chunks = Chunk.partition(step, *self._chunks, common_branches=True)
-        elif mode == 'balance':
+        elif mode == "balance":
             chunks = Chunk.balance(step, *self._chunks, common_branches=True)
         else:
             raise ValueError(f'Unknown mode "{mode}"')
@@ -958,16 +1031,18 @@ class Chain:
             for name, friend in self._friends.items():
                 friend = friend.concat(
                     *chunk,
-                    filter=reader_options.get('filter'),
+                    filter=reader_options.get("filter"),
                     library=library,
-                    reader_options=reader_options)
+                    reader_options=reader_options,
+                )
                 if name in self._rename:
                     friend = rename_record(
                         friend,
                         partial(self._rename_wrapper, friend=name),
-                        library=library)
+                        library=library,
+                    )
                 friends[name] = friend
-            if library == 'ak':
+            if library == "ak":
                 for name, friend in friends.items():
                     if len(friend.fields) > 0:
                         main[name] = friend
@@ -976,17 +1051,25 @@ class Chain:
                 yield merge_record([main, *friends.values()], library=library)
 
     @overload
-    def dask(self, partition: int = ..., library: Literal['ak'] = 'ak', reader_options: dict = None) -> dak.Array:
-        ...
+    def dask(
+        self,
+        partition: int = ...,
+        library: Literal["ak"] = "ak",
+        reader_options: dict = None,
+    ) -> dak.Array: ...
 
     @overload
-    def dask(self, partition: int = ..., library: Literal['np'] = 'np', reader_options: dict = None) -> dict[str, da.Array]:
-        ...
+    def dask(
+        self,
+        partition: int = ...,
+        library: Literal["np"] = "np",
+        reader_options: dict = None,
+    ) -> dict[str, da.Array]: ...
 
     def dask(
         self,
         partition: int = ...,
-        library: Literal['ak', 'np'] = 'ak',
+        library: Literal["ak", "np"] = "ak",
         reader_options: dict = None,
     ) -> DelayedRecordLike:
         """
@@ -1012,8 +1095,9 @@ class Chain:
         if partition is ...:
             partitions = Chunk.common(*self._chunks)
         else:
-            partitions = [*Chunk.balance(
-                partition, *self._chunks, common_branches=True)]
+            partitions = [
+                *Chunk.balance(partition, *self._chunks, common_branches=True)
+            ]
         reader_options = reader_options or {}
         reader = TreeReader(**reader_options)
         main = reader.dask(*partitions, library=library)
@@ -1021,16 +1105,16 @@ class Chain:
         for name, friend in self._friends.items():
             friend = friend.dask(
                 *partitions,
-                filter=reader_options.get('filter'),
+                filter=reader_options.get("filter"),
                 library=library,
-                reader_options=reader_options)
-            if library != 'ak' and name in self._rename:
+                reader_options=reader_options,
+            )
+            if library != "ak" and name in self._rename:
                 friend = rename_record(
-                    friend,
-                    partial(self._rename_wrapper, friend=name),
-                    library=library)
+                    friend, partial(self._rename_wrapper, friend=name), library=library
+                )
             friends[name] = friend
-        if library == 'ak':
+        if library == "ak":
             for name, friend in friends.items():
                 if len(friend.fields) > 0:
                     main[name] = friend

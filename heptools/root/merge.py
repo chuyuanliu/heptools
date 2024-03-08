@@ -108,13 +108,16 @@ def resize(
     path = EOS(path)
     results: list[Chunk] = []
     if chunk_size is ...:
-        results.append(merge(
-            path,
-            *sources,
-            step=step,
-            reader_options=reader_options,
-            writer_options=writer_options,
-            dask=dask))
+        results.append(
+            merge(
+                path,
+                *sources,
+                step=step,
+                reader_options=reader_options,
+                writer_options=writer_options,
+                dask=dask,
+            )
+        )
     else:
         parent = path.parent
         filename = f'{path.stem}.chunk{{index}}{"".join(path.suffixes)}'
@@ -124,12 +127,15 @@ def resize(
                 new_path = path
             else:
                 new_path = parent / filename.format(index=index)
-            results.append(merge(
-                new_path,
-                *new_chunks,
-                step=step,
-                reader_options=reader_options,
-                writer_options=writer_options,
-                dask=dask))
+            results.append(
+                merge(
+                    new_path,
+                    *new_chunks,
+                    step=step,
+                    reader_options=reader_options,
+                    writer_options=writer_options,
+                    dask=dask,
+                )
+            )
     results = clean(sources, results, dask=dask)
     return results

@@ -4,8 +4,7 @@ from typing import Protocol, runtime_checkable
 
 @runtime_checkable
 class JSONable(Protocol):
-    def to_json(self):
-        ...
+    def to_json(self): ...
 
 
 class DefaultEncoder(json.JSONEncoder):

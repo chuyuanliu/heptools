@@ -1,5 +1,5 @@
 def dask_sizeof_plugin(sizeof):
-    @sizeof.register_lazy('awkward')
+    @sizeof.register_lazy("awkward")
     def register_awkward():
         from awkward import Array
 
@@ -7,7 +7,7 @@ def dask_sizeof_plugin(sizeof):
         def sizeof_awkward_array(x: Array):
             return x.nbytes
 
-    @sizeof.register_lazy('uproot')
+    @sizeof.register_lazy("uproot")
     def register_uproot():
         from uproot import Model
 
@@ -15,7 +15,7 @@ def dask_sizeof_plugin(sizeof):
         def sizeof_uproot_model(x: Model):
             return x.num_bytes
 
-    @sizeof.register_lazy('hist')
+    @sizeof.register_lazy("hist")
     def register_hist():
         from hist import Hist
 
@@ -23,6 +23,5 @@ def dask_sizeof_plugin(sizeof):
         def sizeof_hist(x: Hist):
             return sizeof(x.view(flow=True))
 
-    @sizeof.register_lazy('heptools')
-    def register_heptools():
-        ...
+    @sizeof.register_lazy("heptools")
+    def register_heptools(): ...
