@@ -14,10 +14,8 @@ __all__ = ["Partition"]
 class Partition:
     @overload
     def __init__(self, size: int, groups: int, members: int): ...
-
     @overload
     def __init__(self, size: int, groups: Iterable[int]): ...
-
     def __init__(self, size: int, groups: int | Iterable[int], members: int = None):
         self.size = size
         if isinstance(groups, Iterable):

@@ -260,7 +260,6 @@ class Friend:
         library: Literal["ak"] = "ak",
         reader_options: dict = None,
     ) -> ak.Array: ...
-
     @overload
     def arrays(
         self,
@@ -269,7 +268,6 @@ class Friend:
         library: Literal["pd"] = "pd",
         reader_options: dict = None,
     ) -> pd.DataFrame: ...
-
     @overload
     def arrays(
         self,
@@ -278,7 +276,6 @@ class Friend:
         library: Literal["np"] = "np",
         reader_options: dict = None,
     ) -> dict[str, np.ndarray]: ...
-
     @_on_disk
     def arrays(
         self,
@@ -341,7 +338,6 @@ class Friend:
         library: Literal["ak"] = "ak",
         reader_options: dict = None,
     ) -> ak.Array: ...
-
     @overload
     def concat(
         self,
@@ -350,7 +346,6 @@ class Friend:
         library: Literal["pd"] = "pd",
         reader_options: dict = None,
     ) -> pd.DataFrame: ...
-
     @overload
     def concat(
         self,
@@ -359,7 +354,6 @@ class Friend:
         library: Literal["np"] = "np",
         reader_options: dict = None,
     ) -> dict[str, np.ndarray]: ...
-
     @_on_disk
     def concat(
         self,
@@ -406,7 +400,6 @@ class Friend:
         library: Literal["ak"] = "ak",
         reader_options: dict = None,
     ) -> dak.Array: ...
-
     @overload
     def dask(
         self,
@@ -415,7 +408,6 @@ class Friend:
         library: Literal["np"] = "np",
         reader_options: dict = None,
     ) -> dict[str, da.Array]: ...
-
     @_on_disk
     def dask(
         self,
@@ -968,7 +960,6 @@ class Chain:
         mode: Literal["balance", "partition"] = "partition",
         reader_options: dict = None,
     ) -> Generator[ak.Array, None, None]: ...
-
     @overload
     def iterate(
         self,
@@ -977,7 +968,6 @@ class Chain:
         mode: Literal["balance", "partition"] = "partition",
         reader_options: dict = None,
     ) -> Generator[pd.DataFrame, None, None]: ...
-
     @overload
     def iterate(
         self,
@@ -986,7 +976,6 @@ class Chain:
         mode: Literal["balance", "partition"] = "partition",
         reader_options: dict = None,
     ) -> Generator[dict[str, np.ndarray], None, None]: ...
-
     def iterate(
         self,
         step: int = ...,
@@ -1057,7 +1046,6 @@ class Chain:
         library: Literal["ak"] = "ak",
         reader_options: dict = None,
     ) -> dak.Array: ...
-
     @overload
     def dask(
         self,
@@ -1065,7 +1053,6 @@ class Chain:
         library: Literal["np"] = "np",
         reader_options: dict = None,
     ) -> dict[str, da.Array]: ...
-
     def dask(
         self,
         partition: int = ...,

@@ -267,19 +267,25 @@ class TreeReader(_Reader):
 
     @overload
     def arrays(
-        self, source: Chunk, library: Literal["ak"] = "ak", **options
+        self,
+        source: Chunk,
+        library: Literal["ak"] = "ak",
+        **options,
     ) -> ak.Array: ...
-
     @overload
     def arrays(
-        self, source: Chunk, library: Literal["pd"] = "pd", **options
+        self,
+        source: Chunk,
+        library: Literal["pd"] = "pd",
+        **options,
     ) -> pd.DataFrame: ...
-
     @overload
     def arrays(
-        self, source: Chunk, library: Literal["np"] = "np", **options
+        self,
+        source: Chunk,
+        library: Literal["np"] = "np",
+        **options,
     ) -> dict[str, np.ndarray]: ...
-
     def arrays(
         self,
         source: Chunk,
@@ -326,19 +332,25 @@ class TreeReader(_Reader):
 
     @overload
     def concat(
-        self, *sources: Chunk, library: Literal["ak"] = "ak", **options
+        self,
+        *sources: Chunk,
+        library: Literal["ak"] = "ak",
+        **options,
     ) -> ak.Array: ...
-
     @overload
     def concat(
-        self, *sources: Chunk, library: Literal["pd"] = "pd", **options
+        self,
+        *sources: Chunk,
+        library: Literal["pd"] = "pd",
+        **options,
     ) -> pd.DataFrame: ...
-
     @overload
     def concat(
-        self, *sources: Chunk, library: Literal["np"] = "np", **options
+        self,
+        *sources: Chunk,
+        library: Literal["np"] = "np",
+        **options,
     ) -> dict[str, np.ndarray]: ...
-
     def concat(
         self,
         *sources: Chunk,
@@ -385,7 +397,6 @@ class TreeReader(_Reader):
         mode: Literal["balance", "partition"] = "partition",
         **options,
     ) -> Generator[ak.Array, None, None]: ...
-
     @overload
     def iterate(
         self,
@@ -395,7 +406,6 @@ class TreeReader(_Reader):
         mode: Literal["balance", "partition"] = "partition",
         **options,
     ) -> Generator[pd.DataFrame, None, None]: ...
-
     @overload
     def iterate(
         self,
@@ -405,7 +415,6 @@ class TreeReader(_Reader):
         mode: Literal["balance", "partition"] = "partition",
         **options,
     ) -> Generator[dict[str, np.ndarray], None, None]: ...
-
     def iterate(
         self,
         *sources: Chunk,
@@ -454,14 +463,18 @@ class TreeReader(_Reader):
 
     @overload
     def dask(
-        self, *sources: Chunk, partition: int = ..., library: Literal["ak"] = "ak"
+        self,
+        *sources: Chunk,
+        partition: int = ...,
+        library: Literal["ak"] = "ak",
     ) -> dak.Array: ...
-
     @overload
     def dask(
-        self, *sources: Chunk, partition: int = ..., library: Literal["np"] = "np"
+        self,
+        *sources: Chunk,
+        partition: int = ...,
+        library: Literal["np"] = "np",
     ) -> dict[str, da.Array]: ...
-
     def dask(
         self,
         *sources: Chunk,

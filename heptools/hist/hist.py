@@ -33,10 +33,8 @@ from . import template as _t
 class Label:
     @overload
     def __init__(self, label: LabelLike): ...
-
     @overload
     def __init__(self, code: str, display: str): ...
-
     def __init__(self, code: LabelLike, display: str = ...):
         if isinstance(code, Label):
             self.code = code.code

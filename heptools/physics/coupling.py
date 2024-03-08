@@ -210,10 +210,8 @@ class Formula(ABC):
 
     @overload
     def _parse_number(self, value: str) -> float: ...
-
     @overload
     def _parse_number(self, value: float) -> str: ...
-
     def _parse_number(self, value):
         if isinstance(value, str):
             return float(value.replace(self.number_separator, "."))
