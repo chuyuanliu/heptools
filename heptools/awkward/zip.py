@@ -43,9 +43,16 @@ class NanoAOD:
             }
             keys = set(fields)
             jagged = set(
-                filter(lambda x: self._count_pattern.match(x) is not None, to_keep)
+                filter(
+                    lambda x: (x in keys) or (x in to_keep),
+                    map(
+                        lambda x: x[1:],
+                        filter(
+                            lambda x: self._count_pattern.match(x) is not None, to_keep
+                        ),
+                    ),
+                )
             )
-            jagged = set(map(lambda x: x[1:], jagged)) & keys
             regular = keys - jagged
             prefixes = {"jagged": jagged, "regular": regular}
             for k in ("jagged", "regular"):
@@ -53,8 +60,9 @@ class NanoAOD:
                     if self._selected:
                         prefixes[k] &= self._selected
                     for prefix in prefixes[k]:
-                        to_zip[prefix] = frozenset(map("_".join, fields[prefix]))
-                        to_keep -= to_zip[prefix]
+                        if prefix in fields:
+                            to_zip[prefix] = frozenset(map("_".join, fields[prefix]))
+                            to_keep -= to_zip[prefix]
                         if k == "jagged":
                             to_keep.remove(f"n{prefix}")
         if self._cache is not None:
@@ -63,12 +71,10 @@ class NanoAOD:
 
     def __call__(self, data: ak.Array):
         keep, to_zip = self._parse_fields(data)
-        if not to_zip:
-            return data
-        else:
-            kept = data[keep]
-            zipped = dict(zip(ak.fields(kept), ak.unzip(kept)))
+        zipped = data[keep]
+        if to_zip:
+            zipped = dict(zip(ak.fields(zipped), ak.unzip(zipped)))
             for k, vs in to_zip.items():
                 start = len(k) + 1
                 zipped[k] = ak.zip({v[start:]: data[v] for v in vs})
-            return ak.Array(zipped)
+        return ak.Array(zipped)
