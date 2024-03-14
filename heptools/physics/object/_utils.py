@@ -4,7 +4,7 @@ from typing import Callable, Iterable, Literal
 
 import awkward as ak
 
-from ...aktools import FieldLike, cache_field, get_field, get_shape, partition
+from ...aktools import FieldLike, cache_field, get_field, get_shape, partition_with_name
 from ...typetools import accumulated_mro
 from ...utils import arg_new
 
@@ -113,7 +113,9 @@ class Pair:
                         ps[0], 2, fields=["obj1", "obj2"], with_name=cls.name
                     )
                 else:
-                    paired = cls.pair(*partition(ps[0], combinations, 2), mode="single")
+                    paired = cls.pair(
+                        *partition_with_name(ps[0], combinations, 2), mode="single"
+                    )
             case _:
                 raise PhysicsObjectError(f'invalid mode "{mode}"')
 

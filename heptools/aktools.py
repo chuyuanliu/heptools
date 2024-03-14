@@ -24,7 +24,7 @@ __all__ = [
     "set_field",
     "update_fields",
     "get_shape" "foreach",
-    "partition",
+    "partition_with_name",
     "between",
     "where",
     "sort",
@@ -130,7 +130,7 @@ def foreach(data: Array) -> tuple[Array, ...]:
     return tuple(data[slices + (i,)] for i in range(count[0]))
 
 
-def partition(data: Array, groups: int, members: int) -> tuple[Array, ...]:
+def partition_with_name(data: Array, groups: int, members: int) -> tuple[Array, ...]:
     _sizes = ak.num(data)
     if not ak.any(_sizes >= groups * members):
         raise ValueError(f"not enough data to partition into {groups}×{members}")
@@ -143,6 +143,28 @@ def partition(data: Array, groups: int, members: int) -> tuple[Array, ...]:
     _combs = tuple(
         ak.unflatten(data[ak.flatten(_combs[:, :, :, i], axis=2)], groups, axis=1)
         for i in range(members)
+    )
+    return _combs
+
+
+def partition_concatenated(data: Array, groups: int, members: int) -> Array:
+    _sizes = ak.num(data)
+    if not ak.any(_sizes >= groups * members):
+        raise ValueError(f"not enough data to partition into {groups}×{members}")
+    _combs = ak.Array(
+        [
+            Partition(i, groups, members).combination[0]
+            for i in range(ak.max(_sizes) + 1)
+        ]
+    )[_sizes]
+    _combs = ak.unflatten(
+        ak.unflatten(
+            data[ak.flatten(ak.flatten(_combs[:, :, :, :], axis=3), axis=2)],
+            members,
+            axis=1,
+        ),
+        groups,
+        axis=1,
     )
     return _combs
 
