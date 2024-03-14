@@ -132,7 +132,7 @@ def foreach(data: Array) -> tuple[Array, ...]:
 
 def partition(data: Array, groups: int, members: int) -> tuple[Array, ...]:
     _sizes = ak.num(data)
-    if not ak.all(_sizes >= groups * members):
+    if not ak.any(_sizes >= groups * members):
         raise ValueError(f"not enough data to partition into {groups}×{members}")
     _combs = ak.Array(
         [
