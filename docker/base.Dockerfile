@@ -27,6 +27,7 @@ RUN touch /etc/vomses \
     && echo '"cms" "lcg-voms2.cern.ch" "15002" "/DC=ch/DC=cern/OU=computers/CN=lcg-voms2.cern.ch" "cms"' >> /etc/vomses \
     && echo '"cms" "voms2.cern.ch" "15002" "/DC=ch/DC=cern/OU=computers/CN=voms2.cern.ch" "cms"' >> /etc/vomses \
     && echo '"cms" "voms-cms-auth.app.cern.ch" "443" "/DC=ch/DC=cern/OU=computers/CN=cms-auth.web.cern.ch" "cms"' >> /etc/vomses
+ENV VOMS_PROXY_INIT_DONT_VERIFY_AC=1
 # rucio
 RUN mkdir -p /opt/rucio/etc/
 RUN wget -O /opt/rucio/etc/rucio.cfg https://raw.githubusercontent.com/dmwm/CMSRucio/master/docker/CMSRucioClient/rucio-prod.cfg
