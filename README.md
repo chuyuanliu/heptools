@@ -80,11 +80,17 @@ singularity shell -B .:/srv -B /cvmfs -B /uscmst1b_scratch/lpc1 -B $(readlink ${
 
 ## Tips
 
-change singularity (apptainer) cache and temp dir
+- To change singularity (apptainer) cache and temp dir
 
 ```bash
-export APPTAINER_CACHEDIR="${HOME}/nobackup/.apptainer/"
-export APPTAINER_TMPDIR="${HOME}/nobackup/.apptainer/"
+export APPTAINER_CACHEDIR="new/path/to/cache/"
+export APPTAINER_TMPDIR="new/path/to/tmp/"
+```
+
+- To init a voms proxy inside the container, add the following mount to `singularity`
+
+```bash
+-B ${HOME}/.globus
 ```
 
 ## TODO
