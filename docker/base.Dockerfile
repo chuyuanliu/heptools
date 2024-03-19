@@ -19,6 +19,7 @@ RUN mamba env update -n base -f https://raw.githubusercontent.com/chuyuanliu/hep
     dbs3-client \
     rucio-clients
 RUN ln -s /opt/conda/etc/grid-security /etc/grid-security
+RUN touch /root/.rnd
 # rucio
 RUN mkdir -p /opt/rucio/etc/
 RUN wget -O /opt/rucio/etc/rucio.cfg https://raw.githubusercontent.com/dmwm/CMSRucio/master/docker/CMSRucioClient/rucio-prod.cfg
