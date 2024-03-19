@@ -87,12 +87,6 @@ export APPTAINER_CACHEDIR="new/path/to/cache/"
 export APPTAINER_TMPDIR="new/path/to/tmp/"
 ```
 
-- To init a voms proxy inside the container, add the following mount to `singularity`
-
-```bash
--B ${HOME}/.globus
-```
-
 ## TODO
 
 - check: use TYPE_CHECKING to avoid circular import, unused import

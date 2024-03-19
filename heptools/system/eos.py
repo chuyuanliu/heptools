@@ -59,6 +59,10 @@ class EOS:
         self.path = Path(self._slash_pattern.sub("/", str(path)))
 
     @property
+    def as_local(self):
+        return EOS(self.path, None)
+
+    @property
     def is_local(self):
         return not self.host
 
@@ -313,6 +317,15 @@ class EOS:
 
     def local_temp(self, dir=None):
         return EOS(tempfile.mkstemp(suffix=f"_{self.name}", dir=dir)[1])
+
+    @classmethod
+    def common_base(cls, *paths: PathLike):
+        paths = [EOS(p, None) for p in paths]
+        prefix = EOS(os.path.commonprefix(paths))
+        parts = prefix.parts
+        if len(parts) and (parts[-1] != paths[0].parts[len(parts) - 1]):
+            return prefix.parent
+        return prefix
 
 
 PathLike = str | EOS | os.PathLike

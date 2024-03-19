@@ -182,6 +182,11 @@ class Friend:
             self._dump: list[tuple[Chunk, _FriendItem]] = []
             self._dump_name: dict[Chunk, dict[str, str]] = {}
 
+    @classmethod
+    def _path_parts(cls, path: EOS, format="path{}") -> list[str]:
+        parts = [*path.parts[:-1], path.stem]
+        return dict(zip(map(format.format, range(len(parts))), parts[::-1]))
+
     def _name_dump(self, target: Chunk, item: _FriendItem):
         if target not in self._dump_name:
             names = {
@@ -189,14 +194,7 @@ class Friend:
                 "uuid": str(target.uuid),
                 "tree": target.name,
             }
-            parts = [*target.path.parts]
-            if parts[0] in "/\\":
-                parts = parts[1:]
-            parts[-1] = target.path.stem
-            parts = parts[::-1]
-            for i in range(len(parts)):
-                names[f"path{i}"] = parts[i]
-            self._dump_name[target] = names
+            self._dump_name[target] = names | self._path_parts(target.path)
         return self._dump_name[target] | {"start": item.start, "stop": item.stop}
 
     def _check_item(self, item: _FriendItem):
@@ -660,6 +658,7 @@ class Friend:
         self,
         base_path: PathLike,
         naming: str | NameMapping = ...,
+        execute: bool = False,
     ):
         """
         Copy all chunks to a new location.
@@ -669,12 +668,19 @@ class Friend:
         base_path: PathLike
             Base path to store the cloned files.
         naming : str or ~typing.Callable, optional
-            Naming format for the cloned files. If not given, the original names will be used. See notes of :meth:`dump` for details.
+            Naming format for the cloned files. See below for details. If not given, the common base path of all chunks will be replaced by ``base_path``.
 
         Returns
         -------
         Friend
             A new friend tree with the cloned chunks.
+
+        Notes
+        -----
+        The naming format is the same as :meth:`dump`, with the following additional keys:
+
+        - ``{source0}``, ``{source1}``, ... : ``source.path.parts`` without suffixes in reversed order.
+
         """
         base_path = EOS(base_path)
         friend = Friend(self.name)
@@ -682,22 +688,31 @@ class Friend:
         src = []
         dst = []
         self._init_dump()
+        if naming is ...:
+            base = EOS.common_base(
+                *(c.chunk.path for cs in self._data.values() for c in cs)
+            )
         for target, items in self._data.items():
             if not items:
                 continue
             for item in items:
                 chunk = item.chunk.deepcopy()
                 if naming is ...:
-                    name = chunk.path.name
+                    name = chunk.path.as_local.relative_to(base)
                 else:
-                    name = _apply_naming(naming, self._name_dump(target, item))
+                    name = _apply_naming(
+                        naming,
+                        self._name_dump(target, item)
+                        | self._path_parts(chunk.path, "source{}"),
+                    )
                 path = base_path / name
                 src.append(chunk.path)
                 dst.append(path)
                 chunk.path = path
                 friend._data[target].append(_FriendItem(item.start, item.stop, chunk))
-        with ThreadPoolExecutor(max_workers=len(src)) as executor:
-            executor.map(partial(EOS.cp, parents=True, overwrite=True), src, dst)
+        if execute:
+            with ThreadPoolExecutor(max_workers=len(src)) as executor:
+                executor.map(partial(EOS.cp, parents=True, overwrite=True), src, dst)
         return friend
 
     def integrity(
