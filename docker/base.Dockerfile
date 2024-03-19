@@ -17,6 +17,7 @@ RUN mamba env update -n base -f https://raw.githubusercontent.com/chuyuanliu/hep
     # DB
     dbs3-client \
     rucio-clients
+# voms
 RUN ln -s /opt/conda/etc/grid-security /etc/grid-security
 RUN touch /root/.rnd
 RUN apt-get update && apt-get install -y --no-install-recommends \
