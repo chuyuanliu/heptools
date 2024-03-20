@@ -487,7 +487,7 @@ class Friend:
         - ``{stop}``: ``target.entry_stop``
         - ``{path0}``, ``{path1}``, ... : ``target.path.parts`` without suffixes in reversed order.
 
-        where the ``target`` is the one passed to :meth:`add`. In a more general case, a :class:`~typing.Callable` can be used to generate the path.
+        where the ``target`` is the one passed to :meth:`add`. To apply operations beyond the built-in :meth:`str.format` syntax, use a :class:`~typing.Callable` instead.
 
         .. warning::
             The generated path is not guaranteed to be unique. If multiple chunks are dumped to the same path, the last one will overwrite the previous ones.
@@ -668,7 +668,7 @@ class Friend:
         base_path: PathLike
             Base path to store the cloned files.
         naming : str or ~typing.Callable, optional
-            Naming format for the cloned files. See below for details. If not given, the common base path of all chunks will be replaced by ``base_path``.
+            Naming format for the cloned files. See below for details. If not given, will simply replace the common base with ``base_path``.
 
         Returns
         -------
@@ -681,6 +681,7 @@ class Friend:
 
         - ``{source0}``, ``{source1}``, ... : ``source.path.parts`` without suffixes in reversed order.
 
+        where the ``source`` is the chunk to be cloned.
         """
         base_path = EOS(base_path)
         friend = Friend(self.name)
