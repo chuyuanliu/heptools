@@ -22,3 +22,5 @@ Basic I/O
 .. autoapifunction:: heptools.root.merge.merge
 
 .. autoapifunction:: heptools.root.merge.clean
+
+.. autoapifunction:: heptools.root.merge.move

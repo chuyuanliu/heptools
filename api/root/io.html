@@ -642,6 +642,24 @@ Use <code class="xref py py-func docutils literal notranslate"><span class="pre"
 </dl>
 </dd></dl>
 
+<dl class="py function">
+<dt class="sig sig-object py" id="heptools.root.merge.move">
+<span class="sig-prename descclassname"><span class="pre">heptools.root.merge.</span></span><span class="sig-name descname"><span class="pre">move</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">source</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dask</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/chuyuanliu/heptools/tree/master/heptools/root/merge.py#L8-L32"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#heptools.root.merge.move" title="Link to this definition">#</a></dt>
+<dd><p>Move <code class="docutils literal notranslate"><span class="pre">source</span></code> to <code class="docutils literal notranslate"><span class="pre">path</span></code>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>path</strong> (<em>PathLike</em>) – Path to output ROOT file.</p></li>
+<li><p><strong>source</strong> (<a class="reference internal" href="tree.html#heptools.root.chunk.Chunk" title="heptools.root.chunk.Chunk"><em>Chunk</em></a>) – Source chunk to move.</p></li>
+<li><p><strong>dask</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.12)"><em>bool</em></a><em>, </em><em>optional</em><em>, </em><em>default=False</em>) – If <code class="docutils literal notranslate"><span class="pre">True</span></code>, return a <a class="reference external" href="https://docs.dask.org/en/latest/delayed-api.html#dask.delayed.Delayed" title="(in Dask)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Delayed</span></code></a> object.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><em>Chunk or Delayed</em> – Moved chunk.</p>
+</dd>
+</dl>
+</dd></dl>
+
 </section>
 </section>
 
@@ -713,6 +731,7 @@ Use <code class="xref py py-func docutils literal notranslate"><span class="pre"
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#heptools.root.merge.resize"><code class="docutils literal notranslate"><span class="pre">resize()</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#heptools.root.merge.merge"><code class="docutils literal notranslate"><span class="pre">merge()</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#heptools.root.merge.clean"><code class="docutils literal notranslate"><span class="pre">clean()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#heptools.root.merge.move"><code class="docutils literal notranslate"><span class="pre">move()</span></code></a></li>
 </ul>
 </li>
 </ul>
