@@ -184,7 +184,7 @@ class Friend:
 
     @classmethod
     def _path_parts(cls, path: EOS, format="path{}") -> list[str]:
-        parts = [*path.parts[:-1], path.stem]
+        parts = path.parts
         return dict(zip(map(format.format, range(len(parts))), parts[::-1]))
 
     def _name_dump(self, target: Chunk, item: _FriendItem):
@@ -258,6 +258,7 @@ class Friend:
         library: Literal["ak"] = "ak",
         reader_options: dict = None,
     ) -> ak.Array: ...
+
     @overload
     def arrays(
         self,
@@ -266,6 +267,7 @@ class Friend:
         library: Literal["pd"] = "pd",
         reader_options: dict = None,
     ) -> pd.DataFrame: ...
+
     @overload
     def arrays(
         self,
@@ -274,6 +276,7 @@ class Friend:
         library: Literal["np"] = "np",
         reader_options: dict = None,
     ) -> dict[str, np.ndarray]: ...
+
     @_on_disk
     def arrays(
         self,
@@ -336,6 +339,7 @@ class Friend:
         library: Literal["ak"] = "ak",
         reader_options: dict = None,
     ) -> ak.Array: ...
+
     @overload
     def concat(
         self,
@@ -344,6 +348,7 @@ class Friend:
         library: Literal["pd"] = "pd",
         reader_options: dict = None,
     ) -> pd.DataFrame: ...
+
     @overload
     def concat(
         self,
@@ -352,6 +357,7 @@ class Friend:
         library: Literal["np"] = "np",
         reader_options: dict = None,
     ) -> dict[str, np.ndarray]: ...
+
     @_on_disk
     def concat(
         self,
@@ -398,6 +404,7 @@ class Friend:
         library: Literal["ak"] = "ak",
         reader_options: dict = None,
     ) -> dak.Array: ...
+
     @overload
     def dask(
         self,
@@ -406,6 +413,7 @@ class Friend:
         library: Literal["np"] = "np",
         reader_options: dict = None,
     ) -> dict[str, da.Array]: ...
+
     @_on_disk
     def dask(
         self,
@@ -485,7 +493,7 @@ class Friend:
         - ``{tree}``: ``target.name``
         - ``{start}``: ``target.entry_start``
         - ``{stop}``: ``target.entry_stop``
-        - ``{path0}``, ``{path1}``, ... : ``target.path.parts`` without suffixes in reversed order.
+        - ``{path0}``, ``{path1}``, ... : ``target.path.parts`` in reversed order.
 
         where the ``target`` is the one passed to :meth:`add`. To apply operations beyond the built-in :meth:`str.format` syntax, use a :data:`~typing.Callable` instead.
 
@@ -508,9 +516,9 @@ class Friend:
             >>>     ),
             >>>     data
             >>> )
-            >>> # write to root://host.1//a/b/c/test_target_uuid_Events_100_200.root
+            >>> # write to root://host.1//a/b/c/test_uuid_Events_100_200_target.root
             >>> friend.dump(
-            >>>     '{name}_{path0}_{uuid}_{tree}_{start}_{stop}.root')
+            >>>     '{name}_{uuid}_{tree}_{start}_{stop}_{path0}')
             >>> # or write to root://host.2//x/y/z/b/c/test_uuid_100_200.root
             >>> friend.dump(
             >>>     '{path2}/{path1}/{name}_{uuid}_{start}_{stop}.root',

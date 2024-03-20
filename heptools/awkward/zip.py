@@ -73,7 +73,7 @@ class NanoAOD:
 
     def __call__(self, data: ak.Array):
         keep, to_zip = self._parse_fields(data)
-        zipped = to.dict_array(zipped[keep]) if keep else {}
+        zipped = to.dict_array(data[keep]) if keep else {}
         for k, vs in to_zip.items():
             start = len(k) + 1
             zipped[k] = ak.zip({v[start:]: data[v] for v in vs})
