@@ -28,6 +28,10 @@ def numpy(array: ak.Array, copy: bool = False):
         return _numpy_array(array, copy)
 
 
+def dict_array(array: ak.Array):
+    return dict(zip(ak.fields(array), ak.to_list(array)))
+
+
 JSONableT = TypeVar("JSONableT")
 
 

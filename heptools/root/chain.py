@@ -12,7 +12,7 @@ from ..system.eos import EOS, PathLike
 from ._backend import concat_record, merge_record, rename_record
 from .chunk import Chunk
 from .io import TreeReader, TreeWriter
-from .merge import resize
+from .merge import move, resize
 
 if TYPE_CHECKING:
     import awkward as ak
@@ -629,10 +629,10 @@ class Friend:
                 if to_merge:
                     dummy = _FriendItem(to_merge[0].start, to_merge[-1].stop)
                     chunks = [i.chunk for i in to_merge]
-                    if len(chunks) > 1:
-                        path = base / _apply_naming(
-                            naming, self._name_dump(target, dummy)
-                        )
+                    path = base / _apply_naming(naming, self._name_dump(target, dummy))
+                    if len(chunks) == 1:
+                        chunks = move(path, chunks[0], dask=dask)
+                    elif len(chunks) > 1:
                         chunks = resize(
                             path,
                             *chunks,

@@ -5,6 +5,34 @@ from .io import TreeReader, TreeWriter
 
 
 @delayed
+def move(
+    path: PathLike,
+    source: Chunk,
+    dask: bool = False,
+):
+    """
+    Move ``source`` to ``path``.
+
+    Parameters
+    ----------
+    path : PathLike
+        Path to output ROOT file.
+    source : ~heptools.root.chunk.Chunk
+        Source chunk to move.
+    dask : bool, optional, default=False
+        If ``True``, return a :class:`~dask.delayed.Delayed` object.
+
+    Returns
+    -------
+    Chunk or Delayed
+        Moved chunk.
+    """
+    source = source.deepcopy()
+    source.path = source.path.move_to(path)
+    return source
+
+
+@delayed
 def merge(
     path: PathLike,
     *sources: Chunk,
