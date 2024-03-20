@@ -487,7 +487,7 @@ class Friend:
         - ``{stop}``: ``target.entry_stop``
         - ``{path0}``, ``{path1}``, ... : ``target.path.parts`` without suffixes in reversed order.
 
-        where the ``target`` is the one passed to :meth:`add`. To apply operations beyond the built-in :meth:`str.format` syntax, use a :class:`~typing.Callable` instead.
+        where the ``target`` is the one passed to :meth:`add`. To apply operations beyond the built-in :meth:`str.format` syntax, use a :data:`~typing.Callable` instead.
 
         .. warning::
             The generated path is not guaranteed to be unique. If multiple chunks are dumped to the same path, the last one will overwrite the previous ones.
