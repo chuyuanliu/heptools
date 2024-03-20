@@ -631,7 +631,7 @@ class Friend:
                     chunks = [i.chunk for i in to_merge]
                     path = base / _apply_naming(naming, self._name_dump(target, dummy))
                     if len(chunks) == 1:
-                        chunks = move(path, chunks[0], dask=dask)
+                        chunks = [move(path, chunks[0], dask=dask)]
                     elif len(chunks) > 1:
                         chunks = resize(
                             path,
