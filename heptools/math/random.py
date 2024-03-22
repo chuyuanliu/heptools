@@ -11,35 +11,48 @@ _UINT64_11 = np.uint64(11)
 
 class CBRNG(ABC):
     @abstractmethod
-    def raw32(self, counters: npt.NDArray[np.uint64]) -> npt.NDArray[np.uint32]: ...
+    def bit32(self, counters: npt.NDArray[np.uint64]) -> npt.NDArray[np.uint32]: ...
 
     @abstractmethod
-    def raw64(self, counters: npt.NDArray[np.uint64]) -> npt.NDArray[np.uint64]: ...
+    def bit64(self, counters: npt.NDArray[np.uint64]) -> npt.NDArray[np.uint64]: ...
 
     @overload
-    def raw(
+    def uint(
         self, counters: npt.ArrayLike, bits: Literal[64] = 64
     ) -> npt.NDArray[np.uint64]: ...
     @overload
-    def raw(
+    def uint(
         self, counters: npt.ArrayLike, bits: Literal[32] = 32
     ) -> npt.NDArray[np.uint32]: ...
-    def raw(
+    def uint(
         self, counters: npt.ArrayLike, bits: Literal[32, 64] = 64
     ) -> npt.NDArray[np.uint]:
         counters = np.asarray(counters, dtype=np.uint64)
-        if bits == 32:
-            return self.raw32(counters)
-        elif bits == 64:
-            return self.raw64(counters)
+        match bits:
+            case 32:
+                return self.bit32(counters)
+            case 64:
+                return self.bit64(counters)
+            case _:
+                raise NotImplementedError
 
-    def uniform(self, counters: npt.ArrayLike) -> npt.NDArray[np.float64]:
+    @overload
+    def float(
+        self, counters: npt.ArrayLike, bits: Literal[64] = 64
+    ) -> npt.NDArray[np.float64]: ...
+    def float(
+        self, counters: npt.ArrayLike, bits: Literal[64] = 64
+    ) -> npt.NDArray[np.float_]:
         """
-        [0, 1)
+        In [0, 1). Same as `numpy.random._common.uint64_to_double`.
         """
-        x = self.raw(counters)
-        x >>= _UINT64_11
-        return x / _UINT64_MAX_52BITS
+        match bits:
+            case 64:
+                x = self.uint(counters)
+                x >>= _UINT64_11
+                return x / _UINT64_MAX_52BITS
+            case _:
+                raise NotImplementedError
 
 
 class Squares(CBRNG):
@@ -82,7 +95,7 @@ class Squares(CBRNG):
     def __init__(self, seed: int):
         self._key = self._generate_key(seed)
 
-    def raw32(self, ctrs: npt.NDArray[np.uint64]) -> npt.NDArray[np.uint32]:
+    def bit32(self, ctrs: npt.NDArray[np.uint64]) -> npt.NDArray[np.uint32]:
         x = ctrs * self._key
         y = x.copy()
         z = y + self._key
@@ -95,7 +108,7 @@ class Squares(CBRNG):
         x >>= _UINT64_32
         return x.astype(np.uint32)
 
-    def raw64(self, ctrs: npt.NDArray[np.uint64]) -> npt.NDArray[np.uint64]:
+    def bit64(self, ctrs: npt.NDArray[np.uint64]) -> npt.NDArray[np.uint64]:
         x = ctrs * self._key
         y = x.copy()
         z = y + self._key
