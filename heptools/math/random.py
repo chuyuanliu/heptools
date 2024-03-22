@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import hashlib
 from abc import ABC, abstractmethod
 from typing import Iterable, Literal, overload
 
@@ -11,13 +12,26 @@ _UINT64_32 = np.uint64(32)
 _UINT64_11 = np.uint64(11)
 
 
-SeedLike = str | int | Iterable[int]
+SeedLike = int | str | Iterable[int | str]
 
 
-def _seed(seed: SeedLike):
-    if isinstance(seed, str):
-        return np.frombuffer(seed.encode(), dtype=np.uint8)
-    return seed
+def _str_to_entropy(__str: str) -> list[np.uint32]:
+    return np.frombuffer(hashlib.md5(__str.encode()).digest(), dtype=np.uint32).tolist()
+
+
+def _seed(entropy: SeedLike):
+    if isinstance(entropy, str):
+        return _str_to_entropy(entropy)
+    elif isinstance(entropy, Iterable):
+        seeds = []
+        for i in entropy:
+            if isinstance(i, str):
+                seeds.extend(_str_to_entropy(i))
+            else:
+                seeds.append(i)
+        return seeds
+    else:
+        return entropy
 
 
 class CBRNG(ABC):
