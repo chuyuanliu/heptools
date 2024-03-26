@@ -1,12 +1,15 @@
 from __future__ import annotations
 
-from functools import cache
+from fractions import Fraction
+from functools import cache, cached_property
 from itertools import combinations
 from math import comb, perm, prod
-from typing import Iterable, overload
+from typing import Iterable, Literal, overload
 
 import numpy as np
 import numpy.typing as npt
+
+from .sequence import Josephus
 
 __all__ = ["Partition"]
 
@@ -39,7 +42,7 @@ class Partition:
                     self.count *= self._subs[i].count
                     size -= self.groups[i] * self.members[i]
 
-    @property
+    @cached_property
     def combination(self) -> list[npt.NDArray[np.int_]]:
         if self.count == 0:
             return list(
@@ -49,7 +52,7 @@ class Partition:
         result = [Partition._combination(self.size, self.groups[0], self.members[0])]
         for i in range(1, len(self.groups)):
             result.append(
-                Partition._setdiff2d(np.arange(self.size), *result[:i])[
+                Partition.__setdiff2d(np.arange(self.size), *result[:i])[
                     :, self._subs[i].combination[0]
                 ].reshape((-1, self.groups[i], self.members[i]))
             )
@@ -92,8 +95,7 @@ class Partition:
             start = end
         return partitions
 
-    @staticmethod
-    def _setdiff2d(index: npt.NDArray, *exclude: npt.NDArray):
+    def __setdiff2d(index: npt.NDArray, *exclude: npt.NDArray):
         n_exclude, n_index = 0, len(exclude[0])
         for i in np.arange(len(exclude)):
             n_exclude += exclude[i].shape[1]
@@ -111,7 +113,90 @@ class Partition:
         return result
 
     @staticmethod
-    def accelerate():
+    def jit():
         from numba import njit
 
-        Partition._setdiff2d = njit(Partition._setdiff2d)
+        Partition.__setdiff2d = njit(Partition.__setdiff2d)
+
+
+class SubPartitionByFraction:
+    def __init__(
+        self,
+        count: int,
+        fraction: float | str,
+        precision: int = 10,
+        method: Literal["greedy", "step"] = "greedy",
+    ):
+        self._fraction = Fraction(fraction).limit_denominator(precision)
+        _granularity = 1
+        while (
+            comb(
+                self._fraction.denominator * _granularity,
+                self._fraction.numerator * _granularity,
+            )
+            < count
+        ):
+            _granularity += 1
+        self._count = count
+        self._partition = Partition(
+            _granularity * self._fraction.denominator,
+            1,
+            _granularity * self._fraction.numerator,
+        )
+        self._method = method
+
+    @property
+    def count(self):
+        return self._count
+
+    @cached_property
+    def combination(self):
+        combs = self._partition.combination[0]
+        if len(combs) == self._count:
+            return combs
+        elif self._method == "greedy":
+            return combs[[*self._distance_greedy(combs, self._count)]]
+        elif self._method == "step":
+            return combs[
+                Josephus(len(combs), self._partition.size).sequence(self._count)
+            ]
+
+    @property
+    def fraction(self):
+        return self._fraction
+
+    @cached_property
+    def multiplicity(self):
+        return int(np.ceil(self._fraction * self._count))
+
+    @staticmethod
+    def _distance_greedy(combs: npt.NDArray, count: int):
+        target = {0}
+        remain = {*range(1, combs.shape[0])}
+        for _ in range(1, count):
+            distance = SubPartitionByFraction.__distance(
+                combs, np.array([*remain]), np.array([*target])
+            )
+            selected = int(distance[:, 0][np.argmin(distance[:, 1])])
+            target.add(selected)
+            remain.remove(selected)
+        return target
+
+    def __distance(
+        combs: npt.NDArray, remain: npt.NDArray, target: npt.NDArray
+    ) -> npt.NDArray:
+        d = np.empty((len(remain), 2), dtype=np.float64)
+        size = combs.shape[-1] * 2
+        for i, rem in enumerate(remain):
+            ds = np.empty(len(target), dtype=np.float64)
+            for j, tar in enumerate(target):
+                ds[j] = np.unique(np.concatenate((combs[rem], combs[tar]))).shape[0]
+            d[i, 0] = rem
+            d[i, 1] = size - np.mean(ds)
+        return d
+
+    @staticmethod
+    def jit():
+        from numba import njit
+
+        SubPartitionByFraction.__distance = njit(SubPartitionByFraction.__distance)
