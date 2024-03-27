@@ -247,7 +247,7 @@ class TreeReader(_Reader):
 
     Parameters
     ----------
-    filter : ~typing.Callable[[set[str]], set[str]], optional
+    branch_filter : ~typing.Callable[[set[str]], set[str]], optional
         A function to select branches. If not given, all branches will be read.
     transform : ~typing.Callable[[RecordLike], RecordLike], optional
         A function to transform the data after reading. If not given, no transformation will be applied.
@@ -257,12 +257,12 @@ class TreeReader(_Reader):
 
     def __init__(
         self,
-        filter: Callable[[set[str]], set[str]] = None,
+        branch_filter: Callable[[set[str]], set[str]] = None,
         transform: Callable[[RecordLike], RecordLike] = None,
         **options,
     ):
         super().__init__(**options)
-        self._filter = filter
+        self._filter = branch_filter
         self._transform = transform
 
     @overload

@@ -250,11 +250,19 @@ class Friend:
             self._check_item(item)
         self._insert(key, item)
 
+    def _new_reader(self, reader_options: dict):
+        reader_options = dict(reader_options or {})
+        branch_filter = reader_options.pop("branch_filter", None)
+        branches = (
+            self._branches if branch_filter is None else branch_filter(self._branches)
+        )
+        reader_options["branch_filter"] = branches.intersection
+        return TreeReader(**reader_options)
+
     @overload
     def arrays(
         self,
         target: Chunk,
-        filter: Callable[[set[str]], set[str]] = None,
         library: Literal["ak"] = "ak",
         reader_options: dict = None,
     ) -> ak.Array: ...
@@ -263,7 +271,6 @@ class Friend:
     def arrays(
         self,
         target: Chunk,
-        filter: Callable[[set[str]], set[str]] = None,
         library: Literal["pd"] = "pd",
         reader_options: dict = None,
     ) -> pd.DataFrame: ...
@@ -272,7 +279,6 @@ class Friend:
     def arrays(
         self,
         target: Chunk,
-        filter: Callable[[set[str]], set[str]] = None,
         library: Literal["np"] = "np",
         reader_options: dict = None,
     ) -> dict[str, np.ndarray]: ...
@@ -281,7 +287,6 @@ class Friend:
     def arrays(
         self,
         target: Chunk,
-        filter: Callable[[set[str]], set[str]] = None,
         library: Literal["ak", "pd", "np"] = "ak",
         reader_options: dict = None,
     ) -> RecordLike:
@@ -292,8 +297,6 @@ class Friend:
         ----------
         target : Chunk
             A chunk of :class:`TTree`.
-        filter : ~typing.Callable[[set[str]], set[str]], optional
-            A function to select branches. If not given, all branches will be read.
         library : ~typing.Literal['ak', 'np', 'pd'], optional, default='ak'
             The library used to represent arrays.
         reader_options : dict, optional
@@ -326,16 +329,12 @@ class Friend:
                 start = min(stop, item.stop)
                 chunk_stop = start - item.start
                 chunks.append(item.chunk.slice(chunk_start, chunk_stop))
-        branches = self._branches if filter is None else filter(self._branches)
-        reader_options = reader_options or {}
-        reader_options["filter"] = branches.__and__
-        return TreeReader(**reader_options).concat(*chunks, library=library)
+        return self._new_reader(reader_options).concat(*chunks, library=library)
 
     @overload
     def concat(
         self,
         *targets: Chunk,
-        filter: Callable[[set[str]], set[str]] = None,
         library: Literal["ak"] = "ak",
         reader_options: dict = None,
     ) -> ak.Array: ...
@@ -344,7 +343,6 @@ class Friend:
     def concat(
         self,
         *targets: Chunk,
-        filter: Callable[[set[str]], set[str]] = None,
         library: Literal["pd"] = "pd",
         reader_options: dict = None,
     ) -> pd.DataFrame: ...
@@ -353,7 +351,6 @@ class Friend:
     def concat(
         self,
         *targets: Chunk,
-        filter: Callable[[set[str]], set[str]] = None,
         library: Literal["np"] = "np",
         reader_options: dict = None,
     ) -> dict[str, np.ndarray]: ...
@@ -362,7 +359,6 @@ class Friend:
     def concat(
         self,
         *targets: Chunk,
-        filter: Callable[[set[str]], set[str]] = None,
         library: Literal["ak", "pd", "np"] = "ak",
         reader_options: dict = None,
     ) -> RecordLike:
@@ -373,8 +369,6 @@ class Friend:
         ----------
         targets : tuple[Chunk]
             One or more chunks of :class:`TTree`.
-        filter : ~typing.Callable[[set[str]], set[str]], optional
-            A function to select branches. If not given, all branches will be read.
         library : ~typing.Literal['ak', 'np', 'pd'], optional, default='ak'
             The library used to represent arrays.
         reader_options : dict, optional
@@ -386,13 +380,10 @@ class Friend:
             Concatenated data.
         """
         if len(targets) == 1:
-            return self.arrays(targets[0], filter, library, reader_options)
+            return self.arrays(targets[0], library, reader_options)
         else:
             return concat_record(
-                [
-                    self.arrays(target, filter, library, reader_options)
-                    for target in targets
-                ],
+                [self.arrays(target, library, reader_options) for target in targets],
                 library=library,
             )
 
@@ -400,7 +391,6 @@ class Friend:
     def dask(
         self,
         *targets: Chunk,
-        filter: Callable[[set[str]], set[str]] = None,
         library: Literal["ak"] = "ak",
         reader_options: dict = None,
     ) -> dak.Array: ...
@@ -409,7 +399,6 @@ class Friend:
     def dask(
         self,
         *targets: Chunk,
-        filter: Callable[[set[str]], set[str]] = None,
         library: Literal["np"] = "np",
         reader_options: dict = None,
     ) -> dict[str, da.Array]: ...
@@ -418,7 +407,6 @@ class Friend:
     def dask(
         self,
         *targets: Chunk,
-        filter: Callable[[set[str]], set[str]] = None,
         library: Literal["ak", "np"] = "ak",
         reader_options: dict = None,
     ) -> DelayedRecordLike:
@@ -429,8 +417,6 @@ class Friend:
         ----------
         targets : tuple[Chunk]
             Partitions of target :class:`TTree`.
-        filter : ~typing.Callable[[set[str]], set[str]], optional
-            A function to select branches. If not given, all branches will be read.
         library : ~typing.Literal['ak', 'np'], optional, default='ak'
             The library used to represent arrays.
         reader_options : dict, optional
@@ -461,10 +447,7 @@ class Friend:
                 )
             else:
                 friends.append(item.chunk.slice(start - item.start, stop - item.start))
-        branches = self._branches if filter is None else filter(self._branches)
-        reader_options = reader_options or {}
-        reader_options["filter"] = branches.__and__
-        return TreeReader(**reader_options).dask(*friends, library=library)
+        return self._new_reader(reader_options).dask(*friends, library=library)
 
     def dump(
         self,
@@ -1044,7 +1027,6 @@ class Chain:
             for name, friend in self._friends.items():
                 friend = friend.concat(
                     *chunk,
-                    filter=reader_options.get("filter"),
                     library=library,
                     reader_options=reader_options,
                 )
@@ -1110,13 +1092,11 @@ class Chain:
                 *Chunk.balance(partition, *self._chunks, common_branches=True)
             ]
         reader_options = reader_options or {}
-        reader = TreeReader(**reader_options)
-        main = reader.dask(*partitions, library=library)
+        main = TreeReader(**reader_options).dask(*partitions, library=library)
         friends = {}
         for name, friend in self._friends.items():
             friend = friend.dask(
                 *partitions,
-                filter=reader_options.get("filter"),
                 library=library,
                 reader_options=reader_options,
             )
