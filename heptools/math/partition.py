@@ -9,55 +9,62 @@ from typing import Iterable, Literal, overload
 import numpy as np
 import numpy.typing as npt
 
+from .jit import Compilable, allow_jit
 from .sequence import Josephus
 
 __all__ = ["Partition"]
 
 
-class Partition:
+class Partition(Compilable):
     @overload
     def __init__(self, size: int, groups: int, members: int): ...
     @overload
     def __init__(self, size: int, groups: Iterable[int]): ...
     def __init__(self, size: int, groups: int | Iterable[int], members: int = None):
-        self.size = size
+        self._size = size
         if isinstance(groups, Iterable):
-            self.members, self.groups = np.unique(
+            self._members, self._groups = np.unique(
                 np.asarray(groups, int), return_counts=True
             )
         else:
-            self.members = np.array([members], dtype=int)
-            self.groups = np.array([groups], dtype=int)
-        if size < np.sum(self.groups * self.members):
-            self.count = 0
+            self._members = np.array([members], dtype=int)
+            self._groups = np.array([groups], dtype=int)
+        if size < np.sum(self._groups * self._members):
+            self._n_combs = 0
         else:
-            if len(self.groups) == 1:
-                self.count = Partition._count(
-                    self.size, self.groups[0], self.members[0]
+            if len(self._groups) == 1:
+                self._n_combs = Partition._count(
+                    self._size, self._groups[0], self._members[0]
                 )
             else:
-                self._subs, self.count, size = list[Partition](), 1, self.size
-                for i in range(0, len(self.groups)):
-                    self._subs.append(Partition(size, self.groups[i], self.members[i]))
-                    self.count *= self._subs[i].count
-                    size -= self.groups[i] * self.members[i]
+                self._subs, self._n_combs, size = list[Partition](), 1, self._size
+                for i in range(0, len(self._groups)):
+                    self._subs.append(
+                        Partition(size, self._groups[i], self._members[i])
+                    )
+                    self._n_combs *= self._subs[i]._n_combs
+                    size -= self._groups[i] * self._members[i]
+
+    @property
+    def n_combinations(self) -> int:
+        return self._n_combs
 
     @cached_property
-    def combination(self) -> list[npt.NDArray[np.int_]]:
-        if self.count == 0:
+    def combinations(self) -> list[npt.NDArray[np.int_]]:
+        if self.n_combinations == 0:
             return list(
-                np.empty((0, self.groups[i], self.members[i]), dtype=int)
-                for i in range(len(self.groups))
+                np.empty((0, self._groups[i], self._members[i]), dtype=int)
+                for i in range(len(self._groups))
             )
-        result = [Partition._combination(self.size, self.groups[0], self.members[0])]
-        for i in range(1, len(self.groups)):
+        result = [Partition._combination(self._size, self._groups[0], self._members[0])]
+        for i in range(1, len(self._groups)):
             result.append(
-                Partition.__setdiff2d(np.arange(self.size), *result[:i])[
-                    :, self._subs[i].combination[0]
-                ].reshape((-1, self.groups[i], self.members[i]))
+                Partition.__setdiff2d(np.arange(self._size), *result[:i])[
+                    :, self._subs[i].combinations[0]
+                ].reshape((-1, self._groups[i], self._members[i]))
             )
             for j in range(i):
-                result[j] = np.repeat(result[j], self._subs[i].count, axis=0)
+                result[j] = np.repeat(result[j], self._subs[i]._n_combs, axis=0)
         return result
 
     @staticmethod
@@ -89,12 +96,13 @@ class Partition:
         for c in combs:
             remain = np.setdiff1d(np.arange(c[0], size), c)
             partition = Partition(remain.shape[0], groups - 1, members)
-            end = start + partition.count
+            end = start + partition._n_combs
             partitions[start:end, 0, :] = c
-            partitions[start:end, 1:, :] = remain[partition.combination]
+            partitions[start:end, 1:, :] = remain[partition.combinations]
             start = end
         return partitions
 
+    @allow_jit
     def __setdiff2d(index: npt.NDArray, *exclude: npt.NDArray):
         n_exclude, n_index = 0, len(exclude[0])
         for i in np.arange(len(exclude)):
@@ -112,54 +120,55 @@ class Partition:
                     count += 1
         return result
 
-    @staticmethod
-    def jit():
-        from numba import njit
 
-        Partition.__setdiff2d = njit(Partition.__setdiff2d)
-
-
-class SubPartitionByFraction:
+class SubPartitionByFraction(Compilable):
     def __init__(
         self,
-        count: int,
-        fraction: float | str,
-        precision: int = 10,
+        max_combinations: int,
+        fraction: float | str | Fraction,
         method: Literal["greedy", "step"] = "greedy",
     ):
-        self._fraction = Fraction(fraction).limit_denominator(precision)
-        _granularity = 1
+        self._n_combs = max_combinations
+        self._fraction = Fraction(fraction)
+        self._method = method
+        self._fineness = 1
         while (
             comb(
-                self._fraction.denominator * _granularity,
-                self._fraction.numerator * _granularity,
+                self.fraction.denominator * self._fineness,
+                self.fraction.numerator * self._fineness,
             )
-            < count
+            < self.n_combinations
         ):
-            _granularity += 1
-        self._count = count
+            self._fineness += 1
         self._partition = Partition(
-            _granularity * self._fraction.denominator,
+            self._fineness * self.fraction.denominator,
             1,
-            _granularity * self._fraction.numerator,
+            self._fineness * self.fraction.numerator,
         )
-        self._method = method
 
     @property
-    def count(self):
-        return self._count
+    def n_combinations(self):
+        return self._n_combs
 
     @cached_property
-    def combination(self):
-        combs = self._partition.combination[0]
-        if len(combs) == self._count:
+    def combinations(self):
+        combs = self._partition.combinations[0]
+        if len(combs) == self.n_combinations:
             return combs
-        elif self._method == "greedy":
-            return combs[[*self._distance_greedy(combs, self._count)]]
-        elif self._method == "step":
-            return combs[
-                Josephus(len(combs), self._partition.size).sequence(self._count)
-            ]
+        match self._method:
+            case "greedy":
+                return combs[self._greedy(combs, self.n_combinations)]
+            case "step":
+                return combs[
+                    Josephus(
+                        len(combs),
+                        self.max_multiplicity,
+                    ).sequence(self.n_combinations)
+                ]
+
+    @cached_property
+    def granularity(self):
+        return self._fineness * self.fraction.denominator
 
     @property
     def fraction(self):
@@ -167,36 +176,32 @@ class SubPartitionByFraction:
 
     @cached_property
     def multiplicity(self):
-        return int(np.ceil(self._fraction * self._count))
+        return dict(zip(*np.unique(self.combinations, return_counts=True)))
+
+    @cached_property
+    def max_multiplicity(self):
+        return int(np.ceil(self.fraction * self.n_combinations))
 
     @staticmethod
-    def _distance_greedy(combs: npt.NDArray, count: int):
-        target = {0}
-        remain = {*range(1, combs.shape[0])}
-        for _ in range(1, count):
-            distance = SubPartitionByFraction.__distance(
-                combs, np.array([*remain]), np.array([*target])
+    def _greedy(combs: npt.NDArray, count: int):
+        result = np.zeros(count, dtype=int)
+        remain = [*range(1, combs.shape[0])]
+        for i in range(1, count):
+            distance = SubPartitionByFraction.__metric(
+                combs, np.array(remain), result[:i]
             )
-            selected = int(distance[:, 0][np.argmin(distance[:, 1])])
-            target.add(selected)
+            selected = remain[np.argmin(distance)]
+            result[i] = selected
             remain.remove(selected)
-        return target
+        return sorted(result)
 
-    def __distance(
-        combs: npt.NDArray, remain: npt.NDArray, target: npt.NDArray
-    ) -> npt.NDArray:
-        d = np.empty((len(remain), 2), dtype=np.float64)
+    @allow_jit
+    def __metric(combs: npt.NDArray, source: npt.NDArray, target: npt.NDArray):
+        distance = np.empty(len(source), dtype=np.float64)
         size = combs.shape[-1] * 2
-        for i, rem in enumerate(remain):
+        for m, i in enumerate(source):
             ds = np.empty(len(target), dtype=np.float64)
-            for j, tar in enumerate(target):
-                ds[j] = np.unique(np.concatenate((combs[rem], combs[tar]))).shape[0]
-            d[i, 0] = rem
-            d[i, 1] = size - np.mean(ds)
-        return d
-
-    @staticmethod
-    def jit():
-        from numba import njit
-
-        SubPartitionByFraction.__distance = njit(SubPartitionByFraction.__distance)
+            for n, f in enumerate(target):
+                ds[n] = np.unique(np.concatenate((combs[i], combs[f]))).shape[0]
+            distance[m] = size - np.mean(ds)
+        return distance

@@ -136,7 +136,7 @@ def partition_with_name(data: Array, groups: int, members: int) -> tuple[Array, 
         raise ValueError(f"not enough data to partition into {groups}×{members}")
     _combs = ak.Array(
         [
-            Partition(i, groups, members).combination[0]
+            Partition(i, groups, members).combinations[0]
             for i in range(ak.max(_sizes) + 1)
         ]
     )[_sizes]
@@ -153,7 +153,7 @@ def partition_concatenated(data: Array, groups: int, members: int) -> Array:
         raise ValueError(f"not enough data to partition into {groups}×{members}")
     _combs = ak.Array(
         [
-            Partition(i, groups, members).combination[0]
+            Partition(i, groups, members).combinations[0]
             for i in range(ak.max(_sizes) + 1)
         ]
     )[_sizes]

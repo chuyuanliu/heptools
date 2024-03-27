@@ -12,6 +12,7 @@ class Josephus:
     def _loop(size: int, step: int, max: int):
         remain = [*range(size)]
         i = 0
+        step -= 1
         while len(remain) > (size - max):
-            i = (i + step - 1) % len(remain)
+            i = (i + step) % len(remain)
             yield remain.pop(i)
