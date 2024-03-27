@@ -10,7 +10,6 @@ import numpy as np
 import numpy.typing as npt
 
 from .jit import Compilable, allow_jit
-from .sequence import Josephus
 
 __all__ = ["Partition"]
 
@@ -126,7 +125,7 @@ class SubPartitionByFraction(Compilable):
         self,
         max_combinations: int,
         fraction: float | str | Fraction,
-        method: Literal["greedy", "step"] = "greedy",
+        method: Literal["greedy"] = "greedy",
     ):
         self._n_combs = max_combinations
         self._fraction = Fraction(fraction)
@@ -158,13 +157,6 @@ class SubPartitionByFraction(Compilable):
         match self._method:
             case "greedy":
                 return combs[self._greedy(combs, self.n_combinations)]
-            case "step":
-                return combs[
-                    Josephus(
-                        len(combs),
-                        self.max_multiplicity,
-                    ).sequence(self.n_combinations)
-                ]
 
     @cached_property
     def granularity(self):
