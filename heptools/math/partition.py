@@ -1,10 +1,9 @@
 from __future__ import annotations
 
-from fractions import Fraction
 from functools import cache, cached_property
 from itertools import combinations
 from math import comb, perm, prod
-from typing import Iterable, Literal, overload
+from typing import Iterable, overload
 
 import numpy as np
 import numpy.typing as npt
@@ -118,82 +117,3 @@ class Partition(Compilable):
                     result[i, count] = index[j]
                     count += 1
         return result
-
-
-class SubPartitionByFraction(Compilable):
-    def __init__(
-        self,
-        max_combinations: int,
-        fraction: float | str | Fraction,
-        method: Literal["greedy"] = "greedy",
-    ):
-        self._n_combs = max_combinations
-        self._fraction = Fraction(fraction)
-        self._method = method
-        self._fineness = 1
-        while (
-            comb(
-                self.fraction.denominator * self._fineness,
-                self.fraction.numerator * self._fineness,
-            )
-            < self.n_combinations
-        ):
-            self._fineness += 1
-        self._partition = Partition(
-            self._fineness * self.fraction.denominator,
-            1,
-            self._fineness * self.fraction.numerator,
-        )
-
-    @property
-    def n_combinations(self):
-        return self._n_combs
-
-    @cached_property
-    def combinations(self):
-        combs = self._partition.combinations[0]
-        if len(combs) == self.n_combinations:
-            return combs
-        match self._method:
-            case "greedy":
-                return combs[self._greedy(combs, self.n_combinations)]
-
-    @cached_property
-    def granularity(self):
-        return self._fineness * self.fraction.denominator
-
-    @property
-    def fraction(self):
-        return self._fraction
-
-    @cached_property
-    def multiplicity(self):
-        return dict(zip(*np.unique(self.combinations, return_counts=True)))
-
-    @cached_property
-    def max_multiplicity(self):
-        return int(np.ceil(self.fraction * self.n_combinations))
-
-    @staticmethod
-    def _greedy(combs: npt.NDArray, count: int):
-        result = np.zeros(count, dtype=int)
-        remain = [*range(1, combs.shape[0])]
-        for i in range(1, count):
-            distance = SubPartitionByFraction.__metric(
-                combs, np.array(remain), result[:i]
-            )
-            selected = remain[np.argmin(distance)]
-            result[i] = selected
-            remain.remove(selected)
-        return sorted(result)
-
-    @allow_jit
-    def __metric(combs: npt.NDArray, source: npt.NDArray, target: npt.NDArray):
-        distance = np.empty(len(source), dtype=np.float64)
-        size = combs.shape[-1] * 2
-        for m, i in enumerate(source):
-            ds = np.empty(len(target), dtype=np.float64)
-            for n, f in enumerate(target):
-                ds[n] = np.unique(np.concatenate((combs[i], combs[f]))).shape[0]
-            distance[m] = size - np.mean(ds)
-        return distance
