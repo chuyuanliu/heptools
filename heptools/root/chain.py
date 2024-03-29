@@ -4,6 +4,7 @@ import bisect
 from collections import defaultdict, deque
 from concurrent.futures import ThreadPoolExecutor
 from functools import partial
+from itertools import chain
 from logging import Logger
 from typing import (
     TYPE_CHECKING,
@@ -17,7 +18,7 @@ from typing import (
 
 from ..dask.delayed import delayed
 from ..system.eos import EOS, PathLike
-from ._backend import concat_record, merge_record, rename_record
+from ._backend import merge_record, rename_record
 from .chunk import Chunk
 from .io import TreeReader, TreeWriter
 from .merge import move, resize
@@ -267,6 +268,29 @@ class Friend:
         reader_options["branch_filter"] = branches.intersection
         return TreeReader(**reader_options)
 
+    def _match_chunks(self, target: Chunk) -> Generator[Chunk, None, None]:
+        series = self._data[target]
+        start = target.entry_start
+        stop = target.entry_stop
+        for i in range(
+            bisect.bisect_left(
+                series, _FriendItem(target.entry_start, target.entry_stop)
+            ),
+            len(series),
+        ):
+            if start >= stop:
+                break
+            item = series[i]
+            if item.start > start:
+                raise ValueError(
+                    f"Friend {self.name} does not have the entries [{start},{item.start}) for {target}"
+                )
+            else:
+                chunk_start = start - item.start
+                start = min(stop, item.stop)
+                chunk_stop = start - item.start
+                yield item.chunk.slice(chunk_start, chunk_stop)
+
     @overload
     def arrays(
         self,
@@ -274,7 +298,6 @@ class Friend:
         library: Literal["ak"] = "ak",
         reader_options: dict = None,
     ) -> ak.Array: ...
-
     @overload
     def arrays(
         self,
@@ -282,7 +305,6 @@ class Friend:
         library: Literal["pd"] = "pd",
         reader_options: dict = None,
     ) -> pd.DataFrame: ...
-
     @overload
     def arrays(
         self,
@@ -290,7 +312,6 @@ class Friend:
         library: Literal["np"] = "np",
         reader_options: dict = None,
     ) -> dict[str, np.ndarray]: ...
-
     @_on_disk
     def arrays(
         self,
@@ -315,29 +336,9 @@ class Friend:
         RecordLike
             Data from friend :class:`TTree`.
         """
-        series = self._data[target]
-        start = target.entry_start
-        stop = target.entry_stop
-        chunks = []
-        for i in range(
-            bisect.bisect_left(
-                series, _FriendItem(target.entry_start, target.entry_stop)
-            ),
-            len(series),
-        ):
-            if start >= stop:
-                break
-            item = series[i]
-            if item.start > start:
-                raise ValueError(
-                    f"Friend {self.name} does not have the entries [{start},{item.start}) for {target}"
-                )
-            else:
-                chunk_start = start - item.start
-                start = min(stop, item.stop)
-                chunk_stop = start - item.start
-                chunks.append(item.chunk.slice(chunk_start, chunk_stop))
-        return self._new_reader(reader_options).concat(*chunks, library=library)
+        return self._new_reader(reader_options).concat(
+            *self._match_chunks(target), library=library
+        )
 
     @overload
     def concat(
@@ -346,7 +347,6 @@ class Friend:
         library: Literal["ak"] = "ak",
         reader_options: dict = None,
     ) -> ak.Array: ...
-
     @overload
     def concat(
         self,
@@ -354,7 +354,6 @@ class Friend:
         library: Literal["pd"] = "pd",
         reader_options: dict = None,
     ) -> pd.DataFrame: ...
-
     @overload
     def concat(
         self,
@@ -362,7 +361,6 @@ class Friend:
         library: Literal["np"] = "np",
         reader_options: dict = None,
     ) -> dict[str, np.ndarray]: ...
-
     @_on_disk
     def concat(
         self,
@@ -387,13 +385,9 @@ class Friend:
         RecordLike
             Concatenated data.
         """
-        if len(targets) == 1:
-            return self.arrays(targets[0], library, reader_options)
-        else:
-            return concat_record(
-                [self.arrays(target, library, reader_options) for target in targets],
-                library=library,
-            )
+        return self._new_reader(reader_options).concat(
+            *chain(*map(self._match_chunks, targets)), library=library
+        )
 
     @overload
     def dask(
@@ -402,7 +396,6 @@ class Friend:
         library: Literal["ak"] = "ak",
         reader_options: dict = None,
     ) -> dak.Array: ...
-
     @overload
     def dask(
         self,
@@ -410,7 +403,6 @@ class Friend:
         library: Literal["np"] = "np",
         reader_options: dict = None,
     ) -> dict[str, da.Array]: ...
-
     @_on_disk
     def dask(
         self,
