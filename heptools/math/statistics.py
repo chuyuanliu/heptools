@@ -18,7 +18,7 @@ class Variance(ABC, Generic[_DataT]):
 
     @classmethod
     @abstractmethod
-    def calculate(
+    def compute(
         cls, data: _DataT, weight: _DataT = None
     ) -> tuple[_DataT, _DataT, _DataT, _DataT]: ...
 
@@ -26,7 +26,7 @@ class Variance(ABC, Generic[_DataT]):
         if data is None:
             self._raw = None
         else:
-            self._raw = _VarianceData(*self.calculate(data, weight))
+            self._raw = _VarianceData(*self.compute(data, weight))
 
     @property
     def mean(self) -> _DataT:
