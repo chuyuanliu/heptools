@@ -22,13 +22,12 @@ def _str_to_entropy(__str: str) -> list[np.uint32]:
 def _seed(*entropy: SeedLike):
     seeds = []
     for e in entropy:
-        if isinstance(e, Iterable):
-            seeds.extend(e)
+        if isinstance(e, str):
+            seeds.extend(_str_to_entropy(e))
+        elif isinstance(e, Iterable):
+            seeds.extend(_seed(*e))
         else:
             seeds.append(e)
-    for i, e in enumerate(seeds):
-        if isinstance(e, str):
-            seeds[i] = _str_to_entropy(e)
     return seeds
 
 
