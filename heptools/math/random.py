@@ -19,19 +19,17 @@ def _str_to_entropy(__str: str) -> list[np.uint32]:
     return np.frombuffer(hashlib.md5(__str.encode()).digest(), dtype=np.uint32).tolist()
 
 
-def _seed(entropy: SeedLike):
-    if isinstance(entropy, str):
-        return _str_to_entropy(entropy)
-    elif isinstance(entropy, Iterable):
-        seeds = []
-        for i in entropy:
-            if isinstance(i, str):
-                seeds.extend(_str_to_entropy(i))
-            else:
-                seeds.append(i)
-        return seeds
-    else:
-        return entropy
+def _seed(*entropy: SeedLike):
+    seeds = []
+    for e in entropy:
+        if isinstance(e, Iterable):
+            seeds.extend(e)
+        else:
+            seeds.append(e)
+    for i, e in enumerate(seeds):
+        if isinstance(e, str):
+            seeds[i] = _str_to_entropy(e)
+    return seeds
 
 
 class CBRNG(ABC):
@@ -88,8 +86,8 @@ class Squares(CBRNG):
     """
 
     @classmethod
-    def _generate_key(cls, seed: SeedLike) -> np.uint64:
-        gen = np.random.Generator(np.random.MT19937(_seed(seed)))
+    def _generate_key(cls, *seeds: SeedLike) -> np.uint64:
+        gen = np.random.Generator(np.random.MT19937(_seed(*seeds)))
         bits = np.arange(1, 16, dtype=np.uint64)
         offsets = np.arange(0, 29, 4, dtype=np.uint64)
         lower8 = gen.choice(bits, 8, replace=False)
