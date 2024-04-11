@@ -76,6 +76,26 @@ class CBRNG(ABC):
             case _:
                 raise NotImplementedError
 
+    def reduce(self, counters: npt.ArrayLike) -> npt.NDArray[np.uint64]:
+        """
+        Generate a random sequence by reducing the last dimension of the counters.
+        """
+        while True:
+            counters = np.asarray(counters, dtype=np.uint64)
+            shape = counters.shape[-1]
+            if shape == 1:
+                return self.uint(counters).reshape(counters.shape[:-1])
+            elif shape % 2 == 0:
+                counters = self.uint(counters, 32).view(np.uint64)
+            else:
+                counters = np.concatenate(
+                    [
+                        self.uint(counters[..., :-1], 32).view(np.uint64),
+                        counters[..., -1:],
+                    ],
+                    axis=-1,
+                )
+
 
 class Squares(CBRNG):
     """
