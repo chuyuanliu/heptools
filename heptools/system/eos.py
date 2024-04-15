@@ -173,7 +173,10 @@ class EOS:
         return self.path.stat()
 
     def isin(self, other: PathLike):
-        return str(self).startswith(ensure(str(other), __suffix="/"))
+        other = EOS(other)
+        if self.host != other.host:
+            return False
+        return self.common_base(self, other).path == other.path
 
     def relative_to(self, other: PathLike) -> str:
         if self.host == other.host:
@@ -320,12 +323,7 @@ class EOS:
 
     @classmethod
     def common_base(cls, *paths: PathLike):
-        paths = [EOS(p, None) for p in paths]
-        prefix = EOS(os.path.commonprefix(paths))
-        parts = prefix.parts
-        if len(parts) and (parts[-1] != paths[0].parts[len(parts) - 1]):
-            return prefix.parent
-        return prefix
+        return EOS(os.path.commonpath(EOS(p, None) for p in paths))
 
 
 PathLike = str | EOS | os.PathLike
