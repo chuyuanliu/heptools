@@ -42,21 +42,54 @@ class EOS:
 
     history: list[tuple[datetime, str, tuple[bool, bytes]]] = []
 
-    def __init__(self, path: PathLike, host: str = ...):
-        default = ""
-        if isinstance(path, EOS):
-            default, path = path.host, path.path
-        elif not isinstance(path, Path):
-            if isinstance(path, os.PathLike):
-                path = os.fspath(path)
-            match = self._host_pattern.match(path)
-            if match:
-                default = match.group(0)
-                path = path[len(default) :]
-        self.host = arg_set(host, "", default)
-        if self.host:
-            self.host = ensure(self.host, __suffix="/")
-        self.path = Path(self._slash_pattern.sub("/", str(path)))
+    def __init__(self, path: PathLike = None, host: str = ...):
+        if path is None:
+            self.path = None
+        elif isinstance(path, EOS):
+            default = path.host
+            self.path = None if path.path is None else Path(path.path)
+        else:
+            default = ""
+            if not isinstance(path, Path):
+                if isinstance(path, os.PathLike):
+                    path = os.fspath(path)
+                match = self._host_pattern.match(path)
+                if match is not None:
+                    default = match.group(0)
+                    path = path[len(default) :]
+            self.path = Path(self._slash_pattern.sub("/", str(path)))
+            if self.path == Path(os.devnull):
+                self.path = None
+        if self.path is None:
+            self.host = ""
+        else:
+            self.host = arg_set(host, "", default)
+            if self.host:
+                self.host = ensure(self.host, __suffix="/")
+
+    def _devnull(default=...):
+        def wrapper(func):
+            def method(self, *args, **kwargs):
+                if self.path is None:
+                    if default is ...:
+                        return self
+                    if isinstance(default, type):
+                        return default()
+                    return default
+                return func(self, *args, **kwargs)
+
+            return method
+
+        return wrapper
+
+    def _devnull_iter(func):
+        def method(self, *args, **kwargs):
+            if self.path is None:
+                yield from ()
+                return
+            yield from func(self, *args, **kwargs)
+
+        return method
 
     @property
     def as_local(self):
@@ -67,6 +100,7 @@ class EOS:
         return not self.host
 
     @property
+    @_devnull(False)
     def is_dir(self):
         if not self.is_local:
             raise NotImplementedError(
@@ -75,6 +109,7 @@ class EOS:
         return self.path.is_dir()
 
     @property
+    @_devnull(False)
     def is_file(self):
         if not self.is_local:
             raise NotImplementedError(
@@ -83,6 +118,7 @@ class EOS:
         return not self.is_dir
 
     @property
+    @_devnull(True)
     def exists(self):
         if not self.is_local:
             return self.call("ls", self.path)[0]
@@ -117,6 +153,7 @@ class EOS:
         eos = () if self.is_local else (self.client, self.host)
         return self.cmd(*eos, executable, *args)
 
+    @_devnull(list)
     def ls(self):  # TODO test and improve
         files = self.call("ls", self.path)[1].decode().split("\n")
         if self.is_local or self.client == "eos":
@@ -124,6 +161,7 @@ class EOS:
         else:
             return [EOS(f, self.host) for f in files if f]
 
+    @_devnull(False)
     def rm(self, recursive: bool = False):
         if not self.is_local and recursive and self.client == "xrdfs":
             raise NotImplementedError(
@@ -131,13 +169,18 @@ class EOS:
             )  # TODO
         return self.call("rm", "-r" if recursive else "", self.path)[0]
 
+    @_devnull()
     def mkdir(self, recursive: bool = False) -> EOS:
         if self.call("mkdir", "-p" if recursive else "", self.path)[0]:
             return self
 
+    @_devnull()
     def join(self, *other: str):
+        if any(map(lambda x: x is None, other)):
+            return EOS()
         return EOS(self.path.joinpath(*other), self.host)
 
+    @_devnull_iter
     def walk(self) -> Generator[EOS, Any, None]:
         if not self.is_local:
             raise NotImplementedError(
@@ -151,6 +194,7 @@ class EOS:
                 for file in files:
                     yield root / file
 
+    @_devnull_iter
     def scan(self) -> Generator[tuple[EOS, os.stat_result], Any, None]:
         if not self.is_local:
             raise NotImplementedError(
@@ -179,11 +223,23 @@ class EOS:
         return self.common_base(self, other).path == other.path
 
     def relative_to(self, other: PathLike) -> str:
-        if self.host == other.host:
+        other = EOS(other)
+        if (self.path is None) and (other.path is None):
+            return "."
+        if (
+            (self.path is not None)
+            and (other.path is not None)
+            and (self.host == other.host)
+        ):
             return os.path.relpath(self.path, other.path)
-        raise ValueError(f'"{self}" is not in the subpath of "{other}"')
+        raise ValueError(
+            f'Unable to determine the relative path between"{self}" and "{other}"'
+        )
 
+    @_devnull()
     def cd(self, relative: str):
+        if relative is None:
+            return EOS()
         return EOS(os.path.normpath(os.path.join(self, relative)), self.host)
 
     def copy_to(
@@ -239,6 +295,8 @@ class EOS:
         recursive: bool = False,
     ) -> EOS:
         src, dst = EOS(src), EOS(dst)
+        if (src.path is None) or (dst.path is None):
+            return EOS()
         if src == dst:
             return dst
         if parents:
@@ -302,11 +360,12 @@ class EOS:
     def __eq__(self, other):
         if isinstance(other, EOS):
             return self.host == other.host and self.path == other.path
-        elif isinstance(other, str | Path):
+        elif isinstance(other, str | Path | None):
             return self == EOS(other)
         return NotImplemented
 
-    def __str__(self):  # TODO rich, __repr__
+    @_devnull(os.devnull)
+    def __str__(self):
         return self.host + str(self.path)
 
     def __repr__(self):
