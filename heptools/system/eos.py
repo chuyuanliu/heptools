@@ -100,6 +100,10 @@ class EOS:
         return not self.host
 
     @property
+    def is_null(self):
+        return self.path is None
+
+    @property
     @_devnull(False)
     def is_dir(self):
         if not self.is_local:
