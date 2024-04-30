@@ -14,7 +14,6 @@ dependencies:
   # visualization
   - matplotlib
   - bokeh
-  - colorcet
   - graphviz
   - pip:
     - graphviz
