@@ -54,7 +54,7 @@ class OptionalDecorator(ABC):
             self._default = False
         self._kwargs = kwargs
 
-    def __get__(self, instance, owner):
+    def __get__(self, instance, _):
         if instance is None:
             return self
         return MethodType(self, instance)
@@ -107,7 +107,7 @@ class AutoRetry(Generic[_RetryFuncP, _RetryFuncReturnT]):
         if delay is not ...:
             self._delay = delay
 
-    def __get__(self, instance, owner):
+    def __get__(self, instance, _):
         if instance is None:
             return self
         return MethodType(self, instance)
