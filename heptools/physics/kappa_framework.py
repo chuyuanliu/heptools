@@ -14,11 +14,13 @@ class CouplingError(Exception):
 
 
 class Coupling:
-    def __init__(self, kappas: Diagram | type[Diagram] | Iterable[str]):
+    def __init__(self, kappas: KappaList):
         if isinstance(kappas, Diagram) or (
             isinstance(kappas, type) and issubclass(kappas, Diagram)
         ):
             kappas = kappas.diagrams[0]
+        elif isinstance(kappas, Coupling):
+            kappas = kappas._ks
         else:
             kappas = tuple(kappas)
         self._ks = kappas
@@ -42,7 +44,7 @@ class Coupling:
         )
         return self
 
-    def reshape(self, kappas: type[Diagram] | Iterable[str], default: float = 1):
+    def reshape(self, kappas: KappaList, default: float = 1):
         new = Coupling(kappas)
         if new._ks == self._ks:
             new._cs = self._cs.copy()
@@ -62,7 +64,7 @@ class Coupling:
             if self._ks == other._ks:
                 to_add = other._cs
             else:
-                to_add = other.reshape(self._ks)._cs
+                to_add = other.reshape(self)._cs
             self.append(to_add)
             return self
         return NotImplemented
@@ -78,6 +80,12 @@ class Coupling:
     def __iter__(self) -> Generator[dict[str, float]]:
         for i in range(len(self)):
             yield self[i]
+
+    def __repr__(self):
+        return "\n".join(
+            [",".join(self._ks)]
+            + [",".join(str(value) for value in self._cs[i]) for i in range(len(self))]
+        )
 
 
 class _DiagramMeta(type):
@@ -120,7 +128,7 @@ class Diagram(metaclass=_DiagramMeta):
         return np.prod(np.power(couplings, diagram2), axis=1)
 
     def weight(self, couplings: Coupling):
-        couplings = couplings.reshape(self.diagrams[0])._cs
+        couplings = couplings.reshape(self)._cs
         weight = self._component_scale(couplings) @ self._transmat
         if self.unit_basis_weight:
             matched_basis = (couplings == self._basis._cs[:, np.newaxis]).all(-1).T
@@ -135,3 +143,6 @@ class Diagram(metaclass=_DiagramMeta):
         if self._intm2_unc is None:
             raise CouplingError("Uncertainty is not provided")
         return unpack(np.sqrt(self.weight(couplings) ** 2 @ self._intm2_unc**2))
+
+
+KappaList = Coupling | Diagram | type[Diagram] | Iterable[str]
