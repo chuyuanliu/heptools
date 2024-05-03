@@ -14,8 +14,10 @@ class CouplingError(Exception):
 
 
 class Coupling:
-    def __init__(self, kappas: type[Diagram] | Iterable[str]):
-        if isinstance(kappas, type) and issubclass(kappas, Diagram):
+    def __init__(self, kappas: Diagram | type[Diagram] | Iterable[str]):
+        if isinstance(kappas, Diagram) or (
+            isinstance(kappas, type) and issubclass(kappas, Diagram)
+        ):
             kappas = kappas.diagrams[0]
         else:
             kappas = tuple(kappas)
