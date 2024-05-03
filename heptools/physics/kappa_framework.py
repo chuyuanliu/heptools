@@ -40,13 +40,13 @@ class Coupling:
         )
         return self
 
-    def reshape(self, kappas: list[str], default: float = 1):
+    def reshape(self, kappas: type[Diagram] | Iterable[str], default: float = 1):
         new = Coupling(kappas)
-        if kappas == self._ks:
+        if new._ks == self._ks:
             new._cs = self._cs.copy()
         else:
             couplings = []
-            for kappa in kappas:
+            for kappa in new._ks:
                 try:
                     idx = self._ks.index(kappa)
                     couplings.append(self._cs[:, idx : idx + 1])
