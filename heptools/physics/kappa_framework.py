@@ -104,9 +104,7 @@ class Diagram(metaclass=_DiagramMeta):
         count = len(self.diagrams[0])
         self._basis = Coupling(self.diagrams[0]).append(basis[:, :count])
         self._intm2 = basis[:, count]
-        self._intm2_unc = (
-            basis[:, count + 1] if basis.shape[1] >= (count + 2) else self._intm2
-        )
+        self._intm2_unc = basis[:, count + 1] if basis.shape[1] >= (count + 2) else None
         self._transmat = np.linalg.pinv(self._component_scale(self._basis._cs))
         _s = self._transmat.shape
         if _s[1] < _s[0]:
@@ -132,4 +130,6 @@ class Diagram(metaclass=_DiagramMeta):
         return unpack(self.weight(couplings) @ self._intm2)
 
     def xs_unc(self, couplings: Coupling):
+        if self._intm2_unc is None:
+            raise CouplingError("Uncertainty is not provided")
         return unpack(np.sqrt(self.weight(couplings) ** 2 @ self._intm2_unc**2))
