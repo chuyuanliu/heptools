@@ -8,17 +8,18 @@ from types import FunctionType, MethodType
 from typing import Callable, Concatenate, Generic, Iterable, ParamSpec, TypeVar
 
 
-class Wrapped:
-    def __init__(self, cls, *args, **kwargs):
-        self._cls = cls
-        self._args = args
-        self._kwargs = kwargs
+class MethodDecorator:
+    def __init__(self, func: Callable):
+        wraps(func)(self)
+        self._func = func
 
-    def __call__(self, __func):
-        return wraps(__func)(self._cls(__func, *self._args, **self._kwargs))
+    def __get__(self, instance, _):
+        if instance is None:
+            return self
+        return MethodType(self, instance)
 
 
-class OptionalDecorator(ABC):
+class OptionalDecorator(MethodDecorator, ABC):
     @property
     @abstractmethod
     def _switch(cls) -> str: ...
@@ -46,18 +47,12 @@ class OptionalDecorator(ABC):
             raise ValueError(
                 f'Function "{name}{signature}" must have a parameter "{self._switch}: bool"'
             )
-        wraps(__func)(self)
-        self._func = __func
+        super().__init__(__func)
         self._decorated = None
         self._default = signature.parameters[self._switch].default
         if self._default is inspect.Signature.empty:
             self._default = False
         self._kwargs = kwargs
-
-    def __get__(self, instance, _):
-        if instance is None:
-            return self
-        return MethodType(self, instance)
 
     def __getattr__(self, __name: str):
         return getattr(self._func, __name)
@@ -77,7 +72,7 @@ _RetryFuncP = ParamSpec("_RetryFuncP")
 _RetryFuncReturnT = TypeVar("_RetryFuncReturnT")
 
 
-class AutoRetry(Generic[_RetryFuncP, _RetryFuncReturnT]):
+class AutoRetry(MethodDecorator, Generic[_RetryFuncP, _RetryFuncReturnT]):
     def __init__(
         self,
         func: Callable[_RetryFuncP, _RetryFuncReturnT],
@@ -89,33 +84,21 @@ class AutoRetry(Generic[_RetryFuncP, _RetryFuncReturnT]):
         reset: Callable[_RetryFuncP, None] = None,
         skip: Iterable[Exception] = (),
     ):
-        wraps(func)(self)
-        self._func = func
+        super().__init__(func)
         self._max = max
         self._delay = delay
         self._handler = handler
         self._reset = reset
         self._skip = (*skip,)
 
-    def set(
-        self,
-        max: int = ...,
-        delay: float = ...,
-    ):
+    def set(self, max: int = ..., delay: float = ...):
         if max is not ...:
             self._max = max
         if delay is not ...:
             self._delay = delay
 
-    def __get__(self, instance, _):
-        if instance is None:
-            return self
-        return MethodType(self, instance)
-
     def __call__(
-        self,
-        *args: _RetryFuncP.args,
-        **kwargs: _RetryFuncP.kwargs,
+        self, *args: _RetryFuncP.args, **kwargs: _RetryFuncP.kwargs
     ) -> _RetryFuncReturnT:
         i = 0
         while i < self._max:
