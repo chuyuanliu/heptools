@@ -14,7 +14,6 @@ class CouplingError(Exception):
 
 
 class Coupling:
-
     def __init__(self, kappas: type[Diagram] | Iterable[str]):
         if isinstance(kappas, type) and issubclass(kappas, Diagram):
             kappas = kappas.diagrams[0]
@@ -118,7 +117,7 @@ class Diagram(metaclass=_DiagramMeta):
         diagram = np.asarray(self.diagrams[1]).T[np.newaxis, :, :]
         idx2 = np.stack(np.tril_indices(diagram.shape[-1]), axis=-1)
         diagram2 = np.unique(np.sum(diagram[:, :, idx2], axis=-1), axis=-1)
-        return np.product(np.power(couplings, diagram2), axis=1)
+        return np.prod(np.power(couplings, diagram2), axis=1)
 
     def weight(self, couplings: Coupling):
         couplings = couplings.reshape(self.diagrams[0])._cs
@@ -129,8 +128,8 @@ class Diagram(metaclass=_DiagramMeta):
             weight[is_basis] = matched_basis[is_basis]
         return weight
 
-    def sumw_intm2(self, couplings: Coupling):
+    def xs(self, couplings: Coupling):
         return unpack(self.weight(couplings) @ self._intm2)
 
-    def sqrt_sumw2_intm2_unc(self, couplings: Coupling):
+    def xs_unc(self, couplings: Coupling):
         return unpack(np.sqrt(self.weight(couplings) ** 2 @ self._intm2_unc**2))
