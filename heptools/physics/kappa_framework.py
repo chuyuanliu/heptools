@@ -111,10 +111,10 @@ class Diagram(metaclass=_DiagramMeta):
     def __init__(self, basis: npt.ArrayLike, unit_basis_weight=True):
         self.unit_basis_weight = unit_basis_weight
         basis = np.asarray(basis)
-        count = len(self.diagrams[0])
-        self._basis = Coupling(self.diagrams[0]).append(basis[:, :count])
-        self._intm2 = basis[:, count]
-        self._intm2_unc = basis[:, count + 1] if basis.shape[1] >= (count + 2) else None
+        n = len(self.diagrams[0])
+        self._basis = Coupling(self.diagrams[0]).append(basis[:, :n])
+        self._xs = basis[:, n : n + 1].flatten()
+        self._unc = basis[:, n + 1 : n + 2].flatten()
         self._transmat = np.linalg.pinv(self._component_scale(self._basis._cs))
         _s = self._transmat.shape
         if _s[1] < _s[0]:
@@ -137,12 +137,14 @@ class Diagram(metaclass=_DiagramMeta):
         return weight
 
     def xs(self, couplings: Coupling):
-        return unpack(self.weight(couplings) @ self._intm2)
+        if self._xs.shape[0] == 0:
+            raise CouplingError("Cross section is not provided")
+        return unpack(self.weight(couplings) @ self._xs)
 
     def xs_unc(self, couplings: Coupling):
-        if self._intm2_unc is None:
+        if self._unc.shape[0] == 0:
             raise CouplingError("Uncertainty is not provided")
-        return unpack(np.sqrt(self.weight(couplings) ** 2 @ self._intm2_unc**2))
+        return unpack(np.sqrt(self.weight(couplings) ** 2 @ self._unc**2))
 
 
 KappaList = Coupling | Diagram | type[Diagram] | Iterable[str]
