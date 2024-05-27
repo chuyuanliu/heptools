@@ -2,24 +2,24 @@ from __future__ import annotations
 
 import hashlib
 from abc import ABC, abstractmethod
-from typing import Iterable, Literal, overload
+from typing import Generic, Iterable, Literal, TypeVar, overload
 
 import numpy as np
 import numpy.typing as npt
 
-_UINT64_MAX_52BITS = np.float64(1 << 53)
-_UINT64_32 = np.uint64(32)
+_2_PI = 2 * np.pi
 _UINT64_11 = np.uint64(11)
-
+_UINT64_32 = np.uint64(32)
+_BIT52_COUNT = np.float64(1 << 53)
 
 SeedLike = int | str | Iterable[int | str]
 
 
-def _str_to_entropy(__str: str) -> list[np.uint32]:
-    return np.frombuffer(hashlib.md5(__str.encode()).digest(), dtype=np.uint32).tolist()
+def _str_to_entropy(__str: str) -> list[np.uint64]:
+    return np.frombuffer(hashlib.md5(__str.encode()).digest(), dtype=np.uint64).tolist()
 
 
-def _seed(*entropy: SeedLike):
+def _seed(*entropy: SeedLike) -> tuple[int, ...]:
     seeds = []
     for e in entropy:
         if isinstance(e, str):
@@ -28,16 +28,52 @@ def _seed(*entropy: SeedLike):
             seeds.extend(_seed(*e))
         else:
             seeds.append(e)
-    return seeds
+    return (*seeds,)
 
 
-class CBRNG(ABC):
+_KeyT = TypeVar("_KeyT")
+
+
+class CBRNG(ABC, Generic[_KeyT]):
+    def __init__(self, *seed: SeedLike):
+        self._seed = _seed(seed)
+        self._keys: dict[int, _KeyT] = {}
+        self._offset: int = None
+
+    # bit generator
     @abstractmethod
-    def bit32(self, counters: npt.NDArray[np.uint64]) -> npt.NDArray[np.uint32]: ...
+    def bit32(
+        self, counters: npt.NDArray[np.uint64], key: _KeyT
+    ) -> npt.NDArray[np.uint32]: ...
 
     @abstractmethod
-    def bit64(self, counters: npt.NDArray[np.uint64]) -> npt.NDArray[np.uint64]: ...
+    def bit64(
+        self, counters: npt.NDArray[np.uint64], key: _KeyT
+    ) -> npt.NDArray[np.uint64]: ...
 
+    @abstractmethod
+    def key(self, generator: np.random.Generator) -> _KeyT: ...
+
+    # key
+    @property
+    def _key(self) -> _KeyT:
+        k, o = self._keys, self._offset
+        if o not in k:
+            s = self._seed
+            if o is not None:
+                s += (o,)
+            k[o] = self.key(np.random.Generator(np.random.PCG64(s)))
+        return k[o]
+
+    def shift(self, offset: int = None):
+        cls = self.__class__
+        new = cls.__new__(cls)
+        new._seed = self._seed
+        new._keys = self._keys
+        new._offset = offset
+        return new
+
+    # basic types
     @overload
     def uint(
         self, counters: npt.ArrayLike, bits: Literal[64] = 64
@@ -58,30 +94,14 @@ class CBRNG(ABC):
             case _:
                 raise NotImplementedError
 
-    @overload
-    def float(
-        self, counters: npt.ArrayLike, bits: Literal[64] = 64
-    ) -> npt.NDArray[np.float64]: ...
-    def float(
-        self, counters: npt.ArrayLike, bits: Literal[64] = 64
-    ) -> npt.NDArray[np.float_]:
-        """
-        In [0, 1). Same as `numpy.random._common.uint64_to_double`.
-        """
-        match bits:
-            case 64:
-                x = self.uint(counters)
-                x >>= _UINT64_11
-                return x / _UINT64_MAX_52BITS
-            case _:
-                raise NotImplementedError
-
-    def reduce(self, counters: npt.ArrayLike) -> npt.NDArray[np.uint64]:
+    def uint64(self, counters: npt.ArrayLike) -> npt.NDArray[np.uint64]:
         """
         Generate a random sequence by reducing the last dimension of the counters.
         """
+        counters = np.asarray(counters, dtype=np.uint64)
+        if counters.ndim == 1:
+            return self.uint(counters, bits=64)
         while True:
-            counters = np.asarray(counters, dtype=np.uint64)
             shape = counters.shape[-1]
             if shape == 1:
                 return self.uint(counters).reshape(counters.shape[:-1])
@@ -90,23 +110,54 @@ class CBRNG(ABC):
             else:
                 counters = np.concatenate(
                     [
-                        self.uint(counters[..., :-1], 32).view(np.uint64),
                         counters[..., -1:],
+                        self.uint(counters[..., :-1], 32).view(np.uint64),
                     ],
                     axis=-1,
                 )
 
+    def float64(self, counters: npt.ArrayLike) -> npt.NDArray[np.float64]:
+        """
+        [0, 1) Based on `numpy.random._common.uint64_to_double`.
+        """
+        x = self.uint64(counters)
+        x >>= _UINT64_11
+        return x / _BIT52_COUNT
 
-class Squares(CBRNG):
+    # distributions
+    def uniform(self, counters: npt.ArrayLike, low: float = 0.0, high: float = 1.0):
+        """
+        [low, high)
+        """
+        x = self.float64(counters)
+        x *= high - low
+        x += low
+        return x
+
+    def normal(self, counters: npt.ArrayLike, loc: float = 0.0, scale: float = 1.0):
+        """
+        Normal distribution based on Box-Muller transform.
+
+        This may raise a warning in a extremely rare case (1/2^53) when the random number hits 0.
+        """
+        o = self._offset
+        o = 0 if o is None else o + 1
+        x = self.float64(counters)
+        y = self.shift(o).float64(counters)
+        x = np.sqrt(-2.0 * np.log(x)) * np.cos(_2_PI * y)
+        x *= scale
+        x += loc
+        return x
+
+
+class Squares(CBRNG[np.uint64]):
     """
     Squares: a counter-based random number generator (CBRNG) [1]_.
 
     .. [1] https://arxiv.org/abs/2004.06278
     """
 
-    @classmethod
-    def _generate_key(cls, *seeds: SeedLike) -> np.uint64:
-        gen = np.random.Generator(np.random.MT19937(_seed(*seeds)))
+    def key(self, gen: np.random.Generator) -> np.uint64:
         bits = np.arange(1, 16, dtype=np.uint64)
         offsets = np.arange(0, 29, 4, dtype=np.uint64)
         lower8 = gen.choice(bits, 8, replace=False)
@@ -119,23 +170,15 @@ class Squares(CBRNG):
         higher8[1:] = gen.choice(np.delete(bits, int(higher8[0]) - 1), 7, replace=False)
         return np.sum(lower8 << offsets) + (np.sum(higher8 << offsets) << _UINT64_32)
 
-    @classmethod
-    def _round(cls, LR: npt.NDArray, shift: npt.NDArray, last: bool = False):
-        LR *= LR
-        LR += shift
+    def _round(self, lr: npt.NDArray, shift: npt.NDArray, last: bool = False):
+        lr *= lr
+        lr += shift
         if last:
-            yield LR.copy()
-        L = LR >> _UINT64_32
-        LR <<= _UINT64_32
-        LR |= L
-        yield LR
-
-    @property
-    def key(self) -> np.uint64:
-        return self._key
-
-    def __init__(self, seed: SeedLike):
-        self._key = self._generate_key(seed)
+            yield lr.copy()
+        l = lr >> _UINT64_32
+        lr <<= _UINT64_32
+        lr |= l
+        yield lr
 
     def bit32(self, ctrs: npt.NDArray[np.uint64]) -> npt.NDArray[np.uint32]:
         x = ctrs * self._key
