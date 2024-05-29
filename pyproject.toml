@@ -21,4 +21,3 @@ include-package-data = false
 
 [tool.setuptools.packages.find]
 include = ["heptools*"]
-exclude = ["docs*", "docker*"]
