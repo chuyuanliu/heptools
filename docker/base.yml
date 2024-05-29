@@ -1,4 +1,4 @@
-name: heptools-dev
+name: hep
 channels:
   - conda-forge
 dependencies:
