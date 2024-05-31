@@ -1,11 +1,15 @@
-from typing import TypeVar
+from __future__ import annotations
+
+from typing import TYPE_CHECKING, TypeVar
 
 import awkward as ak
 import numpy as np
-import numpy.typing as npt
 
 from ..utils import seqcall
 from .is_ import jagged as is_jagged
+
+if TYPE_CHECKING:
+    import numpy.typing as npt
 
 _copy_to_numpy = seqcall(np.array, ak.to_numpy)
 

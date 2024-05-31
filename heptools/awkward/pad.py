@@ -1,10 +1,14 @@
-from typing import Any
+from __future__ import annotations
+
+from typing import TYPE_CHECKING, Any
 
 import awkward as ak
 import numpy as np
-import numpy.typing as npt
 
 from .to import numpy as to_numpy
+
+if TYPE_CHECKING:
+    import numpy.typing as npt
 
 
 class selected:
