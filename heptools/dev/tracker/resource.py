@@ -125,7 +125,15 @@ class ResourceTracker:
         r_source = ColumnDataSource(data=r_source)
         c_source = ColumnDataSource(data=c_source)
 
-        tooltip = HoverTool(
+        curve_tp = HoverTool(
+            tooltips=[
+                (_TIME, f"@{_TIME} s"),
+                (_MEMORY, f"@{_MEMORY} MB"),
+                (_CPU, f"@{_CPU}%"),
+            ]
+        )
+        curve_tp.renderers = []
+        checkpoint_tp = HoverTool(
             tooltips=[
                 (_TIME, f"@{_TIME} s"),
                 (_MEMORY, f"@{_MEMORY} MB"),
@@ -133,7 +141,7 @@ class ResourceTracker:
                 (_NAME, f"@{_NAME}"),
             ],
         )
-        tooltip.renderers = []
+        checkpoint_tp.renderers = []
         crosshair = CrosshairTool(
             dimensions="height",
             overlay=Span(
@@ -154,9 +162,9 @@ class ResourceTracker:
             else:
                 p.x_range.follow = "end"
                 p.x_range.follow_interval = _X_RANGE
-            p.add_tools(tooltip, crosshair)
-            p.line(x=_TIME, y=key, source=r_source)
-            tooltip.renderers.append(
+            p.add_tools(curve_tp, checkpoint_tp, crosshair)
+            curve_tp.renderers.append(p.line(x=_TIME, y=key, source=r_source))
+            checkpoint_tp.renderers.append(
                 p.scatter(
                     x=_TIME, y=key, source=c_source, size=_CIRCLE_SIZE, color="red"
                 )
