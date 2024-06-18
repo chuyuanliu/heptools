@@ -74,6 +74,7 @@ class PicoAOD(ProcessorABC):
             if len(selected) >= 3:
                 result = selected[2] or result
             selected = selected[0]
+        selected = np.asarray(selected, dtype=bool)
         chunk = Chunk.from_coffea_events(events)
         dataset = events.metadata["dataset"]
         result = {
