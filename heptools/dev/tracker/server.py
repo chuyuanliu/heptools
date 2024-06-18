@@ -36,6 +36,7 @@ class Tracker:
         if name in self._components:
             raise ValueError(f"Component {name} already exists")
         self._components[f"{name}"] = component
+        return self
 
     def start(self):
         if self._server is None:

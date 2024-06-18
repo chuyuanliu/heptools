@@ -128,7 +128,7 @@ class ResourceTracker:
         curve_tp = HoverTool(
             tooltips=[
                 (_TIME, f"@{_TIME} s"),
-                (_MEMORY, f"@{_MEMORY} MB"),
+                (_MEMORY, f"@{_MEMORY}{{0.00}} MB"),
                 (_CPU, f"@{_CPU}%"),
             ]
         )
@@ -136,7 +136,7 @@ class ResourceTracker:
         checkpoint_tp = HoverTool(
             tooltips=[
                 (_TIME, f"@{_TIME} s"),
-                (_MEMORY, f"@{_MEMORY} MB"),
+                (_MEMORY, f"@{_MEMORY}{{0.00}} MB"),
                 (_CPU, f"@{_CPU}%"),
                 (_NAME, f"@{_NAME}"),
             ],
