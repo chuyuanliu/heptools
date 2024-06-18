@@ -1,3 +1,4 @@
+import gc
 import logging
 import re
 from abc import abstractmethod
@@ -16,6 +17,17 @@ from heptools.system.eos import EOS, PathLike
 
 _PICOAOD = "picoAOD"
 _ROOT = ".root"
+
+
+class SkimmingError(Exception):
+    __module__ = Exception.__module__
+
+
+def _clear_cache(events: ak.Array):
+    # try to clear cached branches
+    for cache in events.caches:
+        cache.clear()
+    gc.collect()
 
 
 class PicoAOD(ProcessorABC):
@@ -44,11 +56,24 @@ class PicoAOD(ProcessorABC):
         return {*filter(self._filter_branches.match, branches)}
 
     @abstractmethod
-    def select(self, events: ak.Array) -> npt.ArrayLike:
+    def select(
+        self, events: ak.Array
+    ) -> (
+        npt.NDArray[np.bool_]
+        | tuple[npt.NDArray[np.bool_], ak.Array]
+        | tuple[npt.NDArray[np.bool_], ak.Array | None, dict]
+    ):
         pass
 
     def process(self, events: ak.Array):
         selected = self.select(events)
+        added, result = None, {}
+        if isinstance(selected, tuple):
+            if len(selected) >= 2:
+                added = selected[1]
+            if len(selected) >= 3:
+                result = selected[2] or result
+            selected = selected[0]
         chunk = Chunk.from_coffea_events(events)
         dataset = events.metadata["dataset"]
         result = {
@@ -56,13 +81,27 @@ class PicoAOD(ProcessorABC):
                 "total_events": len(events),
                 "saved_events": int(ak.sum(selected)),
                 "files": [],
-                "source": {f"{chunk.path}": [(chunk.entry_start, chunk.entry_stop)]},
+                "source": {str(chunk.path): [(chunk.entry_start, chunk.entry_stop)]},
             }
+            | result
         }
+        # sanity check
+        if (
+            added is not None
+            and (size := len(added)) != result[dataset]["saved_events"]
+        ):
+            raise SkimmingError(
+                f"Length of additional branches ({size}) does not match the number of selected events ({result[dataset]['saved_events']})"
+            )
+        # clear cache
+        _clear_cache(events)
+        # save the selected events
         if result[dataset]["saved_events"] > 0:
             filename = f"{dataset}/{_PICOAOD}_{chunk.uuid}_{chunk.entry_start}_{chunk.entry_stop}{_ROOT}"
             path = self._base / filename
-            reader = TreeReader(self._filter, self._transform)
+            reader = TreeReader(self._filter)
+
+            saved = 0
             with TreeWriter()(path) as writer:
                 for i, chunks in enumerate(
                     Chunk.partition(self._step, chunk, common_branches=True)
@@ -74,8 +113,15 @@ class PicoAOD(ProcessorABC):
                     _start, _stop = _range[0], _range[-1] + 1
                     _chunk = chunks[0].slice(_start, _stop)
                     _selected = _selected[_start:_stop]
-                    data = reader.arrays(_chunk)
-                    writer.extend(data[_selected])
+                    data = reader.arrays(_chunk)[_selected]
+                    if added is not None:
+                        _saved = saved + ak.sum(_selected)
+                        _added = added[saved:_saved]
+                        for k in added.fields:
+                            data[k] = _added[k]
+                        saved = _saved
+                    data = self._transform(data)
+                    writer.extend(data)
             if writer.tree is not None:
                 result[dataset]["files"].append(writer.tree)
         return result
