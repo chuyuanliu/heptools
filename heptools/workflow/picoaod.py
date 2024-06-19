@@ -3,6 +3,8 @@ import logging
 import re
 from abc import abstractmethod
 from concurrent.futures import Future, ProcessPoolExecutor
+from itertools import chain
+from typing import Iterable
 
 import awkward as ak
 import numpy as np
@@ -30,30 +32,32 @@ def _clear_cache(events: ak.Array):
     gc.collect()
 
 
+def _branch_filter(collections: Iterable[str], branches: Iterable[str]):
+    branches = chain(
+        map("({}_.*)".format, collections or ()),
+        map("(n{})".format, collections or ()),
+        map("({})".format, branches or ()),
+    )
+    return rf'^(?!({"|".join(branches)})$).*$'
+
+
 class PicoAOD(ProcessorABC):
     def __init__(
         self,
         base_path: PathLike,
         step: int,
-        skip_collections: list[str] = None,
-        skip_branches: list[str] = None,
+        skip_collections: Iterable[str] = None,
+        skip_branches: Iterable[str] = None,
     ):
         self._base = EOS(base_path)
         self._step = step
-        if skip_collections is None:
-            skip_collections = []
-        if skip_branches is None:
-            skip_branches = []
-        skipped = (
-            [f"{collection}_.*" for collection in skip_collections]
-            + [f"n{collection}" for collection in skip_collections]
-            + skip_branches
+        self._branch_filter = re.compile(
+            _branch_filter(skip_collections, skip_branches)
         )
-        self._filter_branches = re.compile(rf'^(?!({"|".join(skipped)})$).*$')
         self._transform = NanoAOD(regular=False, jagged=True)
 
     def _filter(self, branches: set[str]):
-        return {*filter(self._filter_branches.match, branches)}
+        return {*filter(self._branch_filter.match, branches)}
 
     @abstractmethod
     def select(
