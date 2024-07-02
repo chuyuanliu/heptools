@@ -22,6 +22,7 @@ RUN ln -s /opt/conda/etc/grid-security /etc/grid-security
 RUN touch /root/.rnd
 RUN apt-get update && apt-get install -y --no-install-recommends \
     voms-clients \
+    bash-completion \
     && apt-get clean && rm -rf /var/lib/apt/lists/*
 RUN touch /etc/vomses \
     && echo '"cms" "lcg-voms2.cern.ch" "15002" "/DC=ch/DC=cern/OU=computers/CN=lcg-voms2.cern.ch" "cms"' >> /etc/vomses \
