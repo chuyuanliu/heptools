@@ -17,6 +17,8 @@ RUN mamba env update -n base -f https://raw.githubusercontent.com/chuyuanliu/hep
     # DB
     dbs3-client \
     rucio-clients
+RUN touch /root/.rnd
+RUN ln -s /opt/conda/etc/grid-security /etc/grid-security
 RUN apt-get update && apt-get install -y --no-install-recommends \
     # voms
     voms-clients \
@@ -25,8 +27,6 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     && apt-get clean && rm -rf /var/lib/apt/lists/*
 # voms
 # https://twiki.cern.ch/twiki/bin/view/LCG/VOMSLSCfileConfiguration
-RUN touch /root/.rnd
-RUN ln -s /opt/conda/etc/grid-security /etc/grid-security
 # "voms2.cern.ch" & "lcg-voms2.cern.ch" are deprecated
 RUN touch /etc/vomses \
     && echo '"cms" "voms-cms-auth.app.cern.ch" "443" "/DC=ch/DC=cern/OU=computers/CN=cms-auth.web.cern.ch" "cms"' >> /etc/vomses
