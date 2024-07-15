@@ -21,7 +21,7 @@ RUN touch /root/.rnd
 RUN ln -s /opt/conda/etc/grid-security /etc/grid-security
 RUN apt-get update && apt-get install -y --no-install-recommends \
     # voms
-    voms-clients \
+    voms-clients-java \
     # bash tools
     bash-completion \
     && apt-get clean && rm -rf /var/lib/apt/lists/*
