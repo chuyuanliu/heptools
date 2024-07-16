@@ -25,11 +25,17 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     # bash tools
     bash-completion \
     && apt-get clean && rm -rf /var/lib/apt/lists/*
-# voms
-# https://twiki.cern.ch/twiki/bin/view/LCG/VOMSLSCfileConfiguration
-# "voms2.cern.ch" & "lcg-voms2.cern.ch" are deprecated
-RUN touch /etc/vomses \
-    && echo '"cms" "voms-cms-auth.app.cern.ch" "443" "/DC=ch/DC=cern/OU=computers/CN=cms-auth.web.cern.ch" "cms"' >> /etc/vomses
+# voms https://twiki.cern.ch/twiki/bin/view/LCG/VOMSLSCfileConfiguration
+## Deprecated:
+## voms2.cern.ch
+## lcg-voms2.cern.ch
+RUN <<EOF > /etc/vomses
+"cms" "voms-cms-auth.app.cern.ch" "443" "/DC=ch/DC=cern/OU=computers/CN=cms-auth.web.cern.ch" "cms"
+EOF
+RUN <<EOF > /etc/grid-security/vomsdir/cms/voms-cms-auth.app.cern.ch.lsc
+/DC=ch/DC=cern/OU=computers/CN=cms-auth.web.cern.ch
+/DC=ch/DC=cern/CN=CERN Grid Certification Authority
+EOF
 ENV VOMS_PROXY_INIT_DONT_VERIFY_AC=1
 # rucio
 RUN mkdir -p /opt/rucio/etc/
