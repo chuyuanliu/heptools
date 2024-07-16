@@ -222,7 +222,7 @@ class TreeWriter:
         size = len_record(data, self._backend)
         if size == 0:
             return
-        elif size == None:
+        elif size is None:
             raise ValueError("The extended data does not have a well-defined length.")
         if self._basket_size is ...:
             self._backend = backend
