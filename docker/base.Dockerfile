@@ -29,10 +29,10 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 ## Deprecated:
 ## voms2.cern.ch
 ## lcg-voms2.cern.ch
-RUN <<EOF > /etc/vomses
+RUN cat <<EOF > /etc/vomses
 "cms" "voms-cms-auth.app.cern.ch" "443" "/DC=ch/DC=cern/OU=computers/CN=cms-auth.web.cern.ch" "cms"
 EOF
-RUN <<EOF > /etc/grid-security/vomsdir/cms/voms-cms-auth.app.cern.ch.lsc
+RUN cat <<EOF > /etc/grid-security/vomsdir/cms/voms-cms-auth.app.cern.ch.lsc
 /DC=ch/DC=cern/OU=computers/CN=cms-auth.web.cern.ch
 /DC=ch/DC=cern/CN=CERN Grid Certification Authority
 EOF
