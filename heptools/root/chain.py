@@ -1,11 +1,12 @@
 from __future__ import annotations
 
 import bisect
+import logging
 from collections import defaultdict, deque
-from concurrent.futures import ThreadPoolExecutor
+from concurrent.futures import Executor, Future
+from dataclasses import dataclass
 from functools import partial
 from itertools import chain
-from logging import Logger
 from typing import (
     TYPE_CHECKING,
     Callable,
@@ -32,9 +33,15 @@ if TYPE_CHECKING:
 
     from .io import DelayedRecordLike, RecordLike
 
+_NAMING = "{name}_{uuid}_{start}_{stop}.root"
+
 
 class NameMapping(Protocol):
     def __call__(self, **keys: str) -> str: ...
+
+
+def _map_executor(fn, *iterables):
+    return (*map(fn, *iterables),)
 
 
 def _apply_naming(naming: str | NameMapping, keys: dict[str, str]) -> str:
@@ -57,9 +64,7 @@ def _friend_from_merge(
     friend._branches = frozenset(branches)
     for k, vs in data.items():
         for start, stop, chunks in vs:
-            chunks = deque(chunks)
-            while chunks:
-                chunk = chunks.popleft()
+            for chunk in chunks:
                 chunk._branches = friend._branches
                 friend._data[k].append(_FriendItem(start, start + len(chunk), chunk))
                 start += len(chunk)
@@ -68,6 +73,28 @@ def _friend_from_merge(
                     f'Failed to merge friend "{name}". The merged chunk does not cover the range [{start},{stop}) for target {k}.'
                 )
     return friend
+
+
+@dataclass
+class _friend_dump_job:
+    path: EOS
+    writer: dict
+    data: RecordLike
+
+    def __call__(self):
+        with TreeWriter(**self.writer)(self.path) as f:
+            f.extend(self.data)
+        return f.tree
+
+
+@dataclass
+class _friend_dump_callback:
+    friend: Friend
+    item: _FriendItem
+
+    def __call__(self, tree: Chunk | Future[Chunk]):
+        self.item.chunk = tree.result() if isinstance(tree, Future) else tree
+        self.friend._check_item(self.item)
 
 
 class _FriendItem:
@@ -98,6 +125,10 @@ class _FriendItem:
     def from_json(cls, data: dict):
         return cls(data["start"], data["stop"], Chunk.from_json(data["chunk"]))
 
+    @property
+    def on_disk(self):
+        return isinstance(self.chunk, Chunk)
+
 
 class Friend:
     """
@@ -123,7 +154,7 @@ class Friend:
     _on_disk_error = 'Cannot perform "{func}()" on friend tree "{name}" when there is in-memory data. Call "dump()" first.'
 
     def _on_disk(func):
-        def wrapper(self, *args, **kwargs):
+        def wrapper(self: Friend, *args, **kwargs):
             if self._to_dump:
                 raise RuntimeError(
                     self._on_disk_error.format(func=func.__name__, name=self.name)
@@ -252,7 +283,7 @@ class Friend:
         """
         item = _FriendItem(target.entry_start, target.entry_stop, data)
         key = self._construct_key(target)
-        if not isinstance(data, Chunk):
+        if not item.on_disk:
             self._init_dump()
             self._dump.append((key, item))
         else:
@@ -443,7 +474,7 @@ class Friend:
                 )
             elif item.stop < stop:
                 raise ValueError(
-                    f'Cannot read one partition from multiple files. Call "merge()" first.'
+                    'Cannot read one partition from multiple files. Call "merge()" first.'
                 )
             else:
                 friends.append(item.chunk.slice(start - item.start, stop - item.start))
@@ -452,8 +483,9 @@ class Friend:
     def dump(
         self,
         base_path: PathLike = ...,
-        naming: str | NameMapping = "{name}_{uuid}_{start}_{stop}.root",
-        writer_options: dict = None,
+        naming: str | NameMapping = ...,
+        writer_options: dict = ...,
+        executor: Executor = ...,
     ):
         """
         Dump all in-memory data to ROOT files with a given ``naming`` format.
@@ -462,10 +494,12 @@ class Friend:
         ----------
         base_path: PathLike, optional
             Base path to store the dumped files. See below for details.
-        naming : str or ~typing.Callable, optional
+        naming : str or ~typing.Callable, default="{name}_{uuid}_{start}_{stop}.root"
             Naming format for the dumped files. See below for details.
         writer_options: dict, optional
             Additional options passed to :class:`~.io.TreeWriter`.
+        executor: ~concurrent.futures.Executor, optional
+            An executor with at least the :meth:`~concurrent.futures.Executor.submit` method implemented. If not provided, the tasks will run sequentially in the current thread.
 
         Notes
         -----
@@ -514,21 +548,25 @@ class Friend:
         if self._to_dump:
             if base_path is not ...:
                 base_path = EOS(base_path)
-            writer_options = writer_options or {}
-            writer = TreeWriter(**writer_options)
+            if naming is ...:
+                naming = _NAMING
+            if writer_options is ...:
+                writer_options = {}
             for target, item in self._dump:
                 if base_path is ...:
                     path = target.path.parent
                 else:
                     path = base_path
                 path = path / _apply_naming(naming, self._name_dump(target, item))
-                with writer(path) as f:
-                    f.extend(item.chunk)
-                item.chunk = f.tree
-                self._check_item(item)
+                job = _friend_dump_job(path, writer_options, item.chunk)
+                callback = _friend_dump_callback(self, item)
+                if executor is ...:
+                    callback(job())
+                else:
+                    executor.submit(job).add_done_callback(callback)
             self._dump.clear()
 
-    def reset(self, confirm: bool = True):
+    def reset(self, confirm: bool = True, executor: Executor = ...):
         """
         Reset the friend tree and delete all dumped files.
 
@@ -536,27 +574,46 @@ class Friend:
         ----------
         confirm : bool, optional, default=True
             Confirm the deletion.
+        executor: ~concurrent.futures.Executor, optional
+            An executor with at least the :meth:`~concurrent.futures.Executor.map` method implemented. If not provided, the tasks will run sequentially in the current thread
 
         """
-        files = []
+        files: list[EOS] = []
         for vs in self._data.values():
             for v in vs:
-                if isinstance(v.chunk, Chunk):
+                if v.on_disk:
                     files.append(v.chunk.path)
         if confirm:
-            Logger.root.info("The following files will be deleted:")
-            Logger.root.warning("\n".join(str(f) for f in files))
+            logging.info("The following files will be deleted:")
+            logging.warning("\n".join(str(f) for f in files))
             confirmation = input(f'Type "{self.name}" to confirm the deletion: ')
             if confirmation != self.name:
-                Logger.root.info("Deletion aborted.")
+                logging.info("Deletion aborted.")
                 return
-        with ThreadPoolExecutor(max_workers=len(files)) as executor:
-            executor.map(EOS.rm, files)
+        (_map_executor if executor is ... else executor.map)(EOS.rm, files)
         self._branches = None
         self._data.clear()
         if hasattr(self, "_dump"):
             del self._dump
             del self._dump_name
+
+    def _contiguous_chunks(self):
+        for target, items in self._data.items():
+            if not items:
+                continue
+            items = deque(items)
+            chunks = []
+            while True:
+                item = None
+                if items:
+                    item = items.popleft()
+                    if (not chunks) or (chunks[-1].stop == item.start):
+                        chunks.append(item)
+                        continue
+                yield target, chunks
+                chunks = [item]
+                if item is None:
+                    break
 
     @_on_disk
     def merge(
@@ -564,7 +621,7 @@ class Friend:
         step: int,
         chunk_size: int = ...,
         base_path: PathLike = ...,
-        naming: str | NameMapping = "{name}_{uuid}.root",
+        naming: str | NameMapping = "{name}_{uuid}_{start}_{stop}.root",
         reader_options: dict = None,
         writer_options: dict = None,
         dask: bool = False,
@@ -598,51 +655,34 @@ class Friend:
             base_path = EOS(base_path)
         self._init_dump()
         data = defaultdict(list)
-        for target, items in self._data.items():
-            if not items:
-                continue
-            if base_path is ...:
-                base = target.path.parent
+        for target, chunks in self._contiguous_chunks():
+            base = target.path.parent if base_path is ... else base_path
+            dummy = _FriendItem(chunks[0].start, chunks[-1].stop)
+            path = base / _apply_naming(naming, self._name_dump(target, dummy))
+            if len(chunks) == 1:
+                chunks = [move(path, chunks[0].chunk, dask=dask)]
             else:
-                base = base_path
-            start = items[0].start
-            items = deque(items)
-            to_merge: list[_FriendItem] = []
-            while True:
-                item = None
-                if to_merge:
-                    start = to_merge[-1].stop
-                if items:
-                    item = items.popleft()
-                    if start == item.start:
-                        to_merge.append(item)
-                        continue
-                if to_merge:
-                    dummy = _FriendItem(to_merge[0].start, to_merge[-1].stop)
-                    chunks = [i.chunk for i in to_merge]
-                    path = base / _apply_naming(naming, self._name_dump(target, dummy))
-                    if len(chunks) == 1:
-                        chunks = [move(path, chunks[0], dask=dask)]
-                    elif len(chunks) > 1:
-                        chunks = resize(
-                            path,
-                            *chunks,
-                            step=step,
-                            chunk_size=chunk_size,
-                            writer_options=writer_options,
-                            reader_options=reader_options,
-                            dask=dask,
-                        )
-                    data[target].append((dummy.start, dummy.stop, chunks))
-                    to_merge.clear()
-                if item is not None:
-                    to_merge.append(item)
-                    continue
-                if not items:
-                    break
+                chunks = resize(
+                    path,
+                    *(c.chunk for c in chunks),
+                    step=step,
+                    chunk_size=chunk_size,
+                    writer_options=writer_options,
+                    reader_options=reader_options,
+                    dask=dask,
+                )
+            data[target].append((dummy.start, dummy.stop, chunks))
         return _friend_from_merge(
             name=self.name, branches=self._branches, data=dict(data), dask=dask
         )
+
+    @property
+    def targets(self):
+        """
+        Generator[:class:`~Friend`]: All contiguous target chunks.
+        """
+        for target, chunks in self._contiguous_chunks():
+            yield target.slice(chunks[0].start, chunks[-1].stop)
 
     @_on_disk
     def clone(
@@ -650,6 +690,7 @@ class Friend:
         base_path: PathLike,
         naming: str | NameMapping = ...,
         execute: bool = False,
+        executor: Executor = ...,
     ):
         """
         Copy all chunks to a new location.
@@ -660,6 +701,10 @@ class Friend:
             Base path to store the cloned files.
         naming : str or ~typing.Callable, optional
             Naming format for the cloned files. See below for details. If not given, will simply replace the common base with ``base_path``.
+        execute : bool, optional, default=False
+            If ``True``, clone the files immediately.
+        executor: ~concurrent.futures.Executor, optional
+            An executor with at least the :meth:`~concurrent.futures.Executor.map` method implemented. If not provided, the tasks will run sequentially in the current thread.
 
         Returns
         -------
@@ -703,14 +748,12 @@ class Friend:
                 chunk.path = path
                 friend._data[target].append(_FriendItem(item.start, item.stop, chunk))
         if execute:
-            with ThreadPoolExecutor(max_workers=len(src)) as executor:
-                executor.map(partial(EOS.cp, parents=True, overwrite=True), src, dst)
+            (_map_executor if executor is ... else executor.map)(
+                partial(EOS.cp, parents=True, overwrite=True), src, dst
+            )
         return friend
 
-    def integrity(
-        self,
-        logger: Logger = None,
-    ):
+    def integrity(self, executor: Executor = ...):
         """
         Check and report the following:
 
@@ -724,22 +767,19 @@ class Friend:
 
         Parameters
         ----------
-        logger : ~logging.Logger, optional
-            The logger used to report the issues. Can be a :class:`~logging.Logger` or any class with the same interface. If not given, the default logger will be used.
+        executor: ~concurrent.futures.Executor, optional
+            An executor with at least the :meth:`~concurrent.futures.Executor.map` method implemented. If not provided, the tasks will run sequentially in the current thread.
         """
-        if logger is None:
-            logger = Logger.root
-        checked: deque[Chunk] = deque()
+        checked = []
         files = set()
         for target, items in self._data.items():
             checked.append(target)
             for item in items:
-                if isinstance(item.chunk, Chunk):
+                if item.on_disk:
                     checked.append(item.chunk)
-        with ThreadPoolExecutor(max_workers=len(checked)) as executor:
-            checked = deque(
-                executor.map(partial(Chunk.integrity, logger=logger), checked)
-            )
+        checked = deque(
+            (map if executor is ... else executor.map)(Chunk.integrity, checked)
+        )
         for target, items in self._data.items():
             target = checked.popleft()
             if target is not None:
@@ -748,41 +788,41 @@ class Friend:
                 stop = target.entry_stop
                 for item in items:
                     if start < item.start:
-                        logger.warning(
+                        logging.warning(
                             f"{target_name}no friend entries in [{start},{item.start})"
                         )
                     elif start > item.start:
-                        logger.error(
+                        logging.error(
                             f"{target_name}duplicate friend entries in [{item.start}, {start})"
                         )
                     start = item.stop
-                    if isinstance(item.chunk, Chunk):
+                    if item.on_disk:
                         chunk = checked.popleft()
                         if chunk is not None:
                             friend_name = f'friend "{chunk.path}"\n    '
                             if len(chunk) != len(item):
-                                logger.error(
+                                logging.error(
                                     f"{friend_name}{len(chunk)} entries not fit in [{item.start},{item.stop})"
                                 )
                             diff = self._branches - chunk.branches
                             if diff:
-                                logger.error(f"{friend_name}missing branches {diff}")
+                                logging.error(f"{friend_name}missing branches {diff}")
                             if chunk.path in files:
-                                logger.error(
+                                logging.error(
                                     f"{friend_name}multiple friend chunks from this source"
                                 )
                             files.add(chunk.path)
                     else:
-                        logger.warning(
+                        logging.warning(
                             f"{target_name}in-memory friend entries in [{item.start},{item.stop})"
                         )
                 if start < stop:
-                    logger.warning(
+                    logging.warning(
                         f"{target_name}no friend entries in [{start},{stop}) "
                     )
             else:
                 for item in items:
-                    if isinstance(item.chunk, Chunk):
+                    if item.on_disk:
                         checked.popleft()
 
     @_on_disk

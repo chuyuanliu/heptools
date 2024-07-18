@@ -1,8 +1,8 @@
 from __future__ import annotations
 
+import logging
 import math
 from functools import partial
-from logging import Logger
 from typing import Iterable
 from uuid import UUID
 
@@ -117,7 +117,7 @@ class Chunk(metaclass=_ChunkMeta):
     def _ignore(cls, value):
         return value is ... or value is None
 
-    def integrity(self, logger: Logger = None):
+    def integrity(self):
         """
         Check and report the following:
 
@@ -128,21 +128,14 @@ class Chunk(metaclass=_ChunkMeta):
         - :data:`entry_start` out of range
         - :data:`entry_stop` out of range
 
-        Parameters
-        ----------
-        logger : ~logging.Logger, optional
-            The logger used to report the issues. Can be a :class:`~logging.Logger` or any class with the same interface. If not given, the default logger will be used.
-
         Returns
         -------
         Chunk or None
             A deep copy of ``self`` with corrected metadata. If file not exists, return ``None``.
         """
-        if logger is None:
-            logger = Logger.root
         chunk_name = f'chunk  "{self.path}"\n    '
         if not self.path.exists:
-            logger.error(f"{chunk_name}file not exists")
+            logging.error(f"{chunk_name}file not exists")
             return None
         else:
             reloaded = Chunk(
@@ -152,20 +145,20 @@ class Chunk(metaclass=_ChunkMeta):
                 fetch=True,
             )
             if not self._ignore(self._uuid) and self._uuid != reloaded.uuid:
-                logger.error(
+                logging.error(
                     f"{chunk_name}UUID {self._uuid}(stored) != {reloaded.uuid}(file)"
                 )
             if (
                 not self._ignore(self._num_entries)
                 and self._num_entries != reloaded.num_entries
             ):
-                logger.error(
+                logging.error(
                     f"{chunk_name}number of entries {self._num_entries}(stored) != {reloaded.num_entries}(file)"
                 )
             if not self._ignore(self._branches):
                 diff = self._branches - reloaded.branches
                 if diff:
-                    logger.error(f"{chunk_name}branches {diff} not in file")
+                    logging.error(f"{chunk_name}branches {diff} not in file")
             out_of_range = False
             if not self._ignore(self._entry_start):
                 out_of_range |= (
@@ -181,7 +174,7 @@ class Chunk(metaclass=_ChunkMeta):
             else:
                 reloaded._entry_stop = reloaded.num_entries
             if out_of_range:
-                logger.warning(
+                logging.warning(
                     f"{chunk_name}invalid entry range [0,{reloaded.num_entries}) -> [{reloaded.entry_start},{reloaded.entry_stop})"
                 )
             return reloaded
@@ -258,8 +251,8 @@ class Chunk(metaclass=_ChunkMeta):
         Chunk
             A sliced :meth:`deepcopy` of ``self`` from ``start`` + :data:`offset` to ``stop`` + :data:`offset`.
         """
-        start += self.offset
-        stop += self.offset
+        start += self.offset or 0
+        stop += self.offset or 0
         chunk = self.deepcopy(entry_start=start, entry_stop=stop)
         return chunk
 
