@@ -34,6 +34,9 @@ if TYPE_CHECKING:
     from .io import DelayedRecordLike, RecordLike
 
 _NAMING = "{name}_{uuid}_{start}_{stop}.root"
+_FRIEND_AUTO = "_Friend__auto"
+_FRIEND_DUMP = "_Friend__dump"
+_FRIEND_DISK_ERROR = 'Cannot perform "{func}()" on friend tree "{name}" when there is in-memory data. Call "dump()" first.'
 
 
 class NameMapping(Protocol):
@@ -146,18 +149,26 @@ class Friend:
     - :meth:`__iadd__` :class:`Friend`
     - :meth:`__add__` :class:`Friend`
     - :meth:`__repr__`
+    - :meth:`__enter__`: Enable auto-dump mode.
+    - :meth:`__exit__`: Disable auto-dump mode.
     """
 
     name: str
     """str : Name of the collection."""
 
-    _on_disk_error = 'Cannot perform "{func}()" on friend tree "{name}" when there is in-memory data. Call "dump()" first.'
+    @property
+    def targets(self):
+        """
+        Generator[:class:`~Chunk`]: All contiguous target chunks.
+        """
+        for target, chunks in self._contiguous_chunks():
+            yield target.slice(chunks[0].start, chunks[-1].stop)
 
     def _on_disk(func):
         def wrapper(self: Friend, *args, **kwargs):
-            if self._to_dump:
+            if self._has_dump:
                 raise RuntimeError(
-                    self._on_disk_error.format(func=func.__name__, name=self.name)
+                    _FRIEND_DISK_ERROR.format(func=func.__name__, name=self.name)
                 )
             return func(self, *args, **kwargs)
 
@@ -172,9 +183,9 @@ class Friend:
     def __iadd__(self, other) -> Friend:
         if isinstance(other, Friend):
             msg = "Cannot add friend trees with different {attr}"
-            if other._to_dump:
+            if other._has_dump:
                 raise RuntimeError(
-                    self._on_disk_error.format(func="__add__", name=other.name)
+                    _FRIEND_DISK_ERROR.format(func="__add__", name=other.name)
                 )
             if self.name != other.name:
                 raise ValueError(msg.format(attr="names"))
@@ -200,6 +211,39 @@ class Friend:
             text += f"\n{k}\n    {v}"
         return text
 
+    @property
+    def _auto_dump(self):
+        if hasattr(self, _FRIEND_AUTO):
+            return self.__auto[0]
+        return False
+
+    def auto_dump(
+        self,
+        base_path: PathLike = ...,
+        naming: str | NameMapping = ...,
+        writer_options: dict = ...,
+        executor: Executor = ...,
+    ):
+        """
+        Automatically dump the in-memory data when :meth:`add` is called. See :meth:`dump` for details.
+        """
+        self.__auto = False, {
+            "base_path": base_path,
+            "naming": naming,
+            "writer_options": writer_options,
+            "executor": executor,
+        }
+        return self
+
+    def __enter__(self):
+        if hasattr(self, _FRIEND_AUTO):
+            self.__auto = True, self.__auto[1]
+        return self
+
+    def __exit__(self, *_):
+        if hasattr(self, _FRIEND_AUTO):
+            del self.__auto
+
     @classmethod
     def _construct_key(cls, chunk: Chunk):
         return Chunk(
@@ -212,15 +256,15 @@ class Friend:
         )
 
     @property
-    def _to_dump(self):
-        if hasattr(self, "_dump"):
-            return len(self._dump) > 0
+    def _has_dump(self):
+        if hasattr(self, _FRIEND_DUMP):
+            return len(self.__dump) > 0
         return False
 
     def _init_dump(self):
-        if not hasattr(self, "_dump"):
-            self._dump: list[tuple[Chunk, _FriendItem]] = []
-            self._dump_name: dict[Chunk, dict[str, str]] = {}
+        if not hasattr(self, _FRIEND_DUMP):
+            self.__dump: list[tuple[Chunk, _FriendItem]] = []
+            self.__naming: dict[Chunk, dict[str, str]] = {}
 
     @classmethod
     def _path_parts(cls, path: EOS, format="path{}") -> list[str]:
@@ -228,14 +272,14 @@ class Friend:
         return dict(zip(map(format.format, range(len(parts))), parts[::-1]))
 
     def _name_dump(self, target: Chunk, item: _FriendItem):
-        if target not in self._dump_name:
+        if target not in self.__naming:
             names = {
                 "name": self.name,
                 "uuid": str(target.uuid),
                 "tree": target.name,
             }
-            self._dump_name[target] = names | self._path_parts(target.path)
-        return self._dump_name[target] | {"start": item.start, "stop": item.stop}
+            self.__naming[target] = names | self._path_parts(target.path)
+        return self.__naming[target] | {"start": item.start, "stop": item.stop}
 
     def _check_item(self, item: _FriendItem):
         if len(item.chunk) != len(item):
@@ -285,7 +329,9 @@ class Friend:
         key = self._construct_key(target)
         if not item.on_disk:
             self._init_dump()
-            self._dump.append((key, item))
+            self.__dump.append((key, item))
+            if self._auto_dump:
+                self.dump(**self.__auto[1])
         else:
             self._check_item(item)
         self._insert(key, item)
@@ -545,14 +591,14 @@ class Friend:
             >>>     return f'{kwargs["path0"][:3]}_{kwargs["tree"]}_{kwargs["start"]}_{kwargs["stop"]}.root'.lower()
             >>> friend.dump(filename)
         """
-        if self._to_dump:
+        if self._has_dump:
             if base_path is not ...:
                 base_path = EOS(base_path)
             if naming is ...:
                 naming = _NAMING
             if writer_options is ...:
                 writer_options = {}
-            for target, item in self._dump:
+            for target, item in self.__dump:
                 if base_path is ...:
                     path = target.path.parent
                 else:
@@ -564,7 +610,7 @@ class Friend:
                     callback(job())
                 else:
                     executor.submit(job).add_done_callback(callback)
-            self._dump.clear()
+            self.__dump.clear()
 
     def reset(self, confirm: bool = True, executor: Executor = ...):
         """
@@ -593,9 +639,11 @@ class Friend:
         (_map_executor if executor is ... else executor.map)(EOS.rm, files)
         self._branches = None
         self._data.clear()
-        if hasattr(self, "_dump"):
-            del self._dump
-            del self._dump_name
+        if hasattr(self, _FRIEND_DUMP):
+            del self.__dump
+            del self.__naming
+        if hasattr(self, _FRIEND_AUTO):
+            del self.__auto
 
     def _contiguous_chunks(self):
         for target, items in self._data.items():
@@ -675,14 +723,6 @@ class Friend:
         return _friend_from_merge(
             name=self.name, branches=self._branches, data=dict(data), dask=dask
         )
-
-    @property
-    def targets(self):
-        """
-        Generator[:class:`~Friend`]: All contiguous target chunks.
-        """
-        for target, chunks in self._contiguous_chunks():
-            yield target.slice(chunks[0].start, chunks[-1].stop)
 
     @_on_disk
     def clone(
