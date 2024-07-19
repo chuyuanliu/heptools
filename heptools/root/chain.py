@@ -225,11 +225,7 @@ class Friend:
         executor: Executor = ...,
     ):
         """
-        Automatically dump the in-memory data when :meth:`add` is called.
-
-        Parameters
-        ----------
-        See :meth:`dump` for details.
+        Automatically dump the in-memory data when :meth:`add` is called. The parameters are the same as :meth:`dump`.
 
         Notes
         -----
