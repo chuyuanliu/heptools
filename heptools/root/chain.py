@@ -149,8 +149,8 @@ class Friend:
     - :meth:`__iadd__` :class:`Friend`
     - :meth:`__add__` :class:`Friend`
     - :meth:`__repr__`
-    - :meth:`__enter__`: Enable auto-dump mode.
-    - :meth:`__exit__`: Disable auto-dump mode.
+    - :meth:`__enter__`: See :meth:`auto_dump`.
+    - :meth:`__exit__`: See :meth:`auto_dump`.
     """
 
     name: str
@@ -225,7 +225,22 @@ class Friend:
         executor: Executor = ...,
     ):
         """
-        Automatically dump the in-memory data when :meth:`add` is called. See :meth:`dump` for details.
+        Automatically dump the in-memory data when :meth:`add` is called.
+
+        Parameters
+        ----------
+        See :meth:`dump` for details.
+
+        Notes
+        -----
+        Enable the auto-dump mode by using the with statement:
+
+        .. code-block:: python
+
+            >>> with friend.auto_dump():
+            >>>     ...
+            >>>     friend.add(target, data)
+            >>>     ...
         """
         self.__auto = False, {
             "base_path": base_path,

@@ -387,16 +387,13 @@ class Chunk(metaclass=_ChunkMeta):
                 for _chunks in range(n, n + 2):
                     _entries = total // _chunks
                     _remain = total % _chunks
-                    _diff = abs(_entries + 1 - size) * _remain + abs(
-                        _entries - size
-                    ) * (_chunks - _remain)
+                    _diff = abs(_entries + 1 - size) * _remain
+                    _diff += abs(_entries - size) * (_chunks - _remain)
                     if _diff < diff:
-                        diff, n_chunks, n_entries, n_remain = (
-                            _diff,
-                            _chunks,
-                            _entries,
-                            _remain,
-                        )
+                        diff = _diff
+                        n_chunks = _chunks
+                        n_entries = _entries
+                        n_remain = _remain
                 start = 0
                 for i in range(n_chunks):
                     stop = start + n_entries
