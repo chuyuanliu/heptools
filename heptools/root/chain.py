@@ -683,6 +683,7 @@ class Friend:
         naming: str | NameMapping = "{name}_{uuid}_{start}_{stop}.root",
         reader_options: dict = None,
         writer_options: dict = None,
+        clean: bool = True,
         dask: bool = False,
     ):
         """
@@ -702,6 +703,8 @@ class Friend:
             Additional options passed to :class:`~.io.TreeReader`.
         writer_options: dict, optional
             Additional options passed to :class:`~.io.TreeWriter`.
+        clean : bool, optional, default=True
+            If ``True``, clean the original friend chunks after merging.
         dask : bool, optional, default=False
             If ``True``, return a :class:`~dask.delayed.Delayed` object.
 
@@ -719,7 +722,7 @@ class Friend:
             dummy = _FriendItem(chunks[0].start, chunks[-1].stop)
             path = base / _apply_naming(naming, self._name_dump(target, dummy))
             if len(chunks) == 1:
-                chunks = [move(path, chunks[0].chunk, dask=dask)]
+                chunks = [move(path, chunks[0].chunk, clean=clean, dask=dask)]
             else:
                 chunks = resize(
                     path,
@@ -728,6 +731,7 @@ class Friend:
                     chunk_size=chunk_size,
                     writer_options=writer_options,
                     reader_options=reader_options,
+                    clean=clean,
                     dask=dask,
                 )
             data[target].append((dummy.start, dummy.stop, chunks))

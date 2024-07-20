@@ -8,6 +8,7 @@ from .io import TreeReader, TreeWriter
 def move(
     path: PathLike,
     source: Chunk,
+    clean: bool = True,
     dask: bool = False,
 ):
     """
@@ -19,6 +20,8 @@ def move(
         Path to output ROOT file.
     source : ~heptools.root.chunk.Chunk
         Source chunk to move.
+    clean : bool, optional, default=True
+        If ``True``, remove the source chunk after moving.
     dask : bool, optional, default=False
         If ``True``, return a :class:`~dask.delayed.Delayed` object.
 
@@ -28,7 +31,7 @@ def move(
         Moved chunk.
     """
     source = source.deepcopy()
-    source.path = source.path.move_to(path)
+    source.path = (source.path.move_to if clean else source.path.copy_to)(path)
     return source
 
 
@@ -106,6 +109,7 @@ def resize(
     chunk_size: int = ...,
     writer_options: dict = None,
     reader_options: dict = None,
+    clean: bool = True,
     dask: bool = False,
 ):
     """
@@ -125,6 +129,8 @@ def resize(
         Additional options passed to :class:`~.io.TreeWriter`.
     reader_options : dict, optional
         Additional options passed to :class:`~.io.TreeReader`.
+    clean : bool, optional, default=True
+        If ``True``, remove the source chunk after moving.
     dask : bool, optional, default=False
         If ``True``, return a :class:`~dask.delayed.Delayed` object.
 
@@ -165,5 +171,6 @@ def resize(
                     dask=dask,
                 )
             )
-    results = clean(sources, results, dask=dask)
+    if clean:
+        results = clean(sources, results, dask=dask)
     return results
