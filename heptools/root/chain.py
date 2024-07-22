@@ -722,7 +722,7 @@ class Friend:
             dummy = _FriendItem(chunks[0].start, chunks[-1].stop)
             path = base / _apply_naming(naming, self._name_dump(target, dummy))
             if len(chunks) == 1:
-                chunks = [move(path, chunks[0].chunk, clean=clean, dask=dask)]
+                chunks = [move(path, chunks[0].chunk, clean_source=clean, dask=dask)]
             else:
                 chunks = resize(
                     path,
@@ -731,7 +731,7 @@ class Friend:
                     chunk_size=chunk_size,
                     writer_options=writer_options,
                     reader_options=reader_options,
-                    clean=clean,
+                    clean_source=clean,
                     dask=dask,
                 )
             data[target].append((dummy.start, dummy.stop, chunks))
