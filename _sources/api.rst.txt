@@ -7,4 +7,5 @@ API reference
 
    api/alias
    api/eos
+   api/math
    api/root
