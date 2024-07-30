@@ -7,5 +7,5 @@ Random Number Generators
 Counter-based
 ================
 
-.. autoclass:: heptools.math.random.CBRNG
+.. autoapiclass:: heptools.math.random.CBRNG
     :members: choice
