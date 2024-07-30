@@ -8,4 +8,4 @@ Counter-based
 ================
 
 .. autoapiclass:: heptools.math.random.CBRNG
-    :members: choice
+    :members: uniform, normal, choice
