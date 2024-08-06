@@ -31,7 +31,9 @@ def move(
         Moved chunk.
     """
     source = source.deepcopy()
-    source.path = (source.path.move_to if clean_source else source.path.copy_to)(path)
+    source.path = (source.path.move_to if clean_source else source.path.copy_to)(
+        path, overwrite=True
+    )
     return source
 
 
