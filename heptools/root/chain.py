@@ -37,7 +37,7 @@ _NAMING = "{name}_{uuid}_{start}_{stop}.root"
 _FRIEND_AUTO = "_Friend__auto"
 _FRIEND_DUMP = "_Friend__dump"
 _FRIEND_DISK_ERROR = 'Cannot perform "{func}()" on friend tree "{name}" when there is in-memory data. Call "dump()" first.'
-
+_FRIEND_MISSING_ERROR = 'Missing "{name}" friend entries{range} for {target}.'
 _BRANCH_FILTER = "branch_filter"
 
 
@@ -359,6 +359,10 @@ class Friend:
         return TreeReader(**reader_options)
 
     def _match_chunks(self, target: Chunk) -> Generator[Chunk, None, None]:
+        if target not in self._data:
+            raise ValueError(
+                _FRIEND_MISSING_ERROR.format(name=self.name, range="", target=target)
+            )
         series = self._data[target]
         start = target.entry_start
         stop = target.entry_stop
@@ -373,7 +377,9 @@ class Friend:
             item = series[i]
             if item.start > start:
                 raise ValueError(
-                    f"Friend {self.name} does not have the entries [{start},{item.start}) for {target}"
+                    _FRIEND_MISSING_ERROR.format(
+                        name=self.name, range=f" [{start},{item.start})", target=target
+                    )
                 )
             else:
                 chunk_start = start - item.start
