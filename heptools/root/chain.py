@@ -21,7 +21,7 @@ from ..dask.delayed import delayed
 from ..system.eos import EOS, PathLike
 from ._backend import merge_record, rename_record
 from .chunk import Chunk
-from .io import TreeReader, TreeWriter
+from .io import ReaderOptions, TreeReader, TreeWriter, WriterOptions
 from .merge import move, resize
 
 if TYPE_CHECKING:
@@ -37,6 +37,8 @@ _NAMING = "{name}_{uuid}_{start}_{stop}.root"
 _FRIEND_AUTO = "_Friend__auto"
 _FRIEND_DUMP = "_Friend__dump"
 _FRIEND_DISK_ERROR = 'Cannot perform "{func}()" on friend tree "{name}" when there is in-memory data. Call "dump()" first.'
+
+_BRANCH_FILTER = "branch_filter"
 
 
 class NameMapping(Protocol):
@@ -221,8 +223,8 @@ class Friend:
         self,
         base_path: PathLike = ...,
         naming: str | NameMapping = ...,
-        writer_options: dict = ...,
-        executor: Executor = ...,
+        writer_options: WriterOptions = None,
+        executor: Executor = None,
     ):
         """
         Automatically dump the in-memory data when :meth:`add` is called. The parameters are the same as :meth:`dump`.
@@ -347,13 +349,13 @@ class Friend:
             self._check_item(item)
         self._insert(key, item)
 
-    def _new_reader(self, reader_options: dict):
+    def _new_reader(self, reader_options: ReaderOptions):
         reader_options = dict(reader_options or {})
-        branch_filter = reader_options.pop("branch_filter", None)
+        branch_filter = reader_options.pop(_BRANCH_FILTER, None)
         branches = (
             self._branches if branch_filter is None else branch_filter(self._branches)
         )
-        reader_options["branch_filter"] = branches.intersection
+        reader_options[_BRANCH_FILTER] = branches.intersection
         return TreeReader(**reader_options)
 
     def _match_chunks(self, target: Chunk) -> Generator[Chunk, None, None]:
@@ -384,28 +386,28 @@ class Friend:
         self,
         target: Chunk,
         library: Literal["ak"] = "ak",
-        reader_options: dict = None,
+        reader_options: ReaderOptions = None,
     ) -> ak.Array: ...
     @overload
     def arrays(
         self,
         target: Chunk,
         library: Literal["pd"] = "pd",
-        reader_options: dict = None,
+        reader_options: ReaderOptions = None,
     ) -> pd.DataFrame: ...
     @overload
     def arrays(
         self,
         target: Chunk,
         library: Literal["np"] = "np",
-        reader_options: dict = None,
+        reader_options: ReaderOptions = None,
     ) -> dict[str, np.ndarray]: ...
     @_on_disk
     def arrays(
         self,
         target: Chunk,
         library: Literal["ak", "pd", "np"] = "ak",
-        reader_options: dict = None,
+        reader_options: ReaderOptions = None,
     ) -> RecordLike:
         """
         Fetch the friend :class:`TTree` for ``target`` into array.
@@ -433,28 +435,28 @@ class Friend:
         self,
         *targets: Chunk,
         library: Literal["ak"] = "ak",
-        reader_options: dict = None,
+        reader_options: ReaderOptions = None,
     ) -> ak.Array: ...
     @overload
     def concat(
         self,
         *targets: Chunk,
         library: Literal["pd"] = "pd",
-        reader_options: dict = None,
+        reader_options: ReaderOptions = None,
     ) -> pd.DataFrame: ...
     @overload
     def concat(
         self,
         *targets: Chunk,
         library: Literal["np"] = "np",
-        reader_options: dict = None,
+        reader_options: ReaderOptions = None,
     ) -> dict[str, np.ndarray]: ...
     @_on_disk
     def concat(
         self,
         *targets: Chunk,
         library: Literal["ak", "pd", "np"] = "ak",
-        reader_options: dict = None,
+        reader_options: ReaderOptions = None,
     ) -> RecordLike:
         """
         Fetch the friend :class:`TTree` for ``targets`` into one array.
@@ -482,21 +484,21 @@ class Friend:
         self,
         *targets: Chunk,
         library: Literal["ak"] = "ak",
-        reader_options: dict = None,
+        reader_options: ReaderOptions = None,
     ) -> dak.Array: ...
     @overload
     def dask(
         self,
         *targets: Chunk,
         library: Literal["np"] = "np",
-        reader_options: dict = None,
+        reader_options: ReaderOptions = None,
     ) -> dict[str, da.Array]: ...
     @_on_disk
     def dask(
         self,
         *targets: Chunk,
         library: Literal["ak", "np"] = "ak",
-        reader_options: dict = None,
+        reader_options: ReaderOptions = None,
     ) -> DelayedRecordLike:
         """
         Fetch the friend :class:`TTree` for ``targets`` as delayed arrays. The partitions will be preserved.
@@ -541,8 +543,8 @@ class Friend:
         self,
         base_path: PathLike = ...,
         naming: str | NameMapping = ...,
-        writer_options: dict = ...,
-        executor: Executor = ...,
+        writer_options: WriterOptions = None,
+        executor: Executor = None,
     ):
         """
         Dump all in-memory data to ROOT files with a given ``naming`` format.
@@ -553,7 +555,7 @@ class Friend:
             Base path to store the dumped files. See below for details.
         naming : str or ~typing.Callable, default="{name}_{uuid}_{start}_{stop}.root"
             Naming format for the dumped files. See below for details.
-        writer_options: dict, optional
+        writer_options : dict, optional
             Additional options passed to :class:`~.io.TreeWriter`.
         executor: ~concurrent.futures.Executor, optional
             An executor with at least the :meth:`~concurrent.futures.Executor.submit` method implemented. If not provided, the tasks will run sequentially in the current thread.
@@ -607,23 +609,22 @@ class Friend:
                 base_path = EOS(base_path)
             if naming is ...:
                 naming = _NAMING
-            if writer_options is ...:
-                writer_options = {}
+            opts = writer_options or {}
             for target, item in self.__dump:
                 if base_path is ...:
                     path = target.path.parent
                 else:
                     path = base_path
                 path = path / _apply_naming(naming, self._name_dump(target, item))
-                job = _friend_dump_job(path, writer_options, item.chunk)
+                job = _friend_dump_job(path, opts, item.chunk)
                 callback = _friend_dump_callback(self, item)
-                if executor is ...:
+                if executor is None:
                     callback(job())
                 else:
                     executor.submit(job).add_done_callback(callback)
             self.__dump.clear()
 
-    def reset(self, confirm: bool = True, executor: Executor = ...):
+    def reset(self, confirm: bool = True, executor: Executor = None):
         """
         Reset the friend tree and delete all dumped files.
 
@@ -647,7 +648,7 @@ class Friend:
             if confirmation != self.name:
                 logging.info("Deletion aborted.")
                 return
-        (_map_executor if executor is ... else executor.map)(EOS.rm, files)
+        (_map_executor if executor is None else executor.map)(EOS.rm, files)
         self._branches = None
         self._data.clear()
         if hasattr(self, _FRIEND_DUMP):
@@ -681,8 +682,8 @@ class Friend:
         chunk_size: int = ...,
         base_path: PathLike = ...,
         naming: str | NameMapping = "{name}_{uuid}_{start}_{stop}.root",
-        reader_options: dict = None,
-        writer_options: dict = None,
+        reader_options: ReaderOptions = None,
+        writer_options: WriterOptions = None,
         clean: bool = True,
         dask: bool = False,
     ):
@@ -699,9 +700,9 @@ class Friend:
             Base path to store the merged files. See notes of :meth:`dump` for details.
         naming : str or ~typing.Callable, optional
             Naming format for the merged files. See notes of :meth:`dump` for details.
-        reader_options: dict, optional
+        reader_options : dict, optional
             Additional options passed to :class:`~.io.TreeReader`.
-        writer_options: dict, optional
+        writer_options : dict, optional
             Additional options passed to :class:`~.io.TreeWriter`.
         clean : bool, optional, default=True
             If ``True``, clean the original friend chunks after merging.
@@ -745,7 +746,7 @@ class Friend:
         base_path: PathLike,
         naming: str | NameMapping = ...,
         execute: bool = False,
-        executor: Executor = ...,
+        executor: Executor = None,
     ):
         """
         Copy all chunks to a new location.
@@ -803,12 +804,12 @@ class Friend:
                 chunk.path = path
                 friend._data[target].append(_FriendItem(item.start, item.stop, chunk))
         if execute:
-            (_map_executor if executor is ... else executor.map)(
+            (_map_executor if executor is None else executor.map)(
                 partial(EOS.cp, parents=True, overwrite=True), src, dst
             )
         return friend
 
-    def integrity(self, executor: Executor = ...):
+    def integrity(self, executor: Executor = None):
         """
         Check and report the following:
 
@@ -833,7 +834,7 @@ class Friend:
                 if item.on_disk:
                     checked.append(item.chunk)
         checked = deque(
-            (map if executor is ... else executor.map)(Chunk.integrity, checked)
+            (map if executor is None else executor.map)(Chunk.integrity, checked)
         )
         for target, items in self._data.items():
             target = checked.popleft()
@@ -956,6 +957,8 @@ class Chain:
             record[main.branch] = array
             record[friend.branch] = array
 
+    If duplicate branches are found after rename, the one in the friend tree that appears last will be kept.
+
     Notes
     -----
     The following special methods are implemented:
@@ -1064,25 +1067,25 @@ class Chain:
         self,
         *chunks: Chunk,
         library: Literal["ak", "pd", "np"],
-        reader_options: dict,
+        reader_options: ReaderOptions,
         friend_only: bool = False,
         awkward_nested: bool = True,
     ) -> RecordLike:
         reader_options = reader_options or {}
         friends = {}
         for name, friend in self._friends.items():
-            friend = friend.concat(
+            data = friend.concat(
                 *chunks,
                 library=library,
                 reader_options=reader_options,
             )
             if name in self._rename:
-                friend = rename_record(
-                    friend,
+                data = rename_record(
+                    data,
                     partial(self._rename_wrapper, friend=name),
                     library=library,
                 )
-            friends[name] = friend
+            friends[name] = data
         if library == "ak":
             friends = {k: v for k, v in friends.items() if len(v.fields) > 0}
         if friend_only:
@@ -1103,7 +1106,7 @@ class Chain:
     def concat(
         self,
         library: Literal["ak"] = "ak",
-        reader_options: dict = None,
+        reader_options: ReaderOptions = None,
         friend_only: bool = False,
         awkward_nested: bool = True,
     ) -> ak.Array: ...
@@ -1111,20 +1114,20 @@ class Chain:
     def concat(
         self,
         library: Literal["pd"] = "pd",
-        reader_options: dict = None,
+        reader_options: ReaderOptions = None,
         friend_only: bool = False,
     ) -> pd.DataFrame: ...
     @overload
     def concat(
         self,
         library: Literal["np"] = "np",
-        reader_options: dict = None,
+        reader_options: ReaderOptions = None,
         friend_only: bool = False,
     ) -> dict[str, np.ndarray]: ...
     def concat(
         self,
         library: Literal["ak", "pd", "np"] = "ak",
-        reader_options: dict = None,
+        reader_options: ReaderOptions = None,
         friend_only: bool = False,
         awkward_nested: bool = True,
     ) -> RecordLike:
@@ -1161,7 +1164,7 @@ class Chain:
         step: int = ...,
         library: Literal["ak"] = "ak",
         mode: Literal["balance", "partition"] = "partition",
-        reader_options: dict = None,
+        reader_options: ReaderOptions = None,
         awkward_nested: bool = True,
     ) -> Generator[ak.Array, None, None]: ...
     @overload
@@ -1170,7 +1173,7 @@ class Chain:
         step: int = ...,
         library: Literal["pd"] = "pd",
         mode: Literal["balance", "partition"] = "partition",
-        reader_options: dict = None,
+        reader_options: ReaderOptions = None,
     ) -> Generator[pd.DataFrame, None, None]: ...
     @overload
     def iterate(
@@ -1178,14 +1181,14 @@ class Chain:
         step: int = ...,
         library: Literal["np"] = "np",
         mode: Literal["balance", "partition"] = "partition",
-        reader_options: dict = None,
+        reader_options: ReaderOptions = None,
     ) -> Generator[dict[str, np.ndarray], None, None]: ...
     def iterate(
         self,
         step: int = ...,
         library: Literal["ak", "pd", "np"] = "ak",
         mode: Literal["balance", "partition"] = "partition",
-        reader_options: dict = None,
+        reader_options: ReaderOptions = None,
         awkward_nested: bool = True,
     ) -> Generator[RecordLike, None, None]:
         """
@@ -1233,20 +1236,20 @@ class Chain:
         self,
         partition: int = ...,
         library: Literal["ak"] = "ak",
-        reader_options: dict = None,
+        reader_options: ReaderOptions = None,
     ) -> dak.Array: ...
     @overload
     def dask(
         self,
         partition: int = ...,
         library: Literal["np"] = "np",
-        reader_options: dict = None,
+        reader_options: ReaderOptions = None,
     ) -> dict[str, da.Array]: ...
     def dask(
         self,
         partition: int = ...,
         library: Literal["ak", "np"] = "ak",
-        reader_options: dict = None,
+        reader_options: ReaderOptions = None,
     ) -> DelayedRecordLike:
         """
         Read chunks and friend trees into delayed arrays.

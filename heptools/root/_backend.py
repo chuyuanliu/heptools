@@ -103,7 +103,8 @@ def merge_record(data: list, library: Literal["ak", "pd", "np"] = ...):
     elif library == "pd":
         import pandas as pd
 
-        return pd.concat(data, ignore_index=False, sort=False, copy=False, axis=1)
+        df = pd.concat(data, ignore_index=False, sort=False, copy=False, axis=1)
+        return df.loc[:, ~df.columns.duplicated(keep="last")]
     elif library == "np" or library.startswith("dict"):
         return reduce(op.or_, data)
     else:

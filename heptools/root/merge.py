@@ -1,7 +1,7 @@
 from ..dask.delayed import delayed
 from ..system.eos import EOS, PathLike
 from .chunk import Chunk
-from .io import TreeReader, TreeWriter
+from .io import ReaderOptions, TreeReader, TreeWriter, WriterOptions
 
 
 @delayed
@@ -40,8 +40,8 @@ def merge(
     path: PathLike,
     *sources: Chunk,
     step: int,
-    writer_options: dict = None,
-    reader_options: dict = None,
+    writer_options: WriterOptions = None,
+    reader_options: ReaderOptions = None,
     dask: bool = False,
 ):
     """
@@ -107,8 +107,8 @@ def resize(
     *sources: Chunk,
     step: int,
     chunk_size: int = ...,
-    writer_options: dict = None,
-    reader_options: dict = None,
+    writer_options: WriterOptions = None,
+    reader_options: ReaderOptions = None,
     clean_source: bool = True,
     dask: bool = False,
 ):
