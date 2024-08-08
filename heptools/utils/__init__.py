@@ -155,3 +155,7 @@ def match_any(
         if match(pattern, target):
             return True
     return False
+
+
+def map_executor(fn, *iterables):
+    return (*map(fn, *iterables),)

@@ -2,12 +2,14 @@ from __future__ import annotations
 
 import logging
 import math
+from concurrent.futures import Executor
 from functools import partial
-from typing import Iterable
+from typing import Iterable, Optional
 from uuid import UUID
 
 from ..system.eos import EOS, PathLike
 from ..typetools import check_type
+from ..utils import map_executor
 
 
 class _ChunkMeta(type):
@@ -257,7 +259,7 @@ class Chunk(metaclass=_ChunkMeta):
         return chunk
 
     @classmethod
-    def from_path(cls, *paths: tuple[str, str], n_process: int = None):
+    def from_path(cls, *paths: tuple[str, str], executor: Optional[Executor] = None):
         """
         Create :class:`Chunk` from ``paths`` and fetch metadata in parallel.
 
@@ -265,19 +267,18 @@ class Chunk(metaclass=_ChunkMeta):
         ----------
         paths : tuple[tuple[str, str]
             Path to ROOT file and name of :class:`TTree`.
-        n_process : int, optional
-            Number of processes to use.
+        executor: ~concurrent.futures.Executor, optional
+            An executor with at least the :meth:`~concurrent.futures.Executor.map` method implemented. If not provided, the tasks will run sequentially in the current thread.
 
         Returns
         -------
         list[Chunk]
             List of chunks from ``paths``.
         """
-        from concurrent.futures import ProcessPoolExecutor
-
         chunks = [Chunk(path, name) for path, name in paths]
-        with ProcessPoolExecutor(max_workers=n_process) as executor:
-            chunks = executor.map(Chunk._fetch, chunks)
+        chunks = (map_executor if executor is None else executor.map)(
+            Chunk._fetch, chunks
+        )
         return [*chunks]
 
     @classmethod

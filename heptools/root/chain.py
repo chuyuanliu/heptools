@@ -13,12 +13,14 @@ from typing import (
     Generator,
     Iterable,
     Literal,
+    Optional,
     Protocol,
     overload,
 )
 
 from ..dask.delayed import delayed
 from ..system.eos import EOS, PathLike
+from ..utils import map_executor
 from ._backend import merge_record, rename_record
 from .chunk import Chunk
 from .io import ReaderOptions, TreeReader, TreeWriter, WriterOptions
@@ -43,10 +45,6 @@ _BRANCH_FILTER = "branch_filter"
 
 class NameMapping(Protocol):
     def __call__(self, **keys: str) -> str: ...
-
-
-def _map_executor(fn, *iterables):
-    return (*map(fn, *iterables),)
 
 
 def _apply_naming(naming: str | NameMapping, keys: dict[str, str]) -> str:
@@ -630,7 +628,7 @@ class Friend:
                     executor.submit(job).add_done_callback(callback)
             self.__dump.clear()
 
-    def reset(self, confirm: bool = True, executor: Executor = None):
+    def reset(self, confirm: bool = True, executor: Optional[Executor] = None):
         """
         Reset the friend tree and delete all dumped files.
 
@@ -654,7 +652,7 @@ class Friend:
             if confirmation != self.name:
                 logging.info("Deletion aborted.")
                 return
-        (_map_executor if executor is None else executor.map)(EOS.rm, files)
+        (map_executor if executor is None else executor.map)(EOS.rm, files)
         self._branches = None
         self._data.clear()
         if hasattr(self, _FRIEND_DUMP):
@@ -752,7 +750,7 @@ class Friend:
         base_path: PathLike,
         naming: str | NameMapping = ...,
         execute: bool = False,
-        executor: Executor = None,
+        executor: Optional[Executor] = None,
     ):
         """
         Copy all chunks to a new location.
@@ -810,7 +808,7 @@ class Friend:
                 chunk.path = path
                 friend._data[target].append(_FriendItem(item.start, item.stop, chunk))
         if execute:
-            (_map_executor if executor is None else executor.map)(
+            (map_executor if executor is None else executor.map)(
                 partial(EOS.cp, parents=True, overwrite=True), src, dst
             )
         return friend
