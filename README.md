@@ -87,6 +87,11 @@ export APPTAINER_CACHEDIR="new/path/to/cache/"
 export APPTAINER_TMPDIR="new/path/to/tmp/"
 ```
 
+- To run ml container in wsl:
+```bash
+singularity shell -B .:/srv -B /run/shm --nvccli --pwd /srv ${HEPTOOLS_DOCKER_IMAGE}
+```
+
 ## TODO
 
 - check: use TYPE_CHECKING to avoid circular import, unused import
