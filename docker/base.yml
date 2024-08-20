@@ -13,6 +13,7 @@ dependencies:
   - numba
   - networkx
   # visualization
+  - nodejs
   - matplotlib
   - bokeh
   - graphviz
