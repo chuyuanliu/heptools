@@ -1,13 +1,5 @@
-from typing import TypedDict
-
 from bokeh.core.properties import Bool, Dict, List, String
 from bokeh.models import Widget
-
-
-class IconCollection(TypedDict):
-    root: str
-    branch: str
-    leaf: str
 
 
 class TreeView(Widget):
