@@ -16,6 +16,11 @@ interface JSTreeNode {
   children: JSTreeNode[]
 }
 
+interface IconEntry {
+  icon: string
+}
+
+
 export class TreeViewElementView extends WidgetView {
   declare model: TreeView
 
@@ -25,7 +30,7 @@ export class TreeViewElementView extends WidgetView {
   private readonly icons_default: Map<string, string> = new Map([
     ['root', 'bi-database'],
     ['branch', 'bi-folder'],
-    ['leaf', 'bi-file-earmark'],
+    ['default', 'bi-file-earmark'],
   ]);
 
   override stylesheets(): StyleSheetLike[] {
@@ -89,17 +94,7 @@ export class TreeViewElementView extends WidgetView {
         data: this._build(),
         animation: false,
       },
-      types: {
-        root: {
-          icon: this._icon('root'),
-        },
-        branch: {
-          icon: this._icon('branch'),
-        },
-        leaf: {
-          icon: this._icon('leaf'),
-        },
-      },
+      types: this._icon(),
       plugins: ['types', 'wholerow', 'sort', 'search', 'conditionalselect'],
       conditionalselect: function (node: any) { return this.is_leaf(node); },
     })
@@ -119,13 +114,15 @@ export class TreeViewElementView extends WidgetView {
     this.shadow_el.append(this.tree_el);
   }
 
-  private _icon(type: string): string | undefined {
-    const icons = dict(this.model.icons);
-    if (type in this.model.icons) {
-      return icons.get(type);
-    } else {
-      return this.icons_default.get(type);
+  private _icon(): any {
+    let types: Map<string, IconEntry> = new Map();
+    for (const [type, icon] of this.icons_default) {
+      types.set(type, { icon: icon });
     }
+    for (const [type, icon] of dict(this.model.icons)) {
+      types.set(type, { icon: icon });
+    }
+    return Object.fromEntries(types);
   }
 
   private _select(): void {
@@ -143,7 +140,7 @@ export class TreeViewElementView extends WidgetView {
       children: [],
     }
     let built: { [key: string]: JSTreeNode } = {};
-    for (const path of this.model.paths) {
+    for (const [path, type] of dict(this.model.paths)) {
       let cur = root;
       const parts = path.split(this.model.separator);
       for (const part of parts) {
@@ -152,14 +149,14 @@ export class TreeViewElementView extends WidgetView {
           id = cur.id + this.model.separator + part;
         }
         if (!(id in built)) {
-          let type = 'branch';
+          let node_type = 'branch';
           if (id === path) {
-            type = 'leaf';
+            node_type = type;
           }
           const node = {
             id: id,
             text: part,
-            type: type,
+            type: node_type,
             state: { opened: this.model.expand },
             children: [],
           }
@@ -180,7 +177,7 @@ export namespace TreeView {
 
   export type Props = Widget.Props & {
     root: p.Property<string>
-    paths: p.Property<string[]>
+    paths: p.Property<Dict<string>>
     separator: p.Property<string>
     expand: p.Property<boolean>
     icons: p.Property<Dict<string>>
@@ -200,7 +197,7 @@ export class TreeView extends Widget {
     this.prototype.default_view = TreeViewElementView
     this.define<TreeView.Props>(({ Str, List, Bool, Dict }) => ({
       root: [Str, 'root'],
-      paths: [List(Str), []],
+      paths: [Dict(Str), {}],
       separator: [Str, '/'],
       expand: [Bool, false],
       icons: [Dict(Str), {}],

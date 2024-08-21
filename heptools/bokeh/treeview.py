@@ -21,9 +21,9 @@ class TreeView(Widget):
     ]
 
     root = String(help="Name of the root node")
-    paths = List(String, help="List of paths")
-    separator = String(help="Separator for paths")
-    expand = Bool(help="Expand all nodes")
-    icons = Dict(String, String, help='Icons for "root", "branch" and "leaf"')
+    paths = Dict(String, String, help="Paths and types of nodes")
+    separator = String(help="Path separator")
+    expand = Bool(help="Expand all nodes when loaded")
+    icons = Dict(String, String, help="Bootstrap icons for each type")
 
-    selected_leaves = List(String, help="All selected leaves")
+    selected_leaves = List(String, help="Current selected leaves")
