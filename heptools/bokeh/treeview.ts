@@ -78,8 +78,8 @@ export class TreeViewElementView extends WidgetView {
 
   override connect_signals(): void {
     super.connect_signals()
-    const { selected_leaves } = this.model.properties;
-    this.on_change(selected_leaves, () => {
+    const { selected } = this.model.properties;
+    this.on_change(selected, () => {
       this._change_select(() => this._select());
     });
   }
@@ -116,7 +116,7 @@ export class TreeViewElementView extends WidgetView {
       })
       .on('changed.jstree', (_: any, data: any) => {
         this._change_select(() => {
-          this.model.selected_leaves = data.selected.slice();
+          this.model.selected = data.selected.slice();
         });
       });
     $(this.search_el).on('keyup', () => {
@@ -141,7 +141,7 @@ export class TreeViewElementView extends WidgetView {
   private _select(): void {
     const tree = $(this.tree_el).jstree(true);
     tree.deselect_all(true);
-    tree.select_node(this.model.selected_leaves);
+    tree.select_node(this.model.selected);
   }
 
   private _build(): JSTreeNode {
@@ -194,7 +194,7 @@ export namespace TreeView {
     separator: p.Property<string>
     expand: p.Property<boolean>
     icons: p.Property<Dict<string>>
-    selected_leaves: p.Property<string[]>
+    selected: p.Property<string[]>
   }
 }
 
@@ -214,7 +214,7 @@ export class TreeView extends Widget {
       separator: [Str, '/'],
       expand: [Bool, false],
       icons: [Dict(Str), {}],
-      selected_leaves: [List(Str), []],
+      selected: [List(Str), []],
     }))
   }
 }

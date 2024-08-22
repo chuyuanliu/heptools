@@ -18,4 +18,4 @@ class TreeView(Widget):
     expand = Bool(help="Expand all nodes when loaded")
     icons = Dict(String, String, help="Bootstrap icons for each type")
 
-    selected_leaves = List(String, help="Current selected leaves")
+    selected = List(String, help="Currently selected leaves")
