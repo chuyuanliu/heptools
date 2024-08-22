@@ -87,8 +87,21 @@ export class TreeViewElementView extends WidgetView {
   override render(): void {
     super.render()
 
-    this.search_el = input({ style: { width: '100%', marginBottom: '5px' } });
-    this.tree_el = div();
+    this.search_el = input({
+      style: {
+        width: '100%',
+        marginBottom: '5px'
+      }
+    });
+    this.tree_el = div({
+      style: {
+        width: '100%',
+        height: '100%',
+        overflow: 'auto',
+        border: '1px solid darkgray',
+        borderRadius: '4px',
+      }
+    });
     $(this.tree_el).jstree({
       core: {
         data: this._build(),
