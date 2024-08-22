@@ -1,4 +1,4 @@
-import { div, ImportedStyleSheet, InlineStyleSheet, input, StyleSheetLike } from 'core/dom';
+import { button, div, ImportedStyleSheet, InlineStyleSheet, input, StyleSheetLike } from 'core/dom';
 import * as p from 'core/properties';
 import { Dict } from 'core/types';
 import { dict } from "core/util/object";
@@ -24,6 +24,7 @@ interface IconEntry {
 export class TreeViewElementView extends WidgetView {
   declare model: TreeView
 
+  private control_el: HTMLElement
   private search_el: HTMLInputElement
   private tree_el: HTMLElement
 
@@ -63,6 +64,16 @@ export class TreeViewElementView extends WidgetView {
 .jstree-default .jstree-wholerow-clicked {
   background: #90d5ff!important;
 }
+.bkext-treeview-btn {
+  height: 24px;
+  width: 24px;
+  padding: 0;
+  border: none;
+  background: #fff;
+  color: #5f5f5f;
+  font-size: 20px;
+  cursor: pointer;
+}
 `),
     ]
   }
@@ -87,12 +98,42 @@ export class TreeViewElementView extends WidgetView {
   override render(): void {
     super.render()
 
+    // control panel
+    this.control_el = div({
+      style: {
+        width: '100%',
+        marginBottom: '2px'
+      }
+    });
+    // expand button
+    let expand_btn = button({
+      class: 'bkext-treeview-btn bi-plus-square',
+      title: 'Expand all',
+    });
+    $(expand_btn).on('click', () => {
+      $(this.tree_el).jstree(true).open_all();
+    });
+    this.control_el.append(expand_btn);
+    // collapse button
+    let collapse_btn = button({
+      class: 'bkext-treeview-btn bi-dash-square',
+      title: 'Collapse all',
+    });
+    $(collapse_btn).on('click', () => {
+      $(this.tree_el).jstree(true).close_all();
+      $(this.tree_el).jstree(true).open_node('.');
+    });
+    this.control_el.append(collapse_btn);
+
+    // search
     this.search_el = input({
       style: {
         width: '100%',
-        marginBottom: '5px'
+        marginBottom: '2px'
       }
     });
+
+    // tree
     this.tree_el = div({
       style: {
         width: '100%',
@@ -123,6 +164,7 @@ export class TreeViewElementView extends WidgetView {
       $(this.tree_el).jstree(true).search($(this.search_el).val());
     });
 
+    this.shadow_el.append(this.control_el);
     this.shadow_el.append(this.search_el);
     this.shadow_el.append(this.tree_el);
   }
@@ -146,7 +188,7 @@ export class TreeViewElementView extends WidgetView {
 
   private _build(): JSTreeNode {
     const root: JSTreeNode = {
-      id: '',
+      id: '.',
       text: this.model.root,
       type: 'root',
       state: { opened: true, disabled: true },
@@ -158,7 +200,7 @@ export class TreeViewElementView extends WidgetView {
       const parts = path.split(this.model.separator);
       for (const part of parts) {
         let id = part;
-        if (cur.id !== '') {
+        if (cur.type !== 'root') {
           id = cur.id + this.model.separator + part;
         }
         if (!(id in built)) {
