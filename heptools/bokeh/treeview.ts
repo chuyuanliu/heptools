@@ -101,6 +101,7 @@ export class TreeViewElementView extends WidgetView {
     // control panel
     this.control_el = div({
       style: {
+        height: '24px',
         width: '100%',
         marginBottom: '2px'
       }
@@ -128,6 +129,7 @@ export class TreeViewElementView extends WidgetView {
     // search
     this.search_el = input({
       style: {
+        height: '24px',
         width: '100%',
         marginBottom: '2px'
       }
@@ -136,8 +138,8 @@ export class TreeViewElementView extends WidgetView {
     // tree
     this.tree_el = div({
       style: {
+        height: 'calc(100% - 50px)',
         width: '100%',
-        height: '100%',
         overflow: 'auto',
         border: '1px solid darkgray',
         borderRadius: '4px',
