@@ -152,7 +152,17 @@ export class TreeViewElementView extends WidgetView {
       },
       types: this._icon(),
       plugins: ['types', 'wholerow', 'sort', 'search', 'conditionalselect'],
-      conditionalselect: function (node: any) { return this.is_leaf(node); },
+      sort: function (a: any, b: any) {
+        let leaf_a = this.is_leaf(a);
+        let leaf_b = this.is_leaf(b);
+        if ((leaf_a + leaf_b) === 1) {
+          return leaf_a - leaf_b;
+        }
+        return this.get_text(a).localeCompare(this.get_text(b));
+      },
+      conditionalselect: function (node: any) {
+        return this.is_leaf(node);
+      },
     })
       .on('loaded.jstree after_open.jstree', () => {
         $(this.tree_el).find('.jstree-node>.jstree-icon.jstree-ocl').addClass('bi-caret-right');
