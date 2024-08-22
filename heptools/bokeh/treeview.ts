@@ -158,7 +158,7 @@ export class TreeViewElementView extends WidgetView {
         if ((leaf_a + leaf_b) === 1) {
           return leaf_a - leaf_b;
         }
-        return this.get_text(a).localeCompare(this.get_text(b));
+        return this.get_text(a) > this.get_text(b) ? 1 : -1;
       },
       conditionalselect: function (node: any) {
         return this.is_leaf(node);
