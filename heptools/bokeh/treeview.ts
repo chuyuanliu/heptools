@@ -74,6 +74,9 @@ export class TreeViewElementView extends WidgetView {
   font-size: 20px;
   cursor: pointer;
 }
+.bkext-treeview-btn:hover {
+  background: #f0f0f0;
+}
 `),
     ]
   }
@@ -108,7 +111,7 @@ export class TreeViewElementView extends WidgetView {
     });
     // expand button
     let expand_btn = button({
-      class: 'bkext-treeview-btn bi-plus-square',
+      class: 'bkext-treeview-btn bi-chevron-bar-expand',
       title: 'Expand all',
     });
     $(expand_btn).on('click', () => {
@@ -117,7 +120,7 @@ export class TreeViewElementView extends WidgetView {
     this.control_el.append(expand_btn);
     // collapse button
     let collapse_btn = button({
-      class: 'bkext-treeview-btn bi-dash-square',
+      class: 'bkext-treeview-btn bi-chevron-bar-contract',
       title: 'Collapse all',
     });
     $(collapse_btn).on('click', () => {
@@ -125,7 +128,27 @@ export class TreeViewElementView extends WidgetView {
       $(this.tree_el).jstree(true).open_node('.');
     });
     this.control_el.append(collapse_btn);
-
+    // select button
+    let select_btn = button({
+      class: 'bkext-treeview-btn bi-plus-lg',
+      title: 'Select all',
+    });
+    $(select_btn).on('click', () => {
+      let tree = $(this.tree_el).jstree(true);
+      for (const [path, _] of dict(this.model.paths)) {
+        tree.select_node(path);
+      }
+    });
+    this.control_el.append(select_btn);
+    // deselect button
+    let deselect_btn = button({
+      class: 'bkext-treeview-btn bi-dash-lg',
+      title: 'Deselect all',
+    });
+    $(deselect_btn).on('click', () => {
+      $(this.tree_el).jstree(true).deselect_all();
+    });
+    this.control_el.append(deselect_btn);
     // search
     this.search_el = input({
       style: {

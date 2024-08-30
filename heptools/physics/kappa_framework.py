@@ -27,6 +27,8 @@ class Coupling:
 
     @property
     def _d(self) -> pd.DataFrame:
+        if not self.__ds:
+            raise CouplingError("No coupling provided.")
         if len(self.__ds) > 1:
             self.__ds = [
                 pd.concat(
@@ -202,3 +204,17 @@ class Diagram(metaclass=_DiagramMeta):
 
     def xs_unc(self, couplings: Coupling):
         return self.quadratic("xs_unc", couplings)
+
+    def js_weight(self, **args: str) -> list[str]:
+        script = []
+        cs = [args.get(arg, arg) for arg in self.diagrams[0]]
+        _s = [
+            "*".join(f"{cs[i]}**{unpack(d[i])}" for i in range(len(cs)))
+            for d in self.__diagram2.T
+        ]
+        script.append(f"let __s = [{', '.join(_s)}];")
+        _w = []
+        for row in self._transmat.T:
+            _w.append("+".join(f"{row[i]}*__s[{i}]" for i in range(len(_s))))
+        script.append(f"let __w = [{', '.join(_w)}];")
+        return script
