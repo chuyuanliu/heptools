@@ -29,16 +29,16 @@ export class TreeViewElementView extends WidgetView {
   private tree_el: HTMLElement
 
   private readonly icons_default: Map<string, string> = new Map([
-    ['root', 'bi-database'],
-    ['branch', 'bi-folder'],
-    ['default', 'bi-file-earmark'],
+    ['root', 'ti ti-database'],
+    ['branch', 'ti ti-folder'],
+    ['default', 'ti ti-file'],
   ]);
 
   override stylesheets(): StyleSheetLike[] {
     return [
       ...super.stylesheets(),
       new ImportedStyleSheet('https://cdnjs.cloudflare.com/ajax/libs/jstree/3.2.1/themes/default/style.min.css'),
-      new ImportedStyleSheet('https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css'),
+      new ImportedStyleSheet(`https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css`),
       new InlineStyleSheet(`
 .jstree-node {
     margin-left: 12px!important;
@@ -111,7 +111,7 @@ export class TreeViewElementView extends WidgetView {
     });
     // expand button
     let expand_btn = button({
-      class: 'bkext-treeview-btn bi-chevron-bar-expand',
+      class: 'bkext-treeview-btn ti ti-chevrons-down',
       title: 'Expand all',
     });
     $(expand_btn).on('click', () => {
@@ -120,7 +120,7 @@ export class TreeViewElementView extends WidgetView {
     this.control_el.append(expand_btn);
     // collapse button
     let collapse_btn = button({
-      class: 'bkext-treeview-btn bi-chevron-bar-contract',
+      class: 'bkext-treeview-btn ti ti-chevrons-up',
       title: 'Collapse all',
     });
     $(collapse_btn).on('click', () => {
@@ -130,7 +130,7 @@ export class TreeViewElementView extends WidgetView {
     this.control_el.append(collapse_btn);
     // select button
     let select_btn = button({
-      class: 'bkext-treeview-btn bi-plus-lg',
+      class: 'bkext-treeview-btn ti ti-plus',
       title: 'Select all',
     });
     $(select_btn).on('click', () => {
@@ -142,7 +142,7 @@ export class TreeViewElementView extends WidgetView {
     this.control_el.append(select_btn);
     // deselect button
     let deselect_btn = button({
-      class: 'bkext-treeview-btn bi-dash-lg',
+      class: 'bkext-treeview-btn ti ti-minus',
       title: 'Deselect all',
     });
     $(deselect_btn).on('click', () => {
@@ -188,7 +188,7 @@ export class TreeViewElementView extends WidgetView {
       },
     })
       .on('loaded.jstree after_open.jstree', () => {
-        $(this.tree_el).find('.jstree-node>.jstree-icon.jstree-ocl').addClass('bi-caret-right');
+        $(this.tree_el).find('.jstree-node>.jstree-icon.jstree-ocl').addClass('ti ti-caret-right');
       })
       .on('changed.jstree', (_: any, data: any) => {
         this._change_select(() => {

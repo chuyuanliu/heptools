@@ -9,7 +9,7 @@ class TreeView(Widget):
         "https://cdnjs.cloudflare.com/ajax/libs/jstree/3.2.1/jstree.min.js",
     ]
     __css__ = [
-        "https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css",
+        "https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css",
     ]
 
     root = String(help="Name of the root node")
