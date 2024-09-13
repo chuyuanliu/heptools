@@ -170,9 +170,8 @@ class Diagram(metaclass=_DiagramMeta):
         cls.__diagram2 = np.unique(np.sum(diagram[..., indices], axis=-1), axis=-1)
 
     def __init__(self, basis: Coupling, unit_basis_weight=False):
-        size_b, min_b = len(basis), self.__diagram2.shape[-1]
-        if size_b < min_b:
-            raise CouplingError(f"Need more basis ({size_b}/{min_b} provided)")
+        if len(basis) < self.rank:
+            raise CouplingError(f"Need more basis ({len(basis)}/{self.rank} provided)")
         self._data = basis
         self._unit = unit_basis_weight
         self._basis = basis.array(*self.diagrams[0])
@@ -218,3 +217,7 @@ class Diagram(metaclass=_DiagramMeta):
             _w.append("+".join(f"{row[i]}*__s[{i}]" for i in range(len(_s))))
         script.append(f"let __w = [{', '.join(_w)}];")
         return script
+
+    @property
+    def rank(self):
+        return self.__diagram2.shape[-1]
