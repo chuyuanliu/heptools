@@ -1,5 +1,5 @@
 import { button, div, ImportedStyleSheet, InlineStyleSheet, input, StyleSheetLike } from 'core/dom';
-import * as p from 'core/properties';
+import type * as p from 'core/properties';
 import { Dict } from 'core/types';
 import { dict } from "core/util/object";
 import { Widget, WidgetView } from "models/widgets/widget";
