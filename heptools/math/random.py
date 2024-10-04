@@ -13,6 +13,9 @@ _UINT64_32 = np.uint64(32)
 _BIT52_COUNT = np.float64(1 << 53)
 
 SeedLike = int | str | Iterable[int | str]
+"""
+int, str, Iterable[int | str]: A seed or a sequence of seeds.
+"""
 
 
 def _str_to_entropy(__str: str) -> list[np.uint64]:
@@ -37,6 +40,11 @@ _KeyT = TypeVar("_KeyT")
 class CBRNG(ABC, Generic[_KeyT]):
     """
     Counter-based random number generator (CBRNG).
+
+    Parameters
+    ----------
+    seed : SeedLike
+        The seed used to generate the key.
     """
 
     def __init__(self, *seed: SeedLike):
