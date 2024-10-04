@@ -50,11 +50,13 @@ if TYPE_CHECKING:
     import numpy as np
     import pandas as pd
 
+if TYPE_CHECKING:
     RecordLike = ak.Array | pd.DataFrame | dict[str, np.ndarray]
     """
     ak.Array, pandas.DataFrame, dict[str, numpy.ndarray]: A mapping from string to array-like object. All arrays must have same lengths.
     """
 
+if TYPE_CHECKING:
     DelayedRecordLike = dak.Array | dict[str, da.Array]
     """
     dask_awkward.Array, dict[str, dask.array.Array]: A mapping from string to array-like delayed object.  All arrays must have same lengths and partitions.

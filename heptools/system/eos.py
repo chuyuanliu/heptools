@@ -391,7 +391,7 @@ class EOS:
 
 PathLike = str | EOS | os.PathLike
 """
-str, ~heptools.system.eos.EOS, os.PathLike: A str or path-like object with :meth:`__fspath__` method.
+str, ~heptools.system.eos.EOS, ~os.PathLike: A str or path-like object with :meth:`__fspath__` method.
 """
 
 

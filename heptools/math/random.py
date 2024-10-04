@@ -2,20 +2,29 @@ from __future__ import annotations
 
 import hashlib
 from abc import ABC, abstractmethod
-from typing import Generic, Iterable, Literal, Optional, TypeVar, overload
+from typing import (
+    TYPE_CHECKING,
+    Generic,
+    Iterable,
+    Literal,
+    Optional,
+    TypeVar,
+    overload,
+)
 
 import numpy as np
 import numpy.typing as npt
+
+if TYPE_CHECKING:
+    SeedLike = int | str | Iterable[int | str]
+    """
+    int, str, ~typing.Iterable[int or str]: A seed or a sequence of seeds.
+    """
 
 _2_PI = 2 * np.pi
 _UINT64_11 = np.uint64(11)
 _UINT64_32 = np.uint64(32)
 _BIT52_COUNT = np.float64(1 << 53)
-
-SeedLike = int | str | Iterable[int | str]
-"""
-int, str, Iterable[int | str]: A seed or a sequence of seeds.
-"""
 
 
 def _str_to_entropy(__str: str) -> list[np.uint64]:
