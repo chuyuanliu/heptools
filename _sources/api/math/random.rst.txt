@@ -7,5 +7,7 @@ Random Number Generators
 Counter-based
 ================
 
+.. autoapidata:: heptools.math.random.SeedLike
+
 .. autoapiclass:: heptools.math.random.CBRNG
     :members: uniform, normal, choice
