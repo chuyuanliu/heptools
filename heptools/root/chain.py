@@ -157,6 +157,13 @@ class Friend:
     """str : Name of the collection."""
 
     @property
+    def branches(self):
+        """
+        frozenset[str]: All branches in the friend tree.
+        """
+        return self._branches
+
+    @property
     def targets(self):
         """
         Generator[:class:`~Chunk`]: All contiguous target chunks.

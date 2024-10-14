@@ -80,13 +80,13 @@ class _Reader:
         self._open_options = self._default_options | self._open_options | options
 
 
-class WriterOptions(TypedDict):
+class WriterOptions(TypedDict, total=False):
     name: str
     parents: bool
     basket_size: int
 
 
-class ReaderOptions(TypedDict):
+class ReaderOptions(TypedDict, total=False):
     branch_filter: Callable[[set[str]], set[str]]
     transform: Callable[[RecordLike], RecordLike]
 
