@@ -1046,6 +1046,7 @@ class Chain:
         chain = Chain()
         chain._chunks += self._chunks
         chain._friends |= self._friends
+        chain._rename |= self._rename
         return chain
 
     def __iadd__(self, other) -> Chain:
