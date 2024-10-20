@@ -2,8 +2,9 @@ from __future__ import annotations
 
 import operator as op
 import sys
+from collections import defaultdict
 from functools import partial, reduce
-from typing import TYPE_CHECKING, Literal
+from typing import TYPE_CHECKING, Callable, Literal
 
 if TYPE_CHECKING:
     import awkward
@@ -11,6 +12,45 @@ if TYPE_CHECKING:
     import pandas
 
 _UNKNOWN = "Unknown backend {library}."
+
+
+class _NestedRecord(defaultdict):
+    def __init__(self, *args, **kwargs):
+        super().__init__(_NestedRecord, *args, **kwargs)
+
+    def to_dict(self) -> dict:
+        return {
+            k: v.to_dict() if isinstance(v, _NestedRecord) else v
+            for k, v in self.items()
+        }
+
+    def to_array(self) -> awkward.Array:
+        import awkward as ak
+
+        return ak.zip(
+            {
+                k: v.to_array() if isinstance(v, _NestedRecord) else v
+                for k, v in self.items()
+            },
+            depth_limit=1,
+        )
+
+    def __setitem__(self, key, value):
+        if isinstance(key, tuple):
+            if len(key) > 1:
+                self[key[0]][key[1:]] = value
+                return
+            else:
+                key = key[0]
+        super().__setitem__(key, value)
+
+    def __getitem__(self, key):
+        if isinstance(key, tuple):
+            if len(key) > 1:
+                return self[key[0]][key[1:]]
+            else:
+                key = key[0]
+        return super().__getitem__(key)
 
 
 class _Backends:
@@ -144,19 +184,29 @@ def len_record(data, library: Literal["ak", "pd", "np"] = ...):
         raise TypeError(_UNKNOWN.format(library=library))
 
 
-def rename_record(data, mapping, library: Literal["ak", "pd", "np"] = ...):
+def rename_record(
+    data,
+    mapping: Callable[[str], str | tuple[str, ...]],
+    library: Literal["ak", "pd", "np"] = ...,
+):
     if library is ...:
         library = record_backend(data)
     if library == "ak":
         import awkward as ak
 
-        return ak.zip(
-            dict(zip(map(mapping, ak.fields(data)), ak.unzip(data))), depth_limit=1
-        )
+        nested = _NestedRecord()
+        for k, v in zip(ak.fields(data), ak.unzip(data)):
+            nested[mapping(k)] = v
+        return nested.to_array()
     elif library == "pd":
-        return data.rename(columns=mapping, copy=False)
+        import pandas as pd
+
+        return pd.DataFrame({mapping(k): data.loc[:, k] for k in data.columns})
     elif library == "np" or library.startswith("dict"):
-        return dict(zip(map(mapping, data.keys()), data.values()))
+        nested = _NestedRecord()
+        for k, v in data.items():
+            nested[mapping(k)] = v
+        return nested.to_dict()
     else:
         raise TypeError(_UNKNOWN.format(library=library))
 
