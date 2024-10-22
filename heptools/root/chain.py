@@ -262,17 +262,6 @@ class Friend:
         if hasattr(self, _FRIEND_AUTO):
             del self.__auto
 
-    @classmethod
-    def _construct_key(cls, chunk: Chunk):
-        return Chunk(
-            source=(chunk.path, chunk.uuid),
-            name=chunk.name,
-            num_entries=None,
-            branches=None,
-            entry_start=None,
-            entry_stop=None,
-        )
-
     @property
     def _has_dump(self):
         if hasattr(self, _FRIEND_DUMP):
@@ -344,7 +333,7 @@ class Friend:
             Addtional branches added to ``target``.
         """
         item = _FriendItem(target.entry_start, target.entry_stop, data)
-        key = self._construct_key(target)
+        key = target.key()
         if not item.on_disk:
             self._init_dump()
             self.__dump.append((key, item))

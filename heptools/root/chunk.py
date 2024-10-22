@@ -239,6 +239,22 @@ class Chunk(metaclass=_ChunkMeta):
             entry_stop=kwargs.get("entry_stop", self._entry_stop),
         )
 
+    def key(self):
+        """
+        Returns
+        -------
+        Chunk
+            A deep copy of ``self`` that only keep the properties used by ``__hash__``.
+        """
+        return Chunk(
+            source=(self.path, self.uuid),
+            name=self.name,
+            num_entries=None,
+            branches=None,
+            entry_start=None,
+            entry_stop=None,
+        )
+
     def slice(self, start: int, stop: int):
         """
         Parameters
