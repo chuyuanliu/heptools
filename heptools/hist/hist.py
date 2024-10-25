@@ -29,6 +29,8 @@ from ..aktools import (
 from ..typetools import check_type
 from . import template as _t
 
+HistAxis = Boolean | IntCategory | Integer | Regular | StrCategory | Variable
+
 
 class Label:
     @overload
@@ -57,7 +59,7 @@ def _default_field(_s: str):
     return (*_s.split("."),)
 
 
-def _create_axis(args: AxisLike) -> AxesMixin:
+def _create_axis(args: AxisLike) -> HistAxis:
     if isinstance(args, AxesMixin):
         return deepcopy(args)
     if len(args) == 0:
@@ -112,7 +114,6 @@ AxisArgs = (
     | StrCategoryArgs
     | IntCategoryArgs
     | VariableArgs
-    | AxesMixin
 )
 AxisLike = (
     RegularAxis
@@ -121,7 +122,6 @@ AxisLike = (
     | StrCategoryAxis
     | IntCategoryAxis
     | VariableAxis
-    | AxesMixin
 )
 
 
@@ -285,7 +285,7 @@ class Collection:
         self._fills: dict[str, list[str]] = {}
         self._hists: dict[str, Hist] = {}
         self._categories = deepcopy(categories)
-        self._axes: dict[str, AxesMixin] = {
+        self._axes: dict[str, HistAxis] = {
             k: _create_axis((*(v if isinstance(v, tuple) else (v,)), k))
             for k, v in self._categories.items()
         }
@@ -319,7 +319,7 @@ class Collection:
         fills = {name: self._fills[name] + [*self._categories] + ["weight"]}
         return self._backend_fill(fills, **fill_args)
 
-    def duplicate_axes(self, name: str) -> list[AxesMixin]:
+    def duplicate_axes(self, name: str) -> list[HistAxis]:
         axes = []
         if name in self._hists:
             for axis in self._hists[name].axes:
