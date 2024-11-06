@@ -56,6 +56,14 @@ def _apply_naming(naming: str | NameMapping, keys: dict[str, str]) -> str:
         raise TypeError(f'Unknown naming "{naming}"')
 
 
+def _eos_rm(path: EOS):
+    path.rm()
+
+
+def _eos_cp(src: EOS, dst: EOS):
+    EOS.cp(src, dst, parents=True, overwrite=True)
+
+
 @delayed
 def _friend_from_merge(
     name: str,
@@ -648,7 +656,7 @@ class Friend:
             if confirmation != self.name:
                 logging.info("Deletion aborted.")
                 return
-        (map_executor if executor is None else executor.map)(EOS.rm, files)
+        (map_executor if executor is None else executor.map)(_eos_rm, files)
         self._branches = None
         self._data.clear()
         if hasattr(self, _FRIEND_DUMP):
@@ -804,9 +812,7 @@ class Friend:
                 chunk.path = path
                 friend._data[target].append(_FriendItem(item.start, item.stop, chunk))
         if execute:
-            (map_executor if executor is None else executor.map)(
-                partial(EOS.cp, parents=True, overwrite=True), src, dst
-            )
+            (map_executor if executor is None else executor.map)(_eos_cp, src, dst)
         return friend
 
     def integrity(self, executor: Executor = None):
