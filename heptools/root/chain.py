@@ -64,8 +64,40 @@ def _eos_cp(src: EOS, dst: EOS):
     EOS.cp(src, dst, parents=True, overwrite=True)
 
 
+@dataclass
+class _friend_cleanup_job:
+    chunk: _FriendItem
+    branches: frozenset[str]
+
+    def __call__(self):
+        chunk = self.chunk.chunk
+        import uproot
+
+        try:
+            with uproot.open(chunk.path) as f:
+                assert f.file.uuid == chunk.uuid
+                tree = f[chunk.name]
+                if chunk._num_entries is not ...:
+                    assert tree.num_entries == chunk.num_entries
+                assert frozenset(tree.keys()) <= self.branches
+        except Exception:
+            return None
+        return chunk
+
+
+@dataclass
+class _friend_cleanup_callback:
+    friend: Friend
+    target: Chunk
+
+    def __call__(self, result: Chunk | Future[Chunk]):
+        chunk = result.result() if isinstance(result, Future) else result
+        if chunk is not None:
+            self.friend.add(self.target, chunk)
+
+
 @delayed
-def _friend_from_merge(
+def _friend_merge(
     name: str,
     branches: frozenset[str],
     data: dict[Chunk, list[tuple[int, int, list[Chunk]]]],
@@ -632,6 +664,59 @@ class Friend:
                     executor.submit(job).add_done_callback(callback)
             self.__dump.clear()
 
+    @_on_disk
+    def cleanup(self, executor: Optional[Executor] = None) -> Friend:
+        """
+        Remove invalid chunks.
+
+        Parameters
+        ----------
+        executor: ~concurrent.futures.Executor, optional
+            An executor with at least the :meth:`~concurrent.futures.Executor.submit` method implemented. If not provided, the tasks will run sequentially in the current thread
+
+        Returns
+        -------
+        Friend
+            A copy of ``self`` with invalid chunks removed.
+        """
+        friend = Friend(self.name)
+        for target, chunks in self._data.items():
+            for chunk in chunks:
+                callback = _friend_cleanup_callback(
+                    friend, target.slice(chunk.start, chunk.stop)
+                )
+                job = _friend_cleanup_job(chunk, self._branches)
+                if executor is None:
+                    callback(job())
+                else:
+                    executor.submit(job).add_done_callback(callback)
+        return friend
+
+    def update(self, paths: Iterable[Chunk]) -> Friend:
+        """
+        Update the path of friend chunks from new ``paths``.
+
+        Parameters
+        ----------
+        paths : ~typing.Iterable[Chunk]
+            Chunks with uuid and new path.
+
+        Returns
+        -------
+        Friend
+            A copy of ``self`` with paths updated.
+        """
+        sources = {chunk.uuid: chunk.path for chunk in paths}
+        friend = Friend(self.name)
+        for target, chunks in self._data.items():
+            for chunk in chunks:
+                new = chunk.chunk
+                if (path := sources.get(new.uuid)) is not None:
+                    new = new.deepcopy()
+                    new.path = path
+                friend.add(target.slice(chunk.start, chunk.stop), new)
+        return friend
+
     def reset(self, confirm: bool = True, executor: Optional[Executor] = None):
         """
         Reset the friend tree and delete all dumped files.
@@ -744,7 +829,7 @@ class Friend:
                     dask=dask,
                 )
             data[target].append((dummy.start, dummy.stop, chunks))
-        return _friend_from_merge(
+        return _friend_merge(
             name=self.name, branches=self._branches, data=dict(data), dask=dask
         )
 

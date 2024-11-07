@@ -142,6 +142,7 @@ class Chunk(metaclass=_ChunkMeta):
         else:
             reloaded = Chunk(
                 source=self.path,
+                name=self.name,
                 entry_start=self._entry_start,
                 entry_stop=self._entry_stop,
                 fetch=True,
