@@ -35,6 +35,7 @@ ROOT file I/O based on :func:`uproot.reading.open`, :func:`uproot._dask.dask` an
 
 from __future__ import annotations
 
+import logging
 from typing import TYPE_CHECKING, Callable, Generator, Literal, TypedDict, overload
 
 import uproot
@@ -328,18 +329,21 @@ class TreeReader(_Reader):
         branches = source.branches
         if self._filter is not None:
             branches = self._filter(branches)
-        with uproot.open(source.path, **self._open_options) as file:
-            data = file[source.name].arrays(
-                expressions=branches,
-                entry_start=source.entry_start,
-                entry_stop=source.entry_stop,
-                **options,
-            )
-            if library == "pd":
-                data.reset_index(drop=True, inplace=True)
-            if self._transform is not None:
-                data = self._transform(data)
-            return data
+        try:
+            with uproot.open(source.path, **self._open_options) as file:
+                data = file[source.name].arrays(
+                    expressions=branches,
+                    entry_start=source.entry_start,
+                    entry_stop=source.entry_stop,
+                    **options,
+                )
+                if library == "pd":
+                    data.reset_index(drop=True, inplace=True)
+                if self._transform is not None:
+                    data = self._transform(data)
+                return data
+        except Exception as e:
+            logging.error(f"Failed to read {source.path}", exc_info=e)
 
     @overload
     def concat(
