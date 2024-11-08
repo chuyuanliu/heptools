@@ -344,6 +344,7 @@ class TreeReader(_Reader):
                 return data
         except Exception as e:
             logging.error(f"Failed to read {source.path}", exc_info=e)
+            raise
 
     @overload
     def concat(
