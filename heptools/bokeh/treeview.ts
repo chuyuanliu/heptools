@@ -194,6 +194,9 @@ export class TreeViewElementView extends WidgetView {
         this._change_select(() => {
           this.model.selected = data.selected.slice();
         });
+      })
+      .on('ready.jstree', () => {
+        this._select();
       });
     $(this.search_el).on('keyup', () => {
       $(this.tree_el).jstree(true).search($(this.search_el).val());
