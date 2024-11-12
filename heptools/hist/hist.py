@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from copy import deepcopy
-from typing import Callable, Iterable, overload
+from typing import Callable, Iterable, TypedDict, overload
 
 import awkward as ak
 import numpy as np
@@ -133,8 +133,12 @@ class HistError(Exception):
     __module__ = Exception.__module__
 
 
+class _MissingFillValue: ...
+
+
 class Fill:
     threads = 1
+    allow_missing = False
 
     def __init__(
         self,
@@ -167,6 +171,14 @@ class Fill:
 
     def __getitem__(self, key: str):
         return self._kwargs[key]
+
+    def _get_fill_arg(self, method: Callable[[], FillLike]):
+        try:
+            return method()
+        except Exception:
+            if self.allow_missing:
+                return _MissingFillValue
+            raise
 
     def cache(self, events: ak.Array):
         if Collection.current is None:
@@ -205,11 +217,11 @@ class Fill:
                 ):
                     category_args[k] = v
                 elif check_type(v, FieldLike):
-                    category_args[k] = get_field(masked, v)
+                    category_args[k] = self._get_fill_arg(lambda: get_field(masked, v))
                 elif check_type(v, AnyArray):
                     category_args[k] = v if mask is None else v[mask]
                 elif check_type(v, Callable):
-                    category_args[k] = v(masked)
+                    category_args[k] = self._get_fill_arg(lambda: v(masked))
                 else:
                     raise FillError(f'cannot fill "{k}" with "{v}"')
             jagged_args = {}
@@ -225,13 +237,15 @@ class Fill:
                         if k not in jagged_args:
                             jagged_args[k] = len(counts_args)
                             counts_args.append(count)
-                    except:
+                    except Exception:
                         continue
             for name in self._fills:
                 fills = {
                     k: f"{name}:{k}" if f"{name}:{k}" in category_args else k
                     for k in self._fills[name]
                 }
+                if any(category_args[v] is _MissingFillValue for v in fills.values()):
+                    continue
                 shape = {jagged_args[k] for k in fills.values() if k in jagged_args}
                 if len(shape) == 0:
                     shape = None
@@ -270,10 +284,15 @@ class Fill:
                                 hist_args[tobroadcast] = np.full(
                                     len(weight), hist_args[tobroadcast]
                                 )
-                    except:
+                    except Exception:
                         continue
                 ############################################################
                 hists._hists[name].fill(**hist_args, threads=self.threads)
+
+
+class CollectionOutput(TypedDict):
+    hists: dict[str, Hist]
+    categories: set[str]
 
 
 class Collection:
@@ -331,5 +350,5 @@ class Collection:
         Collection.current = self
 
     @property
-    def output(self):
+    def output(self) -> CollectionOutput:
         return {"hists": self._hists, "categories": {*self._categories}}
