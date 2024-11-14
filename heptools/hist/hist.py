@@ -358,7 +358,7 @@ class Collection:
             hists = self._hists
         return {
             "hists": {k: self._hists[k] for k in hists},
-            "categories": self._categories.copy(),
+            "categories": set(self._categories),
         }
 
     @property
