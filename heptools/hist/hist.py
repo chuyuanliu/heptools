@@ -288,6 +288,7 @@ class Fill:
                         continue
                 ############################################################
                 hists._hists[name].fill(**hist_args, threads=self.threads)
+                hists._filled.add(name)
 
 
 class CollectionOutput(TypedDict):
@@ -308,6 +309,7 @@ class Collection:
             k: _create_axis((*(v if isinstance(v, tuple) else (v,)), k))
             for k, v in self._categories.items()
         }
+        self._filled: set[str] = set()
         self.cd()
 
     def add(self, name: str, *axes: AxisLike, **fill_args: FillLike):
@@ -349,6 +351,16 @@ class Collection:
     def cd(self):
         Collection.current = self
 
+    def to_dict(self, nonempty: bool = False) -> CollectionOutput:
+        if nonempty:
+            hists = (k for k in self._hists if k in self._filled)  # preserve order
+        else:
+            hists = self._hists
+        return {
+            "hists": {k: self._hists[k] for k in hists},
+            "categories": self._categories.copy(),
+        }
+
     @property
-    def output(self) -> CollectionOutput:
-        return {"hists": self._hists, "categories": {*self._categories}}
+    def output(self):
+        return self.to_dict()
