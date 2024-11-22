@@ -45,7 +45,11 @@ class ClassAttributeDocstring(ast.NodeVisitor):
             self.__attr = None
 
 
-def class_attribute_docstring(cls: type) -> dict[str, str]:
+def class_attribute_docstring(cls: type, clean: bool = True) -> dict[str, str]:
     parser = ClassAttributeDocstring()
     parser.visit(ast.parse(inspect.getsource(cls)))
-    return parser.docstrings[cls.__name__]
+    docs = parser.docstrings[cls.__name__]
+    if clean:
+        for k in docs:
+            docs[k] = inspect.cleandoc(docs[k])
+    return docs
