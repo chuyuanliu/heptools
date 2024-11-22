@@ -5,7 +5,6 @@ from typing import Callable, Iterable, Literal
 
 from .benchmark.unit import Metric
 from .container import Tree
-from .protocols import alias
 from .utils.json import DefaultEncoder
 
 __all__ = [
@@ -44,7 +43,6 @@ class File:
         return {"path": self.path, "nevents": self.nevents, "site": [*self.site]}
 
 
-@alias("copy")
 class FileList:
     def __init__(self, data: dict = None):
         if data is None:
@@ -58,6 +56,9 @@ class FileList:
 
     def copy(self):
         return FileList({"files": self.files})
+
+    def __copy__(self):
+        return self.copy()
 
     def to_json(self):
         return {"files": [*self.files]}
