@@ -24,12 +24,12 @@ class ClassAttributeDocstring(ast.NodeVisitor):
     # parse annotated attributes
     def visit_AnnAssign(self, node: ast.AnnAssign):
         if isinstance(node.target, ast.Name):
-            self.__attr = (node.target.id, node.lineno)
+            self.__attr = (node.target.id, node.end_lineno)
 
     # parse unannotated attributes
     def visit_Assign(self, node: ast.Assign):
         if len(node.targets) == 1 and isinstance(node.targets[0], ast.Name):
-            self.__attr = (node.targets[0].id, node.lineno)
+            self.__attr = (node.targets[0].id, node.end_lineno)
 
     # add docstring
     def visit_Expr(self, node: ast.Expr):
