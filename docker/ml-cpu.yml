@@ -1,0 +1,9 @@
+name: ml-cpu
+channels:
+  - conda-forge
+  - pytorch
+dependencies:
+  # machine learning
+  - pytorch::pytorch
+  - pytorch::cpuonly 
+  - scikit-learn
