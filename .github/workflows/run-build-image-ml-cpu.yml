@@ -5,11 +5,11 @@ on:
     branches:
       - master
     paths:
-      - "docker/ml.*"
+      - "docker/ml-cpu.*"
 
 jobs:
   docker-image-ml:
     uses: ./.github/workflows/job-docker.yml
     with:
-      tag: ml
+      tag: ml-cpu
     secrets: inherit
