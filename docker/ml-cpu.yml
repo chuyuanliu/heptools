@@ -6,4 +6,3 @@ dependencies:
   # machine learning
   - pytorch::pytorch
   - pytorch::cpuonly 
-  - scikit-learn
