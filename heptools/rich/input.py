@@ -78,10 +78,9 @@ class Input:
     def __rich_console__(self, console, options):
         if self.__inputting:
             with self.__lock:
-                style = dict(overflow="fold", no_wrap=False)
-                title = Text(f"{self._title}> ", style="yellow", **style)
+                title = Text.from_markup(f"[yellow]{self._title}> [/yellow]")
                 raw = self.text if not self._password else "*" * len(self.text)
-                text = Text(raw[: self.__cursor], style="default", **style)
+                text = Text(raw[: self.__cursor], style="default", overflow="fold")
                 if self.__cursor < len(self.text):
                     cursor = raw[self.__cursor]
                     if not cursor.isprintable():
