@@ -39,7 +39,7 @@ A docker image will be automatically built and pushed to [docker hub](https://hu
 ### Run an ineractive shell with [Singularity(Apptainer)](https://apptainer.org/docs/user/latest/)
 
 ```bash
-singularity shell -B .:/srv -B /cvmfs --pwd /srv ${HEPTOOLS_DOCKER_IMAGE}
+singularity exec -B .:/srv -B /cvmfs --pwd /srv ${HEPTOOLS_DOCKER_IMAGE} bash --init-file /entrypoint.sh
 ```
 
 use image from [docker hub](https://hub.docker.com/repository/docker/chuyuanliu/heptools)
@@ -75,7 +75,7 @@ If `<schedd_name>` is provided, the default SCHEDD_HOST will be replaced. (check
 Start a container
 
 ```bash
-singularity shell -B .:/srv -B /cvmfs -B /uscmst1b_scratch/lpc1 -B $(readlink ${HOME}/nobackup) --env "CONDOR_CONFIG=${CONDOR_CONFIG}" --pwd /srv ${HEPTOOLS_DOCKER_IMAGE}
+singularity exec -B .:/srv -B /cvmfs -B /uscmst1b_scratch/lpc1 -B $(readlink ${HOME}/nobackup) --env "CONDOR_CONFIG=${CONDOR_CONFIG}" --pwd /srv ${HEPTOOLS_DOCKER_IMAGE} bash --init-file /entrypoint.sh
 ```
 
 ## Tips
@@ -88,8 +88,9 @@ export APPTAINER_TMPDIR="new/path/to/tmp/"
 ```
 
 - To run ml container in wsl:
+
 ```bash
-singularity shell -B .:/srv -B /run/shm --nvccli --pwd /srv ${HEPTOOLS_DOCKER_IMAGE}
+singularity exec -B .:/srv -B /run/shm --nvccli --pwd /srv ${HEPTOOLS_DOCKER_IMAGE} bash --init-file /entrypoint.sh
 ```
 
 ## TODO
