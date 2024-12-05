@@ -39,7 +39,10 @@ ENV VOMS_PROXY_INIT_DONT_VERIFY_AC=1
 # rucio
 RUN mkdir -p /opt/rucio/etc/
 RUN wget -O /opt/rucio/etc/rucio.cfg https://raw.githubusercontent.com/dmwm/CMSRucio/820e1ab3235e9ef0d97671b7da14c8c489d08fb5/docker/rucio_client/rucio-prod.cfg
-# bashrc
-RUN echo "conda activate hep" >> ~/.bashrc
 # entrypoint
+COPY <<EOF entrypoint.sh
+eval "$(/opt/conda/bin/conda shell.bash hook)" 
+conda activate hep
+EOF
 ENTRYPOINT ["tini", "-g", "--"]
+CMD ["bash", "--init-file", "/entrypoint.sh"]
