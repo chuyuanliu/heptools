@@ -8,7 +8,7 @@ on:
       - "docker/ml-cpu.*"
 
 jobs:
-  docker-image-ml:
+  docker-image-ml-cpu:
     uses: ./.github/workflows/job-docker.yml
     with:
       tag: ml-cpu

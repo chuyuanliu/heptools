@@ -34,3 +34,10 @@ jobs:
     with:
       tag: ml
     secrets: inherit
+
+  docker-image-ml-cpu:
+    needs: docker-image-base
+    uses: ./.github/workflows/job-docker.yml
+    with:
+      tag: ml-cpu
+    secrets: inherit

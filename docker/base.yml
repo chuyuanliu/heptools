@@ -5,6 +5,7 @@ dependencies:
   - python=3.10
   - pip
   - pycurl
+  - readchar
   # numerical
   - numpy
   - scipy
