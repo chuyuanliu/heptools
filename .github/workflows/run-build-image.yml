@@ -5,7 +5,6 @@ on:
     branches:
       - master
     paths:
-      - "docker/latest.*"
       - "docker/exp.*"
       - "heptools/**"
       - "setup.cfg"
@@ -16,10 +15,4 @@ jobs:
     uses: ./.github/workflows/job-docker.yml
     with:
       tag: exp
-    secrets: inherit
-
-  docker-image-latest:
-    uses: ./.github/workflows/job-docker.yml
-    with:
-      tag: latest
     secrets: inherit
