@@ -1,8 +1,7 @@
 FROM condaforge/mambaforge:22.11.1-4
 
 RUN mamba env create -f https://raw.githubusercontent.com/chuyuanliu/heptools/master/docker/base.yml && mamba clean --all --yes
-RUN conda activate hep && \
-    mamba install -c conda-forge \
+RUN mamba install -n hep -c conda-forge \
     # grid certificate
     ca-policy-lcg \
     # HTCondor
@@ -13,7 +12,7 @@ RUN conda activate hep && \
     # tini
     tini \
     && mamba clean --all --yes \
-    && pip install --no-cache-dir \
+    && conda run -n hep pip install --no-cache-dir \
     # DB
     dbs3-client \
     rucio-clients
