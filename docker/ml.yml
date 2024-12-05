@@ -7,8 +7,6 @@ dependencies:
   # machine learning
   - pytorch::pytorch
   - pytorch::pytorch-cuda=12.1
-  - pytorch-lightning
-  - tensorboard
   - scikit-learn
   # monitor
   - gevent
