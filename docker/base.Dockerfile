@@ -1,7 +1,7 @@
 FROM condaforge/mambaforge:22.11.1-4
 
-RUN mamba create -n hep -f https://raw.githubusercontent.com/chuyuanliu/heptools/master/docker/base.yml \
-    && mamba install --yes \
+RUN mamba env create -f https://raw.githubusercontent.com/chuyuanliu/heptools/master/docker/base.yml \
+    && mamba env update -n hep --yes \
     -c conda-forge \
     # grid certificate
     ca-policy-lcg \
