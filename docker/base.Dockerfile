@@ -6,7 +6,7 @@ RUN mamba env update -n base -f https://raw.githubusercontent.com/chuyuanliu/hep
     # grid certificate
     ca-policy-lcg \
     # HTCondor
-    htcondor \
+    # htcondor \
     # XRootD
     xrootd \
     fsspec-xrootd \
