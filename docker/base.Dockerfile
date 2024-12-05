@@ -1,8 +1,8 @@
 FROM condaforge/mambaforge:22.11.1-4
 
-RUN mamba env create -f https://raw.githubusercontent.com/chuyuanliu/heptools/master/docker/base.yml \
-    && mamba env update -n hep --yes \
-    -c conda-forge \
+RUN mamba env create -f https://raw.githubusercontent.com/chuyuanliu/heptools/master/docker/base.yml && mamba clean --all --yes
+RUN conda activate hep && \
+    mamba install -c conda-forge \
     # grid certificate
     ca-policy-lcg \
     # HTCondor
