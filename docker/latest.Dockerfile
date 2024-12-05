@@ -5,7 +5,7 @@ RUN mamba remove --yes \
     dask-awkward \
     && mamba install --yes \
     -c conda-forge \
-    coffea=0.7.22 \
+    coffea=0.7.23 \
     && mamba clean --all --yes \
     && pip install --no-cache-dir --no-dependencies git+https://github.com/chuyuanliu/heptools.git@master
 ENTRYPOINT ["tini", "-g", "--"]
