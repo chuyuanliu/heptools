@@ -16,6 +16,10 @@ class Input:
         self.__inputting = False
         self.__cursor = 0
 
+    @property
+    def is_inputting(self):
+        return self.__inputting
+
     def get(self):
         self.text = ""
         self.__cursor = 0
@@ -44,6 +48,11 @@ class Input:
                             self.text[: self.__cursor - 1] + self.text[self.__cursor :]
                         )
                         self.__cursor -= 1
+                case readchar.key.DELETE:
+                    if self.__cursor < len(self.text):
+                        self.text = (
+                            self.text[: self.__cursor] + self.text[self.__cursor + 1 :]
+                        )
                 case readchar.key.ENTER:
                     if self._multiline:
                         self.__insert("\n")
