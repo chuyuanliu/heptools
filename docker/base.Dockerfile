@@ -1,4 +1,4 @@
-FROM condaforge/mambaforge:latest
+FROM condaforge/mambaforge:22.11.1-4
 
 RUN mamba env update -n base -f https://raw.githubusercontent.com/chuyuanliu/heptools/master/docker/base.yml \
     && mamba install --yes \
