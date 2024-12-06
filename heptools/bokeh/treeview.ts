@@ -191,7 +191,7 @@ export class TreeViewElementView extends WidgetView {
         show_only_matches_children: true,
       }
     })
-      .on('loaded.jstree after_open.jstree search.jstree', () => {
+      .on('loaded.jstree after_open.jstree search.jstree clear_search.jstree', () => {
         $(this.tree_el).find('.jstree-node>.jstree-icon.jstree-ocl').addClass('ti ti-caret-right');
       })
       .on('changed.jstree', (_: any, data: any) => {
