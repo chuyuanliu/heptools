@@ -18,4 +18,6 @@ class TreeView(Widget):
     expand = Bool(help="Expand all nodes when loaded")
     icons = Dict(String, String, help="Bootstrap icons for each type")
 
+    show_only_matches = Bool(help="[jstree]Only show nodes that match the search")
+
     selected = List(String, help="Currently selected leaves")
