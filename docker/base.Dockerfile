@@ -4,8 +4,6 @@ RUN mamba env create -f https://raw.githubusercontent.com/chuyuanliu/heptools/ma
 RUN mamba install -n hep -c conda-forge \
     # grid certificate
     ca-policy-lcg \
-    # HTCondor
-    htcondor \
     # XRootD
     xrootd \
     fsspec-xrootd \
