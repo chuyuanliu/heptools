@@ -37,3 +37,5 @@ dependencies:
   - hist
   - particle
   - correctionlib
+  # compatibility
+  - certifi=2024.8.30
