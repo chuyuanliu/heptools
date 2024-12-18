@@ -17,6 +17,7 @@ RUN mamba install -n hep -c conda-forge \
     dbs3-client \
     rucio-clients
 RUN touch /root/.rnd
+RUN ln -s /opt/conda/etc/grid-security /etc/grid-security
 RUN apt-get update && apt-get install -y --no-install-recommends \
     # voms
     voms-clients-java \
