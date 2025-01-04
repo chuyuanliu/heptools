@@ -25,17 +25,22 @@ class _uproot_XRootDResource_open_retry:
     def __call__(self, obj):
         from uproot.extras import XRootD_client
 
-        obj._file = XRootD_client().File()
+        client = XRootD_client()
 
         for i in range(self._max):
             retry, delay = i + 1, 0
             if retry < self._max:
                 delay = self._delay[i]
 
+            obj._file = client.File()
             status, _ = obj._file.open(obj._file_path, timeout=obj._xrd_timeout())
             if not status.error:
                 break
             else:
+                try:
+                    obj._file.close()
+                except Exception:
+                    pass
                 try:
                     obj._xrd_error(status)
                 except Exception:
