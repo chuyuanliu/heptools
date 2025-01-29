@@ -28,7 +28,7 @@
 <link rel="preload" as="font" type="font/woff2" crossorigin href="../../_static/vendor/fontawesome/6.5.1/webfonts/fa-brands-400.woff2" />
 <link rel="preload" as="font" type="font/woff2" crossorigin href="../../_static/vendor/fontawesome/6.5.1/webfonts/fa-regular-400.woff2" />
 
-    <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=a746c00c" />
+    <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=8f2a1f02" />
     <link rel="stylesheet" type="text/css" href="../../_static/graphviz.css?v=eafc0fe6" />
   
   <!-- Pre-loaded scripts that we'll load fully later -->
@@ -374,10 +374,10 @@ document.write(`
 <section id="basic-usage">
 <h2>Basic Usage<a class="headerlink" href="#basic-usage" title="Link to this heading">#</a></h2>
 <p>To construct a friend tree from scratch, you can follow the example below.</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">json</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">json</span>
 
-<span class="kn">from</span> <span class="nn">heptools.root</span> <span class="kn">import</span> <span class="n">Chunk</span><span class="p">,</span> <span class="n">Friend</span>
-<span class="kn">from</span> <span class="nn">heptools.utils.json</span> <span class="kn">import</span> <span class="n">DefaultEncoder</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">heptools.root</span><span class="w"> </span><span class="kn">import</span> <span class="n">Chunk</span><span class="p">,</span> <span class="n">Friend</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">heptools.utils.json</span><span class="w"> </span><span class="kn">import</span> <span class="n">DefaultEncoder</span>
 
 <span class="c1"># initialize a friend tree</span>
 <span class="n">friend</span> <span class="o">=</span> <span class="n">Friend</span><span class="p">(</span><span class="s2">&quot;test_friend&quot;</span><span class="p">)</span>
@@ -420,13 +420,13 @@ document.write(`
 <section id="with-coffea-0-7-22">
 <h2>With <code class="docutils literal notranslate"><span class="pre">coffea&lt;=0.7.22</span></code><a class="headerlink" href="#with-coffea-0-7-22" title="Link to this heading">#</a></h2>
 <p>The friend tree can be used inside coffea processors. For example,</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">json</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">json</span>
 
-<span class="kn">from</span> <span class="nn">heptools.root</span> <span class="kn">import</span> <span class="n">Chunk</span><span class="p">,</span> <span class="n">Friend</span>
-<span class="kn">from</span> <span class="nn">heptools.utils.json</span> <span class="kn">import</span> <span class="n">DefaultEncoder</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">heptools.root</span><span class="w"> </span><span class="kn">import</span> <span class="n">Chunk</span><span class="p">,</span> <span class="n">Friend</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">heptools.utils.json</span><span class="w"> </span><span class="kn">import</span> <span class="n">DefaultEncoder</span>
 
-<span class="k">class</span> <span class="nc">FriendTreeMaker</span><span class="p">(</span><span class="n">processor</span><span class="o">.</span><span class="n">ProcessorABC</span><span class="p">):</span>
-    <span class="k">def</span> <span class="nf">process</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">events</span><span class="p">):</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">FriendTreeMaker</span><span class="p">(</span><span class="n">processor</span><span class="o">.</span><span class="n">ProcessorABC</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">process</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">events</span><span class="p">):</span>
         <span class="c1"># initialize a friend tree</span>
         <span class="n">friend</span> <span class="o">=</span> <span class="n">Friend</span><span class="p">(</span><span class="s2">&quot;test_coffea_friend&quot;</span><span class="p">)</span>
         <span class="c1"># fetch the metadata of the target chunk</span>
@@ -449,21 +449,21 @@ document.write(`
 </pre></div>
 </div>
 <p>For a large dataset, you can use dask to merge.</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">dask</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">dask</span>
 
 <span class="n">merged_friend</span><span class="p">,</span> <span class="o">=</span> <span class="n">dask</span><span class="o">.</span><span class="n">compute</span><span class="p">(</span><span class="n">friend</span><span class="o">.</span><span class="n">merge</span><span class="p">(</span><span class="n">step</span><span class="o">=</span><span class="mi">100_000</span><span class="p">,</span> <span class="n">dask</span><span class="o">=</span><span class="kc">True</span><span class="p">))</span>
 </pre></div>
 </div>
 <p>Then, the data can be retrieved in other processors. For example,</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">heptools.root</span> <span class="kn">import</span> <span class="n">Friend</span>
-<span class="kn">from</span> <span class="nn">heptools.utils.json</span> <span class="kn">import</span> <span class="n">DefaultEncoder</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">heptools.root</span><span class="w"> </span><span class="kn">import</span> <span class="n">Friend</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">heptools.utils.json</span><span class="w"> </span><span class="kn">import</span> <span class="n">DefaultEncoder</span>
 
-<span class="k">class</span> <span class="nc">OtherProcessor</span><span class="p">(</span><span class="n">processor</span><span class="o">.</span><span class="n">ProcessorABC</span><span class="p">):</span>
-    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">friend_path</span><span class="p">):</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">OtherProcessor</span><span class="p">(</span><span class="n">processor</span><span class="o">.</span><span class="n">ProcessorABC</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">friend_path</span><span class="p">):</span>
         <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">friend_path</span><span class="p">,</span> <span class="s2">&quot;r&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">friend</span> <span class="o">=</span> <span class="n">Friend</span><span class="o">.</span><span class="n">from_json</span><span class="p">(</span><span class="n">json</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">f</span><span class="p">))</span>
 
-    <span class="k">def</span> <span class="nf">process</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">events</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">process</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">events</span><span class="p">):</span>
         <span class="c1"># fetch the metadata of the target chunk</span>
         <span class="n">target</span> <span class="o">=</span> <span class="n">Chunk</span><span class="o">.</span><span class="n">from_coffea_events</span><span class="p">(</span><span class="n">events</span><span class="p">)</span>
         <span class="c1"># retrieve branches</span>
