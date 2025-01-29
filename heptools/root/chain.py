@@ -44,10 +44,10 @@ _BRANCH_FILTER = "branch_filter"
 
 
 class NameMapping(Protocol):
-    def __call__(self, **keys: str) -> str: ...
+    def __call__(self, **keys: str) -> str | tuple[str, ...]: ...
 
 
-def _apply_naming(naming: str | NameMapping, keys: dict[str, str]) -> str:
+def _apply_naming(naming: str | NameMapping, keys: dict[str, str]):
     if isinstance(naming, str):
         return naming.format(**keys)
     elif isinstance(naming, Callable):
