@@ -40,8 +40,17 @@ RUN mkdir -p /opt/rucio/etc/
 RUN wget -O /opt/rucio/etc/rucio.cfg https://raw.githubusercontent.com/dmwm/CMSRucio/820e1ab3235e9ef0d97671b7da14c8c489d08fb5/docker/rucio_client/rucio-prod.cfg
 # entrypoint
 COPY <<EOF entrypoint.sh
+# activate conda environment
 eval "$(/opt/conda/bin/conda shell.bash hook)" 
 conda activate hep
+# enable bash completion
+if ! shopt -oq posix; then
+  if [ -f /usr/share/bash-completion/bash_completion ]; then
+    . /usr/share/bash-completion/bash_completion
+  elif [ -f /etc/bash_completion ]; then
+    . /etc/bash_completion
+  fi
+fi
 EOF
 ENTRYPOINT ["tini", "-g", "--"]
 CMD ["bash", "--init-file", "/entrypoint.sh"]
