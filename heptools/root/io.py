@@ -36,9 +36,11 @@ ROOT file I/O based on :func:`uproot.reading.open`, :func:`uproot._dask.dask` an
 from __future__ import annotations
 
 import logging
+from numbers import Number
 from typing import TYPE_CHECKING, Callable, Generator, Literal, TypedDict, overload
 
 import uproot
+from packaging.version import Version
 
 from ..system.eos import EOS, PathLike
 from ._backend import concat_record, len_record, record_backend, slice_record
@@ -49,6 +51,7 @@ if TYPE_CHECKING:
     import dask.array as da
     import dask_awkward as dak
     import numpy as np
+    import numpy.typing as npt
     import pandas as pd
 
 if TYPE_CHECKING:
@@ -62,6 +65,19 @@ if TYPE_CHECKING:
     """
     dask_awkward.Array, dict[str, dask.array.Array]: A mapping from string to array-like delayed object.  All arrays must have same lengths and partitions.
     """
+
+if TYPE_CHECKING:
+    UprootSupportedDtypes = str | Number | npt.ArrayLike
+    """
+    str, Number, ~numpy.typing.ArrayLike: dtypes supported by :mod:`uproot`
+    """
+
+_UTF8_NULL = "\x00"
+_UTF8_CONT = b"\x80"
+
+
+def _align_utf8(s: bytes, n: int) -> bytes:
+    return s + _UTF8_CONT * ((n - len(s)) % n)
 
 
 class _Reader:
@@ -193,7 +209,7 @@ class TreeWriter:
         else:
             data = concat_record(self._buffer, library=self._backend)
             self._buffer = []
-        if data is not None and len(data) > 0:
+        if data is not None and len_record(data, library=self._backend) > 0:
             if self._backend == "ak":
                 from .. import awkward as akext
 
@@ -251,6 +267,31 @@ class TreeWriter:
                 if self._buffer_size >= self._basket_size:
                     self._flush()
         return self
+
+    def save_metadata(self, name: str, metadata: dict[str, UprootSupportedDtypes]):
+        """
+        Save metadata to ROOT file.
+
+        Parameters
+        ----------
+        name : str
+            Name of metadata.
+        metadata : dict[str, UprootSupportedDtypes]
+            A dictionary of metadata.
+        """
+        if Version(uproot.__version__) >= Version("5.0.0"):
+            self._file[name] = {k: [v] for k, v in metadata.items()}
+        else:
+            import awkward as ak
+            import numpy as np
+
+            data = {}
+            for k, v in metadata.items():
+                if isinstance(v, str):
+                    v = np.frombuffer(_align_utf8(v.encode("utf-8"), 8), dtype=np.int64)
+                    k = f"{_UTF8_NULL}{k}"
+                data[k] = ak.Array([v])
+            self._file[name] = data
 
 
 class TreeReader(_Reader):
@@ -533,3 +574,49 @@ class TreeReader(_Reader):
                 }
             )
         return uproot.dask(files, **options)
+
+    def load_metadata(
+        self, name: str, source: Chunk
+    ) -> dict[str, UprootSupportedDtypes]:
+        """
+        Load metadata from ROOT file.
+
+        Parameters
+        ----------
+        name : str
+            Name of the metadata.
+        source : Chunk
+            The ROOT file source.
+
+        Returns
+        -------
+        dict[str, UprootSupportedDtypes]
+            A dictionary of metadata.
+        """
+        with uproot.open(source.path, **self._open_options) as file:
+            if (num_entries := file[name].num_entries) != 1:
+                raise ValueError(
+                    f"Expected one entry in {source.path}[{name}], got {num_entries}."
+                )
+            if Version(uproot.__version__) > Version("5.0.0"):
+                return {k: v[0] for k, v in file[name].arrays(library="np").items()}
+            else:
+                import awkward as ak
+
+                from .. import awkward as akext
+
+                metadata = {}
+                counts = []
+                array = file[name].arrays(library="ak")
+                for k in array.fields:
+                    v = array[k]
+                    if akext.is_.jagged(v):
+                        counts.append(f"n{k}")
+                    if k.startswith(_UTF8_NULL):
+                        k = k.removeprefix(_UTF8_NULL)
+                        metadata[k] = ak.to_numpy(v).tobytes().decode("utf-8", "ignore")
+                    else:
+                        metadata[k] = ak.to_numpy(v)[0]
+                for k in counts:
+                    del metadata[k]
+            return metadata
