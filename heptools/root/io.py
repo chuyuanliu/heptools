@@ -576,7 +576,7 @@ class TreeReader(_Reader):
         return uproot.dask(files, **options)
 
     def load_metadata(
-        self, name: str, source: Chunk
+        self, name: str, source: Chunk, builtin_types: bool = False
     ) -> dict[str, UprootSupportedDtypes]:
         """
         Load metadata from ROOT file.
@@ -587,6 +587,8 @@ class TreeReader(_Reader):
             Name of the metadata.
         source : Chunk
             The ROOT file source.
+        builtin_types : bool, optional, default=False
+            Convert numpy dtypes to builtin types.
 
         Returns
         -------
@@ -599,7 +601,7 @@ class TreeReader(_Reader):
                     f"Expected one entry in {source.path}[{name}], got {num_entries}."
                 )
             if Version(uproot.__version__) > Version("5.0.0"):
-                return {k: v[0] for k, v in file[name].arrays(library="np").items()}
+                metadata = {k: v[0] for k, v in file[name].arrays(library="np").items()}
             else:
                 import awkward as ak
 
@@ -619,4 +621,10 @@ class TreeReader(_Reader):
                         metadata[k] = ak.to_numpy(v)[0]
                 for k in counts:
                     del metadata[k]
+
+            if builtin_types:
+                for k, v in metadata.items():
+                    match type(v).__module__:
+                        case "numpy":
+                            metadata[k] = v.item() if not v.shape else v.tolist()
             return metadata
