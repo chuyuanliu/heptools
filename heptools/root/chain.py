@@ -223,6 +223,13 @@ class Friend:
         for target, chunks in self._contiguous_chunks():
             yield target.slice(chunks[0].start, chunks[-1].stop)
 
+    @property
+    def n_fragments(self):
+        """
+        int: Number of friend tree files.
+        """
+        return sum(len(vs) for vs in self._data.values())
+
     def _on_disk(func):
         def wrapper(self: Friend, *args, **kwargs):
             if self._has_dump:
