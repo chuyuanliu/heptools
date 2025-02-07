@@ -56,12 +56,24 @@ def _apply_naming(naming: str | NameMapping, keys: dict[str, str]):
         raise TypeError(f'Unknown naming "{naming}"')
 
 
-def _eos_rm(path: EOS):
-    path.rm()
+class _eos_rm:
+    def __init__(self, *callbacks: Callable[[EOS], None]):
+        self.callbacks = callbacks
+
+    def __call__(self, path: EOS):
+        path.rm()
+        for callback in self.callbacks:
+            callback(path)
 
 
-def _eos_cp(src: EOS, dst: EOS):
-    EOS.cp(src, dst, parents=True, overwrite=True)
+class _eos_cp:
+    def __init__(self, *callbacks: Callable[[EOS, EOS], None]):
+        self.callbacks = callbacks
+
+    def __call__(self, src: EOS, dst: EOS):
+        EOS.cp(src, dst, parents=True, overwrite=True)
+        for callback in self.callbacks:
+            callback(src, dst)
 
 
 @dataclass
@@ -717,7 +729,12 @@ class Friend:
                 friend.add(target.slice(chunk.start, chunk.stop), new)
         return friend
 
-    def reset(self, confirm: bool = True, executor: Optional[Executor] = None):
+    def reset(
+        self,
+        confirm: bool = True,
+        executor: Optional[Executor] = None,
+        callbacks: Iterable[Callable[[EOS], None]] = (),
+    ):
         """
         Reset the friend tree and delete all dumped files.
 
@@ -727,6 +744,8 @@ class Friend:
             Confirm the deletion.
         executor: ~concurrent.futures.Executor, optional
             An executor with at least the :meth:`~concurrent.futures.Executor.map` method implemented. If not provided, the tasks will run sequentially in the current thread
+        callbacks: ~typing.Iterable[~typing.Callable], optional
+            Functions to be called after each file is deleted.
 
         """
         files: list[EOS] = []
@@ -741,7 +760,7 @@ class Friend:
             if confirmation != self.name:
                 logging.info("Deletion aborted.")
                 return
-        (map_executor if executor is None else executor.map)(_eos_rm, files)
+        (map_executor if executor is None else executor.map)(_eos_rm(*callbacks), files)
         self._branches = None
         self._data.clear()
         if hasattr(self, _FRIEND_DUMP):
@@ -840,6 +859,7 @@ class Friend:
         naming: str | NameMapping = ...,
         execute: bool = False,
         executor: Optional[Executor] = None,
+        callbacks: Iterable[Callable[[EOS, EOS], None]] = (),
     ):
         """
         Copy all chunks to a new location.
@@ -854,6 +874,8 @@ class Friend:
             If ``True``, clone the files immediately.
         executor: ~concurrent.futures.Executor, optional
             An executor with at least the :meth:`~concurrent.futures.Executor.map` method implemented. If not provided, the tasks will run sequentially in the current thread.
+        callbacks: ~typing.Iterable[~typing.Callable], optional
+            Functions to be called after each file is copied.
 
         Returns
         -------
@@ -897,7 +919,9 @@ class Friend:
                 chunk.path = path
                 friend._data[target].append(_FriendItem(item.start, item.stop, chunk))
         if execute:
-            (map_executor if executor is None else executor.map)(_eos_cp, src, dst)
+            (map_executor if executor is None else executor.map)(
+                _eos_cp(*callbacks), src, dst
+            )
         return friend
 
     def integrity(self, executor: Executor = None):
