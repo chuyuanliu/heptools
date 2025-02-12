@@ -370,7 +370,7 @@ document.write(`
                 <article class="bd-article">
                   
   <section id="construct-friend-tree">
-<h1>Construct <a class="reference internal" href="../../api/root/tree.html#heptools.root.chain.Friend" title="heptools.root.chain.Friend"><code class="xref py py-class docutils literal notranslate"><span class="pre">Friend</span></code></a> Tree<a class="headerlink" href="#construct-friend-tree" title="Link to this heading">#</a></h1>
+<h1>Construct <code class="xref py py-class docutils literal notranslate"><span class="pre">Friend</span></code> Tree<a class="headerlink" href="#construct-friend-tree" title="Link to this heading">#</a></h1>
 <section id="basic-usage">
 <h2>Basic Usage<a class="headerlink" href="#basic-usage" title="Link to this heading">#</a></h2>
 <p>To construct a friend tree from scratch, you can follow the example below.</p>
@@ -396,7 +396,7 @@ document.write(`
     <span class="n">json</span><span class="o">.</span><span class="n">dump</span><span class="p">(</span><span class="n">friend</span><span class="p">,</span> <span class="n">f</span><span class="p">,</span> <span class="bp">cls</span><span class="o">=</span><span class="n">DefaultEncoder</span><span class="p">)</span>
 </pre></div>
 </div>
-<p>Then, the data can be retrieved by calling <a class="reference internal" href="../../api/root/tree.html#heptools.root.chain.Friend.arrays" title="heptools.root.chain.Friend.arrays"><code class="xref py py-meth docutils literal notranslate"><span class="pre">arrays()</span></code></a>.</p>
+<p>Then, the data can be retrieved by calling <code class="xref py py-meth docutils literal notranslate"><span class="pre">arrays()</span></code>.</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># load the friend tree from the json file</span>
 <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="s2">&quot;friend.json&quot;</span><span class="p">,</span> <span class="s2">&quot;r&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
     <span class="n">friend</span> <span class="o">=</span> <span class="n">Friend</span><span class="o">.</span><span class="n">from_json</span><span class="p">(</span><span class="n">json</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">f</span><span class="p">))</span>
