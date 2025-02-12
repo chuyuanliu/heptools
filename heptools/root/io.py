@@ -108,6 +108,9 @@ class ReaderOptions(TypedDict, total=False):
     transform: Callable[[RecordLike], RecordLike]
 
 
+BRANCH_FILTER = "branch_filter"
+
+
 class TreeWriter:
     """
     :func:`uproot.recreate` with remote file support and :class:`TBasket` size control.

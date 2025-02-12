@@ -4,7 +4,7 @@ import operator as op
 import sys
 from collections import defaultdict
 from functools import partial, reduce
-from typing import TYPE_CHECKING, Callable, Literal
+from typing import TYPE_CHECKING, Callable, Literal, Protocol
 
 if TYPE_CHECKING:
     import awkward
@@ -228,3 +228,16 @@ def sizeof_record(data, library: Literal["ak", "pd", "np"] = ...):
         return sum(sizeof_record(v, library=lib) for v in data.values())
     else:
         raise TypeError(_UNKNOWN.format(library=library))
+
+
+class NameMapping(Protocol):
+    def __call__(self, **keys: str) -> str | tuple[str, ...]: ...
+
+
+def apply_naming(naming: str | NameMapping, keys: dict[str, str]):
+    if isinstance(naming, str):
+        return naming.format(**keys)
+    elif isinstance(naming, Callable):
+        return naming(**keys)
+    else:
+        raise TypeError(f'Unknown naming "{naming}"')
