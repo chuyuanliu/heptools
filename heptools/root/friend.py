@@ -278,7 +278,7 @@ class Friend:
         return NotImplemented
 
     def __repr__(self):
-        text = f"{self.name}:{self._branches}"
+        text = f"{self.name}:{sorted(self._branches)}"
         for k, v in self._data.items():
             text += f"\n{k}\n    {v}"
         return text
