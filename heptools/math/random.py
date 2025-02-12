@@ -174,7 +174,6 @@ class CBRNG(ABC, Generic[_KeyT]):
         Generates from normal distribution using Box-Muller transform [1]_.
 
         .. warning::
-
             In an extremely rare case (:math:`1/2^{53}`), it may raise a "divide by zero" warning.
 
         Parameters

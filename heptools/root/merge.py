@@ -32,7 +32,7 @@ def move(
     """
     source = source.deepcopy()
     source.path = (source.path.move_to if clean_source else source.path.copy_to)(
-        path, overwrite=True
+        path, overwrite=True, parents=True
     )
     return source
 
@@ -100,7 +100,10 @@ def clean(
     merged: list[Chunk] or Delayed
     """
     for chunk in source:
-        chunk.path.rm()
+        try:
+            chunk.path.rm()
+        except Exception:
+            ...
     return merged
 
 
@@ -143,36 +146,40 @@ def resize(
     """
     path = EOS(path)
     results: list[Chunk] = []
+    move_kws = dict(
+        clean_source=clean_source,
+        dask=dask,
+    )
+    merge_kws = dict(
+        step=step,
+        reader_options=reader_options,
+        writer_options=writer_options,
+        dask=dask,
+    )
+    to_clean = {(chunk.path, chunk.uuid): chunk for chunk in sources}
     if chunk_size is ...:
-        results.append(
-            merge(
-                path,
-                *sources,
-                step=step,
-                reader_options=reader_options,
-                writer_options=writer_options,
-                dask=dask,
-            )
-        )
+        if len(sources) == 1:
+            results.append(move(path, sources[0], **move_kws))
+            to_clean.clear()
+        else:
+            results.append(merge(path, *sources, **merge_kws))
     else:
+        output = path
         parent = path.parent
         filename = f'{path.stem}.chunk{{index}}{"".join(path.suffixes)}'
         chunks = [*Chunk.partition(chunk_size, *sources, common_branches=True)]
-        for index, new_chunks in enumerate(chunks):
-            if len(chunks) == 1:
-                new_path = path
+        for index, to_merges in enumerate(chunks):
+            if len(chunks) > 1:
+                output = parent / filename.format(index=index)
+            if (
+                len(to_merges) == 1
+                and (to_merge := to_merges[0]).entry_start == 0
+                and to_merge.entry_stop == to_merge.num_entries
+            ):
+                results.append(move(output, to_merge, **move_kws))
+                to_clean.pop((to_merge.path, to_merge.uuid), None)
             else:
-                new_path = parent / filename.format(index=index)
-            results.append(
-                merge(
-                    new_path,
-                    *new_chunks,
-                    step=step,
-                    reader_options=reader_options,
-                    writer_options=writer_options,
-                    dask=dask,
-                )
-            )
-    if clean_source:
-        results = clean(sources, results, dask=dask)
+                results.append(merge(output, *to_merges, **merge_kws))
+    if clean_source and to_clean:
+        results = clean(to_clean.values(), results, dask=dask)
     return results

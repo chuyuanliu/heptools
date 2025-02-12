@@ -3,7 +3,7 @@ from __future__ import annotations
 import bisect
 import logging
 from collections import defaultdict, deque
-from concurrent.futures import Executor, Future
+from concurrent.futures import Executor, Future, wait
 from dataclasses import dataclass
 from functools import partial
 from itertools import chain
@@ -24,7 +24,7 @@ from ..utils import map_executor
 from ._backend import merge_record, rename_record
 from .chunk import Chunk
 from .io import ReaderOptions, TreeReader, TreeWriter, WriterOptions
-from .merge import move, resize
+from .merge import resize
 
 if TYPE_CHECKING:
     import awkward as ak
@@ -98,12 +98,10 @@ class _friend_cleanup_callback:
             self.friend.add(self.target, chunk)
 
 
-@delayed
-def _friend_merge(
+def _friend_merge_impl(
     name: str,
     branches: frozenset[str],
     data: dict[Chunk, list[tuple[int, int, list[Chunk]]]],
-    dask: bool,
 ):
     friend = Friend(name)
     friend._branches = frozenset(branches)
@@ -111,13 +109,47 @@ def _friend_merge(
         for start, stop, chunks in vs:
             for chunk in chunks:
                 chunk._branches = friend._branches
-                friend._data[k].append(_FriendItem(start, start + len(chunk), chunk))
+                friend.add(k.slice(start, start + len(chunk)), chunk)
                 start += len(chunk)
             if start != stop:
                 raise RuntimeError(
                     f'Failed to merge friend "{name}". The merged chunk does not cover the range [{start},{stop}) for target {k}.'
                 )
     return friend
+
+
+@delayed
+def _friend_merge_dask(
+    name: str,
+    branches: frozenset[str],
+    data: dict[Chunk, list[tuple[int, int, list[Chunk]]]],
+    dask: bool,
+):
+    return _friend_merge_impl(name, branches, data)
+
+
+@dataclass
+class _friend_merge_future:
+    name: str
+    branches: frozenset[str]
+    data: dict[Chunk, list[tuple[int, int, list[Chunk]]]]
+    jobs: list[Future]
+
+    def result(self):
+        wait(self.jobs)
+        return _friend_merge_impl(self.name, self.branches, self.data)
+
+
+@dataclass
+class _friend_merge_callback:
+    data: dict[Chunk, list[tuple[int, int, list[Chunk]]]]
+    start: int
+    stop: int
+    target: Chunk
+
+    def __call__(self, result: list[Chunk] | Future[list[Chunk]]):
+        chunks = result.result() if isinstance(result, Future) else result
+        self.data[self.target].append((self.start, self.stop, chunks))
 
 
 @dataclass
@@ -791,10 +823,16 @@ class Friend:
         reader_options: ReaderOptions = None,
         writer_options: WriterOptions = None,
         clean: bool = True,
+        executor: Optional[Executor] = None,
         dask: bool = False,
-    ):
+    ) -> Friend | Future[Friend]:
         """
         Merge contiguous chunks into a single file.
+
+        .. warning::
+
+            - ``executor`` and ``dask`` cannot be used together.
+            - If ``chunk_size`` is provided, ``dask`` will provide better parallelism.
 
         Parameters
         ----------
@@ -812,39 +850,51 @@ class Friend:
             Additional options passed to :class:`~.io.TreeWriter`.
         clean : bool, optional, default=True
             If ``True``, clean the original friend chunks after merging.
+        executor: ~concurrent.futures.Executor, optional
+            An executor with at least the :meth:`~concurrent.futures.Executor.submit` method implemented.
         dask : bool, optional, default=False
             If ``True``, return a :class:`~dask.delayed.Delayed` object.
 
         Returns
         -------
-        Friend or Delayed
+        Friend or Delayed or Future[Friend]
             A new friend tree with the merged chunks.
         """
+        if sum((executor is not None, dask)) > 1:
+            raise ValueError("Please specify an parallel backend.")
         if base_path is not ...:
             base_path = EOS(base_path)
         self._init_dump()
         data = defaultdict(list)
+        if executor is not None:
+            jobs = []
         for target, chunks in self._contiguous_chunks():
             base = target.path.parent if base_path is ... else base_path
             dummy = _FriendItem(chunks[0].start, chunks[-1].stop)
             path = base / _apply_naming(naming, self._name_dump(target, dummy))
-            if len(chunks) == 1:
-                chunks = [move(path, chunks[0].chunk, clean_source=clean, dask=dask)]
+            chunks = partial(
+                resize,
+                path,
+                *(c.chunk for c in chunks),
+                step=step,
+                chunk_size=chunk_size,
+                writer_options=writer_options,
+                reader_options=reader_options,
+                clean_source=clean,
+                dask=dask,
+            )
+            callback = _friend_merge_callback(data, dummy.start, dummy.stop, target)
+            if executor is None:
+                callback(chunks())
             else:
-                chunks = resize(
-                    path,
-                    *(c.chunk for c in chunks),
-                    step=step,
-                    chunk_size=chunk_size,
-                    writer_options=writer_options,
-                    reader_options=reader_options,
-                    clean_source=clean,
-                    dask=dask,
-                )
-            data[target].append((dummy.start, dummy.stop, chunks))
-        return _friend_merge(
-            name=self.name, branches=self._branches, data=dict(data), dask=dask
-        )
+                job = executor.submit(chunks)
+                job.add_done_callback(callback)
+                jobs.append(job)
+        friend_meta = dict(name=self.name, branches=self._branches)
+        if executor is not None:
+            return _friend_merge_future(**friend_meta, data=data, jobs=jobs)
+        else:
+            return _friend_merge_dask(**friend_meta, data=dict(data), dask=dask)
 
     @_on_disk
     def clone(
