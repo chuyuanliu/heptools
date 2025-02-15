@@ -216,7 +216,7 @@ class TreeWriter:
             if self._backend == "ak":
                 from .. import awkward as akext
 
-                if akext.is_.jagged(data):
+                if akext.is_jagged(data):
                     data = {k: data[k] for k in data.fields}
             if self._name not in self._file:
                 self._file[self._name] = data
@@ -615,7 +615,7 @@ class TreeReader(_Reader):
                 array = file[name].arrays(library="ak")
                 for k in array.fields:
                     v = array[k]
-                    if akext.is_.jagged(v):
+                    if akext.is_jagged(v):
                         counts.append(f"n{k}")
                     if k.startswith(_UTF8_NULL):
                         k = k.removeprefix(_UTF8_NULL)

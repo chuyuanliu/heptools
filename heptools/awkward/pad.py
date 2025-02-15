@@ -5,7 +5,7 @@ from typing import TYPE_CHECKING, Any
 import awkward as ak
 import numpy as np
 
-from .to import numpy as to_numpy
+from .convert import to_numpy
 
 if TYPE_CHECKING:
     import numpy.typing as npt
