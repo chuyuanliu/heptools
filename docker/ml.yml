@@ -8,6 +8,8 @@ dependencies:
   - pytorch::pytorch
   - pytorch::pytorch-cuda=12.1
   - scikit-learn
+  # GPU
+  - cupy
   # monitor
   - gevent
   - gevent-websocket
