@@ -98,6 +98,15 @@ def check_subclass(__derived, __base) -> bool:
     return True
 
 
+def find_subclass(__obj1, __obj2):
+    t1 = type(__obj1)
+    t2 = type(__obj2)
+    if issubclass(t1, t2):
+        return t1
+    elif issubclass(t2, t1):
+        return t2
+
+
 def check_type(__obj, __type) -> bool:
     # TODO Callable, TypedDict
 

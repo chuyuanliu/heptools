@@ -1,10 +1,19 @@
 from __future__ import annotations
 
 from copy import deepcopy
-from typing import Callable, Iterable, TypedDict, overload
+from typing import (
+    Callable,
+    Generic,
+    Iterable,
+    TypedDict,
+    TypeVar,
+    overload,
+)
 
 import awkward as ak
 import numpy as np
+import numpy.typing as npt
+from awkward._typing import Self
 from hist import Hist
 from hist.axis import (
     AxesMixin,
@@ -15,18 +24,17 @@ from hist.axis import (
     StrCategory,
     Variable,
 )
+from packaging.version import Version
 
+from .. import awkward as akext
 from ..aktools import (
-    AnyArray,
     AnyInt,
     FieldLike,
     RealNumber,
     and_fields,
     get_field,
-    has_record,
-    set_field,
 )
-from ..typetools import check_type
+from ..typetools import check_type, find_subclass
 from . import template as _t
 
 HistAxis = Boolean | IntCategory | Integer | Regular | StrCategory | Variable
@@ -51,12 +59,13 @@ class Label:
     def askwarg(self, code: str = "code", display: str = "display"):
         return {code: self.code, display: self.display}
 
-    def __repr__(self) -> str:  # TODO __repr__
-        return f"Label({self.code}, {self.display})"
 
-
-def _default_field(_s: str):
+def _fill_field(_s: str):
     return (*_s.split("."),)
+
+
+def _fill_special(hist: str, axis: str):
+    return f"{hist} \x00 {axis}"
 
 
 def _create_axis(args: AxisLike) -> HistAxis:
@@ -91,7 +100,7 @@ def _create_axis(args: AxisLike) -> HistAxis:
 
 
 LazyFill = FieldLike | Callable
-FillLike = LazyFill | AnyArray | RealNumber | bool
+FillLike = LazyFill | npt.ArrayLike | RealNumber | bool
 LabelLike = str | tuple[str, str] | Label
 
 RegularArgs = tuple[int, RealNumber, RealNumber]
@@ -133,11 +142,23 @@ class HistError(Exception):
     __module__ = Exception.__module__
 
 
+HistType = TypeVar("HistType", bound=Hist)
+FillType = TypeVar("FillType", bound="_Fill")
+
+
 class _MissingFillValue: ...
 
 
-class Fill:
-    threads = 1
+class _Fill(Generic[HistType]):
+    class __backend__:
+        check_empty_mask: bool
+        akarray: type
+        anyarray: type
+        repeat: Callable
+        broadcast: Callable[..., dict[str]] = None
+
+        allow_str_array: bool = Version(ak.__version__) >= Version("2.0.0")
+
     allow_missing = False
 
     def __init__(
@@ -149,11 +170,13 @@ class Fill:
         self._fills = {} if fills is None else fills
         self._kwargs = fill_args | {"weight": weight}
 
-    def __add__(self, other: Fill | _t.Template) -> Fill:
-        if isinstance(other, Fill):
+    def __add__(self, other: _Fill | _t.Template) -> _Fill:
+        if isinstance(other, _Fill):
+            if (backend := find_subclass(self, other)) is None:
+                raise FillError("Cannot merge fill using different backends")
             fills = other._fills | self._fills
             kwargs = other._kwargs | self._kwargs
-            return self.__class__(fills, **kwargs)
+            return backend(fills, **kwargs)
         elif isinstance(other, _t.Template):
             return self + other.new()
         return NotImplemented
@@ -161,7 +184,7 @@ class Fill:
     def __call__(
         self,
         events: ak.Array,
-        hists: Collection = ...,
+        hists: _Collection[HistType, Self] = ...,
         **fill_args: FillLike,
     ):
         self.fill(events, hists, **fill_args)
@@ -180,130 +203,106 @@ class Fill:
                 return _MissingFillValue
             raise
 
-    def cache(self, events: ak.Array):
-        if Collection.current is None:
-            raise FillError("no histogram collection is specified")
-        for k, v in self._kwargs.items():
-            if isinstance(v, str) and isinstance(
-                Collection.current._axes.get(k), StrCategory
-            ):
-                continue
-            if check_type(v, FieldLike) and has_record(events, v) != v:
-                set_field(events, v, get_field(events, v))
+    def _is_jagged(self, obj):
+        return isinstance(obj, self.__backend__.akarray) and akext.is_jagged(obj)
 
-    def fill(self, events: ak.Array, hists: Collection = ..., **fill_args: FillLike):
+    def fill(
+        self,
+        events: ak.Array,
+        hists: _Collection[HistType, Self] = ...,
+        **fill_args: FillLike,
+    ):
         if hists is ...:
-            if Collection.current is None:
-                raise FillError("no histogram collection is specified")
-            hists = Collection.current
+            if (hists := _Collection.current) is None:
+                raise FillError("No histogram collection is specified")
+        if not isinstance(self, hists.__backend__.fill):
+            raise FillError(
+                "Cannot fill a histogram collection with a different backend"
+            )
         fill_args = self._kwargs | fill_args
         mask_categories = []
         for category in hists._categories:
             if category not in fill_args:
-                if isinstance(hists._axes[category], StrCategory):
+                field = _fill_field(category)
+                if isinstance(hists._axes[category], StrCategory) and not (
+                    self.__backend__.allow_str_array
+                    and akext.is_array(get_field(events, field))
+                ):
                     mask_categories.append(category)
                 else:
-                    fill_args[category] = _default_field(category)
-        for category_args in hists._generate_category_combinations(mask_categories):
+                    fill_args[category] = field
+        for fill_values in hists._generate_category_combinations(mask_categories):
             mask = and_fields(
-                events, *(_default_field(f"{k}.{v}") for k, v in category_args.items())
+                events, *(_fill_field(f"{k}.{v}") for k, v in fill_values.items())
             )
             masked = events if mask is None else events[mask]
-            if len(masked) == 0:
+            if self.__backend__.check_empty_mask and len(masked) == 0:
                 continue
             for k, v in fill_args.items():
                 if (isinstance(v, str) and k in hists._categories) or isinstance(
-                    v, (bool, RealNumber)
+                    v, bool | RealNumber
                 ):
-                    category_args[k] = v
+                    fill_values[k] = v
                 elif check_type(v, FieldLike):
-                    category_args[k] = self._get_fill_arg(lambda: get_field(masked, v))
-                elif check_type(v, AnyArray):
-                    category_args[k] = v if mask is None else v[mask]
-                elif check_type(v, Callable):
-                    category_args[k] = self._get_fill_arg(lambda: v(masked))
+                    fill_values[k] = self._get_fill_arg(lambda: get_field(masked, v))
+                elif isinstance(v, self.__backend__.anyarray):
+                    fill_values[k] = v if mask is None else v[mask]
+                elif isinstance(v, Callable):
+                    fill_values[k] = self._get_fill_arg(lambda: v(masked))
                 else:
                     raise FillError(f'cannot fill "{k}" with "{v}"')
-            jagged_args = {}
-            counts_args = []
-            for k, v in category_args.items():
-                if isinstance(v, ak.Array):
-                    try:
-                        category_args[k] = ak.flatten(v)
-                        count = ak.num(v)
-                        for i, c in enumerate(counts_args):
-                            if ak.all(c == count):
-                                jagged_args[k] = i
-                        if k not in jagged_args:
-                            jagged_args[k] = len(counts_args)
-                            counts_args.append(count)
-                    except Exception:
-                        continue
             for name in self._fills:
                 fills = {
-                    k: f"{name}:{k}" if f"{name}:{k}" in category_args else k
+                    k: (
+                        special
+                        if (special := _fill_special(name, k)) in fill_values
+                        else k
+                    )
                     for k in self._fills[name]
                 }
-                if any(category_args[v] is _MissingFillValue for v in fills.values()):
+                if any(fill_values[v] is _MissingFillValue for v in fills.values()):
                     continue
-                shape = {jagged_args[k] for k in fills.values() if k in jagged_args}
-                if len(shape) == 0:
-                    shape = None
-                elif len(shape) == 1:
-                    shape = counts_args[next(iter(shape))]
-                else:
-                    raise FillError(
-                        f'cannot fill hist "{name}" with unmatched jagged arrays {jagged_args}'
-                    )
+                shape = None
+                for v in fills.values():
+                    fill = fill_values[v]
+                    if self._is_jagged(fill):
+                        shape = ak.num(fill)
+                        break
                 hist_args = {}
                 for k, v in fills.items():
-                    fill = category_args[v]
-                    if shape is not None:
-                        if v not in jagged_args and check_type(fill, AnyArray):
-                            fill = np.repeat(fill, shape)
+                    fill = fill_values[v]
+                    if shape is None:
+                        ...
+                    elif self._is_jagged(fill):
+                        fill = ak.flatten(fill)
+                    elif isinstance(fill, self.__backend__.anyarray):
+                        fill = self.__backend__.repeat(fill, shape)
                     hist_args[k] = fill
                 # https://github.com/scikit-hep/boost-histogram/issues/452 #
-                if all(
-                    [check_type(axis, StrCategory) for axis in hists._hists[name].axes]
+                if (self.__backend__.broadcast is not None) and all(
+                    [isinstance(axis, StrCategory) for axis in hists._hists[name].axes]
                 ):
-                    try:
-                        weight = hist_args["weight"]
-                        if len(weight) > 0:
-                            broadcasted = False
-                            tobroadcast = None
-                            for k, v in hist_args.items():
-                                if k != "weight":
-                                    if check_type(v, AnyArray) and len(v) == len(
-                                        weight
-                                    ):
-                                        broadcasted = True
-                                        break
-                                    else:
-                                        tobroadcast = k
-                            if not broadcasted and tobroadcast is not None:
-                                hist_args[tobroadcast] = np.full(
-                                    len(weight), hist_args[tobroadcast]
-                                )
-                    except Exception:
-                        continue
+                    hist_args = self.__backend__.broadcast(**hist_args)
                 ############################################################
-                hists._hists[name].fill(**hist_args, threads=self.threads)
+                hists._hists[name].fill(**hist_args)
                 hists._filled.add(name)
 
 
-class CollectionOutput(TypedDict):
-    hists: dict[str, Hist]
+class CollectionOutput(Generic[HistType], TypedDict):
+    hists: dict[str, HistType]
     categories: set[str]
 
 
-class Collection:
-    current: Collection = None
-    _backend_fill = Fill
-    _backend_hist = Hist
+class _Collection(Generic[HistType, FillType]):
+    class __backend__:
+        hist: type[HistType]
+        fill: type[FillType]
+
+    current: Self
 
     def __init__(self, **categories):
         self._fills: dict[str, list[str]] = {}
-        self._hists: dict[str, Hist] = {}
+        self._hists: dict[str, HistType] = {}
         self._categories = deepcopy(categories)
         self._axes: dict[str, HistAxis] = {
             k: _create_axis((*(v if isinstance(v, tuple) else (v,)), k))
@@ -313,16 +312,18 @@ class Collection:
         self.cd()
 
     def add(self, name: str, *axes: AxisLike, **fill_args: FillLike):
+        if name in self._hists:
+            raise FillError(f'Histogram "{name}" already exists')
         axes = [_create_axis(axis) for axis in axes]
         self._fills[name] = [_axis.name for _axis in axes]
-        self._hists[name] = self._backend_hist(
+        self._hists[name] = self.__backend__.hist(
             *self._axes.values(), *axes, storage="weight", label="Events"
         )
         return self.auto_fill(name, **fill_args)
 
     def _generate_category_combinations(
         self, categories: list[str]
-    ) -> list[dict[str, str]]:
+    ) -> list[dict[str, FillLike]]:
         if len(categories) == 0:
             return [{}]
         else:
@@ -330,15 +331,17 @@ class Collection:
                 np.meshgrid(*(self._categories[category] for category in categories)),
                 axis=-1,
             ).reshape((-1, len(categories)))
-            return [dict(zip(categories, comb)) for comb in combs]
+            return [dict(zip(categories, comb.tolist())) for comb in combs]
 
     def auto_fill(self, name: str, **fill_args: FillLike):
         default_args = {
-            k: _default_field(k) for k in self._fills[name] if k not in fill_args
+            k: _fill_field(k) for k in self._fills[name] if k not in fill_args
         }
-        fill_args = {f"{name}:{k}": v for k, v in fill_args.items()} | default_args
+        fill_args = {
+            _fill_special(name, k): v for k, v in fill_args.items()
+        } | default_args
         fills = {name: self._fills[name] + [*self._categories] + ["weight"]}
-        return self._backend_fill(fills, **fill_args)
+        return self.__backend__.fill(fills, **fill_args)
 
     def duplicate_axes(self, name: str) -> list[HistAxis]:
         axes = []
@@ -349,9 +352,9 @@ class Collection:
         return axes
 
     def cd(self):
-        Collection.current = self
+        _Collection.current = self
 
-    def to_dict(self, nonempty: bool = False) -> CollectionOutput:
+    def to_dict(self, nonempty: bool = False) -> CollectionOutput[HistType]:
         if nonempty:
             hists = (k for k in self._hists if k in self._filled)  # preserve order
         else:
@@ -364,3 +367,31 @@ class Collection:
     @property
     def output(self):
         return self.to_dict()
+
+
+def _broadcast(weight: FillLike, **kwargs: FillLike):
+    tobroadcast = None
+    for k, v in kwargs.items():
+        tobroadcast = k
+        if isinstance(v, ak.Array | npt.NDArray) and len(v) == len(weight):
+            tobroadcast = None
+            break
+    if tobroadcast is not None:
+        kwargs[tobroadcast] = np.full(len(weight), kwargs[tobroadcast])
+    kwargs["weight"] = weight
+    return kwargs
+
+
+class Fill(_Fill[Hist]):
+    class __backend__(_Fill.__backend__):
+        check_empty_mask = True
+        akarray = ak.Array
+        anyarray = ak.Array | npt.NDArray
+        repeat = np.repeat
+        broadcast = _broadcast
+
+
+class Collection(_Collection[Hist, Fill]):
+    class __backend__(_Collection.__backend__):
+        hist = Hist
+        fill = Fill
