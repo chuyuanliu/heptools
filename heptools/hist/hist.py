@@ -13,7 +13,6 @@ from typing import (
 import awkward as ak
 import numpy as np
 import numpy.typing as npt
-from awkward._typing import Self
 from hist import Hist
 from hist.axis import (
     AxesMixin,
@@ -25,6 +24,7 @@ from hist.axis import (
     Variable,
 )
 from packaging.version import Version
+from typing_extensions import Self
 
 from .. import awkward as akext
 from ..aktools import (
