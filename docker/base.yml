@@ -31,7 +31,7 @@ dependencies:
   - scalene
   # Scikit-HEP
   - coffea
-  - uproot
+  - uproot >= 5.5.2
   - awkward
   - awkward-pandas
   - hist
