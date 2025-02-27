@@ -1,9 +1,13 @@
 import awkward as ak
 
-from ._meta import no_touch_first_array
 from .wrapper import delayed
+
+
+def _to_backend_meta(array, *_, **__):
+    return array
+
 
 # operations
 
 array = delayed(typehint=ak.Array)(ak.Array)
-to_backend = delayed(typehint=ak.to_backend, meta=no_touch_first_array)(ak.to_backend)
+to_backend = delayed(typehint=ak.to_backend, meta=_to_backend_meta)(ak.to_backend)
