@@ -2,7 +2,7 @@
 
 [![Documentation](https://img.shields.io/badge/docs-latest-blue?logo=sphinx)](https://chuyuanliu.github.io/heptools/)
 [![Docker Image](https://img.shields.io/badge/docker-latest-blue?logo=docker)](https://hub.docker.com/repository/docker/chuyuanliu/heptools)
-![Python Version](https://img.shields.io/badge/python-3.10-blue?logo=python)
+![Python Version](https://img.shields.io/badge/python-3.11-blue?logo=python)
 ![Code Style](https://img.shields.io/badge/code%20style-black-black)
 
 A collection of tools for experimental high energy physics analysis.

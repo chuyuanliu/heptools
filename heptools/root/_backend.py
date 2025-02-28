@@ -13,6 +13,8 @@ if TYPE_CHECKING:
 
 _UNKNOWN = "Unknown backend {library}."
 
+Backends = Literal["ak", "np", "pd"]
+
 
 class _NestedRecord(defaultdict):
     def __init__(self, *args, **kwargs):
@@ -99,7 +101,7 @@ def record_backend(data, sequence=False):
     return f"<{data.__module__}.{data.__class__.__name__}>"
 
 
-def concat_record(data: list, library: Literal["ak", "pd", "np"] = ...):
+def concat_record(data: list, library: Backends = ...):
     if library is ...:
         library = record_backend(data, sequence=True)
     if len(data) == 0:
@@ -126,7 +128,7 @@ def concat_record(data: list, library: Literal["ak", "pd", "np"] = ...):
         raise TypeError(_UNKNOWN.format(library=library))
 
 
-def merge_record(data: list, library: Literal["ak", "pd", "np"] = ...):
+def merge_record(data: list, library: Backends = ...):
     if library is ...:
         library = record_backend(data, sequence=True)
     if len(data) == 0:
@@ -151,7 +153,7 @@ def merge_record(data: list, library: Literal["ak", "pd", "np"] = ...):
         raise TypeError(_UNKNOWN.format(library=library))
 
 
-def slice_record(data, start: int, stop: int, library: Literal["ak", "pd", "np"] = ...):
+def slice_record(data, start: int, stop: int, library: Backends = ...):
     if library is ...:
         library = record_backend(data)
     if library in ("ak", "pd"):
@@ -171,7 +173,7 @@ def slice_record(data, start: int, stop: int, library: Literal["ak", "pd", "np"]
         raise TypeError(_UNKNOWN.format(library=library))
 
 
-def len_record(data, library: Literal["ak", "pd", "np"] = ...):
+def len_record(data, library: Backends = ...):
     if library is ...:
         library = record_backend(data)
     if library in ("ak", "pd"):
@@ -187,7 +189,7 @@ def len_record(data, library: Literal["ak", "pd", "np"] = ...):
 def rename_record(
     data,
     mapping: Callable[[str], str | tuple[str, ...]],
-    library: Literal["ak", "pd", "np"] = ...,
+    library: Backends = ...,
 ):
     if library is ...:
         library = record_backend(data)
@@ -211,7 +213,7 @@ def rename_record(
         raise TypeError(_UNKNOWN.format(library=library))
 
 
-def sizeof_record(data, library: Literal["ak", "pd", "np"] = ...):
+def sizeof_record(data, library: Backends = ...):
     if library is ...:
         library = record_backend(data)
     if library in ("ak", "np.array"):
@@ -226,6 +228,20 @@ def sizeof_record(data, library: Literal["ak", "pd", "np"] = ...):
         else:
             lib = library.removeprefix("dict.")
         return sum(sizeof_record(v, library=lib) for v in data.values())
+    else:
+        raise TypeError(_UNKNOWN.format(library=library))
+
+
+def keyof_record(data, library: Backends = ...) -> list[str]:
+    mod = _Backends()
+    if library is ...:
+        library = record_backend(data)
+    if library == "ak":
+        return list(mod.ak.fields(data))
+    elif library == "pd":
+        return list(data.columns)
+    elif library == "np" or library.startswith("dict"):
+        return list(data.keys())
     else:
         raise TypeError(_UNKNOWN.format(library=library))
 

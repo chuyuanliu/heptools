@@ -602,7 +602,9 @@ class Friend:
             ]
             if item.start > start:
                 raise ValueError(
-                    f"Friend {self.name} does not have the entries [{start},{item.start}) for {target}"
+                    _FRIEND_MISSING_ERROR.format(
+                        name=self.name, range=f" [{start},{item.start})", target=target
+                    )
                 )
             elif item.stop < stop:
                 raise ValueError(

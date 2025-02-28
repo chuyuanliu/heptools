@@ -1,9 +1,16 @@
 from __future__ import annotations
 
+from dataclasses import dataclass
 from functools import partial
 from typing import TYPE_CHECKING, Generator, Iterable, Literal, overload
 
-from ._backend import NameMapping, apply_naming, merge_record, rename_record
+from ._backend import (
+    NameMapping,
+    apply_naming,
+    keyof_record,
+    merge_record,
+    rename_record,
+)
 from .chunk import Chunk
 from .io import BRANCH_FILTER, ReaderOptions, TreeReader
 
@@ -16,6 +23,36 @@ if TYPE_CHECKING:
 
     from .friend import Friend
     from .io import DelayedRecordLike, RecordLike
+
+
+def _rename_wrapper(branch: str, friend: str, rename: str | NameMapping):
+    return apply_naming(rename, {"friend": friend, "branch": branch})
+
+
+def _merge_data_impl(
+    main: DelayedRecordLike,
+    friends: dict[str, DelayedRecordLike],
+    renames: dict[str, str | NameMapping],
+    library: str,
+):
+    for k, v in friends.items():
+        if (rename := renames.get(k)) is not None:
+            friends[k] = rename_record(
+                v, partial(_rename_wrapper, friend=k, rename=rename)
+            )
+    if main is None:
+        data = [*friends.values()]
+    else:
+        data = [main, *friends.values()]
+    return merge_record(data, library=library)
+
+
+@dataclass
+class _read_method:
+    method: Literal["dask", "concat"]
+
+    def __call__(self, obj, *args, **kwargs):
+        return getattr(obj, self.method)(*args, **kwargs)
 
 
 class Chain:
@@ -49,7 +86,7 @@ class Chain:
     def __init__(self):
         self._chunks: list[Chunk] = []
         self._friends: dict[str, Friend] = {}
-        self._rename: dict[str, str] = {}
+        self._rename: dict[str, str | NameMapping] = {}
 
     def add_chunk(self, *chunks: Chunk):
         """
@@ -142,9 +179,6 @@ class Chain:
             return chain
         return NotImplemented
 
-    def _rename_wrapper(self, branch: str, friend: str) -> str:
-        return apply_naming(self._rename[friend], {"friend": friend, "branch": branch})
-
     def _filter(
         self, chunks: tuple[Chunk], reader_options: ReaderOptions, friend_only: bool
     ) -> tuple[dict[str, ReaderOptions], ReaderOptions]:
@@ -154,10 +188,10 @@ class Chain:
         for name, friend in self._friends.items():
             branches = b_filter(friend.branches)
             renames = None
-            if name in self._rename:
+            if (rename := self._rename.get(name)) is not None:
                 renames = {}
                 for branch in sorted(branches):
-                    renames[self._rename_wrapper(branch, name)] = branch
+                    renames[_rename_wrapper(branch, name, rename)] = branch
                 branches = set(renames)
             b_friends.append((name, branches, renames))
             output.update(branches)
@@ -186,35 +220,51 @@ class Chain:
 
     def _fetch(
         self,
-        *chunks: Chunk,
+        chunks: Iterable[Chunk],
         library: Literal["ak", "pd", "np"],
         reader_options: ReaderOptions,
         friend_only: bool = False,
-    ) -> RecordLike:
+        method: Literal["dask", "concat"] = "concat",
+    ):
+        reader = _read_method(method)
         opt_friends, opt_main = self._filter(chunks, reader_options or {}, friend_only)
         friends = {}
         for name, friend in self._friends.items():
             opt = opt_friends[name]
             if opt is not None:
-                data = friend.concat(
+                data = reader(
+                    friend,
                     *chunks,
                     library=library,
                     reader_options=opt,
                 )
-                if name in self._rename:
-                    data = rename_record(
-                        data,
-                        partial(self._rename_wrapper, friend=name),
-                        library=library,
-                    )
+                if data is None or len(keyof_record(data, library)) == 0:
+                    continue
                 friends[name] = data
-        if library == "ak":
-            friends = {k: v for k, v in friends.items() if len(v.fields) > 0}
         if friend_only or (opt_main is None):
-            return merge_record([*friends.values()], library=library)
+            main = None
         else:
-            main = TreeReader(**opt_main).concat(*chunks, library=library)
-            return merge_record([main, *friends.values()], library=library)
+            main = reader(TreeReader(**opt_main), *chunks, library=library)
+        return main, friends
+
+    def _non_dask(
+        self,
+        chunks: Iterable[Chunk],
+        library: Literal["ak", "pd", "np"],
+        reader_options: ReaderOptions,
+        friend_only: bool = False,
+    ) -> RecordLike:
+        return _merge_data_impl(
+            *self._fetch(
+                chunks,
+                library,
+                reader_options,
+                friend_only,
+                "concat",
+            ),
+            self._rename,
+            library,
+        )
 
     @overload
     def concat(
@@ -263,8 +313,8 @@ class Chain:
         RecordLike
             Concatenated data.
         """
-        return self._fetch(
-            *self._chunks,
+        return self._non_dask(
+            self._chunks,
             library=library,
             reader_options=reader_options,
             friend_only=friend_only,
@@ -277,6 +327,7 @@ class Chain:
         library: Literal["ak"] = "ak",
         mode: Literal["balance", "partition"] = "partition",
         reader_options: ReaderOptions = None,
+        friend_only: bool = False,
     ) -> Generator[ak.Array, None, None]: ...
 
     @overload
@@ -286,6 +337,7 @@ class Chain:
         library: Literal["pd"] = "pd",
         mode: Literal["balance", "partition"] = "partition",
         reader_options: ReaderOptions = None,
+        friend_only: bool = False,
     ) -> Generator[pd.DataFrame, None, None]: ...
 
     @overload
@@ -295,6 +347,7 @@ class Chain:
         library: Literal["np"] = "np",
         mode: Literal["balance", "partition"] = "partition",
         reader_options: ReaderOptions = None,
+        friend_only: bool = False,
     ) -> Generator[dict[str, np.ndarray], None, None]: ...
 
     def iterate(
@@ -303,6 +356,7 @@ class Chain:
         library: Literal["ak", "pd", "np"] = "ak",
         mode: Literal["balance", "partition"] = "partition",
         reader_options: ReaderOptions = None,
+        friend_only: bool = False,
     ) -> Generator[RecordLike, None, None]:
         """
         Iterate over chunks and friend trees.
@@ -317,6 +371,8 @@ class Chain:
             The mode to generate iteration steps. See :meth:`~.io.TreeReader.iterate` for details.
         reader_options : dict, optional
             Additional options passed to :class:`~.io.TreeReader`.
+        friend_only : bool, optional, default=False
+            If ``True``, only read friend trees.
 
         Yields
         ------
@@ -334,11 +390,11 @@ class Chain:
         for chunk in chunks:
             if not isinstance(chunk, list):
                 chunk = (chunk,)
-            yield self._fetch(
-                *chunk,
+            yield self._non_dask(
+                chunk,
                 library=library,
                 reader_options=reader_options,
-                friend_only=False,
+                friend_only=friend_only,
             )
 
     @overload
@@ -347,6 +403,7 @@ class Chain:
         partition: int = ...,
         library: Literal["ak"] = "ak",
         reader_options: ReaderOptions = None,
+        friend_only: bool = False,
     ) -> dak.Array: ...
 
     @overload
@@ -355,6 +412,7 @@ class Chain:
         partition: int = ...,
         library: Literal["np"] = "np",
         reader_options: ReaderOptions = None,
+        friend_only: bool = False,
     ) -> dict[str, da.Array]: ...
 
     def dask(
@@ -362,6 +420,7 @@ class Chain:
         partition: int = ...,
         library: Literal["ak", "np"] = "ak",
         reader_options: ReaderOptions = None,
+        friend_only: bool = False,
     ) -> DelayedRecordLike:
         """
         Read chunks and friend trees into delayed arrays.
@@ -377,38 +436,33 @@ class Chain:
             The library used to represent arrays.
         reader_options : dict, optional
             Additional options passed to :class:`~.io.TreeReader`.
+        friend_only : bool, optional, default=False
+            If ``True``, only read friend trees.
 
         Returns
         -------
-        main : DelayedRecordLike
+        DelayedRecordLike
             Delayed data from main and friend :class:`TTree`.
         """
-        # TODO predict branches to read
-        # TODO add friend_only option
+        chunks = self._chunks
         if partition is ...:
-            partitions = Chunk.common(*self._chunks)
+            partitions = Chunk.common(*chunks)
         else:
-            partitions = [
-                *Chunk.balance(partition, *self._chunks, common_branches=True)
-            ]
-        reader_options = reader_options or {}
-        main = TreeReader(**reader_options).dask(*partitions, library=library)
-        friends = {}
-        for name, friend in self._friends.items():
-            friend = friend.dask(
-                *partitions,
-                library=library,
-                reader_options=reader_options,
-            )
-            if library != "ak" and name in self._rename:
-                friend = rename_record(
-                    friend, partial(self._rename_wrapper, friend=name), library=library
-                )
-            friends[name] = friend
-        if library == "ak":
-            for name, friend in friends.items():
-                if len(friend.fields) > 0:
-                    main[name] = friend
-            return main
-        else:
-            return merge_record([main, *friends.values()], library=library)
+            partitions = [*Chunk.balance(partition, *chunks, common_branches=True)]
+        args = (
+            *self._fetch(
+                partitions,
+                library,
+                reader_options,
+                friend_only,
+                "dask",
+            ),
+            self._rename,
+            library,
+        )
+        if library == "np":
+            return _merge_data_impl(*args)
+        elif library == "ak":
+            from ..dask.awkward import delayed
+
+            return delayed(_merge_data_impl, label="merge-friend-tree")(*args)
