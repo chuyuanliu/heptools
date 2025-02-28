@@ -151,6 +151,9 @@ class _friend_dump_callback:
         self.friend._check_item(self.item)
 
 
+class FriendTreeError(Exception): ...
+
+
 class _FriendItem:
     def __init__(self, start: int, stop: int, chunk: Chunk = None):
         self.start = start
@@ -204,6 +207,8 @@ class Friend:
     - :meth:`__exit__`: See :meth:`auto_dump`.
     """
 
+    allow_missing: bool = True  # TODO replace by config
+
     name: str
     """str : Name of the collection."""
 
@@ -236,7 +241,7 @@ class Friend:
         """
         return sum(sum(len(v) for v in vs) for vs in self._data.values())
 
-    def _on_disk(func):
+    def __on_disk(func):
         def wrapper(self: Friend, *args, **kwargs):
             if self._has_dump:
                 raise RuntimeError(
@@ -246,12 +251,23 @@ class Friend:
 
         return wrapper
 
+    def __may_fail(func):
+        def wrapper(self: Friend, *args, **kwargs):
+            try:
+                return func(self, *args, **kwargs)
+            except FriendTreeError:
+                if self.allow_missing:
+                    return None
+                raise
+
+        return wrapper
+
     def __init__(self, name: str):
         self.name = name
         self._branches: frozenset[str] = None
         self._data: defaultdict[Chunk, list[_FriendItem]] = defaultdict(list)
 
-    @_on_disk
+    @__on_disk
     def __iadd__(self, other) -> Friend:
         if isinstance(other, Friend):
             msg = "Cannot add friend trees with different {attr}"
@@ -269,7 +285,7 @@ class Friend:
             return self
         return NotImplemented
 
-    @_on_disk
+    @__on_disk
     def __add__(self, other) -> Friend:
         if isinstance(other, Friend):
             friend = self.copy()
@@ -419,23 +435,29 @@ class Friend:
 
     def _match_chunks(self, target: Chunk) -> Generator[Chunk, None, None]:
         if target not in self._data:
-            raise ValueError(
+            raise FriendTreeError(
                 _FRIEND_MISSING_ERROR.format(name=self.name, range="", target=target)
             )
         series = self._data[target]
         start = target.entry_start
         stop = target.entry_stop
-        for i in range(
-            bisect.bisect_left(
-                series, _FriendItem(target.entry_start, target.entry_stop)
-            ),
-            len(series),
-        ):
+        idx = bisect.bisect_left(
+            series, _FriendItem(target.entry_start, target.entry_stop)
+        )
+        if idx == len(series):
+            raise FriendTreeError(
+                _FRIEND_MISSING_ERROR.format(
+                    name=self.name,
+                    range=f" [{target.entry_start},{target.entry_stop})",
+                    target=target,
+                )
+            )
+        for i in range(idx, len(series)):
             if start >= stop:
                 break
             item = series[i]
             if item.start > start:
-                raise ValueError(
+                raise FriendTreeError(
                     _FRIEND_MISSING_ERROR.format(
                         name=self.name, range=f" [{start},{item.start})", target=target
                     )
@@ -470,7 +492,8 @@ class Friend:
         reader_options: ReaderOptions = None,
     ) -> dict[str, np.ndarray]: ...
 
-    @_on_disk
+    @__on_disk
+    @__may_fail
     def arrays(
         self,
         target: Chunk,
@@ -522,7 +545,8 @@ class Friend:
         reader_options: ReaderOptions = None,
     ) -> dict[str, np.ndarray]: ...
 
-    @_on_disk
+    @__on_disk
+    @__may_fail
     def concat(
         self,
         *targets: Chunk,
@@ -566,7 +590,8 @@ class Friend:
         reader_options: ReaderOptions = None,
     ) -> dict[str, da.Array]: ...
 
-    @_on_disk
+    @__on_disk
+    @__may_fail
     def dask(
         self,
         *targets: Chunk,
@@ -592,26 +617,12 @@ class Friend:
         """
         friends = []
         for target in targets:
-            series = self._data[target]
-            start = target.entry_start
-            stop = target.entry_stop
-            item = series[
-                bisect.bisect_left(
-                    series, _FriendItem(target.entry_start, target.entry_stop)
-                )
-            ]
-            if item.start > start:
-                raise ValueError(
-                    _FRIEND_MISSING_ERROR.format(
-                        name=self.name, range=f" [{start},{item.start})", target=target
-                    )
-                )
-            elif item.stop < stop:
-                raise ValueError(
+            chunks = tuple(self._match_chunks(target))
+            if len(chunks) > 1:
+                raise FriendTreeError(
                     'Cannot read one partition from multiple files. Call "merge()" first.'
                 )
-            else:
-                friends.append(item.chunk.slice(start - item.start, stop - item.start))
+            friends.extend(chunks)
         return self._new_reader(reader_options).dask(*friends, library=library)
 
     def dump(
@@ -699,7 +710,7 @@ class Friend:
                     executor.submit(job).add_done_callback(callback)
             self.__dump.clear()
 
-    @_on_disk
+    @__on_disk
     def cleanup(self, executor: Optional[Executor] = None) -> Friend:
         """
         Remove invalid chunks.
@@ -807,7 +818,7 @@ class Friend:
                 if item is None:
                     break
 
-    @_on_disk
+    @__on_disk
     def merge(
         self,
         step: int,
@@ -890,7 +901,7 @@ class Friend:
         else:
             return _friend_merge_dask(**friend_meta, data=dict(data), dask=dask)
 
-    @_on_disk
+    @__on_disk
     def clone(
         self,
         base_path: PathLike,
@@ -1029,7 +1040,7 @@ class Friend:
                     if item.on_disk:
                         checked.popleft()
 
-    @_on_disk
+    @__on_disk
     def to_json(self):
         """
         Convert ``self`` to JSON data.
@@ -1072,7 +1083,7 @@ class Friend:
             friend._data[Chunk.from_json(k)] = items
         return friend
 
-    @_on_disk
+    @__on_disk
     def copy(self):
         """
         Returns

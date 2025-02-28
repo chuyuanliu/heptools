@@ -95,9 +95,22 @@ singularity exec -B .:/srv -B /run/shm --nvccli --pwd /srv ${HEPTOOLS_DOCKER_IMA
 
 ## TODO
 
-- check: use TYPE_CHECKING to avoid circular import, unused import
-- add:hist utils
-- rewrite: XSection
-- doc
+### Short term
+
+- do not set module of customized exceptions `Exception.__module__`
+
+### New feature
+
+- lightweight local database for `xs`, `dataset`
+
+### General
+
+- stable branch
+- documentation
 - comment
 - unit test
+
+### Compatibility
+
+- use TYPE_CHECKING to avoid circular import, typehint only.
+- move to python 3.12 style generic typehint
