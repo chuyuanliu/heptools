@@ -29,6 +29,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 ## lcg-voms2.cern.ch
 COPY <<EOF /etc/vomses
 "cms" "voms-cms-auth.app.cern.ch" "443" "/DC=ch/DC=cern/OU=computers/CN=cms-auth.web.cern.ch" "cms"
+"cms" "voms-cms-auth.cern.ch" "443" "/DC=ch/DC=cern/OU=computers/CN=cms-auth.web.cern.ch" "cms"
 EOF
 COPY <<EOF /etc/grid-security/vomsdir/cms/voms-cms-auth.app.cern.ch.lsc
 /DC=ch/DC=cern/OU=computers/CN=cms-auth.web.cern.ch
