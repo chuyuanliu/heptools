@@ -9,6 +9,7 @@ from functools import partial
 from itertools import chain
 from typing import TYPE_CHECKING, Generator, Iterable, Literal, Optional, overload
 
+from ..config import Configurable, config
 from ..dask.delayed import delayed
 from ..system.eos import EOS, PathLike
 from ..utils import map_executor
@@ -187,7 +188,7 @@ class _FriendItem:
         return isinstance(self.chunk, Chunk)
 
 
-class Friend:
+class Friend(Configurable, namespace="root.Friend"):
     """
     A tool to create and manage a collection of addtional :class:`TBranch` stored in separate ROOT files. (also known as friend :class:`TTree`)
 
@@ -207,7 +208,7 @@ class Friend:
     - :meth:`__exit__`: See :meth:`auto_dump`.
     """
 
-    allow_missing: bool = True  # TODO replace by config
+    allow_missing = config(True)
 
     name: str
     """str : Name of the collection."""

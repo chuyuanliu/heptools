@@ -98,6 +98,7 @@ singularity exec -B .:/srv -B /run/shm --nvccli --pwd /srv ${HEPTOOLS_DOCKER_IMA
 ### Short term
 
 - do not set module of customized exceptions `Exception.__module__`
+- add a loose array for dask awkward
 
 ### New feature
 
@@ -112,5 +113,6 @@ singularity exec -B .:/srv -B /run/shm --nvccli --pwd /srv ${HEPTOOLS_DOCKER_IMA
 
 ### Compatibility
 
-- use TYPE_CHECKING to avoid circular import, typehint only.
-- move to python 3.12 style generic typehint
+- Current:
+  - use TYPE_CHECKING if possible
+- Python 3.12: new generic type and typealias syntax

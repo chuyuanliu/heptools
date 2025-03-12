@@ -20,9 +20,9 @@ def maybe_typetracer(array: ak.Array) -> ak.Array:
     return array
 
 
-def len_maybe_typetracer(array: ak.Array) -> int:
+def len_maybe_typetracer(array: ak.Array, typetracer: int = 0) -> int:
     if is_typetracer(array):
-        return 0
+        return typetracer
     return len(array)
 
 

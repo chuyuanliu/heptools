@@ -34,6 +34,7 @@ from ..aktools import (
     and_fields,
     get_field,
 )
+from ..config import Configurable, config
 from ..typetools import check_type, find_subclass
 from . import template as _t
 
@@ -149,7 +150,7 @@ FillType = TypeVar("FillType", bound="_Fill")
 class _MissingFillValue: ...
 
 
-class _Fill(Generic[HistType]):
+class _Fill(Generic[HistType], Configurable, namespace="hist.Fill"):
     class __backend__:
         check_empty_mask: bool
         akarray: type
@@ -159,7 +160,7 @@ class _Fill(Generic[HistType]):
 
         allow_str_array: bool = Version(ak.__version__) >= Version("2.0.0")
 
-    allow_missing = False
+    allow_missing = config(True)
 
     def __init__(
         self,
