@@ -33,12 +33,12 @@ class _RepackWrapper:
         )
 
 
-class _DelayedDecorator(Protocol):
-    def __call__(self, func: Callable[P, T]) -> _DelayedWrapper[P, T]: ...
+class _PartitionMappingWrapper(Protocol):
+    def __call__(self, func: Callable[P, T]) -> _PartitionMappingWrapper[P, T]: ...
 
 
 @dataclass
-class _DelayedWrapper(Generic[P, T]):
+class _PartitionMappingWrapper(Generic[P, T]):
     func: Callable[P, T]
     label: Optional[str] = None
     token: Optional[str] = None
@@ -74,7 +74,7 @@ class _DelayedWrapper(Generic[P, T]):
 
 
 @overload
-def delayed(
+def partition_mapping(
     func: Callable[P, T],
     /,
     typehint: None = None,
@@ -83,9 +83,9 @@ def delayed(
     meta: Optional[Callable[P, ak.Array]] = None,
     output_divisions: Optional[int] = None,
     traverse: bool = True,
-) -> _DelayedWrapper[P, T]: ...
+) -> _PartitionMappingWrapper[P, T]: ...
 @overload
-def delayed(
+def partition_mapping(
     func: None = None,
     /,
     typehint: None = None,
@@ -94,9 +94,9 @@ def delayed(
     meta: Optional[Callable[P, ak.Array]] = None,
     output_divisions: Optional[int] = None,
     traverse: bool = True,
-) -> _DelayedDecorator: ...
+) -> _PartitionMappingWrapper: ...
 @overload
-def delayed(
+def partition_mapping(
     func: None = None,
     /,
     typehint: Callable[P, T] = ...,
@@ -105,16 +105,16 @@ def delayed(
     meta: Optional[Callable[P, ak.Array]] = None,
     output_divisions: Optional[int] = None,
     traverse: bool = True,
-) -> Callable[[Callable], _DelayedWrapper[P, T]]: ...
-def delayed(
+) -> Callable[[Callable], _PartitionMappingWrapper[P, T]]: ...
+def partition_mapping(
     func=None,
     /,
     typehint=None,
     **kwargs,
 ):
     if func is None:
-        return partial(delayed, typehint=typehint, **kwargs)
+        return partial(partition_mapping, typehint=typehint, **kwargs)
     else:
         if typehint is None:
             typehint = func
-        return wraps(typehint)(_DelayedWrapper(func, **kwargs))
+        return wraps(typehint)(_PartitionMappingWrapper(func, **kwargs))

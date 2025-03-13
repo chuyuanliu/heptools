@@ -32,7 +32,7 @@ class Fill(_h._Fill[Hist]):
         check_empty_mask = False
         akarray = dak.Array
         anyarray = dak.Array
-        repeat = dakext.delayed(np.repeat, meta=_np_repeat_meta)
+        repeat = dakext.partition_mapping(np.repeat, meta=_np_repeat_meta)
 
 
 class Collection(_h._Collection[Hist, Fill]):
