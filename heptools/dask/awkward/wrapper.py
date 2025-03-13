@@ -33,7 +33,7 @@ class _RepackWrapper:
         )
 
 
-class _PartitionMappingWrapper(Protocol):
+class _PartitionMappingDecorator(Protocol):
     def __call__(self, func: Callable[P, T]) -> _PartitionMappingWrapper[P, T]: ...
 
 
@@ -94,7 +94,7 @@ def partition_mapping(
     meta: Optional[Callable[P, ak.Array]] = None,
     output_divisions: Optional[int] = None,
     traverse: bool = True,
-) -> _PartitionMappingWrapper: ...
+) -> _PartitionMappingDecorator: ...
 @overload
 def partition_mapping(
     func: None = None,
