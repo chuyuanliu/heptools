@@ -70,11 +70,11 @@ def _parse_file(url: str) -> Generator[dict[str, Any], None, None]:
 
 
 class FlagKeys(StrEnum):
+    code = auto()
     include = auto()
     type = auto()
     extend = auto()
     literal = auto()
-    code = auto()
 
 
 class Flag:
@@ -150,9 +150,13 @@ class Extend:
         raise ValueError(f"Invalid extend method: {method.value}")
 
 
-class PyType:
-    @classmethod
-    def instance(cls, fullname: str, data):
+class Parser:
+    __current = getcwd()
+
+    def __init__(self, base: Optional[str] = None):
+        self.base = base or self.__current
+
+    def instance(self, fullname: str, data):
         # import module and get class/method/function
         import importlib
 
@@ -169,25 +173,30 @@ class PyType:
         # parse args and kwargs
         kwargs = {}
         if isinstance(data, dict):
-            kwargs = cls.dict(data)
+            kwargs = self.dict(data)
             args = kwargs.pop(None, [])
         else:
             args = data
         if not isinstance(args, list):
             args = [args]
-        return new(*cls.list(args), **kwargs)
+        return new(*self.list(args), **kwargs)
 
-    @classmethod
-    def dict(cls, data: dict[str, Any], singleton: bool = False):
+    def dict(self, data: dict[str, Any], singleton: bool = False):
         parsed = {}
         for k, v in data.items():
-            key, flags, v = cls.eval(k, v)
+            key, flags, v = self.eval(k, v)
+            if (include_flag := flags[FlagKeys.include]).exist:
+                if key is None:
+                    self.include(v, include_flag, result=parsed)
+                    continue
+                else:
+                    raise ValueError(f"Cannot use include with non-empty key: {key}")
             if (type_flag := flags[FlagKeys.type]).exist:
-                v = PyType.instance(type_flag.value, v)
+                v = self.instance(type_flag.value, v)
             elif isinstance(v, dict):
-                v = cls.dict(v)
+                v = self.dict(v)
             elif isinstance(v, list):
-                v = cls.list(v)
+                v = self.list(v)
             parsed[key] = Extend.merge(flags[FlagKeys.extend], parsed.get(key, ...), v)
         if singleton:
             if (
@@ -198,40 +207,28 @@ class PyType:
                 return parsed[None]
         return parsed
 
-    @classmethod
-    def list(cls, data: list[Any]):
+    def list(self, data: list[Any]):
         parsed = []
         for v in data:
             if isinstance(v, dict):
-                v = cls.dict(v, singleton=True)
+                v = self.dict(v, singleton=True)
             elif isinstance(v, list):
-                v = cls.list(v)
+                v = self.list(v)
             parsed.append(v)
         return parsed
 
-    @classmethod
-    def eval(cls, k: str, v: Any):
+    def eval(self, k: str, v: Any):
         key, flags = Flags.match(k)
         if flags[FlagKeys.code].exist:
             v = eval(v)
         return key, flags, v
 
-
-class Import:
-    ABSOLUTE = "absolute"
-    RELATIVE = "relative"
-
-    __current = getcwd()
-
-    @classmethod
-    def resolve(cls, *paths: str, flag: str, base: str = None):
-        if base is None:
-            base = cls.__current
-        match flag:
-            case cls.ABSOLUTE:
+    def resolve(self, *paths: str, flag: Flag):
+        match flag.value:
+            case "absolute":
                 yield from paths
-            case cls.RELATIVE | None:
-                base_parsed = urlparse(base)
+            case "relative" | None:
+                base_parsed = urlparse(self.base)
                 base_path = PurePosixPath(base_parsed.path)
                 base_parent = base_path.parent
                 for path in paths:
@@ -246,7 +243,18 @@ class Import:
                         path=fspath(path_abs),
                     ).geturl()
             case _:
-                raise ValueError(f"Invalid import flag: {flag}")
+                raise ValueError(f"Invalid include flag: {flag}")
+
+    def include(
+        self, paths, flag: Flag, result: dict[str, Any] = None, parent: list[str] = None
+    ):
+        if isinstance(paths, str):
+            paths = [paths]
+        if isinstance(paths, list) and all(isinstance(path, str) for path in paths):
+            return parse_config(
+                *self.resolve(*paths, flag=flag), result=result, parent=parent
+            )
+        raise ValueError(f"Cannot include the configs from: {paths}")
 
 
 def _to_stack(*data: dict[str, Any], parent: list[str]):
@@ -259,8 +267,8 @@ def _to_stack(*data: dict[str, Any], parent: list[str]):
 
 def parse_config(
     *path_or_dict: ConfigSource,
-    result=None,
-    parent=None,
+    result: Optional[dict[str, Any]] = None,
+    parent: Optional[list[str]] = None,
 ) -> dict[str, Any]:
     if result is None:
         result = {}
@@ -273,24 +281,16 @@ def parse_config(
             data = _parse_file(path)
         else:
             data = (data,)
+        parser = Parser(path)
         stack = _to_stack(*data, parent=parent)
         while stack:
             k, v = stack.pop()
-            k[-1], flags, v = PyType.eval(k[-1], v)
+            k[-1], flags, v = parser.eval(k[-1], v)
             if (import_flag := flags[FlagKeys.include]).exist:
-                if isinstance(v, str):
-                    v = [v]
-                if isinstance(v, list) and all(isinstance(x, str) for x in v):
-                    if k[-1] is None:
-                        k = k[:-1]
-                    parse_config(
-                        *(Import.resolve(*v, flag=import_flag.value, base=path)),
-                        result=result,
-                        parent=k,
-                    )
-                    continue
-                else:
-                    raise ValueError(f"Cannot import from the config files: {v}")
+                if k[-1] is None:
+                    k = k[:-1]
+                parser.include(v, import_flag, result=result, parent=k)
+                continue
             if k[-1] is None:
                 raise ValueError(
                     f"Config key cannot be None or empty: key={k}, flags={flags}"
@@ -303,11 +303,11 @@ def parse_config(
                 stack.extend(_to_stack(v, parent=k))
                 continue
             if (type_flag := flags[FlagKeys.type]).exist:
-                v = PyType.instance(type_flag.value, v)
+                v = parser.instance(type_flag.value, v)
             elif isinstance(v, dict):
-                v = PyType.dict(v)
+                v = parser.dict(v)
             elif isinstance(v, list):
-                v = PyType.list(v)
+                v = parser.list(v)
             key = ".".join(k)
             result[key] = Extend.merge(flags[FlagKeys.extend], result.get(key, ...), v)
     return result
