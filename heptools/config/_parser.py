@@ -232,13 +232,18 @@ class Import:
                 yield from paths
             case cls.RELATIVE | None:
                 base_parsed = urlparse(base)
-                parent = PurePosixPath(base_parsed.path).parent
+                base_path = PurePosixPath(base_parsed.path)
+                base_parent = base_path.parent
                 for path in paths:
                     path_parsed = urlparse(path)
+                    if path_parsed.path == ".":
+                        path_abs = base_path
+                    else:
+                        path_abs = base_parent / path_parsed.path
                     yield path_parsed._replace(
                         scheme=base_parsed.scheme,
                         netloc=base_parsed.netloc,
-                        path=fspath(parent / path_parsed.path),
+                        path=fspath(path_abs),
                     ).geturl()
             case _:
                 raise ValueError(f"Invalid import flag: {flag}")
