@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import operator as op
 import re
-import sys
+from enum import StrEnum, auto
 from functools import cache
 from os import PathLike, fspath, getcwd
 from pathlib import PurePosixPath
@@ -69,24 +69,12 @@ def _parse_file(url: str) -> Generator[dict[str, Any], None, None]:
             yield dict((k, _unpack([*map(json.loads, v)])) for k, v in query.items())
 
 
-if sys.version_info >= (3, 11):
-    from enum import StrEnum, auto
-
-    class FlagKeys(StrEnum):
-        include = auto()
-        type = auto()
-        extend = auto()
-        literal = auto()
-        code = auto()
-
-else:
-
-    class FlagKeys:
-        include = "include"
-        type = "type"
-        extend = "extend"
-        literal = "literal"
-        code = "code"
+class FlagKeys(StrEnum):
+    include = auto()
+    type = auto()
+    extend = auto()
+    literal = auto()
+    code = auto()
 
 
 class Flag:

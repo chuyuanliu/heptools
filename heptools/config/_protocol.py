@@ -5,7 +5,7 @@ from typing import Any, Generic, Optional, TypeVar, overload
 
 from typing_extensions import Self  # DEPRECATE
 
-from ._manager import _status
+from ._manager import _status, _unset
 
 T = TypeVar("T")
 
@@ -45,7 +45,7 @@ class config(Generic[T]):
     def __init__(self, name: str): ...
     @overload
     def __init__(self, value: T, name: str): ...
-    def __init__(self, value: T = ..., /, name: str = ...):
+    def __init__(self, value: T = _unset, /, name: str = _unset):
         self.__name = name
         self.__value = value
 
@@ -66,9 +66,9 @@ class config(Generic[T]):
         self._set_data(self.__name, value)
 
     def _init(self, name: str):
-        if self.__name is ...:
+        if self.__name is _unset:
             self.__name = name
-        if self.__value is not ...:
+        if self.__value is not _unset:
             self._init_data(self.__name, self.__value)
         del self.__value
 
