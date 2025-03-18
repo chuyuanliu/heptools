@@ -10,9 +10,6 @@ if TYPE_CHECKING:
     from ._protocol import Configurable
 
 
-class _unset: ...
-
-
 class _status:
     updated: dict[str, Any] = {}
     default: dict[str, Any] = {}
@@ -20,8 +17,8 @@ class _status:
 
     @classmethod
     def get(cls, name: str):
-        value = cls.updated.get(name, _unset)
-        if value is _unset:
+        value = cls.updated.get(name, ...)
+        if value is ...:
             try:
                 value = cls.default[name]
             except KeyError:

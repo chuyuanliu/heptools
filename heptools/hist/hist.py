@@ -24,7 +24,7 @@ from hist.axis import (
     Variable,
 )
 from packaging.version import Version
-from typing_extensions import Self
+from typing_extensions import Self  # DEPRECATE
 
 from .. import awkward as akext
 from ..aktools import (
