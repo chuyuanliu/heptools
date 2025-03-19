@@ -50,6 +50,16 @@ def _parse_file(url: str) -> Generator[dict[str, Any], None, None]:
             import yaml
 
             data = yaml.safe_load(data)
+        case ".toml":
+            import tomllib
+
+            data = tomllib.loads(data)
+        case ".ini":
+            import configparser
+
+            parser = configparser.ConfigParser()
+            parser.read_string(data)
+            data = {k: dict(v.items()) for k, v in parser.items()}
         case _:
             raise NotImplementedError(f"Unsupported file type: {suffix}")
 
