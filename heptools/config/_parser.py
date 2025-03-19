@@ -183,12 +183,12 @@ class Parser:
             clsname = clsname[0]
         else:
             modname, clsname = clsname
-        new = importlib.import_module(modname)
+        cls = importlib.import_module(modname)
         for name in clsname.split("."):
-            new = getattr(new, name)
+            cls = getattr(cls, name)
 
         if flag is None:
-            return new
+            return cls
 
         # parse args and kwargs
         kwargs = {}
@@ -199,7 +199,7 @@ class Parser:
             args = data
         if not isinstance(args, list):
             args = [args]
-        return new(*self.list(args), **kwargs)
+        return cls(*self.list(args), **kwargs)
 
     def dict(self, data: dict[str, Any], singleton: bool = False):
         parsed = {}
