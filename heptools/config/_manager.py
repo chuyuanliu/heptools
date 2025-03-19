@@ -38,9 +38,10 @@ def _freeze(value: bool):
 
 
 @contextmanager
-def _override(override: dict[str, Any]):
+def _override(path_or_dict: tuple):
     cache = _status.updated
-    _status.updated = cache | override
+    _status.updated = deepcopy(cache)
+    parse_config(*path_or_dict, flat=True, result=_status.updated)
     yield
     _status.updated = cache
 
@@ -60,11 +61,11 @@ class _pickler:
 class ConfigManager:
     @staticmethod
     def update(*path_or_dict: str | dict):
-        _status.updated.update(parse_config(*path_or_dict))
+        parse_config(*path_or_dict, flat=True, result=_status.updated)
 
     @staticmethod
     def override(*path_or_dict: str | dict):
-        return _override(parse_config(*path_or_dict))
+        return _override(path_or_dict)
 
     @staticmethod
     def freeze():

@@ -153,7 +153,8 @@ class Extend:
 class Parser:
     __current = getcwd()
 
-    def __init__(self, base: Optional[str] = None):
+    def __init__(self, flat: bool, base: Optional[str] = None):
+        self.flat = flat
         self.base = base or self.__current
 
     def instance(self, fullname: str, data):
@@ -252,7 +253,10 @@ class Parser:
             paths = [paths]
         if isinstance(paths, list) and all(isinstance(path, str) for path in paths):
             return parse_config(
-                *self.resolve(*paths, flag=flag), result=result, parent=parent
+                *self.resolve(*paths, flag=flag),
+                flat=self.flat,
+                result=result,
+                parent=parent,
             )
         raise ValueError(f"Cannot include the configs from: {paths}")
 
@@ -267,6 +271,7 @@ def _to_stack(*data: dict[str, Any], parent: list[str]):
 
 def parse_config(
     *path_or_dict: ConfigSource,
+    flat: bool,
     result: Optional[dict[str, Any]] = None,
     parent: Optional[list[str]] = None,
 ) -> dict[str, Any]:
@@ -281,7 +286,7 @@ def parse_config(
             data = _parse_file(path)
         else:
             data = (data,)
-        parser = Parser(path)
+        parser = Parser(flat, path)
         stack = _to_stack(*data, parent=parent)
         while stack:
             k, v = stack.pop()
@@ -296,7 +301,8 @@ def parse_config(
                     f"Config key cannot be None or empty: key={k}, flags={flags}"
                 )
             if (
-                isinstance(v, dict)
+                flat
+                and isinstance(v, dict)
                 and not flags[FlagKeys.literal].exist
                 and not flags[FlagKeys.type].exist
             ):
@@ -311,3 +317,7 @@ def parse_config(
             key = ".".join(k)
             result[key] = Extend.merge(flags[FlagKeys.extend], result.get(key, ...), v)
     return result
+
+
+def load_config(*path_or_dict: ConfigSource) -> dict[str, Any]:
+    return parse_config(*path_or_dict, flat=False, result=None, parent=None)
