@@ -167,10 +167,16 @@ class Parser:
         self.flat = flat
         self.base = base or self.__current
 
-    def instance(self, fullname: str, data):
-        # import module and get class/method/function
+    def instance(self, flag: Optional[str], data):
+        # import module
         import importlib
 
+        if flag is None:
+            if not isinstance(data, str):
+                raise ValueError(f"Type must be a str, got {data}")
+            fullname = data
+        else:
+            fullname = flag
         clsname = fullname.rsplit("::", 1)
         if len(clsname) == 1:
             modname = "builtins"
@@ -180,6 +186,9 @@ class Parser:
         new = importlib.import_module(modname)
         for name in clsname.split("."):
             new = getattr(new, name)
+
+        if flag is None:
+            return new
 
         # parse args and kwargs
         kwargs = {}
