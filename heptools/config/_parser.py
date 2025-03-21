@@ -293,7 +293,7 @@ class _Parser:
         if isinstance(paths, str):
             paths = [paths]
         if isinstance(paths, list) and all(isinstance(path, str) for path in paths):
-            return self.opts(
+            return self.opts._parse(
                 *self.resolve(*paths, flag=flag),
                 flat=self.flat,
                 result=result,
@@ -319,7 +319,7 @@ class ConfigParser:
     custom_flags: dict[str, FlagParser] = field(default_factory=dict)
     extend_methods: dict[str, ExtendMethod] = field(default_factory=dict)
 
-    def __call__(
+    def _parse(
         self,
         *path_or_dict: ConfigSource,
         flat: bool,
@@ -362,7 +362,16 @@ class ConfigParser:
                 parser.setitem(result, flags, ".".join(k), v)
         return result
 
+    def __call__(
+        self,
+        *path_or_dict: ConfigSource,
+        flat: bool = False,
+        result: Optional[dict[str, Any]] = None,
+        parent: Optional[list[str]] = None,
+    ) -> dict[str, Any]:
+        return self._parse(*path_or_dict, flat=flat, result=result, parent=parent)
+
 
 class ConfigLoader(ConfigParser):
     def __call__(self, *path_or_dict: ConfigSource, result=None) -> dict[str, Any]:
-        return super().__call__(*path_or_dict, flat=False, result=result, parent=None)
+        return self._parse(*path_or_dict, flat=False, result=result, parent=None)
