@@ -1,7 +1,9 @@
 from __future__ import annotations
 
+import importlib
 import operator as op
 import re
+from dataclasses import dataclass, field
 from enum import StrEnum, auto
 from functools import cache
 from os import PathLike, fspath, getcwd
@@ -100,10 +102,7 @@ class Flag:
         return self.flag
 
 
-CustomFlagParser = Callable[[Optional[str], str, Any], tuple[str, Any]]
-
-
-class Flags:
+class _FlagParser:
     __match = re.compile(r"(?P<key>[^\>\<]*?)\s*(?P<flags>(\<[^\>\<]*\>\s*)*)\s*")
     __split = re.compile(r"\<(?P<flag>[^\>\<]*)\>")
 
@@ -139,77 +138,67 @@ class Flags:
         return key, cls(flags)
 
 
-class ExtendMethods:
-    @classmethod
-    def register(cls, method: str, func: Callable[[Any, Any], Any]):
-        Extend.methods[method] = func
+class TypeParser:
+    def __init__(self, base: str = None):
+        self.base = base
 
-    @property
-    def registered(self):
-        return MappingProxyType(Extend.methods)
-
-
-class Extend:
-    methods = {
-        None: op.add,
-        "add": op.add,
-        "or": op.or_,
-        "and": op.and_,
-    }
-
-    @classmethod
-    def merge(cls, method: Flag, v1, v2):
-        if (func := cls.methods.get(method.value)) is not None:
-            return func(v1, v2)
-        raise ValueError(f"Invalid extend method: {method.value}")
-
-
-class Parser:
-    __current = getcwd()
-
-    def __init__(
-        self,
-        flat: bool,
-        base: Optional[str] = None,
-        custom_flags: dict[str, CustomFlagParser] = None,
-    ):
-        self.flat = flat
-        self.base = base or self.__current
-        self.custom_flags = custom_flags or {}
-
-    def instance(self, flag: Flag, data):
+    def __call__(self, module: str, key: str, data: Any):
         # import module
-        import importlib
-
-        if flag.value is None:
+        if module is None:
             if not isinstance(data, str):
                 raise ValueError(f"Type must be a str, got {data}")
             fullname = data
         else:
-            fullname = flag.value
+            fullname = module
         clsname = fullname.rsplit("::", 1)
         if len(clsname) == 1:
-            modname = "builtins"
+            modname = None
             clsname = clsname[0]
         else:
             modname, clsname = clsname
+        if modname is None:
+            if self.base is None:
+                modname = "builtins"
+            else:
+                modname = self.base
+        elif self.base is not None:
+            modname = f"{self.base}.{modname}"
+
         cls = importlib.import_module(modname)
         for name in clsname.split("."):
             cls = getattr(cls, name)
 
-        if flag.value is None:
-            return cls
+        if module is None:
+            return key, cls
 
         # parse args and kwargs
-        kwargs = {}
         if isinstance(data, dict):
-            kwargs = self.dict(data)
+            kwargs = data.copy()
             args = kwargs.pop(None, [])
         else:
+            kwargs = {}
             args = data
         if not isinstance(args, list):
             args = [args]
-        return cls(*self.list(args), **kwargs)
+        return key, cls(*args, **kwargs)
+
+
+class _Parser:
+    __include = getcwd()
+    __type = TypeParser()
+    __extend = MappingProxyType(
+        {
+            None: op.add,
+            "add": op.add,
+            "or": op.or_,
+            "and": op.and_,
+        }
+    )
+
+    def __init__(self, flat: bool, base: Optional[str], parser: ConfigParser):
+        self.flat = flat
+        self.base = base or self.__include
+        self.opts = parser
 
     def dict(self, data: dict[str, Any], singleton: bool = False):
         parsed = {}
@@ -241,31 +230,40 @@ class Parser:
             parsed.append(v)
         return parsed
 
-    def apply_custom(self, flags: Flags):
-        if not flags.others:
-            return
-        for flag, custom in self.custom_flags.items():
-            if (custom_flag := flags[flag]).exist:
-                yield custom_flag.value, custom
-
-    def setitem(self, result: dict[str, Any], flags: Flags, key: str, value: Any):
-        if (type_flag := flags[FlagKeys.type]).exist:
-            value = self.instance(type_flag, value)
-        elif isinstance(value, dict):
-            value = self.dict(value)
-        elif isinstance(value, list):
-            value = self.list(value)
-        if (extend_flag := flags[FlagKeys.extend]).exist and key in result:
-            value = Extend.merge(extend_flag, result[key], value)
-        for flag, custom in self.apply_custom(flags):
-            key, value = custom(flag, key, value)
-        result[key] = value
+    def extend(self, method: str, v1, v2):
+        if (func := self.opts.extend_methods.get(method)) is not None:
+            ...
+        elif (func := self.__extend.get(method)) is not None:
+            ...
+        else:
+            raise ValueError(f"Invalid extend method: {method}")
+        return func(v1, v2)
 
     def eval(self, k: str, v: Any):
-        key, flags = Flags.match(k)
+        key, flags = _FlagParser.match(k)
         if flags[FlagKeys.code].exist:
             v = eval(v)
         return key, flags, v
+
+    def apply_flags(self, flags: _FlagParser):
+        if (type_flag := flags[FlagKeys.type]).exist:
+            yield type_flag.value, self.__type
+        if not flags.others:
+            return
+        for flag, custom in self.opts.custom_flags.items():
+            if (custom_flag := flags[flag]).exist:
+                yield custom_flag.value, custom
+
+    def setitem(self, result: dict[str, Any], flags: _FlagParser, key: str, value: Any):
+        if isinstance(value, dict):
+            value = self.dict(value)
+        elif isinstance(value, list):
+            value = self.list(value)
+        for flag, method in self.apply_flags(flags):
+            key, value = method(flag, key, value)
+        if (extend_flag := flags[FlagKeys.extend]).exist and key in result:
+            value = self.extend(extend_flag.value, result[key], value)
+        result[key] = value
 
     def resolve(self, *paths: str, flag: Flag):
         match flag.value:
@@ -295,7 +293,7 @@ class Parser:
         if isinstance(paths, str):
             paths = [paths]
         if isinstance(paths, list) and all(isinstance(path, str) for path in paths):
-            return parse_config(
+            return self.opts(
                 *self.resolve(*paths, flag=flag),
                 flat=self.flat,
                 result=result,
@@ -312,53 +310,59 @@ def _to_stack(*data: dict[str, Any], parent: list[str]):
     return stack
 
 
-def parse_config(
-    *path_or_dict: ConfigSource,
-    flat: bool,
-    result: Optional[dict[str, Any]] = None,
-    parent: Optional[list[str]] = None,
-    custom_flags: dict[str, CustomFlagParser] = None,
-) -> dict[str, Any]:
-    if result is None:
-        result = {}
-    if parent is None:
-        parent = []
-    for data in path_or_dict:
-        path = None
-        if not isinstance(data, dict):
-            path = fspath(data)
-            data = _parse_file(path)
-        else:
-            data = (data,)
-        parser = Parser(flat, path, custom_flags)
-        stack = _to_stack(*data, parent=parent)
-        while stack:
-            k, v = stack.pop()
-            k[-1], flags, v = parser.eval(k[-1], v)
-            if (import_flag := flags[FlagKeys.include]).exist:
+FlagParser = Callable[[Optional[str], str, Any], tuple[str, Any]]
+ExtendMethod = Callable[[Any, Any], Any]
+
+
+@dataclass
+class ConfigParser:
+    custom_flags: dict[str, FlagParser] = field(default_factory=dict)
+    extend_methods: dict[str, ExtendMethod] = field(default_factory=dict)
+
+    def __call__(
+        self,
+        *path_or_dict: ConfigSource,
+        flat: bool,
+        result: Optional[dict[str, Any]] = None,
+        parent: Optional[list[str]] = None,
+    ) -> dict[str, Any]:
+        if result is None:
+            result = {}
+        if parent is None:
+            parent = []
+        for data in path_or_dict:
+            path = None
+            if not isinstance(data, dict):
+                path = fspath(data)
+                data = _parse_file(path)
+            else:
+                data = (data,)
+            parser = _Parser(flat, path, self)
+            stack = _to_stack(*data, parent=parent)
+            while stack:
+                k, v = stack.pop()
+                k[-1], flags, v = parser.eval(k[-1], v)
+                if (import_flag := flags[FlagKeys.include]).exist:
+                    if k[-1] is None:
+                        k = k[:-1]
+                    parser.include(v, import_flag, result=result, parent=k)
+                    continue
                 if k[-1] is None:
-                    k = k[:-1]
-                parser.include(v, import_flag, result=result, parent=k)
-                continue
-            if k[-1] is None:
-                raise ValueError(
-                    f"Config key cannot be None or empty: key={k}, flags={flags}"
-                )
-            if (
-                flat
-                and isinstance(v, dict)
-                and not flags[FlagKeys.literal].exist
-                and not flags[FlagKeys.type].exist
-            ):
-                stack.extend(_to_stack(v, parent=k))
-                continue
-            parser.setitem(result, flags, ".".join(k), v)
-    return result
+                    raise ValueError(
+                        f"Config key cannot be None or empty: key={k}, flags={flags}"
+                    )
+                if (
+                    flat
+                    and isinstance(v, dict)
+                    and not flags[FlagKeys.literal].exist
+                    and not flags[FlagKeys.type].exist
+                ):
+                    stack.extend(_to_stack(v, parent=k))
+                    continue
+                parser.setitem(result, flags, ".".join(k), v)
+        return result
 
 
-def load_config(
-    *path_or_dict: ConfigSource, **custom_flags: CustomFlagParser
-) -> dict[str, Any]:
-    return parse_config(
-        *path_or_dict, flat=False, result=None, parent=None, custom_flags=custom_flags
-    )
+class ConfigLoader(ConfigParser):
+    def __call__(self, *path_or_dict: ConfigSource, result=None) -> dict[str, Any]:
+        return super().__call__(*path_or_dict, flat=False, result=result, parent=None)

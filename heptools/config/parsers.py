@@ -1,6 +1,6 @@
-from ._parser import ExtendMethods, FlagKeys
+from ._parser import FlagKeys, TypeParser
 
 __all__ = [
     "FlagKeys",
-    "ExtendMethods",
+    "TypeParser",
 ]
