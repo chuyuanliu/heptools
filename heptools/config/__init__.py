@@ -1,5 +1,5 @@
 from ._manager import ConfigManager
-from ._parser import ConfigLoader, ConfigParser
+from ._parser import ConfigLoader, GlobalConfigParser, as_flag_parser
 from ._protocol import Configurable, config, const
 
 __all__ = [
@@ -7,6 +7,7 @@ __all__ = [
     "Configurable",
     "config",
     "const",
-    "ConfigParser",
+    "GlobalConfigParser",
     "ConfigLoader",
+    "as_flag_parser",
 ]

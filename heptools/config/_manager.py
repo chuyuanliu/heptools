@@ -4,7 +4,7 @@ from contextlib import contextmanager
 from copy import deepcopy
 from typing import TYPE_CHECKING, Any, Optional
 
-from ._parser import ConfigParser
+from ._parser import GlobalConfigParser
 
 if TYPE_CHECKING:
     from ._protocol import Configurable
@@ -38,10 +38,10 @@ def _freeze(value: bool):
 
 
 @contextmanager
-def _override(path_or_dict: tuple, parser: ConfigParser):
+def _override(path_or_dict: tuple, parser: GlobalConfigParser):
     cache = _status.updated
     _status.updated = deepcopy(cache)
-    parser(*path_or_dict, flat=True, result=_status.updated)
+    parser(*path_or_dict, result=_status.updated)
     yield
     _status.updated = cache
 
@@ -59,16 +59,14 @@ class _pickler:
 
 
 class ConfigManager:
-    __parser = ConfigParser()
+    __parser = GlobalConfigParser()
 
     @classmethod
-    def update(cls, *path_or_dict: str | dict, parser: ConfigParser = None):
-        parser = (parser or cls.__parser)(
-            *path_or_dict, flat=True, result=_status.updated
-        )
+    def update(cls, *path_or_dict: str | dict, parser: GlobalConfigParser = None):
+        parser = (parser or cls.__parser)(*path_or_dict, result=_status.updated)
 
     @classmethod
-    def override(cls, *path_or_dict: str | dict, parser: ConfigParser = None):
+    def override(cls, *path_or_dict: str | dict, parser: GlobalConfigParser = None):
         return _override(path_or_dict, parser=parser or cls.__parser)
 
     @staticmethod
