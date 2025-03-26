@@ -11,7 +11,7 @@ from functools import cache
 from os import PathLike, fspath, getcwd
 from pathlib import PurePosixPath
 from types import MethodType
-from typing import Any, Callable, Generator, Optional, ParamSpec, Protocol, TypeVar
+from typing import Any, Callable, Optional, ParamSpec, Protocol, TypeVar
 from urllib.parse import parse_qs, unquote, urlparse
 from warnings import warn
 
@@ -27,26 +27,14 @@ def _unpack(seq: list):
     return seq
 
 
-@cache
+@cache  # safe to cache without deepcopy, since parser will always repack dict and list
 def _read_file(url: str) -> str:
     import fsspec
 
     with fsspec.open(url, mode="rt") as f:
         data = f.read()
-    return data
 
-
-def _parse_file(url: str) -> Generator[dict[str, Any], None, None]:
-    parsed = urlparse(url)
-    path = unquote(parsed.path)
-
-    if parsed.params:
-        warn(f'When parsing "{url}", params will be ignored.')
-
-    data = _read_file(
-        parsed._replace(path=path, params="", query="", fragment="").geturl()
-    )
-    match suffix := PurePosixPath(path).suffix:
+    match suffix := PurePosixPath(url).suffix:
         case ".json":
             import json
 
@@ -68,6 +56,19 @@ def _parse_file(url: str) -> Generator[dict[str, Any], None, None]:
         case _:
             raise NotImplementedError(f"Unsupported file type: {suffix}")
 
+    return data
+
+
+def _parse_file(url: str):
+    parsed = urlparse(url)
+    path = unquote(parsed.path)
+    data = _read_file(
+        parsed._replace(path=path, params="", query="", fragment="").geturl()
+    )
+
+    if parsed.params:
+        warn(f'When parsing "{url}", params will be ignored.')
+
     if parsed.fragment:
         for k in parsed.fragment.split("."):
             data = data[k]
@@ -82,6 +83,10 @@ def _parse_file(url: str) -> Generator[dict[str, Any], None, None]:
                 yield json.loads(v)
         if query:
             yield dict((k, _unpack([*map(json.loads, v)])) for k, v in query.items())
+
+
+def clear_cache():
+    _read_file.cache_clear()
 
 
 class FlagKeys(StrEnum):
@@ -503,3 +508,7 @@ class ConfigLoader(_ParserCustomization):
         return _ParserInitializer.new(self).parse(
             *path_or_dict, flat=False, result=result, parent=None
         )
+
+    @staticmethod
+    def clear_cache():
+        clear_cache()
