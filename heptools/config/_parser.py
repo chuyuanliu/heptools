@@ -11,7 +11,7 @@ from functools import cache
 from os import PathLike, fspath, getcwd
 from pathlib import PurePosixPath
 from types import MethodType
-from typing import Any, Callable, Optional, ParamSpec, Protocol, TypeVar
+from typing import Any, Callable, Optional, ParamSpec, Protocol, TypeVar, cast
 from urllib.parse import parse_qs, unquote, urlparse
 from warnings import warn
 
@@ -28,13 +28,13 @@ def _unpack(seq: list):
 
 
 @cache  # safe to cache without deepcopy, since parser will always repack dict and list
-def _read_file(url: str) -> str:
+def _load_file_raw(url: str) -> str:
     import fsspec
 
-    with fsspec.open(url, mode="rt") as f:
-        data = f.read()
+    with fsspec.open(url, mode="rb", compression="infer") as f:
+        data = cast(bytes, f.read())
 
-    match suffix := PurePosixPath(url).suffix:
+    match suffix := PurePosixPath(url).suffixes[0]:
         case ".json":
             import json
 
@@ -43,15 +43,19 @@ def _read_file(url: str) -> str:
             import yaml
 
             data = yaml.safe_load(data)
+        case ".pkl":
+            import pickle
+
+            data = pickle.loads(data)
         case ".toml":
             import tomllib
 
-            data = tomllib.loads(data)
+            data = tomllib.loads(data.decode("utf-8"))
         case ".ini":
             import configparser
 
             parser = configparser.ConfigParser()
-            parser.read_string(data)
+            parser.read_string(data.decode("utf-8"))
             data = {k: dict(v.items()) for k, v in parser.items()}
         case _:
             raise NotImplementedError(f"Unsupported file type: {suffix}")
@@ -59,10 +63,10 @@ def _read_file(url: str) -> str:
     return data
 
 
-def _parse_file(url: str):
+def load_file(url: str, query: bool = True):
     parsed = urlparse(url)
     path = unquote(parsed.path)
-    data = _read_file(
+    data = _load_file_raw(
         parsed._replace(path=path, params="", query="", fragment="").geturl()
     )
 
@@ -74,7 +78,7 @@ def _parse_file(url: str):
             data = data[k]
     yield data
 
-    if parsed.query:
+    if query and parsed.query:
         import json
 
         query = parse_qs(parsed.query)
@@ -86,7 +90,7 @@ def _parse_file(url: str):
 
 
 def clear_cache():
-    _read_file.cache_clear()
+    _load_file_raw.cache_clear()
 
 
 class FlagKeys(StrEnum):
@@ -94,6 +98,7 @@ class FlagKeys(StrEnum):
     include = auto()
     literal = auto()
 
+    file = auto()
     type = auto()
     var = auto()
     ref = auto()
@@ -129,20 +134,22 @@ class Flags:
     def get(self, flag: str):
         return self.flags.get(flag, ...)
 
-    def apply(self, local: dict[str, Any], key: str, value: str):
+    def apply(self, *, key: str, value, **kwargs):
         for flag_k, flag_v in self.flags.items():
             if (parser := self.parsers.get(flag_k)) is not None:
-                key, value = parser(local=local, flag=flag_v, key=key, value=value)
+                key, value = parser(key=key, value=value, flag=flag_v, **kwargs)
         return key, value
 
 
 class FlagParser(Protocol):
     def __call__(
         self,
-        local: Optional[dict[str, Any]],
-        flag: Optional[str],
+        *,
         key: Optional[str],
         value: Optional[Any],
+        flag: Optional[str],
+        parser: Optional[Parser],
+        local: Optional[dict[str, Any]],
     ) -> tuple[str, Any]: ...
 
 
@@ -302,7 +309,15 @@ class VariableParser:
         return key, copy.deepcopy(self._get(flag, key, value, FlagKeys.deepcopy))
 
 
-class _Parser:
+class FileParser:
+    @as_flag_parser
+    def __call__(self, parser: Parser, flag: Optional[str], key: str, value):
+        return key, copy.deepcopy(
+            next(load_file(next(parser.resolve(value, flag=flag)), query=False))
+        )
+
+
+class Parser:
     __cwd = getcwd()
 
     def __init__(self, flat: bool, base: Optional[str], custom: _ParserInitializer):
@@ -351,14 +366,14 @@ class _Parser:
             value = self.dict(value)
         elif isinstance(value, list):
             value = self.list(value)
-        key, value = flags.apply(local, key, value)
+        key, value = flags.apply(parser=self, local=local, key=key, value=value)
         local[key] = value
 
     def resolve(self, *paths: str, flag: str):
         match flag:
             case "absolute":
                 yield from paths
-            case "relative" | None:
+            case "relative":
                 base_parsed = urlparse(self.base)
                 base_path = PurePosixPath(base_parsed.path)
                 base_parent = base_path.parent
@@ -373,6 +388,21 @@ class _Parser:
                         netloc=base_parsed.netloc,
                         path=fspath(path_abs),
                     ).geturl()
+            case None:
+                absolute = []
+                relative = []
+                order = []
+                for path in paths:
+                    path_parsed = urlparse(path)
+                    if path_parsed.scheme or PurePosixPath(path).is_absolute():
+                        order.append((absolute, len(absolute)))
+                        absolute.append(path)
+                    else:
+                        order.append((relative, len(relative)))
+                        relative.append(path)
+                relative[:] = self.resolve(*relative, flag="relative")
+                for col, idx in order:
+                    yield col[idx]
             case _:
                 raise ValueError(f"Invalid include flag: {flag}")
 
@@ -411,10 +441,12 @@ class _ParserInitializer(_ParserCustomization):
     _split = re.compile(r"\<(?P<flag>[^\>\<]*)\>")
 
     type = TypeParser()
+    file = FileParser()
 
     def __post_init__(self):
         local = VariableParser()
         self.parsers = self.custom_flags | {
+            FlagKeys.file: self.file,
             FlagKeys.type: self.type,
             FlagKeys.var: local.var,
             FlagKeys.ref: local.ref,
@@ -442,10 +474,10 @@ class _ParserInitializer(_ParserCustomization):
             path = None
             if not isinstance(data, dict):
                 path = fspath(data)
-                data = _parse_file(path)
+                data = load_file(path)
             else:
                 data = (data,)
-            parser = _Parser(flat, path, self)
+            parser = Parser(flat, path, self)
             stack = _to_stack(*data, parent=parent)
             while stack:
                 k, v = stack.pop()
