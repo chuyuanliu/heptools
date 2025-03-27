@@ -201,8 +201,10 @@ class TypeParser:
             modname = f"{self.base}.{modname}"
 
         cls = importlib.import_module(modname)
-        for name in clsname.split("."):
-            cls = getattr(cls, name)
+        clsname = clsname.split(".")
+        if any(clsname):
+            for name in clsname:
+                cls = getattr(cls, name)
 
         if flag is None:
             return key, cls
