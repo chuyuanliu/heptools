@@ -25,13 +25,13 @@ dependencies:
   # parallel
   - dask
   - dask-jobqueue
-  - dask-awkward >=2025.2.0
+  - dask-awkward
   - dask-histogram
   # benchmarks
   - scalene
   # Scikit-HEP
   - coffea
-  - uproot >= 5.5.2
+  - uproot
   - awkward
   - awkward-pandas
   - hist
