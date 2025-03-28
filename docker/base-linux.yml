@@ -1,0 +1,17 @@
+name: hep
+channels:
+  - conda-forge
+dependencies:
+  # grid certificate
+  - ca-policy-lcg 
+  # HTCondor
+  - htcondor
+  # XRootD
+  - xrootd
+  - fsspec-xrootd
+  # tini
+  - tini
+  # DB
+  - pip:
+    - dbs3-client
+    - rucio-clients

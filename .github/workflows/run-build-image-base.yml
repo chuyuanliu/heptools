@@ -5,7 +5,7 @@ on:
     branches:
       - master
     paths:
-      - "docker/base.*"
+      - "docker/base*"
 
 jobs:
   docker-image-base:
