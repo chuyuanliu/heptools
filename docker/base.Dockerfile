@@ -1,7 +1,9 @@
 FROM condaforge/mambaforge:22.11.1-4
 
-RUN mamba env create -f https://raw.githubusercontent.com/chuyuanliu/heptools/master/docker/base.yml && mamba clean --all --yes
-RUN mamba install -n hep -f https://raw.githubusercontent.com/chuyuanliu/heptools/master/docker/base-linux.yml && mamba clean --all --yes
+RUN mamba env create -f https://raw.githubusercontent.com/chuyuanliu/heptools/master/docker/base.yml \
+  && mamba clean --all --yes
+RUN mamba env update -n hep -f https://raw.githubusercontent.com/chuyuanliu/heptools/master/docker/base-linux.yml \
+  && mamba clean --all --yes
 RUN touch /root/.rnd
 RUN apt-get update && apt-get install -y --no-install-recommends \
   # voms
