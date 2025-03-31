@@ -243,7 +243,7 @@ class ExtendRecursive:
 
 class ExtendParser:
     methods = {
-        None: op.add,
+        None: ExtendRecursive(op.add),
         "add": op.add,
         "or": op.or_,
         "and": op.and_,
