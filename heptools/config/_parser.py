@@ -100,7 +100,7 @@ class FlagKeys(StrEnum):
     code = auto()
     include = auto()
     literal = auto()
-    ignore = auto()
+    discard = auto()
     dummy = auto()
 
     file = auto()
@@ -380,7 +380,7 @@ class Parser:
         elif isinstance(value, list):
             value = self.list(value)
         key, value = flags.apply(parser=self, local=local, key=key, value=value)
-        if not flags.has(FlagKeys.ignore):
+        if not flags.has(FlagKeys.discard):
             local[key] = value
 
     def resolve(self, *paths: str, flag: str):
@@ -510,7 +510,7 @@ class _ParserInitializer(_ParserCustomization):
                     parser.include(v, import_flag, result=result, parent=k)
                     continue
                 if k[-1] is None:
-                    if flags.has(FlagKeys.ignore):
+                    if flags.has(FlagKeys.discard):
                         k = k[:-1]
                     else:
                         raise ValueError(
@@ -520,7 +520,7 @@ class _ParserInitializer(_ParserCustomization):
                     flat
                     and isinstance(v, dict)
                     and not flags.has(FlagKeys.literal)
-                    and not flags.has(FlagKeys.ignore)
+                    and not flags.has(FlagKeys.discard)
                     and not flags.has(FlagKeys.type)
                 ):
                     stack.extend(_to_stack(v, parent=k))
