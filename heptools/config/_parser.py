@@ -5,7 +5,7 @@ import importlib
 import inspect
 import operator as op
 import re
-from dataclasses import asdict, dataclass, field
+from dataclasses import dataclass, field, fields
 from enum import StrEnum, auto
 from functools import cache
 from os import PathLike, fspath, getcwd
@@ -475,7 +475,7 @@ class _ParserInitializer(_ParserCustomization):
 
     @classmethod
     def new(cls, other: _ParserCustomization):
-        return cls(**asdict(other))
+        return cls(**{k.name: getattr(other, k.name) for k in fields(other)})
 
     @property
     def locals(self):
