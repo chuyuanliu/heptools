@@ -63,7 +63,7 @@ def _load_file_raw(url: str) -> str:
     return data
 
 
-def load_file(url: str, query: bool = True):
+def load_file(url: str, parse_query: bool = True):
     parsed = urlparse(url)
     path = unquote(parsed.path)
     data = _load_file_raw(
@@ -75,10 +75,13 @@ def load_file(url: str, query: bool = True):
 
     if parsed.fragment:
         for k in parsed.fragment.split("."):
-            data = data[k]
+            try:
+                data = data[k]
+            except KeyError:
+                data = data[int(k)]
     yield data
 
-    if query and parsed.query:
+    if parse_query and parsed.query:
         import json
 
         query = parse_qs(parsed.query)
@@ -97,6 +100,8 @@ class FlagKeys(StrEnum):
     code = auto()
     include = auto()
     literal = auto()
+    ignore = auto()
+    dummy = auto()
 
     file = auto()
     type = auto()
@@ -105,6 +110,9 @@ class FlagKeys(StrEnum):
     copy = auto()
     deepcopy = auto()
     extend = auto()
+
+
+FlagReserved = frozenset(e.value for e in FlagKeys)
 
 
 class NoFlag:
@@ -139,6 +147,9 @@ class Flags:
             if (parser := self.parsers.get(flag_k)) is not None:
                 key, value = parser(key=key, value=value, flag=flag_v, **kwargs)
         return key, value
+
+    def __repr__(self):
+        return " ".join(f"<{k}={v}>" for k, v in self.flags.items())
 
 
 class FlagParser(Protocol):
@@ -315,7 +326,7 @@ class FileParser:
     @as_flag_parser
     def __call__(self, parser: Parser, flag: Optional[str], key: str, value):
         return key, copy.deepcopy(
-            next(load_file(next(parser.resolve(value, flag=flag)), query=False))
+            next(load_file(next(parser.resolve(value, flag=flag)), parse_query=False))
         )
 
 
@@ -369,7 +380,8 @@ class Parser:
         elif isinstance(value, list):
             value = self.list(value)
         key, value = flags.apply(parser=self, local=local, key=key, value=value)
-        local[key] = value
+        if not flags.has(FlagKeys.ignore):
+            local[key] = value
 
     def resolve(self, *paths: str, flag: str):
         match flag:
@@ -447,6 +459,10 @@ class _ParserInitializer(_ParserCustomization):
 
     def __post_init__(self):
         self.vars = VariableParser()
+        if reserved := FlagReserved.intersection(self.custom_flags):
+            raise RuntimeError(
+                f"The following reserved flags are overridden: {', '.join(reserved)}"
+            )
         self.parsers = self.custom_flags | {
             FlagKeys.file: self.file,
             FlagKeys.type: self.type,
@@ -494,13 +510,17 @@ class _ParserInitializer(_ParserCustomization):
                     parser.include(v, import_flag, result=result, parent=k)
                     continue
                 if k[-1] is None:
-                    raise ValueError(
-                        f"Config key cannot be None or empty: key={k}, flags={flags}"
-                    )
+                    if flags.has(FlagKeys.ignore):
+                        k = k[:-1]
+                    else:
+                        raise ValueError(
+                            f"Config key cannot be None or empty: key={k}, flags={flags}"
+                        )
                 if (
                     flat
                     and isinstance(v, dict)
                     and not flags.has(FlagKeys.literal)
+                    and not flags.has(FlagKeys.ignore)
                     and not flags.has(FlagKeys.type)
                 ):
                     stack.extend(_to_stack(v, parent=k))
