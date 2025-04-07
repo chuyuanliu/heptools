@@ -1,7 +1,14 @@
+from __future__ import annotations
+
+from typing import TYPE_CHECKING, Callable
+
 from ..dask.delayed import delayed
 from ..system.eos import EOS, PathLike
 from .chunk import Chunk
 from .io import ReaderOptions, TreeReader, TreeWriter, WriterOptions
+
+if TYPE_CHECKING:
+    import awkward as ak
 
 
 @delayed
@@ -44,6 +51,7 @@ def merge(
     step: int,
     writer_options: WriterOptions = None,
     reader_options: ReaderOptions = None,
+    transform: Callable[[ak.Array], ak.Array] = None,
     dask: bool = False,
 ):
     """
@@ -61,6 +69,8 @@ def merge(
         Additional options passed to :class:`~.io.TreeWriter`.
     reader_options : dict, optional
         Additional options passed to :class:`~.io.TreeReader`.
+    transform : ~typing.Callable[[ak.Array], ak.Array], optional
+        A function to transform the array before writing.
     dask : bool, optional, default=False
         If ``True``, return a :class:`~dask.delayed.Delayed` object.
 
@@ -73,6 +83,8 @@ def merge(
     reader_options = reader_options or {}
     with TreeWriter(**writer_options)(path) as writer:
         for data in TreeReader(**reader_options).iterate(*sources, step=step):
+            if transform:
+                data = transform(data)
             writer.extend(data)
     return writer.tree
 
@@ -115,6 +127,7 @@ def resize(
     writer_options: WriterOptions = None,
     reader_options: ReaderOptions = None,
     clean_source: bool = True,
+    transform: Callable[[ak.Array], ak.Array] = None,
     dask: bool = False,
 ):
     """
@@ -136,6 +149,8 @@ def resize(
         Additional options passed to :class:`~.io.TreeReader`.
     clean_source : bool, optional, default=True
         If ``True``, remove the source chunk after moving.
+    transform : ~typing.Callable[[ak.Array], ak.Array], optional
+        A function to transform the array before writing.
     dask : bool, optional, default=False
         If ``True``, return a :class:`~dask.delayed.Delayed` object.
 
@@ -154,6 +169,7 @@ def resize(
         step=step,
         reader_options=reader_options,
         writer_options=writer_options,
+        transform=transform,
         dask=dask,
     )
     to_clean = {(chunk.path, chunk.uuid): chunk for chunk in sources}

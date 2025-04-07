@@ -1,4 +1,5 @@
 import re
+from enum import IntEnum, auto
 from itertools import groupby
 
 import awkward as ak
@@ -6,6 +7,11 @@ import awkward as ak
 
 def _unzip(array: ak.Array) -> dict[str, ak.Array]:
     return dict(zip(ak.fields(array), ak.unzip(array)))
+
+
+class _Shape(IntEnum):
+    JAGGED = auto()
+    REGULAR = auto()
 
 
 class NanoAOD:
@@ -19,7 +25,7 @@ class NanoAOD:
         cache: bool = True,
     ):
         self._selected = frozenset(selected)
-        self._zip = {"jagged": jagged, "regular": regular}
+        self._zip = {_Shape.JAGGED: jagged, _Shape.REGULAR: regular}
         self._cache: dict[frozenset[str], tuple[set[str], dict[str, set[str]]]] = (
             {} if cache else None
         )
@@ -31,7 +37,7 @@ class NanoAOD:
             key = frozenset(to_keep)
             if key in self._cache:
                 return self._cache[key]
-        if self._zip["jagged"] or self._zip["regular"]:
+        if any(self._zip.values()):
             fields = {
                 k: list(v)
                 for k, v in groupby(
@@ -58,8 +64,8 @@ class NanoAOD:
                 )
             )
             regular = keys - jagged
-            prefixes = {"jagged": jagged, "regular": regular}
-            for k in ("jagged", "regular"):
+            prefixes = {_Shape.JAGGED: jagged, _Shape.REGULAR: regular}
+            for k in _Shape:
                 if self._zip[k]:
                     if self._selected:
                         prefixes[k] &= self._selected
@@ -67,7 +73,7 @@ class NanoAOD:
                         if prefix in fields:
                             to_zip[prefix] = frozenset(map("_".join, fields[prefix]))
                             to_keep -= to_zip[prefix]
-                        if k == "jagged":
+                        if k == _Shape.JAGGED:
                             to_keep.remove(f"n{prefix}")
         if self._cache is not None:
             self._cache[key] = to_keep, to_zip

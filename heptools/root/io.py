@@ -1,9 +1,9 @@
 """
-ROOT file I/O based on :func:`uproot.reading.open`, :func:`uproot._dask.dask` and :func:`uproot.writing.writable.recreate`.
+A wrapper for ROOT file I/O :func:`uproot.reading.open`, :func:`uproot._dask.dask` and :func:`uproot.writing.writable.recreate`.
 
 .. note::
     Readers will use the following default options for :func:`uproot.open`:
-    
+
     .. code-block:: python
 
         object_cache = None
@@ -16,7 +16,7 @@ ROOT file I/O based on :func:`uproot.reading.open`, :func:`uproot._dask.dask` an
         open_files = False
 
     and for both:
-    
+
     .. code-block:: python
 
         timeout = 180
@@ -25,10 +25,6 @@ ROOT file I/O based on :func:`uproot.reading.open`, :func:`uproot._dask.dask` an
     Writers will always overwrite the output file if it exists.
 
 .. todo::
-    Test `fsspec-xrootd <https://coffeateam.github.io/fsspec-xrootd/>`_
-
-.. todo::
-    Test :func:`uproot.writing._dask_write.dask_write`
     Use :func:`dask_awkward.new_scalar_object` to return object.
 
 """

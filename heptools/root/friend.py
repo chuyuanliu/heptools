@@ -7,7 +7,15 @@ from concurrent.futures import Executor, Future, wait
 from dataclasses import dataclass
 from functools import partial
 from itertools import chain
-from typing import TYPE_CHECKING, Generator, Iterable, Literal, Optional, overload
+from typing import (
+    TYPE_CHECKING,
+    Generator,
+    Iterable,
+    Literal,
+    Optional,
+    overload,
+    Callable,
+)
 
 from ..config import Configurable, config
 from ..dask.delayed import delayed
@@ -830,6 +838,7 @@ class Friend(Configurable, namespace="root.Friend"):
         writer_options: WriterOptions = None,
         clean: bool = True,
         executor: Optional[Executor] = None,
+        transform: Callable[[ak.Array], ak.Array] = None,
         dask: bool = False,
     ) -> Friend | Future[Friend]:
         """
@@ -858,6 +867,8 @@ class Friend(Configurable, namespace="root.Friend"):
             If ``True``, clean the original friend chunks after merging.
         executor: ~concurrent.futures.Executor, optional
             An executor with at least the :meth:`~concurrent.futures.Executor.submit` method implemented.
+        transform : ~typing.Callable[[ak.Array], ak.Array], optional
+            A function to transform the array before writing.
         dask : bool, optional, default=False
             If ``True``, return a :class:`~dask.delayed.Delayed` object.
 
@@ -887,6 +898,7 @@ class Friend(Configurable, namespace="root.Friend"):
                 writer_options=writer_options,
                 reader_options=reader_options,
                 clean_source=clean,
+                transform=transform,
                 dask=dask,
             )
             callback = _friend_merge_callback(data, dummy.start, dummy.stop, target)
