@@ -295,7 +295,7 @@ class Friend(Configurable, namespace="root.Friend"):
         return NotImplemented
 
     def __repr__(self):
-        text = f"{self.name}:{sorted(self._branches)}"
+        text = f"{self.name}:{sorted(self._branches or ())}"
         for k, v in self._data.items():
             text += f"\n{k}\n    {v}"
         return text
