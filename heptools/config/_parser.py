@@ -168,27 +168,27 @@ class FlagParser(Protocol):
         flag: Optional[str],
         parser: Optional[Parser],
         local: Optional[dict[str, Any]],
-    ) -> tuple[str, Any]: ...
+    ) -> tuple[str, Any]:
+        """
+        Parameters
+        ----------
+        key: Optional[str]
+            The key of the current item.
+        value: Optional[Any]
+            The value of the current item.
+        flag: Optional[str]
+            The flags of the current item.
+        parser: Optional[Parser]
+            The current parser instance.
+        local: Optional[dict[str, Any]]
+            The current dictionary.
 
-    """
-    Parameters
-    ----------
-    key: Optional[str]
-        The key of the current item.
-    value: Optional[Any]
-        The value of the current item.
-    flag: Optional[str]
-        The flags of the current item.
-    parser: Optional[Parser]
-        The current parser instance.
-    local: Optional[dict[str, Any]]
-        The current dictionary.
-    
-    Returns
-    -------
-    tuple[str, Any]
-        The key and value after parsing.
-    """
+        Returns
+        -------
+        tuple[str, Any]
+            The key and value after parsing.
+        """
+        ...
 
 
 class _FlagParser:
