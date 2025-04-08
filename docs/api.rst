@@ -9,3 +9,4 @@ API reference
    api/eos
    api/math
    api/root
+   api/config

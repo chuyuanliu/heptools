@@ -19,6 +19,9 @@ P = ParamSpec("P")
 T = TypeVar("T")
 
 ConfigSource = str | PathLike | dict[str, Any]
+"""
+str or ~os.PathLike or dict: A path to the config file or a nested dict.
+"""
 
 
 def _unpack(seq: list):
@@ -163,6 +166,28 @@ class FlagParser(Protocol):
         local: Optional[dict[str, Any]],
     ) -> tuple[str, Any]: ...
 
+    """
+    Flag parser protocol
+
+    Parameters
+    ----------
+    key: Optional[str]
+        The key of the current item.
+    value: Optional[Any]
+        The value of the current item.
+    flag: Optional[str]
+        The flags of the current item.
+    parser: Optional[Parser]
+        The current parser instance.
+    local: Optional[dict[str, Any]]
+        The current dictionary.
+    
+    Returns
+    -------
+    tuple[str, Any]
+        The key and value after parsing.
+    """
+
 
 class _FlagParser:
     def __init__(self, func: FlagParser):
@@ -233,6 +258,9 @@ class TypeParser:
 
 
 ExtendMethod = Callable[[Any, Any], Any]
+"""
+~typing.Callable[[Any, Any], Any]: A method to merge two values into one.
+"""
 
 
 class ExtendRecursive:
@@ -560,13 +588,44 @@ class GlobalConfigParser(_ParserCustomization):
 
 
 class ConfigLoader(_ParserCustomization):
+    """
+    A customizable config loader.
+
+    Parameters
+    ----------
+    custom_flags : dict[str, FlagParser], optional
+        Customized flags and their parsers.
+
+    extend_methods : dict[str, ExtendMethod], optional
+        Customized <extend> methods and their implementations.
+
+    """
+
     def __call__(
         self, *path_or_dict: ConfigSource, result: Optional[dict[str, Any]] = None
     ) -> dict[str, Any]:
+        """
+        Load configs from multiple sources.
+
+        Parameters
+        ----------
+        *path_or_dict : ConfigSource
+            Paths to config files or deserialized configs.
+        result : dict[str, Any], optional
+            If provided, the configs will be loaded into this dict.
+
+        Returns
+        -------
+        dict[str, Any]
+            The loaded configs.
+        """
         return _ParserInitializer.new(self).parse(
             *path_or_dict, flat=False, result=result, parent=None
         )
 
     @staticmethod
     def clear_cache():
+        """
+        Clear all cache.
+        """
         clear_cache()
