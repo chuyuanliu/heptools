@@ -74,7 +74,7 @@ def load_file(url: str, parse_query: bool = True):
         warn(f'When parsing "{url}", params will be ignored.')
 
     if parsed.fragment:
-        for k in parsed.fragment.split("."):
+        for k in parsed.fragment.split("/"):
             try:
                 data = data[k]
             except KeyError:
@@ -451,7 +451,7 @@ class _ParserCustomization:
 
 @dataclass
 class _ParserInitializer(_ParserCustomization):
-    _match = re.compile(r"(?P<key>[^\>\<]*?)\s*(?P<flags>(\<[^\>\<]*\>\s*)*)\s*")
+    _match = re.compile(r"(?P<key>.*?)\s*(?P<flags>(\<[^\>\<]*\>\s*)*)\s*")
     _split = re.compile(r"\<(?P<flag>[^\>\<]*)\>")
 
     type = TypeParser()
