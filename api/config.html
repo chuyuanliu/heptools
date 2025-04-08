@@ -372,8 +372,8 @@ document.write(`
   <section id="config">
 <h1>Config<a class="headerlink" href="#config" title="Link to this heading">#</a></h1>
 <dl class="py data">
-<dt class="sig sig-object py" id="heptools.config._parser.ConfigSource">
-<span class="sig-prename descclassname"><span class="pre">heptools.config._parser.</span></span><span class="sig-name descname"><span class="pre">ConfigSource</span></span><a class="reference external" href="https://github.com/chuyuanliu/heptools/tree/master/heptools/config/_parser.py#L21-L21"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#heptools.config._parser.ConfigSource" title="Link to this definition">#</a></dt>
+<dt class="sig sig-object py" id="heptools.config.ConfigSource">
+<span class="sig-prename descclassname"><span class="pre">heptools.config.</span></span><span class="sig-name descname"><span class="pre">ConfigSource</span></span><a class="reference external" href="https://github.com/chuyuanliu/heptools/tree/master/heptools/config/_parser.py#L21-L21"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#heptools.config.ConfigSource" title="Link to this definition">#</a></dt>
 <dd><p>A path to the config file or a nested dict.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Type<span class="colon">:</span></dt>
@@ -383,8 +383,8 @@ document.write(`
 </dd></dl>
 
 <dl class="py class">
-<dt class="sig sig-object py" id="heptools.config._parser.FlagParser">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">heptools.config._parser.</span></span><span class="sig-name descname"><span class="pre">FlagParser</span></span><a class="reference external" href="https://github.com/chuyuanliu/heptools/tree/master/heptools/config/_parser.py#L158-L189"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#heptools.config._parser.FlagParser" title="Link to this definition">#</a></dt>
+<dt class="sig sig-object py" id="heptools.config.FlagParser">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">heptools.config.</span></span><span class="sig-name descname"><span class="pre">FlagParser</span></span><a class="reference external" href="https://github.com/chuyuanliu/heptools/tree/master/heptools/config/_parser.py#L158-L189"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#heptools.config.FlagParser" title="Link to this definition">#</a></dt>
 <dd><p>Base class for protocol classes.</p>
 <p>Protocol classes are defined as:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="k">class</span><span class="w"> </span><span class="nc">Proto</span><span class="p">(</span><span class="n">Protocol</span><span class="p">):</span>
@@ -417,8 +417,8 @@ Protocol classes can be generic, they are defined as:</p>
 </dd></dl>
 
 <dl class="py data">
-<dt class="sig sig-object py" id="heptools.config._parser.ExtendMethod">
-<span class="sig-prename descclassname"><span class="pre">heptools.config._parser.</span></span><span class="sig-name descname"><span class="pre">ExtendMethod</span></span><a class="reference external" href="https://github.com/chuyuanliu/heptools/tree/master/heptools/config/_parser.py#L260-L260"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#heptools.config._parser.ExtendMethod" title="Link to this definition">#</a></dt>
+<dt class="sig sig-object py" id="heptools.config.ExtendMethod">
+<span class="sig-prename descclassname"><span class="pre">heptools.config.</span></span><span class="sig-name descname"><span class="pre">ExtendMethod</span></span><a class="reference external" href="https://github.com/chuyuanliu/heptools/tree/master/heptools/config/_parser.py#L260-L260"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#heptools.config.ExtendMethod" title="Link to this definition">#</a></dt>
 <dd><p>A method to merge two values into one.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Type<span class="colon">:</span></dt>
@@ -428,17 +428,34 @@ Protocol classes can be generic, they are defined as:</p>
 </dd></dl>
 
 <dl class="py class">
-<dt class="sig sig-object py" id="heptools.config._parser.ConfigLoader">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">heptools.config._parser.</span></span><span class="sig-name descname"><span class="pre">ConfigLoader</span></span><a class="reference external" href="https://github.com/chuyuanliu/heptools/tree/master/heptools/config/_parser.py#L590-L631"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#heptools.config._parser.ConfigLoader" title="Link to this definition">#</a></dt>
+<dt class="sig sig-object py" id="heptools.config.ConfigLoader">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">heptools.config.</span></span><span class="sig-name descname"><span class="pre">ConfigLoader</span></span><a class="reference external" href="https://github.com/chuyuanliu/heptools/tree/master/heptools/config/_parser.py#L590-L631"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#heptools.config.ConfigLoader" title="Link to this definition">#</a></dt>
 <dd><p>A customizable config loader.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>custom_flags</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.13)"><em>dict</em></a><em>[</em><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><em>str</em></a><em>, </em><a class="reference internal" href="#heptools.config._parser.FlagParser" title="heptools.config._parser.FlagParser"><em>FlagParser</em></a><em>]</em><em>, </em><em>optional</em>) – Customized flags and their parsers.</p></li>
+<li><p><strong>custom_flags</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.13)"><em>dict</em></a><em>[</em><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><em>str</em></a><em>, </em><a class="reference internal" href="#heptools.config.FlagParser" title="heptools.config.FlagParser"><em>FlagParser</em></a><em>]</em><em>, </em><em>optional</em>) – Customized flags and their parsers.</p></li>
 <li><p><strong>extend_methods</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.13)"><em>dict</em></a><em>[</em><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><em>str</em></a><em>, </em><em>ExtendMethod</em><em>]</em><em>, </em><em>optional</em>) – Customized &lt;extend&gt; methods and their implementations.</p></li>
 </ul>
 </dd>
 </dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="heptools.config.ConfigLoader.__call__">
+<span class="sig-name descname"><span class="pre">__call__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">path_or_dict</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">result</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/chuyuanliu/heptools/tree/master/heptools/config/_parser.py#L604-L624"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#heptools.config.ConfigLoader.__call__" title="Link to this definition">#</a></dt>
+<dd><p>Load configs from multiple sources.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>*path_or_dict</strong> (<em>ConfigSource</em>) – Paths to config files or deserialized configs.</p></li>
+<li><p><strong>result</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.13)"><em>dict</em></a><em>[</em><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><em>str</em></a><em>, </em><em>Any</em><em>]</em><em>, </em><em>optional</em>) – If provided, the configs will be loaded into this dict.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><em>dict[str, Any]</em> – The loaded configs.</p>
+</dd>
+</dl>
+</dd></dl>
+
 </dd></dl>
 
 </section>
@@ -480,10 +497,13 @@ Protocol classes can be generic, they are defined as:</p>
   </div>
   <nav class="bd-toc-nav page-toc" aria-labelledby="pst-page-navigation-heading-2">
     <ul class="visible nav section-nav flex-column">
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#heptools.config._parser.ConfigSource"><code class="docutils literal notranslate"><span class="pre">ConfigSource</span></code></a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#heptools.config._parser.FlagParser"><code class="docutils literal notranslate"><span class="pre">FlagParser</span></code></a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#heptools.config._parser.ExtendMethod"><code class="docutils literal notranslate"><span class="pre">ExtendMethod</span></code></a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#heptools.config._parser.ConfigLoader"><code class="docutils literal notranslate"><span class="pre">ConfigLoader</span></code></a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#heptools.config.ConfigSource"><code class="docutils literal notranslate"><span class="pre">ConfigSource</span></code></a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#heptools.config.FlagParser"><code class="docutils literal notranslate"><span class="pre">FlagParser</span></code></a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#heptools.config.ExtendMethod"><code class="docutils literal notranslate"><span class="pre">ExtendMethod</span></code></a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#heptools.config.ConfigLoader"><code class="docutils literal notranslate"><span class="pre">ConfigLoader</span></code></a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#heptools.config.ConfigLoader.__call__"><code class="docutils literal notranslate"><span class="pre">ConfigLoader.__call__()</span></code></a></li>
+</ul>
+</li>
 </ul>
   </nav></div>
 

@@ -2,10 +2,11 @@
 Config
 ************************
 
-.. autoapidata:: heptools.config._parser.ConfigSource
+.. autoapidata:: heptools.config.ConfigSource
 
-.. autoapiclass:: heptools.config._parser.FlagParser
+.. autoapiclass:: heptools.config.FlagParser
 
-.. autoapidata:: heptools.config._parser.ExtendMethod
+.. autoapidata:: heptools.config.ExtendMethod
 
-.. autoapiclass:: heptools.config._parser.ConfigLoader
+.. autoapiclass:: heptools.config.ConfigLoader
+    :special-members: __call__
