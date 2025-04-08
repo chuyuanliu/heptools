@@ -4,9 +4,13 @@ Config
 
 .. autoapidata:: heptools.config.ConfigSource
 
-.. autoapiclass:: heptools.config.FlagParser
-
 .. autoapidata:: heptools.config.ExtendMethod
 
+.. autoapiclass:: heptools.config.FlagParser
+    :special-members: __call__
+
+.. autoapifunction:: heptools.config.as_flag_parser
+
 .. autoapiclass:: heptools.config.ConfigLoader
+    :members:
     :special-members: __call__

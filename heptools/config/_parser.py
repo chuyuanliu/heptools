@@ -156,6 +156,10 @@ class Flags:
 
 
 class FlagParser(Protocol):
+    """
+    Flag parser protocol
+    """
+
     def __call__(
         self,
         *,
@@ -167,8 +171,6 @@ class FlagParser(Protocol):
     ) -> tuple[str, Any]: ...
 
     """
-    Flag parser protocol
-
     Parameters
     ----------
     key: Optional[str]
@@ -204,6 +206,10 @@ class _FlagParser:
 
 
 def as_flag_parser(func: Callable[P, T]) -> Callable[P, T]:
+    """
+    A decorator to make a function with omitted keyword arguments compatible with :class:`FlagParser` protocol.
+    """
+
     return _FlagParser(func)
 
 
