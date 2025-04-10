@@ -353,6 +353,145 @@ document.write(`
                   
   <section id="config-parser">
 <h1>Config Parser<a class="headerlink" href="#config-parser" title="Link to this heading">#</a></h1>
+<p>This tool provides a consistent solution to load multiple configuration files into a single nested dictionary and allows to extend the commonly used dictionary-like formats (<cite>json</cite>, <cite>yaml</cite>, <cite>toml</cite>, <cite>ini</cite>) by adding flags to each key.</p>
+<section id="flag">
+<h2>Flag<a class="headerlink" href="#flag" title="Link to this heading">#</a></h2>
+<section id="syntax">
+<h3>Syntax<a class="headerlink" href="#syntax" title="Link to this heading">#</a></h3>
+<ul class="simple">
+<li><p>A flag is defined as a key-value pair given by <cite>&lt;flag_key=flag_value&gt;</cite> or <cite>&lt;flag_key&gt;</cite> if the value is <cite>None</cite>.</p></li>
+<li><p>Arbitrary number of flags can be added after each <cite>key</cite>.</p></li>
+<li><p>At list one space is required between the key and the flags.</p></li>
+<li><p>The spaces among the flags are optional. The following flags are all valid:</p></li>
+</ul>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">key</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">value</span>
+<span class="nt">key &lt;flag_key&gt;</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">value</span>
+<span class="nt">key &lt;flag_key=flag_value&gt;</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">value</span>
+<span class="nt">key   &lt;flag_key1=flag_value1&gt;&lt;flag_key2&gt;  &lt;flag_key3=flag_value3&gt;  </span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">value</span>
+</pre></div>
+</div>
+</section>
+<section id="parsing">
+<h3>Parsing<a class="headerlink" href="#parsing" title="Link to this heading">#</a></h3>
+<p>The flags will be parsed from left to right with the following exceptions:
+- The following flags have higher priority: <cite>&lt;code&gt;</cite> &amp;gt; <cite>&lt;include&gt;</cite> &amp;gt; others from left to right.
+- The following flags will not trigger any parser: <cite>&lt;literal&gt;</cite>, <cite>&lt;discard&gt;</cite>, <cite>&lt;dummy&gt;</cite>.</p>
+<p>Each parser will take the <cite>key</cite> and <cite>value</cite> from the previous parser and pass the possibly modified ones to the next, so the order of flags matters.</p>
+</section>
+<section id="url-format">
+<h3>URL format<a class="headerlink" href="#url-format" title="Link to this heading">#</a></h3>
+<p>Both the <code class="xref py py-class docutils literal notranslate"><span class="pre">ConfigParser</span></code> and built-in flags <cite>&lt;include&gt;</cite>, <cite>&lt;file&gt;</cite> accept the standard URL as path to files, and the IO is completely handled by <code class="xref py py-mod docutils literal notranslate"><span class="pre">fsspec</span></code>.</p>
+<p>A standard URL is given by the following format:
+.. code-block:: yaml</p>
+<blockquote>
+<div><p>scheme://netloc/path;parameters?query#fragment</p>
+</div></blockquote>
+<ul class="simple">
+<li><p>The <cite>scheme://netloc/</cite> can be omitted for local files.</p></li>
+<li><p>The <cite>parameters</cite> is always ignored.</p></li>
+<li><p>The <cite>query</cite> can be used to provide an additional simple configuration.</p></li>
+<li><p>The <cite>fragment</cite> can be used to access a nested dictionary or an element in a list.</p></li>
+<li><p>The [percentage-encoding](<a class="reference external" href="https://en.wikipedia.org/wiki/Percent-encoding">https://en.wikipedia.org/wiki/Percent-encoding</a>) <cite>%XX</cite> can be used in <cite>path</cite> to escape special characters.</p></li>
+</ul>
+<p>The following URLs are valid:</p>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">local path</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">/path/to/file.yml</span>
+<span class="nt">XRootD path</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">root://server.host//path/to/file.yml</span>
+<span class="nt">fragment</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">/path/to/file.yml#key1/key2/0/key3</span>
+<span class="nt">query</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">/path/to/file.yml?key1=value1&amp;key2=value2&amp;key1=value3</span>
+</pre></div>
+</div>
+<p>The <cite>fragment</cite> example above is equivalent to the pseudo code:
+.. code-block:: python</p>
+<blockquote>
+<div><p>yaml.load(open(“/path/to/file.yml”))[“key1”][“key2”][int(“0”)][“key3”]</p>
+</div></blockquote>
+<p>where the str-to-int conversion will be triggered when encountering a list.</p>
+<p>The <cite>query</cite> example above will give an additional config dict:
+.. code-block:: python</p>
+<blockquote>
+<div><dl class="simple">
+<dt>{</dt><dd><p>“key1”: [“value1”, “value3”],
+“key2”: “value2”,</p>
+</dd>
+</dl>
+<p>}</p>
+</div></blockquote>
+<p>where if a key appears multiple times in the query, all values will be collected into a list.
+A special key <cite>json=</cite> can be used to pass JSON strings but is not recommended. The order of parsing is file, json query, other queries, where the later ones may override the former ones.</p>
+<div class="admonition warning">
+<p class="admonition-title">Warning</p>
+<p>When using with <code class="xref py py-class docutils literal notranslate"><span class="pre">ConfigParser</span></code>, the final deserialized object (after all fragments) is required to be a dictionary.</p>
+</div>
+</section>
+</section>
+<section id="built-in-flags">
+<h2>Built-in flags<a class="headerlink" href="#built-in-flags" title="Link to this heading">#</a></h2>
+<section id="code">
+<h3><cite>&lt;code&gt;</cite><a class="headerlink" href="#code" title="Link to this heading">#</a></h3>
+<p><cite>&lt;code&gt;</cite> will replace the value by calling <a class="reference external" href="https://docs.python.org/3/library/functions.html#eval" title="(in Python v3.13)"><code class="xref py py-func docutils literal notranslate"><span class="pre">eval()</span></code></a> on it.</p>
+<section id="value">
+<h4>value<a class="headerlink" href="#value" title="Link to this heading">#</a></h4>
+<ul class="simple">
+<li><p>a code string.</p></li>
+</ul>
+</section>
+<section id="example">
+<h4>example<a class="headerlink" href="#example" title="Link to this heading">#</a></h4>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">key &lt;code&gt;</span><span class="p">:</span><span class="w"> </span><span class="s">&#39;[f&quot;item{i}&quot;</span><span class="nv"> </span><span class="s">for</span><span class="nv"> </span><span class="s">i</span><span class="nv"> </span><span class="s">in</span><span class="nv"> </span><span class="s">range(100)]&#39;</span>
+</pre></div>
+</div>
+</section>
+</section>
+<section id="include">
+<h3><cite>&lt;include&gt;</cite><a class="headerlink" href="#include" title="Link to this heading">#</a></h3>
+<p><cite>&lt;include&gt;</cite> allows to merge dictionaries from other config files into the given level and will be parsed under the current context. For intra file include, <cite>.</cite> can be used as path.</p>
+<section id="flag-values">
+<h4>flag values<a class="headerlink" href="#flag-values" title="Link to this heading">#</a></h4>
+<ul class="simple">
+<li><p><cite>&lt;include&gt;</cite>: the path will be inferred.</p></li>
+<li><p><cite>&lt;include=absolute&gt;</cite>: force to resolve as the absolute path.</p></li>
+<li><p><cite>&lt;include=relative&gt;</cite>: force to resolve as the relative path to the config file.</p></li>
+</ul>
+</section>
+<section id="key">
+<h4>key<a class="headerlink" href="#key" title="Link to this heading">#</a></h4>
+<ul class="simple">
+<li><p>the key is required to be empty.</p></li>
+<li><p>any flag other than <cite>&lt;code&gt;</cite> will be ignored.</p></li>
+</ul>
+</section>
+<section id="values">
+<h4>values<a class="headerlink" href="#values" title="Link to this heading">#</a></h4>
+<ul class="simple">
+<li><p>a url string</p></li>
+<li><p>a list of url strings</p></li>
+</ul>
+</section>
+<section id="id1">
+<h4>example<a class="headerlink" href="#id1" title="Link to this heading">#</a></h4>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="l l-Scalar l-Scalar-Plain">file1.yml</span>
+<span class="l l-Scalar l-Scalar-Plain">----------</span>
+<span class="l l-Scalar l-Scalar-Plain">key1</span><span class="p p-Indicator">:</span>
+<span class="w">    </span><span class="nt">key1_1</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">value1</span>
+
+<span class="l l-Scalar l-Scalar-Plain">file2.yml</span>
+<span class="l l-Scalar l-Scalar-Plain">----------</span>
+<span class="nt">key2</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">key2_2</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">value2</span>
+
+<span class="nt">key3</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">&lt;include&gt;</span><span class="p">:</span>
+<span class="w">        </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">file1.yml#key1</span>
+<span class="w">        </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">.#key2</span>
+</pre></div>
+</div>
+<p>Then <cite>file2.yml#key3</cite> will give <cite>{‘key1_1’: ‘value1’, ‘key2_2’: ‘value2’}</cite>.</p>
+</section>
+</section>
+</section>
+<section id="comparing-to-yaml">
+<h2>Comparing to <cite>yaml</cite><a class="headerlink" href="#comparing-to-yaml" title="Link to this heading">#</a></h2>
+</section>
 </section>
 
 
@@ -374,6 +513,39 @@ document.write(`
               
                 <div class="bd-sidebar-secondary bd-toc"><div class="sidebar-secondary-items sidebar-secondary__inner">
 
+
+  <div class="sidebar-secondary-item">
+<div
+    id="pst-page-navigation-heading-2"
+    class="page-toc tocsection onthispage">
+    <i class="fa-solid fa-list"></i> On this page
+  </div>
+  <nav class="bd-toc-nav page-toc" aria-labelledby="pst-page-navigation-heading-2">
+    <ul class="visible nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#flag">Flag</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#syntax">Syntax</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#parsing">Parsing</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#url-format">URL format</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#built-in-flags">Built-in flags</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#code"><cite>&lt;code&gt;</cite></a><ul class="nav section-nav flex-column">
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#value">value</a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#example">example</a></li>
+</ul>
+</li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#include"><cite>&lt;include&gt;</cite></a><ul class="nav section-nav flex-column">
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#flag-values">flag values</a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#key">key</a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#values">values</a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#id1">example</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#comparing-to-yaml">Comparing to <cite>yaml</cite></a></li>
+</ul>
+  </nav></div>
 
   <div class="sidebar-secondary-item">
 
