@@ -28,6 +28,7 @@ The following flags are all valid:
 Parsing
 --------------
 The flags will be parsed from left to right with the following exceptions:
+
 - The following flags have higher priority: :ref:`config-flag-code` \> :ref:`config-flag-include` \> others from left to right.
 - The following flags will not trigger any parser: ``<literal>``, ``<discard>``, ``<dummy>``.
 

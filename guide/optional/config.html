@@ -394,9 +394,11 @@ document.write(`
 </section>
 <section id="parsing">
 <h3>Parsing<a class="headerlink" href="#parsing" title="Link to this heading">#</a></h3>
-<p>The flags will be parsed from left to right with the following exceptions:
-- The following flags have higher priority: <a class="reference internal" href="#config-flag-code"><span class="std std-ref">&lt;code&gt;</span></a> &gt; <a class="reference internal" href="#config-flag-include"><span class="std std-ref">&lt;include&gt;</span></a> &gt; others from left to right.
-- The following flags will not trigger any parser: <code class="docutils literal notranslate"><span class="pre">&lt;literal&gt;</span></code>, <code class="docutils literal notranslate"><span class="pre">&lt;discard&gt;</span></code>, <code class="docutils literal notranslate"><span class="pre">&lt;dummy&gt;</span></code>.</p>
+<p>The flags will be parsed from left to right with the following exceptions:</p>
+<ul class="simple">
+<li><p>The following flags have higher priority: <a class="reference internal" href="#config-flag-code"><span class="std std-ref">&lt;code&gt;</span></a> &gt; <a class="reference internal" href="#config-flag-include"><span class="std std-ref">&lt;include&gt;</span></a> &gt; others from left to right.</p></li>
+<li><p>The following flags will not trigger any parser: <code class="docutils literal notranslate"><span class="pre">&lt;literal&gt;</span></code>, <code class="docutils literal notranslate"><span class="pre">&lt;discard&gt;</span></code>, <code class="docutils literal notranslate"><span class="pre">&lt;dummy&gt;</span></code>.</p></li>
+</ul>
 <p>Each parser will take the <code class="docutils literal notranslate"><span class="pre">key</span></code> and <code class="docutils literal notranslate"><span class="pre">value</span></code> from the previous parser and pass the possibly modified ones to the next, so the order of flags matters.</p>
 </section>
 <section id="url-format">
