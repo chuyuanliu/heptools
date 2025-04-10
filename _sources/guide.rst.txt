@@ -6,4 +6,4 @@ User guide
    :maxdepth: 2
 
    guide/howto
-   guide/performance
+   guide/optional
