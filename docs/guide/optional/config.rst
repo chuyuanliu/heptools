@@ -35,7 +35,7 @@ Each parser will take the ``key`` and ``value`` from the previous parser and pas
 
 URL format
 --------------
-Both the :class:`ConfigLoader` and built-in flags ``<include>``, ``<file>`` accept the standard URL as path to files, and the IO is completely handled by :mod:`fsspec`. 
+Both the :class:`~heptools.config.ConfigLoader` and built-in flags ``<include>``, ``<file>`` accept the standard URL as path to files, and the IO is completely handled by :func:`fsspec.open`. 
 
 A standard URL is given by the following format:
 
@@ -81,7 +81,7 @@ A special key ``json=`` can be used to pass JSON strings but is not recommended.
 
 .. warning::
 
-    When using with :class:`ConfigLoader`, the final deserialized object (after all fragments) is required to be a dictionary.
+    When using with :class:`~heptools.config.ConfigLoader`, the final deserialized object (after all fragments) is required to be a dictionary.
 
 
 Built-in flags
@@ -109,7 +109,7 @@ example
 
 ``<include>`` allows to merge dictionaries from other config files into the given level and will be parsed under the current context. For intra file include, ``.`` can be used as path.
 
-flag values
+flag value
 ^^^^^^^^^^^
 
 - ``<include>``: the path will be inferred.
@@ -123,7 +123,7 @@ key
 - any flag other than ``<code>`` will be ignored.
 
 
-values
+value
 ^^^^^^
 
 - a url string
