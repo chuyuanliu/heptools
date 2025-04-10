@@ -395,13 +395,13 @@ document.write(`
 <section id="parsing">
 <h3>Parsing<a class="headerlink" href="#parsing" title="Link to this heading">#</a></h3>
 <p>The flags will be parsed from left to right with the following exceptions:
-- The following flags have higher priority: <code class="docutils literal notranslate"><span class="pre">&lt;code&gt;</span></code> &amp;gt; <code class="docutils literal notranslate"><span class="pre">&lt;include&gt;</span></code> &amp;gt; others from left to right.
+- The following flags have higher priority: <a class="reference internal" href="#config-flag-code"><span class="std std-ref">&lt;code&gt;</span></a> &gt; <a class="reference internal" href="#config-flag-include"><span class="std std-ref">&lt;include&gt;</span></a> &gt; others from left to right.
 - The following flags will not trigger any parser: <code class="docutils literal notranslate"><span class="pre">&lt;literal&gt;</span></code>, <code class="docutils literal notranslate"><span class="pre">&lt;discard&gt;</span></code>, <code class="docutils literal notranslate"><span class="pre">&lt;dummy&gt;</span></code>.</p>
 <p>Each parser will take the <code class="docutils literal notranslate"><span class="pre">key</span></code> and <code class="docutils literal notranslate"><span class="pre">value</span></code> from the previous parser and pass the possibly modified ones to the next, so the order of flags matters.</p>
 </section>
 <section id="url-format">
 <h3>URL format<a class="headerlink" href="#url-format" title="Link to this heading">#</a></h3>
-<p>Both the <a class="reference internal" href="../../api/config.html#heptools.config.ConfigLoader" title="heptools.config.ConfigLoader"><code class="xref py py-class docutils literal notranslate"><span class="pre">ConfigLoader</span></code></a> and built-in flags <code class="docutils literal notranslate"><span class="pre">&lt;include&gt;</span></code>, <code class="docutils literal notranslate"><span class="pre">&lt;file&gt;</span></code> accept the standard URL as path to files, and the IO is completely handled by <a class="reference external" href="https://filesystem-spec.readthedocs.io/en/latest/api.html#fsspec.open" title="(in fsspec v2025.3.0.post3+g6b85a47.d20250314)"><code class="xref py py-func docutils literal notranslate"><span class="pre">fsspec.open()</span></code></a>.</p>
+<p>Both the <a class="reference internal" href="../../api/config.html#heptools.config.ConfigLoader" title="heptools.config.ConfigLoader"><code class="xref py py-class docutils literal notranslate"><span class="pre">ConfigLoader</span></code></a> and built-in flags <a class="reference internal" href="#config-flag-include"><span class="std std-ref">&lt;include&gt;</span></a>, <code class="docutils literal notranslate"><span class="pre">&lt;file&gt;</span></code> accept the standard URL as path to files, and the IO is completely handled by <a class="reference external" href="https://filesystem-spec.readthedocs.io/en/latest/api.html#fsspec.open" title="(in fsspec v2025.3.0.post3+g6b85a47.d20250314)"><code class="xref py py-func docutils literal notranslate"><span class="pre">fsspec.open()</span></code></a>.</p>
 <p>A standard URL is given by the following format:</p>
 <div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="l l-Scalar l-Scalar-Plain">scheme://netloc/path;parameters?query#fragment</span>
 </pre></div>
@@ -411,7 +411,7 @@ document.write(`
 <li><p>The <code class="docutils literal notranslate"><span class="pre">parameters</span></code> is always ignored.</p></li>
 <li><p>The <code class="docutils literal notranslate"><span class="pre">query</span></code> can be used to provide an additional simple configuration.</p></li>
 <li><p>The <code class="docutils literal notranslate"><span class="pre">fragment</span></code> can be used to access a nested dictionary or an element in a list.</p></li>
-<li><p>The [percentage-encoding](<a class="reference external" href="https://en.wikipedia.org/wiki/Percent-encoding">https://en.wikipedia.org/wiki/Percent-encoding</a>) <code class="docutils literal notranslate"><span class="pre">%XX</span></code> can be used in <code class="docutils literal notranslate"><span class="pre">path</span></code> to escape special characters.</p></li>
+<li><p>The <a class="reference external" href="https://en.wikipedia.org/wiki/Percent-encoding">percentage-encoding</a> <code class="docutils literal notranslate"><span class="pre">%XX</span></code> can be used in <code class="docutils literal notranslate"><span class="pre">path</span></code> to escape special characters.</p></li>
 </ul>
 <p>The following URLs are valid:</p>
 <div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">local path</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">/path/to/file.yml</span>
@@ -443,7 +443,7 @@ A special key <code class="docutils literal notranslate"><span class="pre">json=
 <section id="built-in-flags">
 <h2>Built-in flags<a class="headerlink" href="#built-in-flags" title="Link to this heading">#</a></h2>
 <section id="code">
-<h3><code class="docutils literal notranslate"><span class="pre">&lt;code&gt;</span></code><a class="headerlink" href="#code" title="Link to this heading">#</a></h3>
+<span id="config-flag-code"></span><h3><code class="docutils literal notranslate"><span class="pre">&lt;code&gt;</span></code><a class="headerlink" href="#code" title="Link to this heading">#</a></h3>
 <p><code class="docutils literal notranslate"><span class="pre">&lt;code&gt;</span></code> will replace the value by calling :func:<code class="docutils literal notranslate"><span class="pre">eval</span></code> on it.</p>
 <section id="value">
 <h4>value<a class="headerlink" href="#value" title="Link to this heading">#</a></h4>
@@ -459,7 +459,7 @@ A special key <code class="docutils literal notranslate"><span class="pre">json=
 </section>
 </section>
 <section id="include">
-<h3><code class="docutils literal notranslate"><span class="pre">&lt;include&gt;</span></code><a class="headerlink" href="#include" title="Link to this heading">#</a></h3>
+<span id="config-flag-include"></span><h3><code class="docutils literal notranslate"><span class="pre">&lt;include&gt;</span></code><a class="headerlink" href="#include" title="Link to this heading">#</a></h3>
 <p><code class="docutils literal notranslate"><span class="pre">&lt;include&gt;</span></code> allows to merge dictionaries from other config files into the given level and will be parsed under the current context. For intra file include, <code class="docutils literal notranslate"><span class="pre">.</span></code> can be used as path.</p>
 <section id="flag-value">
 <h4>flag value<a class="headerlink" href="#flag-value" title="Link to this heading">#</a></h4>
@@ -473,7 +473,7 @@ A special key <code class="docutils literal notranslate"><span class="pre">json=
 <h4>key<a class="headerlink" href="#key" title="Link to this heading">#</a></h4>
 <ul class="simple">
 <li><p>the key is required to be empty.</p></li>
-<li><p>any flag other than <code class="docutils literal notranslate"><span class="pre">&lt;code&gt;</span></code> will be ignored.</p></li>
+<li><p>any flag other than <a class="reference internal" href="#config-flag-code"><span class="std std-ref">&lt;code&gt;</span></a> will be ignored.</p></li>
 </ul>
 </section>
 <section id="id1">
