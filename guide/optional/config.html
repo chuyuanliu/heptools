@@ -371,17 +371,17 @@ document.write(`
                   
   <section id="config-parser">
 <h1>Config Parser<a class="headerlink" href="#config-parser" title="Link to this heading">#</a></h1>
-<p>This tool provides a consistent solution to load multiple configuration files into a single nested dictionary and allows to extend the commonly used dictionary-like formats (<cite>json</cite>, <cite>yaml</cite>, <cite>toml</cite>, <cite>ini</cite>) by adding flags to each key.</p>
+<p>This tool provides a consistent solution to load multiple configuration files into a single nested dictionary and allows to extend the commonly used dictionary-like formats (<code class="docutils literal notranslate"><span class="pre">json</span></code>, <code class="docutils literal notranslate"><span class="pre">yaml</span></code>, <code class="docutils literal notranslate"><span class="pre">toml</span></code>, <code class="docutils literal notranslate"><span class="pre">ini</span></code>) by adding flags to each key.</p>
 <section id="flag">
 <h2>Flag<a class="headerlink" href="#flag" title="Link to this heading">#</a></h2>
 <section id="syntax">
 <h3>Syntax<a class="headerlink" href="#syntax" title="Link to this heading">#</a></h3>
 <ul class="simple">
-<li><p>A flag is defined as a key-value pair given by <cite>&lt;flag_key=flag_value&gt;</cite> or <cite>&lt;flag_key&gt;</cite> if the value is <cite>None</cite>.</p></li>
-<li><p>Arbitrary number of flags can be added after each <cite>key</cite>.</p></li>
+<li><p>A flag is defined as a key-value pair given by <code class="docutils literal notranslate"><span class="pre">&lt;flag_key=flag_value&gt;</span></code> or <code class="docutils literal notranslate"><span class="pre">&lt;flag_key&gt;</span></code> if the value is <code class="docutils literal notranslate"><span class="pre">None</span></code>.</p></li>
+<li><p>Arbitrary number of flags can be added after each <code class="docutils literal notranslate"><span class="pre">key</span></code>.</p></li>
 <li><p>At least one space is required between the key and the flags.</p></li>
 <li><p>The spaces among the flags are optional.</p></li>
-<li><p>If the empty or <cite>~</cite> key will be parsed as <cite>None</cite>.</p></li>
+<li><p>If the empty or <code class="docutils literal notranslate"><span class="pre">~</span></code> key will be parsed as <code class="docutils literal notranslate"><span class="pre">None</span></code>.</p></li>
 </ul>
 <p>The following flags are all valid:</p>
 <div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">key</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">value</span>
@@ -395,24 +395,23 @@ document.write(`
 <section id="parsing">
 <h3>Parsing<a class="headerlink" href="#parsing" title="Link to this heading">#</a></h3>
 <p>The flags will be parsed from left to right with the following exceptions:
-- The following flags have higher priority: <cite>&lt;code&gt;</cite> &amp;gt; <cite>&lt;include&gt;</cite> &amp;gt; others from left to right.
-- The following flags will not trigger any parser: <cite>&lt;literal&gt;</cite>, <cite>&lt;discard&gt;</cite>, <cite>&lt;dummy&gt;</cite>.</p>
-<p>Each parser will take the <cite>key</cite> and <cite>value</cite> from the previous parser and pass the possibly modified ones to the next, so the order of flags matters.</p>
+- The following flags have higher priority: <code class="docutils literal notranslate"><span class="pre">&lt;code&gt;</span></code> &amp;gt; <code class="docutils literal notranslate"><span class="pre">&lt;include&gt;</span></code> &amp;gt; others from left to right.
+- The following flags will not trigger any parser: <code class="docutils literal notranslate"><span class="pre">&lt;literal&gt;</span></code>, <code class="docutils literal notranslate"><span class="pre">&lt;discard&gt;</span></code>, <code class="docutils literal notranslate"><span class="pre">&lt;dummy&gt;</span></code>.</p>
+<p>Each parser will take the <code class="docutils literal notranslate"><span class="pre">key</span></code> and <code class="docutils literal notranslate"><span class="pre">value</span></code> from the previous parser and pass the possibly modified ones to the next, so the order of flags matters.</p>
 </section>
 <section id="url-format">
 <h3>URL format<a class="headerlink" href="#url-format" title="Link to this heading">#</a></h3>
-<p>Both the <code class="xref py py-class docutils literal notranslate"><span class="pre">ConfigParser</span></code> and built-in flags <cite>&lt;include&gt;</cite>, <cite>&lt;file&gt;</cite> accept the standard URL as path to files, and the IO is completely handled by <code class="xref py py-mod docutils literal notranslate"><span class="pre">fsspec</span></code>.</p>
-<p>A standard URL is given by the following format:
-.. code-block:: yaml</p>
-<blockquote>
-<div><p>scheme://netloc/path;parameters?query#fragment</p>
-</div></blockquote>
+<p>Both the <code class="xref py py-class docutils literal notranslate"><span class="pre">ConfigLoader</span></code> and built-in flags <code class="docutils literal notranslate"><span class="pre">&lt;include&gt;</span></code>, <code class="docutils literal notranslate"><span class="pre">&lt;file&gt;</span></code> accept the standard URL as path to files, and the IO is completely handled by <code class="xref py py-mod docutils literal notranslate"><span class="pre">fsspec</span></code>.</p>
+<p>A standard URL is given by the following format:</p>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="l l-Scalar l-Scalar-Plain">scheme://netloc/path;parameters?query#fragment</span>
+</pre></div>
+</div>
 <ul class="simple">
-<li><p>The <cite>scheme://netloc/</cite> can be omitted for local files.</p></li>
-<li><p>The <cite>parameters</cite> is always ignored.</p></li>
-<li><p>The <cite>query</cite> can be used to provide an additional simple configuration.</p></li>
-<li><p>The <cite>fragment</cite> can be used to access a nested dictionary or an element in a list.</p></li>
-<li><p>The [percentage-encoding](<a class="reference external" href="https://en.wikipedia.org/wiki/Percent-encoding">https://en.wikipedia.org/wiki/Percent-encoding</a>) <cite>%XX</cite> can be used in <cite>path</cite> to escape special characters.</p></li>
+<li><p>The <code class="docutils literal notranslate"><span class="pre">scheme://netloc/</span></code> can be omitted for local files.</p></li>
+<li><p>The <code class="docutils literal notranslate"><span class="pre">parameters</span></code> is always ignored.</p></li>
+<li><p>The <code class="docutils literal notranslate"><span class="pre">query</span></code> can be used to provide an additional simple configuration.</p></li>
+<li><p>The <code class="docutils literal notranslate"><span class="pre">fragment</span></code> can be used to access a nested dictionary or an element in a list.</p></li>
+<li><p>The [percentage-encoding](<a class="reference external" href="https://en.wikipedia.org/wiki/Percent-encoding">https://en.wikipedia.org/wiki/Percent-encoding</a>) <code class="docutils literal notranslate"><span class="pre">%XX</span></code> can be used in <code class="docutils literal notranslate"><span class="pre">path</span></code> to escape special characters.</p></li>
 </ul>
 <p>The following URLs are valid:</p>
 <div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">local path</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">/path/to/file.yml</span>
@@ -421,35 +420,31 @@ document.write(`
 <span class="nt">query</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">/path/to/file.yml?key1=value1&amp;key2=value2&amp;key1=value3</span>
 </pre></div>
 </div>
-<p>The <cite>fragment</cite> example above is equivalent to the pseudo code:
-.. code-block:: python</p>
-<blockquote>
-<div><p>yaml.load(open(“/path/to/file.yml”))[“key1”][“key2”][int(“0”)][“key3”]</p>
-</div></blockquote>
+<p>The <code class="docutils literal notranslate"><span class="pre">fragment</span></code> example above is equivalent to the pseudo code:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">yaml</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="nb">open</span><span class="p">(</span><span class="s2">&quot;/path/to/file.yml&quot;</span><span class="p">))[</span><span class="s2">&quot;key1&quot;</span><span class="p">][</span><span class="s2">&quot;key2&quot;</span><span class="p">][</span><span class="nb">int</span><span class="p">(</span><span class="s2">&quot;0&quot;</span><span class="p">)][</span><span class="s2">&quot;key3&quot;</span><span class="p">]</span>
+</pre></div>
+</div>
 <p>where the str-to-int conversion will be triggered when encountering a list.</p>
-<p>The <cite>query</cite> example above will give an additional config dict:
-.. code-block:: python</p>
-<blockquote>
-<div><dl class="simple">
-<dt>{</dt><dd><p>“key1”: [“value1”, “value3”],
-“key2”: “value2”,</p>
-</dd>
-</dl>
-<p>}</p>
-</div></blockquote>
+<p>The <code class="docutils literal notranslate"><span class="pre">query</span></code> example above will give an additional config dict:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="p">{</span>
+    <span class="s2">&quot;key1&quot;</span><span class="p">:</span> <span class="p">[</span><span class="s2">&quot;value1&quot;</span><span class="p">,</span> <span class="s2">&quot;value3&quot;</span><span class="p">],</span>
+    <span class="s2">&quot;key2&quot;</span><span class="p">:</span> <span class="s2">&quot;value2&quot;</span><span class="p">,</span>
+<span class="p">}</span>
+</pre></div>
+</div>
 <p>where if a key appears multiple times in the query, all values will be collected into a list.
-A special key <cite>json=</cite> can be used to pass JSON strings but is not recommended. The order of parsing is file, json query, other queries, where the later ones may override the former ones.</p>
+A special key <code class="docutils literal notranslate"><span class="pre">json=</span></code> can be used to pass JSON strings but is not recommended. The order of parsing is file, json query, other queries, where the later ones may override the former ones.</p>
 <div class="admonition warning">
 <p class="admonition-title">Warning</p>
-<p>When using with <code class="xref py py-class docutils literal notranslate"><span class="pre">ConfigParser</span></code>, the final deserialized object (after all fragments) is required to be a dictionary.</p>
+<p>When using with <code class="xref py py-class docutils literal notranslate"><span class="pre">ConfigLoader</span></code>, the final deserialized object (after all fragments) is required to be a dictionary.</p>
 </div>
 </section>
 </section>
 <section id="built-in-flags">
 <h2>Built-in flags<a class="headerlink" href="#built-in-flags" title="Link to this heading">#</a></h2>
 <section id="code">
-<h3><cite>&lt;code&gt;</cite><a class="headerlink" href="#code" title="Link to this heading">#</a></h3>
-<p><cite>&lt;code&gt;</cite> will replace the value by calling <a class="reference external" href="https://docs.python.org/3/library/functions.html#eval" title="(in Python v3.13)"><code class="xref py py-func docutils literal notranslate"><span class="pre">eval()</span></code></a> on it.</p>
+<h3><code class="docutils literal notranslate"><span class="pre">&lt;code&gt;</span></code><a class="headerlink" href="#code" title="Link to this heading">#</a></h3>
+<p><code class="docutils literal notranslate"><span class="pre">&lt;code&gt;</span></code> will replace the value by calling :func:<code class="docutils literal notranslate"><span class="pre">eval</span></code> on it.</p>
 <section id="value">
 <h4>value<a class="headerlink" href="#value" title="Link to this heading">#</a></h4>
 <ul class="simple">
@@ -464,21 +459,21 @@ A special key <cite>json=</cite> can be used to pass JSON strings but is not rec
 </section>
 </section>
 <section id="include">
-<h3><cite>&lt;include&gt;</cite><a class="headerlink" href="#include" title="Link to this heading">#</a></h3>
-<p><cite>&lt;include&gt;</cite> allows to merge dictionaries from other config files into the given level and will be parsed under the current context. For intra file include, <cite>.</cite> can be used as path.</p>
+<h3><code class="docutils literal notranslate"><span class="pre">&lt;include&gt;</span></code><a class="headerlink" href="#include" title="Link to this heading">#</a></h3>
+<p><code class="docutils literal notranslate"><span class="pre">&lt;include&gt;</span></code> allows to merge dictionaries from other config files into the given level and will be parsed under the current context. For intra file include, <code class="docutils literal notranslate"><span class="pre">.</span></code> can be used as path.</p>
 <section id="flag-values">
 <h4>flag values<a class="headerlink" href="#flag-values" title="Link to this heading">#</a></h4>
 <ul class="simple">
-<li><p><cite>&lt;include&gt;</cite>: the path will be inferred.</p></li>
-<li><p><cite>&lt;include=absolute&gt;</cite>: force to resolve as the absolute path.</p></li>
-<li><p><cite>&lt;include=relative&gt;</cite>: force to resolve as the relative path to the config file.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">&lt;include&gt;</span></code>: the path will be inferred.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">&lt;include=absolute&gt;</span></code>: force to resolve as the absolute path.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">&lt;include=relative&gt;</span></code>: force to resolve as the relative path to the config file.</p></li>
 </ul>
 </section>
 <section id="key">
 <h4>key<a class="headerlink" href="#key" title="Link to this heading">#</a></h4>
 <ul class="simple">
 <li><p>the key is required to be empty.</p></li>
-<li><p>any flag other than <cite>&lt;code&gt;</cite> will be ignored.</p></li>
+<li><p>any flag other than <code class="docutils literal notranslate"><span class="pre">&lt;code&gt;</span></code> will be ignored.</p></li>
 </ul>
 </section>
 <section id="values">
@@ -506,12 +501,12 @@ A special key <cite>json=</cite> can be used to pass JSON strings but is not rec
 <span class="w">        </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">.#key2</span>
 </pre></div>
 </div>
-<p>Then <cite>file2.yml#key3</cite> will give <cite>{‘key1_1’: ‘value1’, ‘key2_2’: ‘value2’}</cite>.</p>
+<p>Then <code class="docutils literal notranslate"><span class="pre">file2.yml#key3</span></code> will give <code class="docutils literal notranslate"><span class="pre">{'key1_1':</span> <span class="pre">'value1',</span> <span class="pre">'key2_2':</span> <span class="pre">'value2'}</span></code>.</p>
 </section>
 </section>
 </section>
 <section id="comparing-to-yaml">
-<h2>Comparing to <cite>yaml</cite><a class="headerlink" href="#comparing-to-yaml" title="Link to this heading">#</a></h2>
+<h2>Comparing to <code class="docutils literal notranslate"><span class="pre">yaml</span></code><a class="headerlink" href="#comparing-to-yaml" title="Link to this heading">#</a></h2>
 </section>
 </section>
 
@@ -568,12 +563,12 @@ A special key <cite>json=</cite> can be used to pass JSON strings but is not rec
 </ul>
 </li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#built-in-flags">Built-in flags</a><ul class="nav section-nav flex-column">
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#code"><cite>&lt;code&gt;</cite></a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#code"><code class="docutils literal notranslate"><span class="pre">&lt;code&gt;</span></code></a><ul class="nav section-nav flex-column">
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#value">value</a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#example">example</a></li>
 </ul>
 </li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#include"><cite>&lt;include&gt;</cite></a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#include"><code class="docutils literal notranslate"><span class="pre">&lt;include&gt;</span></code></a><ul class="nav section-nav flex-column">
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#flag-values">flag values</a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#key">key</a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#values">values</a></li>
@@ -582,7 +577,7 @@ A special key <cite>json=</cite> can be used to pass JSON strings but is not rec
 </li>
 </ul>
 </li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#comparing-to-yaml">Comparing to <cite>yaml</cite></a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#comparing-to-yaml">Comparing to <code class="docutils literal notranslate"><span class="pre">yaml</span></code></a></li>
 </ul>
   </nav></div>
 
