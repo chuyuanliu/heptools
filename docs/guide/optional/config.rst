@@ -28,14 +28,14 @@ The following flags are all valid:
 Parsing
 --------------
 The flags will be parsed from left to right with the following exceptions:
-- The following flags have higher priority: ``<code>`` &gt; ``<include>`` &gt; others from left to right.
+- The following flags have higher priority: :ref:`config-flag-code` \> :ref:`config-flag-include` \> others from left to right.
 - The following flags will not trigger any parser: ``<literal>``, ``<discard>``, ``<dummy>``.
 
 Each parser will take the ``key`` and ``value`` from the previous parser and pass the possibly modified ones to the next, so the order of flags matters.
 
 URL format
 --------------
-Both the :class:`~heptools.config.ConfigLoader` and built-in flags ``<include>``, ``<file>`` accept the standard URL as path to files, and the IO is completely handled by :func:`fsspec.open`. 
+Both the :class:`~heptools.config.ConfigLoader` and built-in flags :ref:`config-flag-include`, ``<file>`` accept the standard URL as path to files, and the IO is completely handled by :func:`fsspec.open`. 
 
 A standard URL is given by the following format:
 
@@ -47,7 +47,7 @@ A standard URL is given by the following format:
 - The ``parameters`` is always ignored.
 - The ``query`` can be used to provide an additional simple configuration.
 - The ``fragment`` can be used to access a nested dictionary or an element in a list.
-- The [percentage-encoding](https://en.wikipedia.org/wiki/Percent-encoding) ``%XX`` can be used in ``path`` to escape special characters.
+- The `percentage-encoding <https://en.wikipedia.org/wiki/Percent-encoding>`_ ``%XX`` can be used in ``path`` to escape special characters.
 
 The following URLs are valid:
 
@@ -87,6 +87,8 @@ A special key ``json=`` can be used to pass JSON strings but is not recommended.
 Built-in flags
 ===============
 
+.. _config-flag-code:
+
 ``<code>``
 --------------
 
@@ -104,6 +106,8 @@ example
 
     key <code>: '[f"item{i}" for i in range(100)]'
 
+.. _config-flag-include:
+
 ``<include>``
 --------------
 
@@ -120,7 +124,7 @@ key
 ^^^^
 
 - the key is required to be empty.
-- any flag other than ``<code>`` will be ignored.
+- any flag other than :ref:`config-flag-code` will be ignored.
 
 
 value
