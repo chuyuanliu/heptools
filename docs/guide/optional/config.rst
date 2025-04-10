@@ -11,8 +11,11 @@ Syntax
 --------------
 - A flag is defined as a key-value pair given by `<flag_key=flag_value>` or `<flag_key>` if the value is `None`. 
 - Arbitrary number of flags can be added after each `key`. 
-- At list one space is required between the key and the flags.
-- The spaces among the flags are optional. The following flags are all valid:
+- At least one space is required between the key and the flags.
+- The spaces among the flags are optional. 
+- If the empty or `~` key will be parsed as `None`.
+
+The following flags are all valid:
 
 .. code-block:: yaml
     
@@ -20,6 +23,7 @@ Syntax
     key <flag_key>: value
     key <flag_key=flag_value>: value
     key   <flag_key1=flag_value1><flag_key2>  <flag_key3=flag_value3>  : value
+    <flag_key1> <flag_key2=flag_value2>  : value
 
 Parsing
 --------------
