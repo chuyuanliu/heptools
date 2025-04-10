@@ -78,10 +78,9 @@ def load_file(url: str, parse_query: bool = True):
 
     if parsed.fragment:
         for k in parsed.fragment.split("/"):
-            try:
-                data = data[k]
-            except KeyError:
-                data = data[int(k)]
+            if isinstance(data, list):
+                k = int(k)
+            data = data[k]
     yield data
 
     if parse_query and parsed.query:
@@ -108,6 +107,7 @@ class FlagKeys(StrEnum):
 
     file = auto()
     type = auto()
+    attr = auto()
     var = auto()
     ref = auto()
     copy = auto()
@@ -172,16 +172,16 @@ class FlagParser(Protocol):
         """
         Parameters
         ----------
-        key: Optional[str]
+        key: str, optional
             The key of the current item.
-        value: Optional[Any]
+        value: Any, optional
             The value of the current item.
-        flag: Optional[str]
+        flag: str, optional
             The flags of the current item.
-        parser: Optional[Parser]
+        parser: Parser, optional
             The current parser instance.
-        local: Optional[dict[str, Any]]
-            The current dictionary.
+        local: dict[str, Any], optional
+            The current parsed result.
 
         Returns
         -------
@@ -213,7 +213,7 @@ def as_flag_parser(func: Callable[P, T]) -> Callable[P, T]:
     return _FlagParser(func)
 
 
-class TypeParser:
+class TypeParser:  # flag: <type>
     def __init__(self, base: str = None):
         self.base = base
 
@@ -263,6 +263,14 @@ class TypeParser:
         return key, cls(*args, **kwargs)
 
 
+class AttrParser:  # flag: <attr>
+    @as_flag_parser
+    def __call__(self, flag: Optional[str], key: str, value):
+        for attr in flag.split("."):
+            value = getattr(value, attr)
+        return key, value
+
+
 ExtendMethod = Callable[[Any, Any], Any]
 """
 ~typing.Callable[[Any, Any], Any]: A method to merge two values into one.
@@ -286,7 +294,7 @@ class ExtendRecursive:
         return new
 
 
-class ExtendParser:
+class ExtendParser:  # flag: <extend>
     methods = {
         None: ExtendRecursive(op.add),
         "add": op.add,
@@ -311,7 +319,7 @@ class ExtendParser:
             )
 
 
-class VariableParser:
+class VariableParser:  # flag: <var> <ref> <copy> <deepcopy>
     def __init__(self):
         self.local = {}
 
@@ -356,7 +364,7 @@ class VariableParser:
         return key, copy.deepcopy(self._get(flag, key, value, FlagKeys.deepcopy))
 
 
-class FileParser:
+class FileParser:  # flag: <file>
     @as_flag_parser
     def __call__(self, parser: Parser, flag: Optional[str], key: str, value):
         return key, copy.deepcopy(
@@ -485,10 +493,11 @@ class _ParserCustomization:
 
 @dataclass
 class _ParserInitializer(_ParserCustomization):
-    _match = re.compile(r"(?P<key>.*?)\s*(?P<flags>(\<[^\>\<]*\>\s*)*)\s*")
+    _match = re.compile(r"(?P<key>(.*?(?=\s))|())\s*(?P<flags>(\<[^\>\<]*\>\s*)*)\s*")
     _split = re.compile(r"\<(?P<flag>[^\>\<]*)\>")
 
     type = TypeParser()
+    attr = AttrParser()
     file = FileParser()
 
     def __post_init__(self):
@@ -500,6 +509,7 @@ class _ParserInitializer(_ParserCustomization):
         self.parsers = self.custom_flags | {
             FlagKeys.file: self.file,
             FlagKeys.type: self.type,
+            FlagKeys.attr: self.attr,
             FlagKeys.var: self.vars.var,
             FlagKeys.ref: self.vars.ref,
             FlagKeys.copy: self.vars.copy,

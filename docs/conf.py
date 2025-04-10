@@ -51,6 +51,7 @@ intersphinx_mapping = {
     "awkward": ("https://awkward-array.org/doc/stable/", None),
     "coffea": ("https://coffeateam.github.io/coffea/", None),
     "XRootD": ("https://xrootd.slac.stanford.edu/doc/doxygen/5.6.4/python/", None),
+    "fsspec": ("https://filesystem-spec.readthedocs.io/en/latest/", None),
 }
 
 # -- Options for HTML output -------------------------------------------------
