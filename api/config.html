@@ -384,7 +384,7 @@ document.write(`
 
 <dl class="py data">
 <dt class="sig sig-object py" id="heptools.config.ExtendMethod">
-<span class="sig-prename descclassname"><span class="pre">heptools.config.</span></span><span class="sig-name descname"><span class="pre">ExtendMethod</span></span><a class="reference external" href="https://github.com/chuyuanliu/heptools/tree/master/heptools/config/_parser.py#L274-L274"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#heptools.config.ExtendMethod" title="Link to this definition">#</a></dt>
+<span class="sig-prename descclassname"><span class="pre">heptools.config.</span></span><span class="sig-name descname"><span class="pre">ExtendMethod</span></span><a class="reference external" href="https://github.com/chuyuanliu/heptools/tree/master/heptools/config/_parser.py#L200-L200"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#heptools.config.ExtendMethod" title="Link to this definition">#</a></dt>
 <dd><p>A method to merge two values into one.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Type<span class="colon">:</span></dt>
@@ -395,11 +395,11 @@ document.write(`
 
 <dl class="py class">
 <dt class="sig sig-object py" id="heptools.config.FlagParser">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">heptools.config.</span></span><span class="sig-name descname"><span class="pre">FlagParser</span></span><a class="reference external" href="https://github.com/chuyuanliu/heptools/tree/master/heptools/config/_parser.py#L158-L191"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#heptools.config.FlagParser" title="Link to this definition">#</a></dt>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">heptools.config.</span></span><span class="sig-name descname"><span class="pre">FlagParser</span></span><a class="reference external" href="https://github.com/chuyuanliu/heptools/tree/master/heptools/config/_parser.py#L84-L117"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#heptools.config.FlagParser" title="Link to this definition">#</a></dt>
 <dd><p>Flag parser protocol</p>
 <dl class="py method">
 <dt class="sig sig-object py" id="heptools.config.FlagParser.__call__">
-<span class="sig-name descname"><span class="pre">__call__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">key</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">value</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">flag</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">parser</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">local</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/chuyuanliu/heptools/tree/master/heptools/config/_parser.py#L163-L191"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#heptools.config.FlagParser.__call__" title="Link to this definition">#</a></dt>
+<span class="sig-name descname"><span class="pre">__call__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">key</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">value</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">flag</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">parser</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">local</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/chuyuanliu/heptools/tree/master/heptools/config/_parser.py#L89-L117"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#heptools.config.FlagParser.__call__" title="Link to this definition">#</a></dt>
 <dd><dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
@@ -420,13 +420,13 @@ document.write(`
 
 <dl class="py function">
 <dt class="sig sig-object py" id="heptools.config.as_flag_parser">
-<span class="sig-prename descclassname"><span class="pre">heptools.config.</span></span><span class="sig-name descname"><span class="pre">as_flag_parser</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">func</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/chuyuanliu/heptools/tree/master/heptools/config/_parser.py#L208-L213"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#heptools.config.as_flag_parser" title="Link to this definition">#</a></dt>
+<span class="sig-prename descclassname"><span class="pre">heptools.config.</span></span><span class="sig-name descname"><span class="pre">as_flag_parser</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">func</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/chuyuanliu/heptools/tree/master/heptools/config/_parser.py#L134-L139"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#heptools.config.as_flag_parser" title="Link to this definition">#</a></dt>
 <dd><p>A decorator to make a function with omitted keyword arguments compatible with <a class="reference internal" href="#heptools.config.FlagParser" title="heptools.config.FlagParser"><code class="xref py py-class docutils literal notranslate"><span class="pre">FlagParser</span></code></a> protocol.</p>
 </dd></dl>
 
 <dl class="py class">
 <dt class="sig sig-object py" id="heptools.config.ConfigLoader">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">heptools.config.</span></span><span class="sig-name descname"><span class="pre">ConfigLoader</span></span><a class="reference external" href="https://github.com/chuyuanliu/heptools/tree/master/heptools/config/_parser.py#L606-L647"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#heptools.config.ConfigLoader" title="Link to this definition">#</a></dt>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">heptools.config.</span></span><span class="sig-name descname"><span class="pre">ConfigLoader</span></span><a class="reference external" href="https://github.com/chuyuanliu/heptools/tree/master/heptools/config/_parser.py#L536-L570"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#heptools.config.ConfigLoader" title="Link to this definition">#</a></dt>
 <dd><p>A customizable config loader.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -438,7 +438,7 @@ document.write(`
 </dl>
 <dl class="py method">
 <dt class="sig sig-object py" id="heptools.config.ConfigLoader.__call__">
-<span class="sig-name descname"><span class="pre">__call__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">path_or_dict</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">result</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/chuyuanliu/heptools/tree/master/heptools/config/_parser.py#L620-L640"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#heptools.config.ConfigLoader.__call__" title="Link to this definition">#</a></dt>
+<span class="sig-name descname"><span class="pre">__call__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">path_or_dict</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">result</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/chuyuanliu/heptools/tree/master/heptools/config/_parser.py#L550-L570"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#heptools.config.ConfigLoader.__call__" title="Link to this definition">#</a></dt>
 <dd><p>Load configs from multiple sources.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -453,10 +453,64 @@ document.write(`
 </dl>
 </dd></dl>
 
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="heptools.config.FileLoader">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">heptools.config.</span></span><span class="sig-name descname"><span class="pre">FileLoader</span></span><a class="reference external" href="https://github.com/chuyuanliu/heptools/tree/master/heptools/config/_io.py#L17-L136"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#heptools.config.FileLoader" title="Link to this definition">#</a></dt>
+<dd><p>A module to load and deserialize objects from URL.</p>
 <dl class="py method">
-<dt class="sig sig-object py" id="heptools.config.ConfigLoader.clear_cache">
-<em class="property"><span class="pre">static</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">clear_cache</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference external" href="https://github.com/chuyuanliu/heptools/tree/master/heptools/config/_parser.py#L643-L647"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#heptools.config.ConfigLoader.clear_cache" title="Link to this definition">#</a></dt>
+<dt class="sig sig-object py" id="heptools.config.FileLoader.clear_cache">
+<em class="property"><span class="pre">classmethod</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">clear_cache</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference external" href="https://github.com/chuyuanliu/heptools/tree/master/heptools/config/_io.py#L43-L45"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#heptools.config.FileLoader.clear_cache" title="Link to this definition">#</a></dt>
 <dd><p>Clear all cache.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="heptools.config.FileLoader.register">
+<em class="property"><span class="pre">classmethod</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">register</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">extensions</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/chuyuanliu/heptools/tree/master/heptools/config/_io.py#L49-L49"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#heptools.config.FileLoader.register" title="Link to this definition">#</a></dt>
+<dd><p>Register a deserializer for file extensions.
+This method can be used as a decorator.
+Cache will be cleared after registration.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>extensions</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><em>str</em></a><em> | </em><em>Iterable</em><em>[</em><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><em>str</em></a><em>]</em>) – File extensions to register.</p></li>
+<li><p><strong>deserializer</strong> (<em>Callable</em><em>[</em><em>[</em><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#bytes" title="(in Python v3.13)"><em>bytes</em></a><em>]</em><em>, </em><em>Any</em><em>]</em><em>, </em><em>optional</em>) – Deserializer function.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="heptools.config.FileLoader.unregister">
+<em class="property"><span class="pre">classmethod</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">unregister</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">extensions</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/chuyuanliu/heptools/tree/master/heptools/config/_io.py#L77-L91"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#heptools.config.FileLoader.unregister" title="Link to this definition">#</a></dt>
+<dd><p>Unregister deserializers for file extensions.
+Cache will be cleared after unregistration.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>extensions</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><em>str</em></a><em> | </em><em>Iterable</em><em>[</em><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><em>str</em></a><em>]</em>) – File extensions to unregister.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="heptools.config.FileLoader.registered_extensions">
+<em class="property"><span class="pre">classmethod</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">registered_extensions</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference external" href="https://github.com/chuyuanliu/heptools/tree/master/heptools/config/_io.py#L94-L96"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#heptools.config.FileLoader.registered_extensions" title="Link to this definition">#</a></dt>
+<dd><p>Get all registered file extensions.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="heptools.config.FileLoader.load">
+<em class="property"><span class="pre">classmethod</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">load</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">url</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">parse_query</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/chuyuanliu/heptools/tree/master/heptools/config/_io.py#L99-L136"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#heptools.config.FileLoader.load" title="Link to this definition">#</a></dt>
+<dd><p>Load and deserialize an object from a URL.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>url</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><em>str</em></a>) – A URL to an object.</p></li>
+<li><p><strong>parse_query</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.13)"><em>bool</em></a><em>, </em><em>optional</em>) – Whether to parse the query string, by default True</p></li>
+</ul>
+</dd>
+</dl>
 </dd></dl>
 
 </dd></dl>
@@ -509,7 +563,14 @@ document.write(`
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#heptools.config.as_flag_parser"><code class="docutils literal notranslate"><span class="pre">as_flag_parser()</span></code></a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#heptools.config.ConfigLoader"><code class="docutils literal notranslate"><span class="pre">ConfigLoader</span></code></a><ul class="nav section-nav flex-column">
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#heptools.config.ConfigLoader.__call__"><code class="docutils literal notranslate"><span class="pre">ConfigLoader.__call__()</span></code></a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#heptools.config.ConfigLoader.clear_cache"><code class="docutils literal notranslate"><span class="pre">ConfigLoader.clear_cache()</span></code></a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#heptools.config.FileLoader"><code class="docutils literal notranslate"><span class="pre">FileLoader</span></code></a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#heptools.config.FileLoader.clear_cache"><code class="docutils literal notranslate"><span class="pre">FileLoader.clear_cache()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#heptools.config.FileLoader.register"><code class="docutils literal notranslate"><span class="pre">FileLoader.register()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#heptools.config.FileLoader.unregister"><code class="docutils literal notranslate"><span class="pre">FileLoader.unregister()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#heptools.config.FileLoader.registered_extensions"><code class="docutils literal notranslate"><span class="pre">FileLoader.registered_extensions()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#heptools.config.FileLoader.load"><code class="docutils literal notranslate"><span class="pre">FileLoader.load()</span></code></a></li>
 </ul>
 </li>
 </ul>
