@@ -141,7 +141,7 @@ This flag will replace the value by the result of :func:`eval`. The variables de
 .. admonition:: value
   :class: guide-config-value
 
-  - ``str`` a python expression
+  - ``str``: a python expression
 
 .. admonition:: example
   :class: guide-config-example, dropdown 
@@ -174,8 +174,8 @@ This flag allows to merge dictionaries from other config files into the given le
 .. admonition:: value
   :class: guide-config-value
 
-  - ``str`` a URL to a dictionary
-  - ``list`` a list of URLs
+  - ``str``: a URL to a dictionary
+  - ``list``: a list of URLs
 
 .. admonition:: example
   :class: guide-config-example, dropdown
@@ -260,16 +260,14 @@ This flag allows to insert any deserialized object from a URL. Unlike :ref:`conf
 .. admonition:: flag
   :class: guide-config-flag
 
-  The flag values are the same as :ref:`config-flag-include`.
-
-  - ``<file>``
-  - ``<file=absolute>``
-  - ``<file=relative>``
+  - ``<file>``: the type of the path will be inferred.
+  - ``<file=absolute>``: resolve as an absolute path.
+  - ``<file=relative>``: resolve as an path relative to the current config file.
 
 .. admonition:: value
   :class: guide-config-value
 
-  - ``str`` a URL to any object
+  - ``str``: a URL to any object
 
 
 .. admonition:: example

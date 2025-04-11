@@ -1,0 +1,16 @@
+/* https: //pydata-sphinx-theme.readthedocs.io/en/stable/user_guide/extending.html*/
+div.admonition.guide-config-flag {
+    border-color: hsl(60deg 100% 25%);
+}
+
+div.admonition.guide-config-key {
+    border-color: hsl(60deg 100% 25%);
+}
+
+div.admonition.guide-config-value {
+    border-color: hsl(60deg 100% 25%);
+}
+
+div.admonition.guide-config-example {
+    border-color: hsl(60deg 100% 25%);
+}

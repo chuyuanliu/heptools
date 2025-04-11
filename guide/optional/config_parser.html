@@ -33,7 +33,7 @@
     <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=8f2a1f02" />
     <link rel="stylesheet" type="text/css" href="../../_static/togglebutton.css?v=13237357" />
     <link rel="stylesheet" type="text/css" href="../../_static/graphviz.css?v=4ae1632d" />
-    <link rel="stylesheet" type="text/css" href="../../_static/static/style/admonition.css" />
+    <link rel="stylesheet" type="text/css" href="../../_static/css/admonition.css?v=92f74fbf" />
   
   <!-- So that users can add custom icons -->
   <script src="../../_static/scripts/fontawesome.js?digest=8878045cc6db502f8baf"></script>
@@ -477,7 +477,7 @@ A special key <code class="docutils literal notranslate"><span class="pre">json=
 <div class="guide-config-value admonition">
 <p class="admonition-title">value</p>
 <ul class="simple">
-<li><p><code class="docutils literal notranslate"><span class="pre">str</span></code> a python expression</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">str</span></code>: a python expression</p></li>
 </ul>
 </div>
 <div class="guide-config-example dropdown admonition">
@@ -508,8 +508,8 @@ A special key <code class="docutils literal notranslate"><span class="pre">json=
 <div class="guide-config-value admonition">
 <p class="admonition-title">value</p>
 <ul class="simple">
-<li><p><code class="docutils literal notranslate"><span class="pre">str</span></code> a URL to a dictionary</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">list</span></code> a list of URLs</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">str</span></code>: a URL to a dictionary</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">list</span></code>: a list of URLs</p></li>
 </ul>
 </div>
 <div class="guide-config-example dropdown admonition">
@@ -573,17 +573,16 @@ A special key <code class="docutils literal notranslate"><span class="pre">json=
 <p>This flag allows to insert any deserialized object from a URL. Unlike <a class="reference internal" href="#config-flag-include"><span class="std std-ref">&lt;include&gt;</span></a>, this flag will only replace the value by a deep copy of the loaded object, instead of parsing it into the current context. See <a class="reference internal" href="#config-url-io"><span class="std std-ref">URL and IO</span></a> for details.</p>
 <div class="guide-config-flag admonition">
 <p class="admonition-title">flag</p>
-<p>The flag values are the same as <a class="reference internal" href="#config-flag-include"><span class="std std-ref">&lt;include&gt;</span></a>.</p>
 <ul class="simple">
-<li><p><code class="docutils literal notranslate"><span class="pre">&lt;file&gt;</span></code></p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">&lt;file=absolute&gt;</span></code></p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">&lt;file=relative&gt;</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">&lt;file&gt;</span></code>: the type of the path will be inferred.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">&lt;file=absolute&gt;</span></code>: resolve as an absolute path.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">&lt;file=relative&gt;</span></code>: resolve as an path relative to the current config file.</p></li>
 </ul>
 </div>
 <div class="guide-config-value admonition">
 <p class="admonition-title">value</p>
 <ul class="simple">
-<li><p><code class="docutils literal notranslate"><span class="pre">str</span></code> a URL to any object</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">str</span></code>: a URL to any object</p></li>
 </ul>
 </div>
 <div class="guide-config-example dropdown admonition">
