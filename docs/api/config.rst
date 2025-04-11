@@ -14,3 +14,6 @@ Config
 .. autoapiclass:: heptools.config.ConfigLoader
     :members:
     :special-members: __call__
+
+.. autoapiclass:: heptools.config.FileLoader
+    :members:

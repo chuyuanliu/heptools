@@ -7,13 +7,13 @@ import operator as op
 import re
 from dataclasses import dataclass, field, fields
 from enum import StrEnum, auto
-from functools import cache
 from os import PathLike, fspath, getcwd
 from pathlib import PurePosixPath
 from types import MethodType
-from typing import Any, Callable, Optional, ParamSpec, Protocol, TypeVar, cast
-from urllib.parse import parse_qs, unquote, urlparse
-from warnings import warn
+from typing import Any, Callable, Optional, ParamSpec, Protocol, TypeVar
+from urllib.parse import urlparse
+
+from ._io import FileLoader
 
 P = ParamSpec("P")
 T = TypeVar("T")
@@ -22,80 +22,6 @@ ConfigSource = str | PathLike | dict[str, Any]
 """
 str, ~os.PathLike, dict: A path to the config file or a nested dict.
 """
-
-
-def _unpack(seq: list):
-    if len(seq) == 1:
-        return seq[0]
-    return seq
-
-
-@cache  # safe to cache without deepcopy, since parser will always repack dict and list
-def _load_file_raw(url: str) -> str:
-    import fsspec
-
-    with fsspec.open(url, mode="rb", compression="infer") as f:
-        data = cast(bytes, f.read())
-
-    match suffix := PurePosixPath(url).suffixes[0]:
-        case ".json":
-            import json
-
-            data = json.loads(data)
-        case ".yaml" | ".yml":
-            import yaml
-
-            data = yaml.safe_load(data)
-        case ".pkl":
-            import pickle
-
-            data = pickle.loads(data)
-        case ".toml":
-            import tomllib
-
-            data = tomllib.loads(data.decode("utf-8"))
-        case ".ini":
-            import configparser
-
-            parser = configparser.ConfigParser()
-            parser.read_string(data.decode("utf-8"))
-            data = {k: dict(v.items()) for k, v in parser.items()}
-        case _:
-            raise NotImplementedError(f"Unsupported file type: {suffix}")
-
-    return data
-
-
-def load_file(url: str, parse_query: bool = True):
-    parsed = urlparse(url)
-    path = unquote(parsed.path)
-    data = _load_file_raw(
-        parsed._replace(path=path, params="", query="", fragment="").geturl()
-    )
-
-    if parsed.params:
-        warn(f'When parsing "{url}", params will be ignored.')
-
-    if parsed.fragment:
-        for k in parsed.fragment.split("/"):
-            if isinstance(data, list):
-                k = int(k)
-            data = data[k]
-    yield data
-
-    if parse_query and parsed.query:
-        import json
-
-        query = parse_qs(parsed.query)
-        if (q := query.pop("json", ...)) is not ...:
-            for v in q:
-                yield json.loads(v)
-        if query:
-            yield dict((k, _unpack([*map(json.loads, v)])) for k, v in query.items())
-
-
-def clear_cache():
-    _load_file_raw.cache_clear()
 
 
 class FlagKeys(StrEnum):
@@ -368,7 +294,11 @@ class FileParser:  # flag: <file>
     @as_flag_parser
     def __call__(self, parser: Parser, flag: Optional[str], key: str, value):
         return key, copy.deepcopy(
-            next(load_file(next(parser.resolve(value, flag=flag)), parse_query=False))
+            next(
+                FileLoader.load(
+                    next(parser.resolve(value, flag=flag)), parse_query=False
+                )
+            )
         )
 
 
@@ -540,7 +470,7 @@ class _ParserInitializer(_ParserCustomization):
             path = None
             if not isinstance(data, dict):
                 path = fspath(data)
-                data = load_file(path)
+                data = FileLoader.load(path)
             else:
                 data = (data,)
             parser = Parser(flat, path, self)
@@ -638,10 +568,3 @@ class ConfigLoader(_ParserCustomization):
         return _ParserInitializer.new(self).parse(
             *path_or_dict, flat=False, result=result, parent=None
         )
-
-    @staticmethod
-    def clear_cache():
-        """
-        Clear all cache.
-        """
-        clear_cache()

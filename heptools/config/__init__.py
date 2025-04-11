@@ -1,3 +1,4 @@
+from ._io import FileLoader
 from ._manager import ConfigManager
 from ._parser import (
     ConfigLoader,
@@ -6,7 +7,6 @@ from ._parser import (
     FlagParser,
     GlobalConfigParser,
     as_flag_parser,
-    clear_cache,
 )
 from ._protocol import Configurable, config, const
 
@@ -18,8 +18,8 @@ __all__ = [
     "GlobalConfigParser",
     "ConfigLoader",
     "as_flag_parser",
-    "clear_cache",
     "ConfigSource",
     "FlagParser",
     "ExtendMethod",
+    "FileLoader",
 ]

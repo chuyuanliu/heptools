@@ -36,11 +36,13 @@ The flags will be parsed from left to right with the following exceptions:
 
 Each parser will take the ``key`` and ``value`` from the previous parser and pass the possibly modified ones to the next, so the order of flags matters.
 
+.. _config-url-io:
+
 URL and IO
 ------------
-Both the :class:`~heptools.config.ConfigLoader` and built-in flags :ref:`config-flag-include`, :ref:`config-flag-file` accept the standard URL as file path.
+Both the :class:`~heptools.config.ConfigLoader` and built-in flags :ref:`config-flag-include`, :ref:`config-flag-file` shares the same IO mechanism.
 
-A standard URL is given by the following format:
+The file path is described by a standard URL with the following format:
 
 .. code-block:: yaml
 
@@ -73,11 +75,11 @@ The ``query`` example above will give an additional dictionary ``{"key1": ["valu
 A special key ``json=`` can be used to pass JSON strings. The order of parsing is file, json query and other queries, where the later ones may override the former ones.
 
 
-File IO is handled by :func:`fsspec.open`. 
+File IO is handled by :func:`fsspec.open` and the deserialization is handled by :class:`~heptools.config.FileLoader`
 
-- The following extensions are supported: ``.json``, ``.yaml``, ``.yml``, ``.toml``, ``.ini``, ``.pkl``.
-- The compression format is inferred from the extension, see :data:`fsspec.utils.compressions`.
-- The deserialized objects will be catched, and can be cleared by :meth:`ConfigLoader.clear_cache`.
+- The compression format is inferred from the last extension, see :data:`fsspec.utils.compressions`.
+- The deserializer is inferred from the first extension.
+- The deserialized objects will be catched, and can be cleared by :meth:`~heptools.config.FileLoader.clear_cache`.
 
 
 .. warning::
@@ -153,7 +155,7 @@ example
 ``<include>``
 --------------
 
-This flag allows to merge dictionaries from other config files into the given level and will be parsed under the current context. To include within the same file, ``.`` can be used as path.
+This flag allows to merge dictionaries from other config files into the given level and will be parsed under the current context. To include within the same file, ``.`` can be used as path. See :ref:`config-url-io` for details.
 
 flag
 ^^^^^^
@@ -180,11 +182,11 @@ example
 
 .. code-block:: yaml
 
-  # file1.yml
+  --- #file1.yml
   key1:
     key1_1: value1
 
-  # file2.yml
+  --- #file2.yml
   key2:
     key2_2: value2
 
@@ -252,7 +254,22 @@ The example above will be parsed into ``{'key': 10}``.
 
 ``<file>``
 ----------
-# TODO
+
+This flag allows to insert any deserialized object from a URL. Unlike :ref:`config-flag-include`, this flag will only replace the value by a deep copy of the loaded object, instead of parsing it into the current context. See :ref:`config-url-io` for details.
+
+flag
+^^^^
+
+The flag values are the same as :ref:`config-flag-include`.
+
+- ``<file>``
+- ``<file=absolute>``
+- ``<file=relative>``
+
+value
+^^^^^
+
+- ``str`` a URL to any object
 
 .. _config-flag-type:
 
