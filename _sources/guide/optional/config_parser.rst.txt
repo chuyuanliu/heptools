@@ -89,7 +89,7 @@ Special
 ``None`` key
 ^^^^^^^^^^^^
 
-Besides the standard rules, both ``~`` and empty string in the key will be parsed to ``None``, e.g.
+Besides the standard rules, both ``~`` and empty string in the key will be parsed into ``None``, e.g.
 
 .. code-block:: yaml
 
@@ -107,7 +107,7 @@ Besides the standard rules, both ``~`` and empty string in the key will be parse
 Use flag with ``list``
 ^^^^^^^^^^^^^^^^^^^^^^
 
-In order to allow applying flags to list elements, when the element is a dictionary and the only key is ``None``, the value will be used as the element, e.g.
+In order to apply flags to list elements, when the element is a dictionary and the only key is ``None``, the element will be replaced by its value, e.g.
 
 .. code-block:: yaml
 
@@ -115,7 +115,14 @@ In order to allow applying flags to list elements, when the element is a diction
     <flag>: value2
   - <flag>: value3
 
-will be parsed to ``[{"key1": "value1", None: "value2"}, "value3"]``. :ref:`config-flag-literal` can be used to avoid this behavior.
+will be parsed into ``[{"key1": "value1", None: "value2"}, "value3"]``. :ref:`config-flag-literal` can be used to avoid this behavior, e.g.
+
+.. code-block:: yaml
+
+  - <flag>: value1
+  - <flag> <literal>: value2
+
+will be parsed into ``["value1", {None: "value2"}]``.
 
 Built-in flags
 ===============
@@ -125,7 +132,7 @@ Built-in flags
 ``<code>``
 --------------
 
-``<code>`` will replace the value by the result of :func:`eval`. The variables defined with :ref:`config-flag-var` are available as ``locals``.
+This flag will replace the value by the result of :func:`eval`. The variables defined with :ref:`config-flag-var` are available as ``locals``.
 
 value
 ^^^^^
@@ -144,7 +151,7 @@ example
 ``<include>``
 --------------
 
-``<include>`` allows to merge dictionaries from other config files into the given level and will be parsed under the current context. To include within the same file, ``.`` can be used as path.
+This flag allows to merge dictionaries from other config files into the given level and will be parsed under the current context. To include within the same file, ``.`` can be used as path.
 
 flag
 ^^^^^^
@@ -191,17 +198,53 @@ Then ``file2.yml#key3`` will give ``{'key1_1': 'value1', 'key2_2': 'value2'}``.
 ``<literal>``
 --------------
 
+This flag can be used to escape certain parsing rules:
+
+- avoid to trigger :ref:`config-special-list`.
+
+
 .. _config-flag-discard:
 
 ``<discard>``
 --------------
-# TODO
+
+The keys marked as ``<discard>`` will not be added into the current dictionary but will still be parsed. 
+
+example
+^^^^^^^
+
+This is useful when you only want to use the side effects of parsing. e.g. define variables, execute code, etc.
+
+.. code-block:: yaml
+
+  <discard>:
+    var1 <var>: value1
+    <type=print>: Hello World
+  key1 <ref>: var1
+
+The example above will define a variable ``var1``, print ``Hello World`` and be parsed into ``{'key1': 'value1'}``.
 
 .. _config-flag-dummy:
 
 ``<dummy>``
 ------------
-# TODO
+
+This flag is reserved to not trigger any parser.
+
+example
+^^^^^^^
+
+This is useful when there maybe duplicate keys.
+
+.. code-block:: yaml
+
+  key: 1
+  key <extend> <dummy=1>: 2
+  key <extend> <dummy=2>: 3
+  key <extend> <dummy=3>: 4
+
+The example above will be parsed into ``{'key': 10}``.
+
 
 .. _config-flag-file:
 

@@ -445,7 +445,7 @@ A special key <code class="docutils literal notranslate"><span class="pre">json=
 <h3>Special<a class="headerlink" href="#special" title="Link to this heading">#</a></h3>
 <section id="none-key">
 <h4><code class="docutils literal notranslate"><span class="pre">None</span></code> key<a class="headerlink" href="#none-key" title="Link to this heading">#</a></h4>
-<p>Besides the standard rules, both <code class="docutils literal notranslate"><span class="pre">~</span></code> and empty string in the key will be parsed to <code class="docutils literal notranslate"><span class="pre">None</span></code>, e.g.</p>
+<p>Besides the standard rules, both <code class="docutils literal notranslate"><span class="pre">~</span></code> and empty string in the key will be parsed into <code class="docutils literal notranslate"><span class="pre">None</span></code>, e.g.</p>
 <div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="c1"># None</span>
 <span class="nt">~</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">value</span>
 <span class="nt">~ &lt;flag&gt;</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">value</span>
@@ -459,13 +459,18 @@ A special key <code class="docutils literal notranslate"><span class="pre">json=
 </section>
 <section id="use-flag-with-list">
 <span id="config-special-list"></span><h4>Use flag with <code class="docutils literal notranslate"><span class="pre">list</span></code><a class="headerlink" href="#use-flag-with-list" title="Link to this heading">#</a></h4>
-<p>In order to allow applying flags to list elements, when the element is a dictionary and the only key is <code class="docutils literal notranslate"><span class="pre">None</span></code>, the value will be used as the element, e.g.</p>
+<p>In order to apply flags to list elements, when the element is a dictionary and the only key is <code class="docutils literal notranslate"><span class="pre">None</span></code>, the element will be replaced by its value, e.g.</p>
 <div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">key1</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">value1</span>
 <span class="w">  </span><span class="nt">&lt;flag&gt;</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">value2</span>
 <span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">&lt;flag&gt;</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">value3</span>
 </pre></div>
 </div>
-<p>will be parsed to <code class="docutils literal notranslate"><span class="pre">[{&quot;key1&quot;:</span> <span class="pre">&quot;value1&quot;,</span> <span class="pre">None:</span> <span class="pre">&quot;value2&quot;},</span> <span class="pre">&quot;value3&quot;]</span></code>. <a class="reference internal" href="#config-flag-literal"><span class="std std-ref">&lt;literal&gt;</span></a> can be used to avoid this behavior.</p>
+<p>will be parsed into <code class="docutils literal notranslate"><span class="pre">[{&quot;key1&quot;:</span> <span class="pre">&quot;value1&quot;,</span> <span class="pre">None:</span> <span class="pre">&quot;value2&quot;},</span> <span class="pre">&quot;value3&quot;]</span></code>. <a class="reference internal" href="#config-flag-literal"><span class="std std-ref">&lt;literal&gt;</span></a> can be used to avoid this behavior, e.g.</p>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">&lt;flag&gt;</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">value1</span>
+<span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">&lt;flag&gt; &lt;literal&gt;</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">value2</span>
+</pre></div>
+</div>
+<p>will be parsed into <code class="docutils literal notranslate"><span class="pre">[&quot;value1&quot;,</span> <span class="pre">{None:</span> <span class="pre">&quot;value2&quot;}]</span></code>.</p>
 </section>
 </section>
 </section>
@@ -473,7 +478,7 @@ A special key <code class="docutils literal notranslate"><span class="pre">json=
 <h2>Built-in flags<a class="headerlink" href="#built-in-flags" title="Link to this heading">#</a></h2>
 <section id="code">
 <span id="config-flag-code"></span><h3><code class="docutils literal notranslate"><span class="pre">&lt;code&gt;</span></code><a class="headerlink" href="#code" title="Link to this heading">#</a></h3>
-<p><code class="docutils literal notranslate"><span class="pre">&lt;code&gt;</span></code> will replace the value by the result of <a class="reference external" href="https://docs.python.org/3/library/functions.html#eval" title="(in Python v3.13)"><code class="xref py py-func docutils literal notranslate"><span class="pre">eval()</span></code></a>. The variables defined with <a class="reference internal" href="#config-flag-var"><span class="std std-ref">&lt;var&gt;</span></a> are available as <code class="docutils literal notranslate"><span class="pre">locals</span></code>.</p>
+<p>This flag will replace the value by the result of <a class="reference external" href="https://docs.python.org/3/library/functions.html#eval" title="(in Python v3.13)"><code class="xref py py-func docutils literal notranslate"><span class="pre">eval()</span></code></a>. The variables defined with <a class="reference internal" href="#config-flag-var"><span class="std std-ref">&lt;var&gt;</span></a> are available as <code class="docutils literal notranslate"><span class="pre">locals</span></code>.</p>
 <section id="value">
 <h4>value<a class="headerlink" href="#value" title="Link to this heading">#</a></h4>
 <ul class="simple">
@@ -489,7 +494,7 @@ A special key <code class="docutils literal notranslate"><span class="pre">json=
 </section>
 <section id="include">
 <span id="config-flag-include"></span><h3><code class="docutils literal notranslate"><span class="pre">&lt;include&gt;</span></code><a class="headerlink" href="#include" title="Link to this heading">#</a></h3>
-<p><code class="docutils literal notranslate"><span class="pre">&lt;include&gt;</span></code> allows to merge dictionaries from other config files into the given level and will be parsed under the current context. To include within the same file, <code class="docutils literal notranslate"><span class="pre">.</span></code> can be used as path.</p>
+<p>This flag allows to merge dictionaries from other config files into the given level and will be parsed under the current context. To include within the same file, <code class="docutils literal notranslate"><span class="pre">.</span></code> can be used as path.</p>
 <section id="id1">
 <h4>flag<a class="headerlink" href="#id1" title="Link to this heading">#</a></h4>
 <ul class="simple">
@@ -533,14 +538,40 @@ A special key <code class="docutils literal notranslate"><span class="pre">json=
 </section>
 <section id="literal">
 <span id="config-flag-literal"></span><h3><code class="docutils literal notranslate"><span class="pre">&lt;literal&gt;</span></code><a class="headerlink" href="#literal" title="Link to this heading">#</a></h3>
+<p>This flag can be used to escape certain parsing rules:</p>
+<ul class="simple">
+<li><p>avoid to trigger <a class="reference internal" href="#config-special-list"><span class="std std-ref">Use flag with list</span></a>.</p></li>
+</ul>
 </section>
 <section id="discard">
 <span id="config-flag-discard"></span><h3><code class="docutils literal notranslate"><span class="pre">&lt;discard&gt;</span></code><a class="headerlink" href="#discard" title="Link to this heading">#</a></h3>
-<p># TODO</p>
+<p>The keys marked as <code class="docutils literal notranslate"><span class="pre">&lt;discard&gt;</span></code> will not be added into the current dictionary but will still be parsed.</p>
+<section id="id4">
+<h4>example<a class="headerlink" href="#id4" title="Link to this heading">#</a></h4>
+<p>This is useful when you only want to use the side effects of parsing. e.g. define variables, execute code, etc.</p>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">&lt;discard&gt;</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">var1 &lt;var&gt;</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">value1</span>
+<span class="w">  </span><span class="nt">&lt;type=print&gt;</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">Hello World</span>
+<span class="nt">key1 &lt;ref&gt;</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">var1</span>
+</pre></div>
+</div>
+<p>The example above will define a variable <code class="docutils literal notranslate"><span class="pre">var1</span></code>, print <code class="docutils literal notranslate"><span class="pre">Hello</span> <span class="pre">World</span></code> and be parsed into <code class="docutils literal notranslate"><span class="pre">{'key1':</span> <span class="pre">'value1'}</span></code>.</p>
+</section>
 </section>
 <section id="dummy">
 <span id="config-flag-dummy"></span><h3><code class="docutils literal notranslate"><span class="pre">&lt;dummy&gt;</span></code><a class="headerlink" href="#dummy" title="Link to this heading">#</a></h3>
-<p># TODO</p>
+<p>This flag is reserved to not trigger any parser.</p>
+<section id="id5">
+<h4>example<a class="headerlink" href="#id5" title="Link to this heading">#</a></h4>
+<p>This is useful when there maybe duplicate keys.</p>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">key</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">1</span>
+<span class="nt">key &lt;extend&gt; &lt;dummy=1&gt;</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">2</span>
+<span class="nt">key &lt;extend&gt; &lt;dummy=2&gt;</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">3</span>
+<span class="nt">key &lt;extend&gt; &lt;dummy=3&gt;</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">4</span>
+</pre></div>
+</div>
+<p>The example above will be parsed into <code class="docutils literal notranslate"><span class="pre">{'key':</span> <span class="pre">10}</span></code>.</p>
+</section>
 </section>
 <section id="file">
 <span id="config-flag-file"></span><h3><code class="docutils literal notranslate"><span class="pre">&lt;file&gt;</span></code><a class="headerlink" href="#file" title="Link to this heading">#</a></h3>
@@ -645,8 +676,14 @@ A special key <code class="docutils literal notranslate"><span class="pre">json=
 </ul>
 </li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#literal"><code class="docutils literal notranslate"><span class="pre">&lt;literal&gt;</span></code></a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#discard"><code class="docutils literal notranslate"><span class="pre">&lt;discard&gt;</span></code></a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#dummy"><code class="docutils literal notranslate"><span class="pre">&lt;dummy&gt;</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#discard"><code class="docutils literal notranslate"><span class="pre">&lt;discard&gt;</span></code></a><ul class="nav section-nav flex-column">
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#id4">example</a></li>
+</ul>
+</li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#dummy"><code class="docutils literal notranslate"><span class="pre">&lt;dummy&gt;</span></code></a><ul class="nav section-nav flex-column">
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#id5">example</a></li>
+</ul>
+</li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#file"><code class="docutils literal notranslate"><span class="pre">&lt;file&gt;</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#type"><code class="docutils literal notranslate"><span class="pre">&lt;type&gt;</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#attr"><code class="docutils literal notranslate"><span class="pre">&lt;attr&gt;</span></code></a></li>
