@@ -39,7 +39,7 @@
     <script src="../../_static/documentation_options.js?v=5929fcd5"></script>
     <script src="../../_static/doctools.js?v=888ff710"></script>
     <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
-    <script>DOCUMENTATION_OPTIONS.pagename = 'guide/optional/config';</script>
+    <script>DOCUMENTATION_OPTIONS.pagename = 'guide/optional/config_parser';</script>
     <link rel="index" title="Index" href="../../genindex.html" />
     <link rel="search" title="Search" href="../../search.html" />
     <link rel="next" title="API reference" href="../../api.html" />
@@ -371,7 +371,7 @@ document.write(`
                   
   <section id="config-parser">
 <h1>Config Parser<a class="headerlink" href="#config-parser" title="Link to this heading">#</a></h1>
-<p>This tool provides a consistent solution to load multiple configuration files into a single nested dictionary and extend the commonly used dictionary-like formats (<code class="docutils literal notranslate"><span class="pre">json</span></code>, <code class="docutils literal notranslate"><span class="pre">yaml</span></code>, <code class="docutils literal notranslate"><span class="pre">toml</span></code>, <code class="docutils literal notranslate"><span class="pre">ini</span></code>) by adding flags to keys.</p>
+<p>This tool provides a consistent solution to load multiple configuration files into a single nested dictionary and extend the commonly used dictionary-like formats (<code class="docutils literal notranslate"><span class="pre">JSON</span></code>, <code class="docutils literal notranslate"><span class="pre">YAML</span></code>, <code class="docutils literal notranslate"><span class="pre">TOML</span></code>, <code class="docutils literal notranslate"><span class="pre">INI</span></code>) by adding flags to keys.</p>
 <section id="parser">
 <h2>Parser<a class="headerlink" href="#parser" title="Link to this heading">#</a></h2>
 <p># TODO</p>
@@ -401,13 +401,13 @@ document.write(`
 <p>The flags will be parsed from left to right with the following exceptions:</p>
 <ul class="simple">
 <li><p>The following flags have higher priority than others: <a class="reference internal" href="#config-flag-code"><span class="std std-ref">&lt;code&gt;</span></a>, <a class="reference internal" href="#config-flag-include"><span class="std std-ref">&lt;include&gt;</span></a>.</p></li>
-<li><p>The following flags will not trigger any parser: <code class="docutils literal notranslate"><span class="pre">&lt;literal&gt;</span></code>, <code class="docutils literal notranslate"><span class="pre">&lt;discard&gt;</span></code>, <code class="docutils literal notranslate"><span class="pre">&lt;dummy&gt;</span></code>.</p></li>
+<li><p>The following flags will not trigger any parser: <a class="reference internal" href="#config-flag-literal"><span class="std std-ref">&lt;literal&gt;</span></a>, <a class="reference internal" href="#config-flag-discard"><span class="std std-ref">&lt;discard&gt;</span></a>, <a class="reference internal" href="#config-flag-dummy"><span class="std std-ref">&lt;dummy&gt;</span></a>.</p></li>
 </ul>
 <p>Each parser will take the <code class="docutils literal notranslate"><span class="pre">key</span></code> and <code class="docutils literal notranslate"><span class="pre">value</span></code> from the previous parser and pass the possibly modified ones to the next, so the order of flags matters.</p>
 </section>
-<section id="url-format">
-<h3>URL format<a class="headerlink" href="#url-format" title="Link to this heading">#</a></h3>
-<p>Both the <a class="reference internal" href="../../api/config.html#heptools.config.ConfigLoader" title="heptools.config.ConfigLoader"><code class="xref py py-class docutils literal notranslate"><span class="pre">ConfigLoader</span></code></a> and built-in flags <a class="reference internal" href="#config-flag-include"><span class="std std-ref">&lt;include&gt;</span></a>, <code class="docutils literal notranslate"><span class="pre">&lt;file&gt;</span></code> accept the standard URL as file path, and the IO is handled by <a class="reference external" href="https://filesystem-spec.readthedocs.io/en/latest/api.html#fsspec.open" title="(in fsspec v2025.3.0.post3+g6b85a47.d20250314)"><code class="xref py py-func docutils literal notranslate"><span class="pre">fsspec.open()</span></code></a>.</p>
+<section id="url-and-io">
+<h3>URL and IO<a class="headerlink" href="#url-and-io" title="Link to this heading">#</a></h3>
+<p>Both the <a class="reference internal" href="../../api/config.html#heptools.config.ConfigLoader" title="heptools.config.ConfigLoader"><code class="xref py py-class docutils literal notranslate"><span class="pre">ConfigLoader</span></code></a> and built-in flags <a class="reference internal" href="#config-flag-include"><span class="std std-ref">&lt;include&gt;</span></a>, <a class="reference internal" href="#config-flag-file"><span class="std std-ref">&lt;file&gt;</span></a> accept the standard URL as file path.</p>
 <p>A standard URL is given by the following format:</p>
 <div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="l l-Scalar l-Scalar-Plain">scheme://netloc/path;parameters?query#fragment</span>
 </pre></div>
@@ -422,8 +422,8 @@ document.write(`
 <p>Example of valid URLs:</p>
 <div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">local path</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">/path/to/file.yml</span>
 <span class="nt">XRootD path</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">root://server.host//path/to/file.yml</span>
-<span class="nt">path with fragment</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">/path/to/file.yml#key1/key2/0/key3</span>
-<span class="nt">path with query</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">/path/to/file.yml?key1=value1&amp;key2=value2&amp;key1=value3</span>
+<span class="nt">fragment</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">/path/to/file.yml#key1/key2/0/key3</span>
+<span class="nt">query</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">/path/to/file.yml?key1=value1&amp;key2=value2&amp;key1=value3</span>
 </pre></div>
 </div>
 <p>The <code class="docutils literal notranslate"><span class="pre">fragment</span></code> example above is equivalent to the pseudo code:</p>
@@ -440,6 +440,11 @@ document.write(`
 </div>
 <p>where if a key appears multiple times in the query, all values will be collected into a list.
 A special key <code class="docutils literal notranslate"><span class="pre">json=</span></code> can be used to pass JSON strings. The order of parsing is file, json query and other queries, where the later ones may override the former ones.</p>
+<p>File IO is handled by <a class="reference external" href="https://filesystem-spec.readthedocs.io/en/latest/api.html#fsspec.open" title="(in fsspec v2025.3.0.post3+g6b85a47.d20250314)"><code class="xref py py-func docutils literal notranslate"><span class="pre">fsspec.open()</span></code></a>.</p>
+<ul class="simple">
+<li><p>The following extensions are supported: <code class="docutils literal notranslate"><span class="pre">.json</span></code>, <code class="docutils literal notranslate"><span class="pre">.yaml</span></code>, <code class="docutils literal notranslate"><span class="pre">.yml</span></code>, <code class="docutils literal notranslate"><span class="pre">.toml</span></code>, <code class="docutils literal notranslate"><span class="pre">.ini</span></code>, <code class="docutils literal notranslate"><span class="pre">.pkl</span></code>.</p></li>
+<li><p>The compression format is inferred from the extension, see <code class="xref py py-data docutils literal notranslate"><span class="pre">fsspec.utils.compressions</span></code>.</p></li>
+</ul>
 <div class="admonition warning">
 <p class="admonition-title">Warning</p>
 <p>When using with <a class="reference internal" href="../../api/config.html#heptools.config.ConfigLoader" title="heptools.config.ConfigLoader"><code class="xref py py-class docutils literal notranslate"><span class="pre">ConfigLoader</span></code></a>, the final deserialized object (after all fragments) is required to be a dictionary.</p>
@@ -508,13 +513,45 @@ A special key <code class="docutils literal notranslate"><span class="pre">json=
 <p>Then <code class="docutils literal notranslate"><span class="pre">file2.yml#key3</span></code> will give <code class="docutils literal notranslate"><span class="pre">{'key1_1':</span> <span class="pre">'value1',</span> <span class="pre">'key2_2':</span> <span class="pre">'value2'}</span></code>.</p>
 </section>
 </section>
+<section id="literal">
+<span id="config-flag-literal"></span><h3><code class="docutils literal notranslate"><span class="pre">&lt;literal&gt;</span></code><a class="headerlink" href="#literal" title="Link to this heading">#</a></h3>
+<p># TODO</p>
+</section>
+<section id="discard">
+<span id="config-flag-discard"></span><h3><code class="docutils literal notranslate"><span class="pre">&lt;discard&gt;</span></code><a class="headerlink" href="#discard" title="Link to this heading">#</a></h3>
+<p># TODO</p>
+</section>
+<section id="dummy">
+<span id="config-flag-dummy"></span><h3><code class="docutils literal notranslate"><span class="pre">&lt;dummy&gt;</span></code><a class="headerlink" href="#dummy" title="Link to this heading">#</a></h3>
+<p># TODO</p>
+</section>
+<section id="file">
+<span id="config-flag-file"></span><h3><code class="docutils literal notranslate"><span class="pre">&lt;file&gt;</span></code><a class="headerlink" href="#file" title="Link to this heading">#</a></h3>
+<p># TODO</p>
+</section>
+<section id="type">
+<span id="config-flag-type"></span><h3><code class="docutils literal notranslate"><span class="pre">&lt;type&gt;</span></code><a class="headerlink" href="#type" title="Link to this heading">#</a></h3>
+<p># TODO</p>
+</section>
+<section id="attr">
+<span id="config-flag-attr"></span><h3><code class="docutils literal notranslate"><span class="pre">&lt;attr&gt;</span></code><a class="headerlink" href="#attr" title="Link to this heading">#</a></h3>
+<p># TODO</p>
+</section>
+<section id="var">
+<span id="config-flag-var"></span><h3><code class="docutils literal notranslate"><span class="pre">&lt;var&gt;</span></code><a class="headerlink" href="#var" title="Link to this heading">#</a></h3>
+<p># TODO</p>
+</section>
+<section id="extend">
+<span id="config-flag-extend"></span><h3><code class="docutils literal notranslate"><span class="pre">&lt;extend&gt;</span></code><a class="headerlink" href="#extend" title="Link to this heading">#</a></h3>
+<p># TODO</p>
+</section>
 </section>
 <section id="customization">
 <h2>Customization<a class="headerlink" href="#customization" title="Link to this heading">#</a></h2>
 <p># TODO</p>
 </section>
 <section id="comparing-to-yaml">
-<h2>Comparing to <code class="docutils literal notranslate"><span class="pre">yaml</span></code><a class="headerlink" href="#comparing-to-yaml" title="Link to this heading">#</a></h2>
+<h2>Comparing to <code class="docutils literal notranslate"><span class="pre">YAML</span></code><a class="headerlink" href="#comparing-to-yaml" title="Link to this heading">#</a></h2>
 <p># TODO</p>
 </section>
 </section>
@@ -569,7 +606,7 @@ A special key <code class="docutils literal notranslate"><span class="pre">json=
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#flag">Flag</a><ul class="nav section-nav flex-column">
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#syntax">Syntax</a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#parsing">Parsing</a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#url-format">URL format</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#url-and-io">URL and IO</a></li>
 </ul>
 </li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#built-in-flags">Built-in flags</a><ul class="nav section-nav flex-column">
@@ -585,10 +622,18 @@ A special key <code class="docutils literal notranslate"><span class="pre">json=
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#id3">example</a></li>
 </ul>
 </li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#literal"><code class="docutils literal notranslate"><span class="pre">&lt;literal&gt;</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#discard"><code class="docutils literal notranslate"><span class="pre">&lt;discard&gt;</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#dummy"><code class="docutils literal notranslate"><span class="pre">&lt;dummy&gt;</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#file"><code class="docutils literal notranslate"><span class="pre">&lt;file&gt;</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#type"><code class="docutils literal notranslate"><span class="pre">&lt;type&gt;</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#attr"><code class="docutils literal notranslate"><span class="pre">&lt;attr&gt;</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#var"><code class="docutils literal notranslate"><span class="pre">&lt;var&gt;</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#extend"><code class="docutils literal notranslate"><span class="pre">&lt;extend&gt;</span></code></a></li>
 </ul>
 </li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#customization">Customization</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#comparing-to-yaml">Comparing to <code class="docutils literal notranslate"><span class="pre">yaml</span></code></a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#comparing-to-yaml">Comparing to <code class="docutils literal notranslate"><span class="pre">YAML</span></code></a></li>
 </ul>
   </nav></div>
 
@@ -596,7 +641,7 @@ A special key <code class="docutils literal notranslate"><span class="pre">json=
 
   
   <div class="tocsection editthispage">
-    <a href="https://github.com/chuyuanliu/heptools/edit/master/docs/guide/optional/config.rst">
+    <a href="https://github.com/chuyuanliu/heptools/edit/master/docs/guide/optional/config_parser.rst">
       <i class="fa-solid fa-pencil"></i>
       
       
@@ -611,7 +656,7 @@ A special key <code class="docutils literal notranslate"><span class="pre">json=
   <div class="sidebar-secondary-item">
 
   <div class="tocsection sourcelink">
-    <a href="../../_sources/guide/optional/config.rst.txt">
+    <a href="../../_sources/guide/optional/config_parser.rst.txt">
       <i class="fa-solid fa-file-lines"></i> Show Source
     </a>
   </div>

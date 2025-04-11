@@ -7,4 +7,4 @@ The following self-contained submodules provide solutions to more specific probl
 .. toctree::
     :hidden:
 
-    optional/config.rst
+    optional/config_parser.rst
