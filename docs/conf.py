@@ -83,7 +83,7 @@ html_context = {
 
 # custom css
 html_css_files = [
-    "static/style/admonition.css",
+    "css/admonition.css",
 ]
 
 # -- Options for napoleon -------------------------------------------------
