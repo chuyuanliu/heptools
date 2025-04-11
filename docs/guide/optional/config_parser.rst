@@ -139,10 +139,12 @@ Built-in flags
 This flag will replace the value by the result of :func:`eval`. The variables defined with :ref:`config-flag-var` are available as ``locals``.
 
 .. admonition:: value
+  :class: guide-config-value
 
   - ``str`` a python expression
 
 .. admonition:: example
+  :class: guide-config-example, dropdown 
 
   .. code-block:: yaml
 
@@ -156,23 +158,27 @@ This flag will replace the value by the result of :func:`eval`. The variables de
 This flag allows to merge dictionaries from other config files into the given level and will be parsed under the current context. To include within the same file, ``.`` can be used as path. See :ref:`config-url-io` for details.
 
 .. admonition:: flag
+  :class: guide-config-flag
 
   - ``<include>``: the type of the path will be inferred.
   - ``<include=absolute>``: resolve as an absolute path.
   - ``<include=relative>``: resolve as an path relative to the current config file.
 
 .. admonition:: key
+  :class: guide-config-key
 
   - the key is required to be empty.
   - any flag other than :ref:`config-flag-code` will be ignored.
 
 
 .. admonition:: value
+  :class: guide-config-value
 
   - ``str`` a URL to a dictionary
   - ``list`` a list of URLs
 
 .. admonition:: example
+  :class: guide-config-example, dropdown
 
   .. code-block:: yaml
 
@@ -209,6 +215,7 @@ This flag can be used to escape certain parsing rules:
 The keys marked as ``<discard>`` will not be added into the current dictionary but will still be parsed. 
 
 .. admonition:: example
+  :class: guide-config-example, dropdown
 
   This is useful when you only want to use the side effects of parsing. e.g. define variables, execute code, etc.
 
@@ -229,6 +236,7 @@ The keys marked as ``<discard>`` will not be added into the current dictionary b
 This flag is reserved to never trigger any parser.
 
 .. admonition:: example
+  :class: guide-config-example, dropdown
 
   This is useful when you want to duplicate keys.
 
@@ -250,6 +258,7 @@ This flag is reserved to never trigger any parser.
 This flag allows to insert any deserialized object from a URL. Unlike :ref:`config-flag-include`, this flag will only replace the value by a deep copy of the loaded object, instead of parsing it into the current context. See :ref:`config-url-io` for details.
 
 .. admonition:: flag
+  :class: guide-config-flag
 
   The flag values are the same as :ref:`config-flag-include`.
 
@@ -258,11 +267,13 @@ This flag allows to insert any deserialized object from a URL. Unlike :ref:`conf
   - ``<file=relative>``
 
 .. admonition:: value
+  :class: guide-config-value
 
   - ``str`` a URL to any object
 
 
 .. admonition:: example
+  :class: guide-config-example, dropdown
 
   Given a compressed pickle file ``database.pkl.lz4`` created by
 

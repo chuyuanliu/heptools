@@ -30,6 +30,8 @@ extensions = [
     "sphinx.ext.intersphinx",
     # allow todo admonition
     "sphinx.ext.todo",
+    # allow toggle button
+    "sphinx_togglebutton",
     # add links to source code in remote repo
     "sphinx_linkrepo",
     # (not applied) allow recursively loop over all files and automatically generate API docs
@@ -78,6 +80,12 @@ html_context = {
     "github_version": "master",
     "doc_path": "docs",
 }
+
+# custom css
+html_css_files = [
+    "static/style/admonition.css",
+]
+
 # -- Options for napoleon -------------------------------------------------
 napoleon_use_rtype = False
 
