@@ -128,7 +128,7 @@ class NoFlag:
         return ...
 
     @staticmethod
-    def apply(key: str, value: str):
+    def apply(*, key: str, value: str, **_):
         return key, value
 
 
@@ -577,7 +577,7 @@ class _ParserInitializer(_ParserCustomization):
             return None, NoFlag
         matched = self._match.fullmatch(key)
         if not matched:
-            raise ValueError(f"Invalid key format: {key}")
+            return key, NoFlag
         flags = {}
         for flag in self._split.finditer(matched["flags"]):
             k = flag["flag"].split("=")

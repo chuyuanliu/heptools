@@ -2,7 +2,7 @@
 Config Parser
 **************
 
-This tool provides a consistent solution to load multiple configuration files into a single nested dictionary and extend the commonly used dictionary-like formats (``json``, ``yaml``, ``toml``, ``ini``) by adding flags to keys.
+This tool provides a consistent solution to load multiple configuration files into a single nested dictionary and extend the commonly used dictionary-like formats (``JSON``, ``YAML``, ``TOML``, ``INI``) by adding flags to keys.
 
 Parser
 ================
@@ -34,13 +34,13 @@ Parsing
 The flags will be parsed from left to right with the following exceptions:
 
 - The following flags have higher priority than others: :ref:`config-flag-code`, :ref:`config-flag-include`.
-- The following flags will not trigger any parser: ``<literal>``, ``<discard>``, ``<dummy>``.
+- The following flags will not trigger any parser: :ref:`config-flag-literal`, :ref:`config-flag-discard`, :ref:`config-flag-dummy`.
 
 Each parser will take the ``key`` and ``value`` from the previous parser and pass the possibly modified ones to the next, so the order of flags matters.
 
-URL format
---------------
-Both the :class:`~heptools.config.ConfigLoader` and built-in flags :ref:`config-flag-include`, ``<file>`` accept the standard URL as file path, and the IO is handled by :func:`fsspec.open`. 
+URL and IO
+------------
+Both the :class:`~heptools.config.ConfigLoader` and built-in flags :ref:`config-flag-include`, :ref:`config-flag-file` accept the standard URL as file path.
 
 A standard URL is given by the following format:
 
@@ -60,8 +60,8 @@ Example of valid URLs:
 
   local path: /path/to/file.yml
   XRootD path: root://server.host//path/to/file.yml
-  path with fragment: /path/to/file.yml#key1/key2/0/key3
-  path with query: /path/to/file.yml?key1=value1&key2=value2&key1=value3
+  fragment: /path/to/file.yml#key1/key2/0/key3
+  query: /path/to/file.yml?key1=value1&key2=value2&key1=value3
 
 The ``fragment`` example above is equivalent to the pseudo code:
 
@@ -84,9 +84,15 @@ where if a key appears multiple times in the query, all values will be collected
 A special key ``json=`` can be used to pass JSON strings. The order of parsing is file, json query and other queries, where the later ones may override the former ones.
 
 
+File IO is handled by :func:`fsspec.open`. 
+
+- The following extensions are supported: ``.json``, ``.yaml``, ``.yml``, ``.toml``, ``.ini``, ``.pkl``.
+- The compression format is inferred from the extension, see :data:`fsspec.utils.compressions`.
+
+
 .. warning::
 
-    When using with :class:`~heptools.config.ConfigLoader`, the final deserialized object (after all fragments) is required to be a dictionary.
+  When using with :class:`~heptools.config.ConfigLoader`, the final deserialized object (after all fragments) is required to be a dictionary.
 
 
 Built-in flags
@@ -158,6 +164,53 @@ example
 
 Then ``file2.yml#key3`` will give ``{'key1_1': 'value1', 'key2_2': 'value2'}``.
 
+.. _config-flag-literal:
+
+``<literal>``
+--------------
+# TODO
+
+.. _config-flag-discard:
+
+``<discard>``
+--------------
+# TODO
+
+.. _config-flag-dummy:
+
+``<dummy>``
+------------
+# TODO
+
+.. _config-flag-file:
+
+``<file>``
+----------
+# TODO
+
+.. _config-flag-type:
+
+``<type>``
+----------
+# TODO
+
+.. _config-flag-attr:
+
+``<attr>``
+----------
+# TODO
+
+.. _config-flag-var:
+
+``<var>``
+---------
+# TODO
+
+.. _config-flag-extend:
+
+``<extend>``
+------------
+# TODO
 
 Customization
 ===============
@@ -165,6 +218,6 @@ Customization
 
 
 
-Comparing to ``yaml``
+Comparing to ``YAML``
 ===================
 # TODO
