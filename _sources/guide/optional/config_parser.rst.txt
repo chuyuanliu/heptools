@@ -15,16 +15,14 @@ Syntax
 --------------
 - A flag is defined as a key-value pair given by ``<flag_key=flag_value>`` or ``<flag_key>`` if the value is ``None``. 
 - Arbitrary number of flags can be added after each ``key``. 
-- At least one space is required between the key and the flags.
-- The spaces among the flags are optional. 
-- The empty or ``~`` key will be parsed as ``None``.
+- The spaces between the key and the flags are optional.
 
 Example of valid key and flags:
 
 .. code-block:: yaml
 
   key: value
-  key <flag_key>: value
+  key<flag_key>: value
   key <flag_key=flag_value>: value
   key   <flag_key1=flag_value1><flag_key2>  <flag_key3=flag_value3>  : value
   <flag_key1> <flag_key2=flag_value2>  : value
@@ -94,6 +92,37 @@ File IO is handled by :func:`fsspec.open`.
 
   When using with :class:`~heptools.config.ConfigLoader`, the final deserialized object (after all fragments) is required to be a dictionary.
 
+Special
+---------
+
+``None`` key
+^^^^^^^^^^^^
+
+Besides the standard rules, both ``~`` and empty string in the key will be parsed to ``None``, e.g.
+
+.. code-block:: yaml
+  # None
+  ~: value
+  ~ <flag>: value
+  "": value
+  <flag>: value
+  null: value
+  # not None
+  null <flag>: value
+
+.. _config-special-list:
+
+Use flag with ``list``
+^^^^^^^^^^^^^^^^^^^^^^
+
+In order to allow applying flags to list elements, when the element is a dictionary and the only key is ``None``, the value will be used as the element, e.g.
+
+.. code-block:: yaml
+  - key1: value1 
+    <flag>: value2
+  - <flag>: value3
+
+will be parsed to ``[{"key1": "value1", None: "value2"}, "value3"]``. :ref:`config-flag-literal` can be used to avoid this behavior.
 
 Built-in flags
 ===============
@@ -103,7 +132,7 @@ Built-in flags
 ``<code>``
 --------------
 
-``<code>`` will replace the value by the result of :func:`eval`.
+``<code>`` will replace the value by the result of :func:`eval`. The variables defined with :ref:`config-flag-var` are available as ``locals``.
 
 value
 ^^^^^

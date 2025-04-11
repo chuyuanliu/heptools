@@ -383,13 +383,11 @@ document.write(`
 <ul class="simple">
 <li><p>A flag is defined as a key-value pair given by <code class="docutils literal notranslate"><span class="pre">&lt;flag_key=flag_value&gt;</span></code> or <code class="docutils literal notranslate"><span class="pre">&lt;flag_key&gt;</span></code> if the value is <code class="docutils literal notranslate"><span class="pre">None</span></code>.</p></li>
 <li><p>Arbitrary number of flags can be added after each <code class="docutils literal notranslate"><span class="pre">key</span></code>.</p></li>
-<li><p>At least one space is required between the key and the flags.</p></li>
-<li><p>The spaces among the flags are optional.</p></li>
-<li><p>The empty or <code class="docutils literal notranslate"><span class="pre">~</span></code> key will be parsed as <code class="docutils literal notranslate"><span class="pre">None</span></code>.</p></li>
+<li><p>The spaces between the key and the flags are optional.</p></li>
 </ul>
 <p>Example of valid key and flags:</p>
 <div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">key</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">value</span>
-<span class="nt">key &lt;flag_key&gt;</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">value</span>
+<span class="nt">key&lt;flag_key&gt;</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">value</span>
 <span class="nt">key &lt;flag_key=flag_value&gt;</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">value</span>
 <span class="nt">key   &lt;flag_key1=flag_value1&gt;&lt;flag_key2&gt;  &lt;flag_key3=flag_value3&gt;  </span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">value</span>
 <span class="nt">&lt;flag_key1&gt; &lt;flag_key2=flag_value2&gt;  </span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">value</span>
@@ -450,12 +448,24 @@ A special key <code class="docutils literal notranslate"><span class="pre">json=
 <p>When using with <a class="reference internal" href="../../api/config.html#heptools.config.ConfigLoader" title="heptools.config.ConfigLoader"><code class="xref py py-class docutils literal notranslate"><span class="pre">ConfigLoader</span></code></a>, the final deserialized object (after all fragments) is required to be a dictionary.</p>
 </div>
 </section>
+<section id="special">
+<h3>Special<a class="headerlink" href="#special" title="Link to this heading">#</a></h3>
+<section id="none-key">
+<h4><code class="docutils literal notranslate"><span class="pre">None</span></code> key<a class="headerlink" href="#none-key" title="Link to this heading">#</a></h4>
+<p>Besides the standard rules, both <code class="docutils literal notranslate"><span class="pre">~</span></code> and empty string in the key will be parsed to <code class="docutils literal notranslate"><span class="pre">None</span></code>, e.g.</p>
+</section>
+<section id="use-flag-with-list">
+<span id="config-special-list"></span><h4>Use flag with <code class="docutils literal notranslate"><span class="pre">list</span></code><a class="headerlink" href="#use-flag-with-list" title="Link to this heading">#</a></h4>
+<p>In order to allow applying flags to list elements, when the element is a dictionary and the only key is <code class="docutils literal notranslate"><span class="pre">None</span></code>, the value will be used as the element, e.g.</p>
+<p>will be parsed to <code class="docutils literal notranslate"><span class="pre">[{&quot;key1&quot;:</span> <span class="pre">&quot;value1&quot;,</span> <span class="pre">None:</span> <span class="pre">&quot;value2&quot;},</span> <span class="pre">&quot;value3&quot;]</span></code>. <a class="reference internal" href="#config-flag-literal"><span class="std std-ref">&lt;literal&gt;</span></a> can be used to avoid this behavior.</p>
+</section>
+</section>
 </section>
 <section id="built-in-flags">
 <h2>Built-in flags<a class="headerlink" href="#built-in-flags" title="Link to this heading">#</a></h2>
 <section id="code">
 <span id="config-flag-code"></span><h3><code class="docutils literal notranslate"><span class="pre">&lt;code&gt;</span></code><a class="headerlink" href="#code" title="Link to this heading">#</a></h3>
-<p><code class="docutils literal notranslate"><span class="pre">&lt;code&gt;</span></code> will replace the value by the result of <a class="reference external" href="https://docs.python.org/3/library/functions.html#eval" title="(in Python v3.13)"><code class="xref py py-func docutils literal notranslate"><span class="pre">eval()</span></code></a>.</p>
+<p><code class="docutils literal notranslate"><span class="pre">&lt;code&gt;</span></code> will replace the value by the result of <a class="reference external" href="https://docs.python.org/3/library/functions.html#eval" title="(in Python v3.13)"><code class="xref py py-func docutils literal notranslate"><span class="pre">eval()</span></code></a>. The variables defined with <a class="reference internal" href="#config-flag-var"><span class="std std-ref">&lt;var&gt;</span></a> are available as <code class="docutils literal notranslate"><span class="pre">locals</span></code>.</p>
 <section id="value">
 <h4>value<a class="headerlink" href="#value" title="Link to this heading">#</a></h4>
 <ul class="simple">
@@ -607,6 +617,11 @@ A special key <code class="docutils literal notranslate"><span class="pre">json=
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#syntax">Syntax</a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#parsing">Parsing</a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#url-and-io">URL and IO</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#special">Special</a><ul class="nav section-nav flex-column">
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#none-key"><code class="docutils literal notranslate"><span class="pre">None</span></code> key</a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#use-flag-with-list">Use flag with <code class="docutils literal notranslate"><span class="pre">list</span></code></a></li>
+</ul>
+</li>
 </ul>
 </li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#built-in-flags">Built-in flags</a><ul class="nav section-nav flex-column">
