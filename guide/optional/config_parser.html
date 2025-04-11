@@ -435,6 +435,7 @@ A special key <code class="docutils literal notranslate"><span class="pre">json=
 <ul class="simple">
 <li><p>The following extensions are supported: <code class="docutils literal notranslate"><span class="pre">.json</span></code>, <code class="docutils literal notranslate"><span class="pre">.yaml</span></code>, <code class="docutils literal notranslate"><span class="pre">.yml</span></code>, <code class="docutils literal notranslate"><span class="pre">.toml</span></code>, <code class="docutils literal notranslate"><span class="pre">.ini</span></code>, <code class="docutils literal notranslate"><span class="pre">.pkl</span></code>.</p></li>
 <li><p>The compression format is inferred from the extension, see <code class="xref py py-data docutils literal notranslate"><span class="pre">fsspec.utils.compressions</span></code>.</p></li>
+<li><p>The deserialized objects will be catched, and can be cleared by <code class="xref py py-meth docutils literal notranslate"><span class="pre">ConfigLoader.clear_cache()</span></code>.</p></li>
 </ul>
 <div class="admonition warning">
 <p class="admonition-title">Warning</p>
@@ -452,6 +453,7 @@ A special key <code class="docutils literal notranslate"><span class="pre">json=
 <span class="s">&quot;&quot;</span><span class="p p-Indicator">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">value</span>
 <span class="nt">&lt;flag&gt;</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">value</span>
 <span class="nt">null</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">value</span>
+
 <span class="c1"># not None</span>
 <span class="nt">null &lt;flag&gt;</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">value</span>
 </pre></div>
@@ -540,7 +542,7 @@ A special key <code class="docutils literal notranslate"><span class="pre">json=
 <span id="config-flag-literal"></span><h3><code class="docutils literal notranslate"><span class="pre">&lt;literal&gt;</span></code><a class="headerlink" href="#literal" title="Link to this heading">#</a></h3>
 <p>This flag can be used to escape certain parsing rules:</p>
 <ul class="simple">
-<li><p>avoid to trigger <a class="reference internal" href="#config-special-list"><span class="std std-ref">Use flag with list</span></a>.</p></li>
+<li><p>retain the dictionary with <code class="docutils literal notranslate"><span class="pre">None</span></code> key in <a class="reference internal" href="#config-special-list"><span class="std std-ref">Use flag with list</span></a>.</p></li>
 </ul>
 </section>
 <section id="discard">
@@ -555,15 +557,15 @@ A special key <code class="docutils literal notranslate"><span class="pre">json=
 <span class="nt">key1 &lt;ref&gt;</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">var1</span>
 </pre></div>
 </div>
-<p>The example above will define a variable <code class="docutils literal notranslate"><span class="pre">var1</span></code>, print <code class="docutils literal notranslate"><span class="pre">Hello</span> <span class="pre">World</span></code> and be parsed into <code class="docutils literal notranslate"><span class="pre">{'key1':</span> <span class="pre">'value1'}</span></code>.</p>
+<p>The example above will print <code class="docutils literal notranslate"><span class="pre">Hello</span> <span class="pre">World</span></code> and be parsed into <code class="docutils literal notranslate"><span class="pre">{'key1':</span> <span class="pre">'value1'}</span></code>.</p>
 </section>
 </section>
 <section id="dummy">
 <span id="config-flag-dummy"></span><h3><code class="docutils literal notranslate"><span class="pre">&lt;dummy&gt;</span></code><a class="headerlink" href="#dummy" title="Link to this heading">#</a></h3>
-<p>This flag is reserved to not trigger any parser.</p>
+<p>This flag is reserved to never trigger any parser.</p>
 <section id="id5">
 <h4>example<a class="headerlink" href="#id5" title="Link to this heading">#</a></h4>
-<p>This is useful when there maybe duplicate keys.</p>
+<p>This is useful when you want to duplicate keys.</p>
 <div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">key</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">1</span>
 <span class="nt">key &lt;extend&gt; &lt;dummy=1&gt;</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">2</span>
 <span class="nt">key &lt;extend&gt; &lt;dummy=2&gt;</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">3</span>

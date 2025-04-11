@@ -77,6 +77,7 @@ File IO is handled by :func:`fsspec.open`.
 
 - The following extensions are supported: ``.json``, ``.yaml``, ``.yml``, ``.toml``, ``.ini``, ``.pkl``.
 - The compression format is inferred from the extension, see :data:`fsspec.utils.compressions`.
+- The deserialized objects will be catched, and can be cleared by :meth:`ConfigLoader.clear_cache`.
 
 
 .. warning::
@@ -99,6 +100,7 @@ Besides the standard rules, both ``~`` and empty string in the key will be parse
   "": value
   <flag>: value
   null: value
+
   # not None
   null <flag>: value
 
@@ -200,7 +202,7 @@ Then ``file2.yml#key3`` will give ``{'key1_1': 'value1', 'key2_2': 'value2'}``.
 
 This flag can be used to escape certain parsing rules:
 
-- avoid to trigger :ref:`config-special-list`.
+- retain the dictionary with ``None`` key in :ref:`config-special-list`.
 
 
 .. _config-flag-discard:
@@ -222,19 +224,19 @@ This is useful when you only want to use the side effects of parsing. e.g. defin
     <type=print>: Hello World
   key1 <ref>: var1
 
-The example above will define a variable ``var1``, print ``Hello World`` and be parsed into ``{'key1': 'value1'}``.
+The example above will print ``Hello World`` and be parsed into ``{'key1': 'value1'}``.
 
 .. _config-flag-dummy:
 
 ``<dummy>``
 ------------
 
-This flag is reserved to not trigger any parser.
+This flag is reserved to never trigger any parser.
 
 example
 ^^^^^^^
 
-This is useful when there maybe duplicate keys.
+This is useful when you want to duplicate keys.
 
 .. code-block:: yaml
 
