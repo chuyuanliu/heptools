@@ -12,7 +12,7 @@ sys.path.insert(0, os.path.abspath(".."))  # noqa: E402
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#project-information
 
 project = "HEP tools"
-copyright = "2024, Chuyuan Liu"
+copyright = "2023-2025, Chuyuan Liu"
 author = "Chuyuan Liu"
 
 # -- General configuration ---------------------------------------------------

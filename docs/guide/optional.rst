@@ -2,7 +2,7 @@
 Optional Tools
 *********************
 
-The following self-contained submodules provide solutions to more specific problems and are completely decoupled from the rest of the package.
+The following self-contained submodules provide tools to more specific problems.
 
 .. toctree::
     :hidden:
