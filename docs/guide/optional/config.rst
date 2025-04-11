@@ -92,6 +92,7 @@ Built-in flags
 
 ``<code>``
 --------------
+<details>
 
 ``<code>`` will replace the value by the result of :func:`eval`.
 
@@ -106,6 +107,8 @@ example
 .. code-block:: yaml
 
   key <code>: '[f"item{i}" for i in range(100)]'
+
+</details>
 
 .. _config-flag-include:
 
