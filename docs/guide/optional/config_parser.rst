@@ -143,7 +143,6 @@ This flag will replace the value by the result of :func:`eval`. The variables de
   - ``str`` a python expression
 
 .. admonition:: example
-    :collapsible:
 
   .. code-block:: yaml
 
@@ -174,7 +173,6 @@ This flag allows to merge dictionaries from other config files into the given le
   - ``list`` a list of URLs
 
 .. admonition:: example
-    :collapsible:
 
   .. code-block:: yaml
 
@@ -211,7 +209,6 @@ This flag can be used to escape certain parsing rules:
 The keys marked as ``<discard>`` will not be added into the current dictionary but will still be parsed. 
 
 .. admonition:: example
-    :collapsible:
 
   This is useful when you only want to use the side effects of parsing. e.g. define variables, execute code, etc.
 
@@ -232,7 +229,6 @@ The keys marked as ``<discard>`` will not be added into the current dictionary b
 This flag is reserved to never trigger any parser.
 
 .. admonition:: example
-    :collapsible:
 
   This is useful when you want to duplicate keys.
 
@@ -267,7 +263,6 @@ This flag allows to insert any deserialized object from a URL. Unlike :ref:`conf
 
 
 .. admonition:: example
-    :collapsible:
 
   Given a compressed pickle file ``database.pkl.lz4`` created by
 
