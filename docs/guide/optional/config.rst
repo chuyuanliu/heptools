@@ -4,6 +4,10 @@ Config Parser
 
 This tool provides a consistent solution to load multiple configuration files into a single nested dictionary and extend the commonly used dictionary-like formats (``json``, ``yaml``, ``toml``, ``ini``) by adding flags to keys.
 
+Parser
+================
+# TODO
+
 Flag
 ================
 
@@ -92,7 +96,6 @@ Built-in flags
 
 ``<code>``
 --------------
-<details>
 
 ``<code>`` will replace the value by the result of :func:`eval`.
 
@@ -108,8 +111,6 @@ example
 
   key <code>: '[f"item{i}" for i in range(100)]'
 
-</details>
-
 .. _config-flag-include:
 
 ``<include>``
@@ -117,8 +118,8 @@ example
 
 ``<include>`` allows to merge dictionaries from other config files into the given level and will be parsed under the current context. To include within the same file, ``.`` can be used as path.
 
-flag value
-^^^^^^^^^^^
+flag
+^^^^^^
 
 - ``<include>``: the type of the path will be inferred.
 - ``<include=absolute>``: resolve as an absolute path.
@@ -158,7 +159,12 @@ example
 Then ``file2.yml#key3`` will give ``{'key1_1': 'value1', 'key2_2': 'value2'}``.
 
 
+Customization
+===============
+# TODO
+
 
 
 Comparing to ``yaml``
 ===================
+# TODO
