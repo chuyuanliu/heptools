@@ -69,16 +69,7 @@ The ``fragment`` example above is equivalent to the pseudo code:
 
 where the str-to-int conversion will only be triggered for list.
 
-The ``query`` example above will give an additional dictionary:
-
-.. code-block:: python
-
-  {
-    "key1": ["value1", "value3"],
-    "key2": "value2",
-  }
-
-where if a key appears multiple times in the query, all values will be collected into a list.
+The ``query`` example above will give an additional dictionary ``{"key1": ["value1", "value3"], "key2": "value2"}``, where if a key appears multiple times in the query, all values will be collected into a list.
 A special key ``json=`` can be used to pass JSON strings. The order of parsing is file, json query and other queries, where the later ones may override the former ones.
 
 
@@ -101,6 +92,7 @@ Special
 Besides the standard rules, both ``~`` and empty string in the key will be parsed to ``None``, e.g.
 
 .. code-block:: yaml
+
   # None
   ~: value
   ~ <flag>: value
@@ -118,6 +110,7 @@ Use flag with ``list``
 In order to allow applying flags to list elements, when the element is a dictionary and the only key is ``None``, the value will be used as the element, e.g.
 
 .. code-block:: yaml
+
   - key1: value1 
     <flag>: value2
   - <flag>: value3
@@ -197,7 +190,6 @@ Then ``file2.yml#key3`` will give ``{'key1_1': 'value1', 'key2_2': 'value2'}``.
 
 ``<literal>``
 --------------
-# TODO
 
 .. _config-flag-discard:
 
