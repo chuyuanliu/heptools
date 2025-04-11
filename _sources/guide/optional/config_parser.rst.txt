@@ -138,16 +138,15 @@ Built-in flags
 
 This flag will replace the value by the result of :func:`eval`. The variables defined with :ref:`config-flag-var` are available as ``locals``.
 
-.. note:: value
+.. admonition:: value
 
   - ``str`` a python expression
 
-example
-^^^^^^^
+.. admonition:: example
 
-.. code-block:: yaml
+  .. code-block:: yaml
 
-  key <code>: '[f"item{i}" for i in range(100)]'
+    key <code>: '[f"item{i}" for i in range(100)]'
 
 .. _config-flag-include:
 
@@ -156,45 +155,41 @@ example
 
 This flag allows to merge dictionaries from other config files into the given level and will be parsed under the current context. To include within the same file, ``.`` can be used as path. See :ref:`config-url-io` for details.
 
-flag
-^^^^^^
+.. admonition:: flag
 
-- ``<include>``: the type of the path will be inferred.
-- ``<include=absolute>``: resolve as an absolute path.
-- ``<include=relative>``: resolve as an path relative to the current config file.
+  - ``<include>``: the type of the path will be inferred.
+  - ``<include=absolute>``: resolve as an absolute path.
+  - ``<include=relative>``: resolve as an path relative to the current config file.
 
-key
-^^^^
+.. admonition:: key
 
-- the key is required to be empty.
-- any flag other than :ref:`config-flag-code` will be ignored.
+  - the key is required to be empty.
+  - any flag other than :ref:`config-flag-code` will be ignored.
 
 
-value
-^^^^^^
+.. admonition:: value
 
-- ``str`` a URL to a dictionary
-- ``list`` a list of URLs
+  - ``str`` a URL to a dictionary
+  - ``list`` a list of URLs
 
-example
-^^^^^^^
+.. admonition:: example
 
-.. code-block:: yaml
+  .. code-block:: yaml
 
-  --- # file1.yml
-  key1:
-    key1_1: value1
+    --- # file1.yml
+    key1:
+      key1_1: value1
 
-  --- # file2.yml
-  key2:
-    key2_2: value2
+    --- # file2.yml
+    key2:
+      key2_2: value2
 
-  key3:
-    <include>:
-      - file1.yml#key1
-      - .#key2
+    key3:
+      <include>:
+        - file1.yml#key1
+        - .#key2
 
-Then ``file2.yml#key3`` will give ``{'key1_1': 'value1', 'key2_2': 'value2'}``.
+  Then ``file2.yml#key3`` will give ``{'key1_1': 'value1', 'key2_2': 'value2'}``.
 
 .. _config-flag-literal:
 
@@ -213,19 +208,18 @@ This flag can be used to escape certain parsing rules:
 
 The keys marked as ``<discard>`` will not be added into the current dictionary but will still be parsed. 
 
-example
-^^^^^^^
+.. admonition:: example
 
-This is useful when you only want to use the side effects of parsing. e.g. define variables, execute code, etc.
+  This is useful when you only want to use the side effects of parsing. e.g. define variables, execute code, etc.
 
-.. code-block:: yaml
+  .. code-block:: yaml
 
-  <discard>:
-    var1 <var>: value1
-    <type=print>: Hello World
-  key1 <ref>: var1
+    <discard>:
+      var1 <var>: value1
+      <type=print>: Hello World
+    key1 <ref>: var1
 
-The example above will print ``Hello World`` and be parsed into ``{'key1': 'value1'}``.
+  The example above will print ``Hello World`` and be parsed into ``{'key1': 'value1'}``.
 
 .. _config-flag-dummy:
 
@@ -234,19 +228,18 @@ The example above will print ``Hello World`` and be parsed into ``{'key1': 'valu
 
 This flag is reserved to never trigger any parser.
 
-example
-^^^^^^^
+.. admonition:: example
 
-This is useful when you want to duplicate keys.
+  This is useful when you want to duplicate keys.
 
-.. code-block:: yaml
+  .. code-block:: yaml
 
-  key: 1
-  key <extend> <dummy=1>: 2
-  key <extend> <dummy=2>: 3
-  key <extend> <dummy=3>: 4
+    key: 1
+    key <extend> <dummy=1>: 2
+    key <extend> <dummy=2>: 3
+    key <extend> <dummy=3>: 4
 
-The example above will be parsed into ``{'key': 10}``.
+  The example above will be parsed into ``{'key': 10}``.
 
 
 .. _config-flag-file:
@@ -256,19 +249,28 @@ The example above will be parsed into ``{'key': 10}``.
 
 This flag allows to insert any deserialized object from a URL. Unlike :ref:`config-flag-include`, this flag will only replace the value by a deep copy of the loaded object, instead of parsing it into the current context. See :ref:`config-url-io` for details.
 
-flag
-^^^^
+.. admonition:: flag
 
-The flag values are the same as :ref:`config-flag-include`.
+  The flag values are the same as :ref:`config-flag-include`.
 
-- ``<file>``
-- ``<file=absolute>``
-- ``<file=relative>``
+  - ``<file>``
+  - ``<file=absolute>``
+  - ``<file=relative>``
 
-value
-^^^^^
+.. admonition:: value
 
-- ``str`` a URL to any object
+  - ``str`` a URL to any object
+
+
+.. admonition:: example
+
+  Given a compressed pickle file ``database.pkl.lz4`` containing ``{"column1": [0, 1, ..., 100]}``,
+
+  .. code-block:: yaml
+
+    key1 <file>: database.pkl.lz4#column1
+
+  will be parsed into ``{"key1": [0, 1, ..., 100]}`"``.
 
 .. _config-flag-type:
 
