@@ -20,7 +20,7 @@ T = TypeVar("T")
 
 ConfigSource = str | PathLike | dict[str, Any]
 """
-str or ~os.PathLike or dict: A path to the config file or a nested dict.
+str, ~os.PathLike, dict: A path to the config file or a nested dict.
 """
 
 
@@ -493,7 +493,7 @@ class _ParserCustomization:
 
 @dataclass
 class _ParserInitializer(_ParserCustomization):
-    _match = re.compile(r"(?P<key>(.*?(?=\s))|())\s*(?P<flags>(\<[^\>\<]*\>\s*)*)\s*")
+    _match = re.compile(r"(?P<key>.*?)\s*(?P<flags>(\<[^\>\<]*\>\s*)*)\s*")
     _split = re.compile(r"\<(?P<flag>[^\>\<]*)\>")
 
     type = TypeParser()
