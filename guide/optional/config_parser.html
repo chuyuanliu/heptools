@@ -31,7 +31,9 @@
 <link href="../../_static/styles/pydata-sphinx-theme.css?digest=8878045cc6db502f8baf" rel="stylesheet" />
 
     <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=8f2a1f02" />
+    <link rel="stylesheet" type="text/css" href="../../_static/togglebutton.css?v=13237357" />
     <link rel="stylesheet" type="text/css" href="../../_static/graphviz.css?v=4ae1632d" />
+    <link rel="stylesheet" type="text/css" href="../../_static/static/style/admonition.css" />
   
   <!-- So that users can add custom icons -->
   <script src="../../_static/scripts/fontawesome.js?digest=8878045cc6db502f8baf"></script>
@@ -42,6 +44,11 @@
     <script src="../../_static/documentation_options.js?v=5929fcd5"></script>
     <script src="../../_static/doctools.js?v=9bcbadda"></script>
     <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script>let toggleHintShow = 'Click to show';</script>
+    <script>let toggleHintHide = 'Click to hide';</script>
+    <script>let toggleOpenOnPrint = 'true';</script>
+    <script src="../../_static/togglebutton.js?v=4a39c7ea"></script>
+    <script>var togglebuttonSelector = '.toggle, .admonition.dropdown';</script>
     <script>DOCUMENTATION_OPTIONS.pagename = 'guide/optional/config_parser';</script>
     <link rel="index" title="Index" href="../../genindex.html" />
     <link rel="search" title="Search" href="../../search.html" />
@@ -467,13 +474,13 @@ A special key <code class="docutils literal notranslate"><span class="pre">json=
 <section id="code">
 <span id="config-flag-code"></span><h3><code class="docutils literal notranslate"><span class="pre">&lt;code&gt;</span></code><a class="headerlink" href="#code" title="Link to this heading">#</a></h3>
 <p>This flag will replace the value by the result of <a class="reference external" href="https://docs.python.org/3/library/functions.html#eval" title="(in Python v3.13)"><code class="xref py py-func docutils literal notranslate"><span class="pre">eval()</span></code></a>. The variables defined with <a class="reference internal" href="#config-flag-var"><span class="std std-ref">&lt;var&gt;</span></a> are available as <code class="docutils literal notranslate"><span class="pre">locals</span></code>.</p>
-<div class="admonition-value admonition">
+<div class="guide-config-value admonition">
 <p class="admonition-title">value</p>
 <ul class="simple">
 <li><p><code class="docutils literal notranslate"><span class="pre">str</span></code> a python expression</p></li>
 </ul>
 </div>
-<div class="admonition-example admonition">
+<div class="guide-config-example dropdown admonition">
 <p class="admonition-title">example</p>
 <div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">key &lt;code&gt;</span><span class="p">:</span><span class="w"> </span><span class="s">&#39;[f&quot;item{i}&quot;</span><span class="nv"> </span><span class="s">for</span><span class="nv"> </span><span class="s">i</span><span class="nv"> </span><span class="s">in</span><span class="nv"> </span><span class="s">range(100)]&#39;</span>
 </pre></div>
@@ -483,7 +490,7 @@ A special key <code class="docutils literal notranslate"><span class="pre">json=
 <section id="include">
 <span id="config-flag-include"></span><h3><code class="docutils literal notranslate"><span class="pre">&lt;include&gt;</span></code><a class="headerlink" href="#include" title="Link to this heading">#</a></h3>
 <p>This flag allows to merge dictionaries from other config files into the given level and will be parsed under the current context. To include within the same file, <code class="docutils literal notranslate"><span class="pre">.</span></code> can be used as path. See <a class="reference internal" href="#config-url-io"><span class="std std-ref">URL and IO</span></a> for details.</p>
-<div class="admonition-flag admonition">
+<div class="guide-config-flag admonition">
 <p class="admonition-title">flag</p>
 <ul class="simple">
 <li><p><code class="docutils literal notranslate"><span class="pre">&lt;include&gt;</span></code>: the type of the path will be inferred.</p></li>
@@ -491,21 +498,21 @@ A special key <code class="docutils literal notranslate"><span class="pre">json=
 <li><p><code class="docutils literal notranslate"><span class="pre">&lt;include=relative&gt;</span></code>: resolve as an path relative to the current config file.</p></li>
 </ul>
 </div>
-<div class="admonition-key admonition">
+<div class="guide-config-key admonition">
 <p class="admonition-title">key</p>
 <ul class="simple">
 <li><p>the key is required to be empty.</p></li>
 <li><p>any flag other than <a class="reference internal" href="#config-flag-code"><span class="std std-ref">&lt;code&gt;</span></a> will be ignored.</p></li>
 </ul>
 </div>
-<div class="admonition-value admonition">
+<div class="guide-config-value admonition">
 <p class="admonition-title">value</p>
 <ul class="simple">
 <li><p><code class="docutils literal notranslate"><span class="pre">str</span></code> a URL to a dictionary</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">list</span></code> a list of URLs</p></li>
 </ul>
 </div>
-<div class="admonition-example admonition">
+<div class="guide-config-example dropdown admonition">
 <p class="admonition-title">example</p>
 <div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nn">---</span><span class="w"> </span><span class="c1"># file1.yml</span>
 <span class="nt">key1</span><span class="p">:</span>
@@ -534,7 +541,7 @@ A special key <code class="docutils literal notranslate"><span class="pre">json=
 <section id="discard">
 <span id="config-flag-discard"></span><h3><code class="docutils literal notranslate"><span class="pre">&lt;discard&gt;</span></code><a class="headerlink" href="#discard" title="Link to this heading">#</a></h3>
 <p>The keys marked as <code class="docutils literal notranslate"><span class="pre">&lt;discard&gt;</span></code> will not be added into the current dictionary but will still be parsed.</p>
-<div class="admonition-example admonition">
+<div class="guide-config-example dropdown admonition">
 <p class="admonition-title">example</p>
 <p>This is useful when you only want to use the side effects of parsing. e.g. define variables, execute code, etc.</p>
 <div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">&lt;discard&gt;</span><span class="p">:</span>
@@ -549,7 +556,7 @@ A special key <code class="docutils literal notranslate"><span class="pre">json=
 <section id="dummy">
 <span id="config-flag-dummy"></span><h3><code class="docutils literal notranslate"><span class="pre">&lt;dummy&gt;</span></code><a class="headerlink" href="#dummy" title="Link to this heading">#</a></h3>
 <p>This flag is reserved to never trigger any parser.</p>
-<div class="admonition-example admonition">
+<div class="guide-config-example dropdown admonition">
 <p class="admonition-title">example</p>
 <p>This is useful when you want to duplicate keys.</p>
 <div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">key</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">1</span>
@@ -564,7 +571,7 @@ A special key <code class="docutils literal notranslate"><span class="pre">json=
 <section id="file">
 <span id="config-flag-file"></span><h3><code class="docutils literal notranslate"><span class="pre">&lt;file&gt;</span></code><a class="headerlink" href="#file" title="Link to this heading">#</a></h3>
 <p>This flag allows to insert any deserialized object from a URL. Unlike <a class="reference internal" href="#config-flag-include"><span class="std std-ref">&lt;include&gt;</span></a>, this flag will only replace the value by a deep copy of the loaded object, instead of parsing it into the current context. See <a class="reference internal" href="#config-url-io"><span class="std std-ref">URL and IO</span></a> for details.</p>
-<div class="admonition-flag admonition">
+<div class="guide-config-flag admonition">
 <p class="admonition-title">flag</p>
 <p>The flag values are the same as <a class="reference internal" href="#config-flag-include"><span class="std std-ref">&lt;include&gt;</span></a>.</p>
 <ul class="simple">
@@ -573,13 +580,13 @@ A special key <code class="docutils literal notranslate"><span class="pre">json=
 <li><p><code class="docutils literal notranslate"><span class="pre">&lt;file=relative&gt;</span></code></p></li>
 </ul>
 </div>
-<div class="admonition-value admonition">
+<div class="guide-config-value admonition">
 <p class="admonition-title">value</p>
 <ul class="simple">
 <li><p><code class="docutils literal notranslate"><span class="pre">str</span></code> a URL to any object</p></li>
 </ul>
 </div>
-<div class="admonition-example admonition">
+<div class="guide-config-example dropdown admonition">
 <p class="admonition-title">example</p>
 <p>Given a compressed pickle file <code class="docutils literal notranslate"><span class="pre">database.pkl.lz4</span></code> created by</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">with</span> <span class="n">lz4</span><span class="o">.</span><span class="n">frame</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="s2">&quot;database.pkl.lz4&quot;</span><span class="p">,</span> <span class="s2">&quot;wb&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
