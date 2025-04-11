@@ -7,11 +7,11 @@ Basic I/O
 :class:`TTree`
 ===============================
 
-.. autoapiclass:: heptools.root.io.TreeWriter
+.. autoapiclass:: heptools.root.TreeWriter
     :members:
     :special-members: __call__, __enter__, __exit__
 
-.. autoapiclass:: heptools.root.io.TreeReader
+.. autoapiclass:: heptools.root.TreeReader
     :members:
 
 :mod:`dask`

@@ -487,8 +487,9 @@ A special key <code class="docutils literal notranslate"><span class="pre">json=
 <li><p><code class="docutils literal notranslate"><span class="pre">str</span></code> a python expression</p></li>
 </ul>
 </div>
-<div class="admonition-example admonition">
-<p class="admonition-title">example</p>
+<div class="admonition-example-collapsible admonition">
+<p class="admonition-title">example
+  :collapsible:</p>
 <div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">key &lt;code&gt;</span><span class="p">:</span><span class="w"> </span><span class="s">&#39;[f&quot;item{i}&quot;</span><span class="nv"> </span><span class="s">for</span><span class="nv"> </span><span class="s">i</span><span class="nv"> </span><span class="s">in</span><span class="nv"> </span><span class="s">range(100)]&#39;</span>
 </pre></div>
 </div>
@@ -519,8 +520,9 @@ A special key <code class="docutils literal notranslate"><span class="pre">json=
 <li><p><code class="docutils literal notranslate"><span class="pre">list</span></code> a list of URLs</p></li>
 </ul>
 </div>
-<div class="admonition-example admonition">
-<p class="admonition-title">example</p>
+<div class="admonition-example-collapsible admonition">
+<p class="admonition-title">example
+  :collapsible:</p>
 <div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nn">---</span><span class="w"> </span><span class="c1"># file1.yml</span>
 <span class="nt">key1</span><span class="p">:</span>
 <span class="w">  </span><span class="nt">key1_1</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">value1</span>
@@ -548,8 +550,9 @@ A special key <code class="docutils literal notranslate"><span class="pre">json=
 <section id="discard">
 <span id="config-flag-discard"></span><h3><code class="docutils literal notranslate"><span class="pre">&lt;discard&gt;</span></code><a class="headerlink" href="#discard" title="Link to this heading">#</a></h3>
 <p>The keys marked as <code class="docutils literal notranslate"><span class="pre">&lt;discard&gt;</span></code> will not be added into the current dictionary but will still be parsed.</p>
-<div class="admonition-example admonition">
-<p class="admonition-title">example</p>
+<div class="admonition-example-collapsible admonition">
+<p class="admonition-title">example
+  :collapsible:</p>
 <p>This is useful when you only want to use the side effects of parsing. e.g. define variables, execute code, etc.</p>
 <div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">&lt;discard&gt;</span><span class="p">:</span>
 <span class="w">  </span><span class="nt">var1 &lt;var&gt;</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">value1</span>
@@ -563,8 +566,9 @@ A special key <code class="docutils literal notranslate"><span class="pre">json=
 <section id="dummy">
 <span id="config-flag-dummy"></span><h3><code class="docutils literal notranslate"><span class="pre">&lt;dummy&gt;</span></code><a class="headerlink" href="#dummy" title="Link to this heading">#</a></h3>
 <p>This flag is reserved to never trigger any parser.</p>
-<div class="admonition-example admonition">
-<p class="admonition-title">example</p>
+<div class="admonition-example-collapsible admonition">
+<p class="admonition-title">example
+  :collapsible:</p>
 <p>This is useful when you want to duplicate keys.</p>
 <div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">key</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">1</span>
 <span class="nt">key &lt;extend&gt; &lt;dummy=1&gt;</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">2</span>
@@ -593,13 +597,18 @@ A special key <code class="docutils literal notranslate"><span class="pre">json=
 <li><p><code class="docutils literal notranslate"><span class="pre">str</span></code> a URL to any object</p></li>
 </ul>
 </div>
-<div class="admonition-example admonition">
-<p class="admonition-title">example</p>
-<p>Given a compressed pickle file <code class="docutils literal notranslate"><span class="pre">database.pkl.lz4</span></code> containing <code class="docutils literal notranslate"><span class="pre">{&quot;column1&quot;:</span> <span class="pre">[0,</span> <span class="pre">1,</span> <span class="pre">...,</span> <span class="pre">100]}</span></code>,</p>
+<div class="admonition-example-collapsible admonition">
+<p class="admonition-title">example
+  :collapsible:</p>
+<p>Given a compressed pickle file <code class="docutils literal notranslate"><span class="pre">database.pkl.lz4</span></code> created by</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">with</span> <span class="n">lz4</span><span class="o">.</span><span class="n">frame</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="s2">&quot;database.pkl.lz4&quot;</span><span class="p">,</span> <span class="s2">&quot;wb&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+  <span class="n">pickle</span><span class="o">.</span><span class="n">dump</span><span class="p">({</span><span class="s2">&quot;column1&quot;</span><span class="p">:</span> <span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">*</span> <span class="mi">1000</span><span class="p">},</span> <span class="n">f</span><span class="p">)</span>
+</pre></div>
+</div>
 <div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">key1 &lt;file&gt;</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">database.pkl.lz4#column1</span>
 </pre></div>
 </div>
-<p>will be parsed into <code class="docutils literal notranslate"><span class="pre">{&quot;key1&quot;:</span> <span class="pre">[0,</span> <span class="pre">1,</span> <span class="pre">...,</span> <span class="pre">100]}`&quot;</span></code>.</p>
+<p>will be parsed into <code class="docutils literal notranslate"><span class="pre">{&quot;key1&quot;:</span> <span class="pre">[0,</span> <span class="pre">0,</span> <span class="pre">...,</span> <span class="pre">0]}`&quot;</span></code>.</p>
 </div>
 </section>
 <section id="type">
@@ -755,7 +764,7 @@ A special key <code class="docutils literal notranslate"><span class="pre">json=
 
   <p class="copyright">
     
-      © Copyright 2024, Chuyuan Liu.
+      © Copyright 2023-2025, Chuyuan Liu.
       <br/>
     
   </p>
