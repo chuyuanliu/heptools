@@ -46,10 +46,10 @@ class FileLoader:
 
     @classmethod
     @overload
-    def register(cls, extensions: str | Iterable[str]) -> Callable[[T], T]: ...
+    def register(cls, extensions: str | Iterable[str], deserializer: T) -> T: ...
     @classmethod
     @overload
-    def register(cls, extensions: str | Iterable[str], deserializer: T) -> T: ...
+    def register(cls, extensions: str | Iterable[str]) -> Callable[[T], T]: ...
     @classmethod
     def register(cls, extensions: str | Iterable[str], deserializer=None):
         """
@@ -62,7 +62,7 @@ class FileLoader:
         extensions : str | Iterable[str]
             File extensions to register.
         deserializer : Callable[[bytes], Any], optional
-            Deserializer function.
+            Deserializer function. If not provided, will return a decorator.
         """
         if deserializer is None:
             return lambda deserializer: cls.register(extensions, deserializer)

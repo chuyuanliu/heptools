@@ -138,10 +138,9 @@ Built-in flags
 
 This flag will replace the value by the result of :func:`eval`. The variables defined with :ref:`config-flag-var` are available as ``locals``.
 
-value
-^^^^^
+.. note:: value
 
-- ``str`` a python expression
+  - ``str`` a python expression
 
 example
 ^^^^^^^
@@ -182,11 +181,11 @@ example
 
 .. code-block:: yaml
 
-  --- #file1.yml
+  --- # file1.yml
   key1:
     key1_1: value1
 
-  --- #file2.yml
+  --- # file2.yml
   key2:
     key2_2: value2
 
