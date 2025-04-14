@@ -1,7 +1,7 @@
+from collections import defaultdict
 from pathlib import PurePosixPath
 from typing import Any, Callable, Generator, Iterable, TypeVar, overload
 from urllib.parse import parse_qs, unquote, urlparse
-from warnings import warn
 
 import fsspec
 
@@ -19,24 +19,23 @@ class FileLoader:
     A module to load and deserialize objects from URL.
     """
 
-    __cache: dict[str, Any] = {}
+    __cache: dict[str, dict[str, Any]] = defaultdict(dict)
     __deserializers: dict[str, Callable[[bytes], Any]] = {}
 
     @classmethod
     def __load(cls, url: str):
-        if url in cls.__cache:
-            return cls.__cache[url]
+        suffix = PurePosixPath(url).suffixes[0].lstrip(".")
+        if not suffix in cls.__deserializers:
+            raise NotImplementedError(f"Unsupported file type: {suffix}")
+
+        cache = cls.__cache[suffix]
+        if url in cache:
+            return cache[url]
 
         with fsspec.open(url, mode="rb", compression="infer") as f:
             data = f.read()
-
-        suffix = PurePosixPath(url).suffixes[0].lstrip(".")
-        if deserializer := cls.__deserializers.get(suffix):
-            data = deserializer(data)
-        else:
-            raise NotImplementedError(f"Unsupported file type: {suffix}")
-
-        cls.__cache[url] = data
+        data = cls.__deserializers[suffix](data)
+        cache[url] = data
         return data
 
     @classmethod
@@ -55,7 +54,7 @@ class FileLoader:
         """
         Register a deserializer for file extensions.
         This method can be used as a decorator.
-        Cache will be cleared after registration.
+        The cache for the extensions will be cleared after registration.
 
         Parameters
         ----------
@@ -70,14 +69,14 @@ class FileLoader:
             extensions = (extensions,)
         for extension in extensions:
             cls.__deserializers[extension] = deserializer
-        cls.__cache.clear()
+            cls.__cache.pop(extension, None)
         return deserializer
 
     @classmethod
     def unregister(cls, extensions: str | Iterable[str]):
         """
         Unregister deserializers for file extensions.
-        Cache will be cleared after unregistration.
+        The cache for the extensions will be cleared after unregistration.
 
         Parameters
         ----------
@@ -88,7 +87,7 @@ class FileLoader:
             extensions = (extensions,)
         for extension in extensions:
             cls.__deserializers.pop(extension, None)
-        cls.__cache.clear()
+            cls.__cache.pop(extension, None)
 
     @classmethod
     def registered_extensions(cls):
@@ -113,11 +112,8 @@ class FileLoader:
             parsed._replace(path=path, params="", query="", fragment="").geturl()
         )
 
-        if parsed.params:
-            warn(f'When parsing "{url}", params will be ignored.')
-
         if parsed.fragment:
-            for k in parsed.fragment.split("/"):
+            for k in parsed.fragment.split("."):
                 if isinstance(data, list):
                     k = int(k)
                 data = data[k]

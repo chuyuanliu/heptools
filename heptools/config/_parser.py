@@ -9,11 +9,12 @@ from dataclasses import dataclass, field, fields
 from enum import StrEnum, auto
 from os import PathLike, fspath, getcwd
 from pathlib import PurePosixPath
-from types import MethodType
+from types import MappingProxyType, MethodType
 from typing import Any, Callable, Optional, ParamSpec, Protocol, TypeVar
 from urllib.parse import urlparse
 
 from ._io import FileLoader
+from ._utils import NestedTree
 
 P = ParamSpec("P")
 T = TypeVar("T")
@@ -27,7 +28,6 @@ str, ~os.PathLike, dict: A path to the config file or a nested dict.
 class FlagKeys(StrEnum):
     code = auto()
     include = auto()
-    literal = auto()
     discard = auto()
     dummy = auto()
 
@@ -44,7 +44,7 @@ class FlagKeys(StrEnum):
 FlagReserved = frozenset(e.value for e in FlagKeys)
 
 
-class NoFlag:
+class _NoFlag:
     @staticmethod
     def has(_: str):
         return False
@@ -58,23 +58,38 @@ class NoFlag:
         return key, value
 
 
-class Flags:
+class _Flags:
+    _globals = frozenset((FlagKeys.code, FlagKeys.include, FlagKeys.discard))
+
     def __init__(
-        self, flags: Optional[dict[str, Optional[str]]], parsers: dict[str, FlagParser]
+        self, flags: list[tuple[str, str]], parsers: dict[str, Optional[FlagParser]]
     ):
-        self.flags = flags or {}
         self.parsers = parsers
+        self.flags = list[tuple[str, str]]()
+        self.parsed = dict[str, str]()
+        for k, v in flags:
+            if k in self._globals:
+                self.parsed[k] = v
+            else:
+                self.flags.append((k, v))
 
     def has(self, flag: str):
-        return flag in self.flags
+        return flag in self.parsed
 
     def get(self, flag: str):
-        return self.flags.get(flag, ...)
+        return self.parsed.get(flag, ...)
 
     def apply(self, *, key: str, value, **kwargs):
-        for flag_k, flag_v in self.flags.items():
+        for flag_k, flag_v in self.flags:
             if (parser := self.parsers.get(flag_k)) is not None:
-                key, value = parser(key=key, value=value, flag=flag_v, **kwargs)
+                key, value = parser(
+                    key=key,
+                    value=value,
+                    flag=flag_v,
+                    flags=MappingProxyType(self.parsed),
+                    **kwargs,
+                )
+            self.parsed[flag_k] = flag_v
         return key, value
 
     def __repr__(self):
@@ -92,8 +107,9 @@ class FlagParser(Protocol):
         key: Optional[str],
         value: Optional[Any],
         flag: Optional[str],
-        parser: Optional[Parser],
+        flags: Optional[dict[str, Optional[str]]],
         local: Optional[dict[str, Any]],
+        parser: Optional[Parser],
     ) -> tuple[str, Any]:
         """
         Parameters
@@ -103,11 +119,13 @@ class FlagParser(Protocol):
         value: Any, optional
             The value of the current item.
         flag: str, optional
-            The flags of the current item.
-        parser: Parser, optional
-            The current parser instance.
+            The value of the current flag.
+        flags: dict[str, Optional[str]], optional
+            All flags before the current flag.
         local: dict[str, Any], optional
-            The current parsed result.
+            The parsed result.
+        parser: Parser, optional
+            The parser instance.
 
         Returns
         -------
@@ -305,30 +323,25 @@ class FileParser:  # flag: <file>
 class Parser:
     __cwd = getcwd()
 
-    def __init__(self, flat: bool, base: Optional[str], custom: _ParserInitializer):
-        self.flat = flat
+    def __init__(self, base: Optional[str], custom: _ParserInitializer):
         self.base = base or self.__cwd
         self.custom = custom
 
-    def dict(self, data: dict[str, Any], singleton: bool = False):
-        parsed = {}
+    def dict(self, data: dict[str, Any], singleton: bool = False, result: dict = None):
+        if result is None:
+            result = {}
         for k, v in data.items():
             key, flags, v = self.eval(k, v)
             if (include_flag := flags.get(FlagKeys.include)) is not ...:
                 if key is None:
-                    self.include(v, include_flag, result=parsed)
+                    self.include(v, include_flag, result=result)
                     continue
                 else:
                     raise ValueError(f"Cannot use include with non-empty key: {key}")
-            self.setitem(parsed, flags, key, v)
-        if (
-            singleton
-            and len(parsed) == 1
-            and None in parsed
-            and not flags.has(FlagKeys.literal)
-        ):
-            return parsed[None]
-        return parsed
+            self.setitem(result, flags, key, v)
+        if singleton and len(result) == 1 and None in result:
+            return result[None]
+        return result
 
     def list(self, data: list[Any]):
         parsed = []
@@ -346,7 +359,11 @@ class Parser:
             v = eval(v, None, self.custom.locals)
         return key, flags, v
 
-    def setitem(self, local: dict[str, Any], flags: Flags, key: str, value: Any):
+    def setitem(self, local: dict[str, Any], flags: _Flags, key: str, value: Any):
+        if self.custom.expand and key is not None:
+            keys = key.split(".")
+            local = NestedTree.init(local, keys[:-1])
+            key = keys[-1]
         if isinstance(value, dict):
             value = self.dict(value)
         elif isinstance(value, list):
@@ -392,32 +409,18 @@ class Parser:
             case _:
                 raise ValueError(f"Invalid include flag: {flag}")
 
-    def include(
-        self, paths, flag: str, result: dict[str, Any] = None, parent: list[str] = None
-    ):
+    def include(self, paths, flag: str, result: dict[str, Any] = None):
         if isinstance(paths, str):
             paths = [paths]
         if isinstance(paths, list) and all(isinstance(path, str) for path in paths):
-            return self.custom.parse(
-                *self.resolve(*paths, flag=flag),
-                flat=self.flat,
-                result=result,
-                parent=parent,
-            )
+            return self.custom.parse(*self.resolve(*paths, flag=flag), result=result)
         raise ValueError(f"Cannot include the configs from: {paths}")
-
-
-def _to_stack(*data: dict[str, Any], parent: list[str]):
-    stack = []
-    for d in data:
-        stack.extend((parent + [k], v) for k, v in d.items())
-    stack.reverse()
-    return stack
 
 
 @dataclass
 class _ParserCustomization:
-    custom_flags: dict[str, FlagParser] = field(default_factory=dict)
+    expand: bool = False
+    custom_flags: dict[str, Optional[FlagParser]] = field(default_factory=dict)
     extend_methods: dict[str, ExtendMethod] = field(default_factory=dict)
 
 
@@ -432,11 +435,11 @@ class _ParserInitializer(_ParserCustomization):
 
     def __post_init__(self):
         self.vars = VariableParser()
-        if reserved := FlagReserved.intersection(self.custom_flags):
-            raise RuntimeError(
-                f"The following reserved flags are overridden: {', '.join(reserved)}"
-            )
         self.parsers = self.custom_flags | {
+            FlagKeys.code: None,
+            FlagKeys.include: None,
+            FlagKeys.discard: None,
+            FlagKeys.dummy: None,
             FlagKeys.file: self.file,
             FlagKeys.type: self.type,
             FlagKeys.attr: self.attr,
@@ -458,57 +461,29 @@ class _ParserInitializer(_ParserCustomization):
     def parse(
         self,
         *path_or_dict: ConfigSource,
-        flat: bool,
         result: Optional[dict[str, Any]] = None,
-        parent: Optional[list[str]] = None,
     ) -> dict[str, Any]:
         if result is None:
             result = {}
-        if parent is None:
-            parent = []
-        for data in path_or_dict:
+        for configs in path_or_dict:
             path = None
-            if not isinstance(data, dict):
-                path = fspath(data)
-                data = FileLoader.load(path)
+            if not isinstance(configs, dict):
+                path = fspath(configs)
+                configs = FileLoader.load(path)
             else:
-                data = (data,)
-            parser = Parser(flat, path, self)
-            stack = _to_stack(*data, parent=parent)
-            while stack:
-                k, v = stack.pop()
-                k[-1], flags, v = parser.eval(k[-1], v)
-                if (import_flag := flags.get(FlagKeys.include)) is not ...:
-                    if k[-1] is None:
-                        k = k[:-1]
-                    parser.include(v, import_flag, result=result, parent=k)
-                    continue
-                if k[-1] is None:
-                    if flags.has(FlagKeys.discard):
-                        k = k[:-1]
-                    else:
-                        raise ValueError(
-                            f"Config key cannot be None or empty: key={k}, flags={flags}"
-                        )
-                if (
-                    flat
-                    and isinstance(v, dict)
-                    and not flags.has(FlagKeys.literal)
-                    and not flags.has(FlagKeys.discard)
-                    and not flags.has(FlagKeys.type)
-                ):
-                    stack.extend(_to_stack(v, parent=k))
-                else:
-                    parser.setitem(result, flags, ".".join(k), v)
+                configs = (configs,)
+            parser = Parser(path, self)
+            for config in configs:
+                parser.dict(config, result=result)
         return result
 
-    def match(self, key: Optional[str]) -> tuple[Optional[str], Flags]:
+    def match(self, key: Optional[str]) -> tuple[Optional[str], _Flags]:
         if key is None:
-            return None, NoFlag
+            return None, _NoFlag
         matched = self._match.fullmatch(key)
         if not matched:
-            return key, NoFlag
-        flags = {}
+            return key, _NoFlag
+        flags = []
         for flag in self._split.finditer(matched["flags"]):
             k = flag["flag"].split("=")
             if len(k) == 1:
@@ -517,33 +492,25 @@ class _ParserInitializer(_ParserCustomization):
                 v = k[1]
             else:
                 raise ValueError(f"Invalid flag format: <{flag}> in {key}")
-            flags[k[0]] = v
+            flags.append((k[0], v))
         key = matched["key"]
         if not key or key == "~":
             key = None
-        return key, Flags(flags, self.parsers)
+        return key, _Flags(flags, self.parsers)
 
 
-class GlobalConfigParser(_ParserCustomization):
-    def __call__(
-        self, *path_or_dict: ConfigSource, result: Optional[dict[str, Any]]
-    ) -> dict[str, Any]:
-        return _ParserInitializer.new(self).parse(
-            *path_or_dict, flat=True, result=result, parent=None
-        )
-
-
-class ConfigLoader(_ParserCustomization):
+class ConfigParser(_ParserCustomization):
     """
-    A customizable config loader.
+    A customizable config parser.
 
     Parameters
     ----------
-    custom_flags : dict[str, FlagParser], optional
-        Customized flags and their parsers.
-
+    expand : bool, optional, default=False
+        Expand dot-separated keys to nested dicts.
+    custom_flags : dict[str, Optional[FlagParser]], optional
+        Customized flags
     extend_methods : dict[str, ExtendMethod], optional
-        Customized <extend> methods and their implementations.
+        Customized <extend> methods.
 
     """
 
@@ -565,6 +532,4 @@ class ConfigLoader(_ParserCustomization):
         dict[str, Any]
             The loaded configs.
         """
-        return _ParserInitializer.new(self).parse(
-            *path_or_dict, flat=False, result=result, parent=None
-        )
+        return _ParserInitializer.new(self).parse(*path_or_dict, result=result)

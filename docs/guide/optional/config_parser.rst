@@ -14,8 +14,8 @@ Flag
 Syntax
 --------------
 - A flag is defined as a key-value pair given by ``<flag_key=flag_value>`` or ``<flag_key>`` if the value is ``None``. 
-- Arbitrary number of flags can be added after each ``key``. 
-- The spaces between the key and the flags are optional.
+- Unlimited number of flags can be added after each key. 
+- The spaces between key and flags are optional.
 
 Example of valid key and flags:
 
@@ -29,18 +29,17 @@ Example of valid key and flags:
 
 Parsing
 --------------
-The flags will be parsed from left to right with the following exceptions:
-
-- The following flags have higher priority than others: :ref:`config-flag-code`, :ref:`config-flag-include`.
-- The following flags will not trigger any parser: :ref:`config-flag-literal`, :ref:`config-flag-discard`, :ref:`config-flag-dummy`.
-
-Each parser will take the ``key`` and ``value`` from the previous parser and pass the possibly modified ones to the next, so the order of flags matters.
+- The flags are parsed from left to right, with some exceptions.
+- Each parser will use the key and value from the previous parser, so the order of flags matters.
+- If a flag occurs multiple times, each will be parsed based on the order, with some exceptions.
+- Exceptions: :ref:`config-flag-code` and :ref:`config-flag-include` have higher priority than all others and will only be parsed once.
+- Exceptions: :ref:`config-flag-discard` and :ref:`config-flag-dummy` will not trigger any parser.
 
 .. _config-url-io:
 
 URL and IO
 ------------
-Both the :class:`~heptools.config.ConfigLoader` and built-in flags :ref:`config-flag-include`, :ref:`config-flag-file` shares the same IO mechanism.
+Both the :class:`~heptools.config.ConfigParser` and built-in flags :ref:`config-flag-include`, :ref:`config-flag-file` shares the same IO mechanism.
 
 The file path is described by a standard URL with the following format:
 
@@ -84,10 +83,13 @@ File IO is handled by :func:`fsspec.open` and the deserialization is handled by 
 
 .. warning::
 
-  When using with :class:`~heptools.config.ConfigLoader`, the final deserialized object (after all fragments) is required to be a dictionary.
+  When using with :class:`~heptools.config.ConfigParser`, the final deserialized object (after all fragments) is required to be a dictionary.
 
 Special
 ---------
+
+``expand`` in :class:`~heptools.config.ConfigParser`
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 ``None`` key
 ^^^^^^^^^^^^
@@ -119,14 +121,7 @@ In order to apply flags to list elements, when the element is a dictionary and t
     <flag>: value2
   - <flag>: value3
 
-will be parsed into ``[{"key1": "value1", None: "value2"}, "value3"]``. :ref:`config-flag-literal` can be used to avoid this behavior, e.g.
-
-.. code-block:: yaml
-
-  - <flag>: value1
-  - <flag> <literal>: value2
-
-will be parsed into ``["value1", {None: "value2"}]``.
+will be parsed into ``[{"key1": "value1", None: "value2"}, "value3"]``. 
 
 Built-in flags
 ===============
@@ -197,16 +192,6 @@ This flag allows to merge dictionaries from other config files into the given le
 
   Then ``file2.yml#key3`` will give ``{'key1_1': 'value1', 'key2_2': 'value2'}``.
 
-.. _config-flag-literal:
-
-``<literal>``
---------------
-
-This flag can be used to escape certain parsing rules:
-
-- retain the dictionary with ``None`` key in :ref:`config-special-list`.
-
-
 .. _config-flag-discard:
 
 ``<discard>``
@@ -255,7 +240,7 @@ This flag is reserved to never trigger any parser.
 ``<file>``
 ----------
 
-This flag allows to insert any deserialized object from a URL. Unlike :ref:`config-flag-include`, this flag will only replace the value by a deep copy of the loaded object, instead of parsing it into the current context. See :ref:`config-url-io` for details.
+This flag allows to insert any deserialized object from a URL. Unlike :ref:`config-flag-include`, this flag will only replace the value by a deep copy of the loaded object, instead of merging it into the current dictionary. See :ref:`config-url-io` for details.
 
 .. admonition:: flag
   :class: guide-config-flag
@@ -284,7 +269,7 @@ This flag allows to insert any deserialized object from a URL. Unlike :ref:`conf
 
     key1 <file>: database.pkl.lz4#column1
 
-  will be parsed into ``{"key1": [0, 0, ..., 0]}`"``.
+  will be parsed into ``{"key1": [0, 0, ..., 0]}``.
 
 .. _config-flag-type:
 
