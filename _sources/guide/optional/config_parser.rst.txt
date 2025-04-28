@@ -337,7 +337,7 @@ This flag allows to insert any deserialized object from a URL. Unlike :ref:`conf
 
 ``<var>``
 ---------
-# TODO
+# TODO var, ref, copy, deepcopy
 
 .. _config-flag-extend:
 

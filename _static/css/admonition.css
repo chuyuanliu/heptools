@@ -1,16 +1,1 @@
-/* https: //pydata-sphinx-theme.readthedocs.io/en/stable/user_guide/extending.html*/
-div.admonition.guide-config-flag {
-    border-color: hsl(60deg 100% 25%);
-}
-
-div.admonition.guide-config-key {
-    border-color: hsl(60deg 100% 25%);
-}
-
-div.admonition.guide-config-value {
-    border-color: hsl(60deg 100% 25%);
-}
-
-div.admonition.guide-config-example {
-    border-color: hsl(60deg 100% 25%);
-}
+﻿div.admonition.guide-config-flag{border-color:red}div.admonition.guide-config-flag>.admonition-title{background-color:blue;color:#fff}div.admonition.guide-config-flag>.admonition-title::after{content:"👀";color:red}div.admonition.guide-config-key{border-color:green}div.admonition.guide-config-key>.admonition-title{background-color:#ff0;color:#000}div.admonition.guide-config-key>.admonition-title::after{content:"👀";color:green}div.admonition.guide-config-value{border-color:green}div.admonition.guide-config-value>.admonition-title{background-color:#ff0;color:#000}div.admonition.guide-config-value>.admonition-title::after{content:"👀";color:green}div.admonition.guide-note{border-color:green}div.admonition.guide-note>.admonition-title{background-color:#ff0;color:#000}div.admonition.guide-note>.admonition-title::after{content:"👀";color:green}
