@@ -5,7 +5,7 @@ Config
 Parsers
 ---------
 
-.. autoapiclass:: heptools.config.ConfigLoader
+.. autoapiclass:: heptools.config.ConfigParser
     :members:
     :special-members: __call__
 
