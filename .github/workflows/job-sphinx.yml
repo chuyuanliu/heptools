@@ -18,19 +18,20 @@ jobs:
         with:
           node-version: "22"
           cache: "npm"
-          cache-dependency-path: ./docs/package-lock.json
-      - run: npm ci
+          cache-dependency-path: docs/package.json
+      - working-directory: docs
+        run: npm install
 
       - name: Setup Python
         uses: actions/setup-python@v5
         with:
           python-version: "3.11"
           cache: "pip"
-      - run: pip install -r ./docs/requirements.txt
+      - run: pip install -r docs/requirements.txt
 
       - name: Build docs
+        working-directory: docs
         run: |
-          cd docs
           bash build.sh
           make html
 
@@ -39,4 +40,4 @@ jobs:
         with:
           publish_branch: docs
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: ./docs/_build/html
+          publish_dir: docs/_build/html
