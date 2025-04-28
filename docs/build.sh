@@ -1,4 +1,4 @@
-# compile scss
+# compile scss to css
 cd _static/css
 for input in *.scss; do
     if [[ $input != _* ]]; then
