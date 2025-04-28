@@ -1,5 +1,3 @@
-#!/bin/bash
-
 # compile scss
 cd _static/css
 for input in *.scss; do
