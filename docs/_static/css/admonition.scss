@@ -1,0 +1,42 @@
+$styles: (
+  "config-flag": (
+    "border": red,
+    "background": blue,
+    "foreground": white,
+    "icon": "👀"
+  ),
+  "config-key": (
+    "border": green,
+    "background": yellow,
+    "foreground": black,
+    "icon": "👀"
+  ),
+  "config-value": (
+    "border": green,
+    "background": yellow,
+    "foreground": black,
+    "icon": "👀"
+  ),
+  "note": (
+    "border": green,
+    "background": yellow,
+    "foreground": black,
+    "icon": "👀"
+  )
+);
+
+@each $name, $style in $styles {
+  div.admonition.guide-#{$name} {
+    border-color: map-get($style, "border");
+  }
+
+  div.admonition.guide-#{$name} > .admonition-title {
+    background-color: map-get($style, "background");
+    color: map-get($style, "foreground");
+  }
+
+  div.admonition.guide-#{$name} > .admonition-title::after {
+    content: map-get($style, "icon");
+    color: map-get($style, "border");
+  }
+}
