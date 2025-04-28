@@ -19,6 +19,8 @@ jobs:
           node-version: "22"
           cache: "npm"
           cache-dependency-path: ./docs/package.json
+      - run: npm ci
+      - run: npm test
 
       - name: Setup Python
         uses: actions/setup-python@v5
