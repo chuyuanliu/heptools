@@ -256,10 +256,9 @@ class RecursiveExtend:
 class ExtendParser:  # tag: <extend>
     methods = {
         None: RecursiveExtend(op.add),
-        "add": op.add,
-        "or": op.or_,
+        "add": RecursiveExtend(op.add),
         "and": op.and_,
-        "recursive": RecursiveExtend(op.add),
+        "or": op.or_,
     }
 
     def __init__(self, methods: dict[str, ExtendMethod]):

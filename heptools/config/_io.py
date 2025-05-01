@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 from collections import defaultdict
 from os import fspath
 from pathlib import PurePosixPath
@@ -26,6 +27,13 @@ def _unpack(seq: list):
     if len(seq) == 1:
         return seq[0]
     return seq
+
+
+def _maybe_json(data: str):
+    try:
+        return json.loads(data)
+    except json.JSONDecodeError:
+        return data
 
 
 def resolve_path(base: str, scheme: str, *paths: str):
@@ -83,9 +91,7 @@ def load_url(
     if parse_query and parsed.query:
         query = parse_qs(parsed.query)
         if query:
-            import json
-
-            yield dict((k, _unpack([*map(json.loads, v)])) for k, v in query.items())
+            yield dict((k, _unpack([*map(_maybe_json, v)])) for k, v in query.items())
 
 
 class _MaybeClassMethod:
@@ -240,8 +246,6 @@ class FileLoader(FileIO):
 
 @FileLoader.register("json")
 def json_deserializer(data: bytes):
-    import json
-
     return json.loads(data)
 
 
