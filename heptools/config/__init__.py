@@ -1,6 +1,6 @@
 from ._io import FileLoader
 from ._manager import ConfigManager
-from ._parser import ConfigParser, ConfigSource, ExtendMethod, FlagParser
+from ._parser import ConfigParser, ConfigSource, ExtendMethod, TagParser
 from ._protocol import Configurable, config, const
 
 __all__ = [
@@ -12,7 +12,7 @@ __all__ = [
     # config parser
     "ConfigParser",
     "ConfigSource",
-    "FlagParser",
+    "TagParser",
     "ExtendMethod",
     # io
     "FileLoader",

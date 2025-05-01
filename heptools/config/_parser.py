@@ -25,7 +25,7 @@ str, ~os.PathLike, dict: A path to the config file or a nested dict.
 """
 
 
-class _ReservedFlag(StrEnum):
+class _ReservedTag(StrEnum):
     def _generate_next_value_(name, *_):
         return name.lower().replace("_", "-")
 
@@ -46,7 +46,7 @@ class _ReservedFlag(StrEnum):
     extend = auto()
 
 
-class _NoFlag:
+class _NoTag:
     @staticmethod
     def has(_: str):
         return False
@@ -60,54 +60,54 @@ class _NoFlag:
         return key, value
 
 
-class _MatchedFlags:
+class _MatchedTags:
     special = frozenset(
         (
-            _ReservedFlag.code,
-            _ReservedFlag.include,
-            _ReservedFlag.literal,
-            _ReservedFlag.discard,
+            _ReservedTag.code,
+            _ReservedTag.include,
+            _ReservedTag.literal,
+            _ReservedTag.discard,
         )
     )
 
     def __init__(
-        self, flags: list[tuple[str, str]], parsers: dict[str, Optional[FlagParser]]
+        self, tags: list[tuple[str, str]], parsers: dict[str, Optional[TagParser]]
     ):
         self.parsers = parsers
-        self.flags = list[tuple[str, str]]()
+        self.tags = list[tuple[str, str]]()
         self.parsed = dict[str, str]()
-        for k, v in flags:
+        for k, v in tags:
             if k in self.special:
                 self.parsed[k] = v
             else:
-                self.flags.append((k, v))
+                self.tags.append((k, v))
 
-    def has(self, flag: str):
-        return flag in self.parsed
+    def has(self, tag: str):
+        return tag in self.parsed
 
-    def get(self, flag: str):
-        return self.parsed.get(flag, ...)
+    def get(self, tag: str):
+        return self.parsed.get(tag, ...)
 
     def apply(self, *, key: str, value, **kwargs):
-        for flag_k, flag_v in self.flags:
-            if (parser := self.parsers.get(flag_k)) is not None:
+        for tag_k, tag_v in self.tags:
+            if (parser := self.parsers.get(tag_k)) is not None:
                 key, value = parser(
                     key=key,
                     value=value,
-                    flag=flag_v,
-                    flags=MappingProxyType(self.parsed),
+                    tag=tag_v,
+                    tags=MappingProxyType(self.parsed),
                     **kwargs,
                 )
-            self.parsed[flag_k] = flag_v
+            self.parsed[tag_k] = tag_v
         return key, value
 
     def __repr__(self):
-        return " ".join(f"<{k}={v}>" for k, v in self.flags)
+        return " ".join(f"<{k}={v}>" for k, v in self.tags)
 
 
-class FlagParser(Protocol):
+class TagParser(Protocol):
     """
-    Flag parser protocol
+    Tag parser protocol
     """
 
     def __call__(
@@ -115,8 +115,8 @@ class FlagParser(Protocol):
         *,
         key: Optional[str],
         value: Optional[Any],
-        flag: Optional[str],
-        flags: Optional[dict[str, Optional[str]]],
+        tag: Optional[str],
+        tags: Optional[dict[str, Optional[str]]],
         local: Optional[dict[str, Any]],
         path: Optional[str],
     ) -> tuple[str, Any]:
@@ -124,15 +124,15 @@ class FlagParser(Protocol):
         Parameters
         ----------
         key: str, optional
-            The key of the current item.
+            The current key.
         value: Any, optional
-            The value of the current item.
-        flag: str, optional
-            The value of the current flag.
-        flags: dict[str, Optional[str]], optional
-            All flags before the current flag.
+            The current value .
+        tag: str, optional
+            The value of the current tag.
+        tags: dict[str, Optional[str]], optional
+            All parsed tags of the current key.
         local: dict[str, Any], optional
-            The parsed result.
+            All parsed items in the current dictionary.
         path: str, optional
             The path to the current config file.
 
@@ -145,8 +145,8 @@ class FlagParser(Protocol):
 
 
 @dataclass
-class _FlagParserWrapper:
-    func: FlagParser
+class _TagParserWrapper:
+    func: TagParser
     keys: frozenset[str]
 
     def __call__(self, *arg, **kwargs):
@@ -158,7 +158,7 @@ class _FlagParserWrapper:
         return MethodType(self, instance)
 
 
-def _flag_parser(func: Callable[P, T]) -> Callable[P, T]:
+def _tag_parser(func: Callable[P, T]) -> Callable[P, T]:
     kwargs = set()
     sig = inspect.signature(func)
     for k, v in sig.parameters.items():
@@ -167,30 +167,32 @@ def _flag_parser(func: Callable[P, T]) -> Callable[P, T]:
                 kwargs.add(k)
             case ParKind.VAR_KEYWORD:
                 return func
-    return _FlagParserWrapper(func=func, keys=frozenset(kwargs))
+    return _TagParserWrapper(func=func, keys=frozenset(kwargs))
 
 
-class TypeParser:  # flag: <type>
+class TypeParser:  # tag: <type>
     def __init__(self, base: str = None):
         self.base = base
 
-    @_flag_parser
-    def __call__(self, flag: Optional[str], key: str, value: Any):
+    @_tag_parser
+    def __call__(self, tag: Optional[str], key: str, value: Any):
         # import module
-        if flag is None:
+        if tag is None:
             if not isinstance(value, str):
                 raise ValueError(
-                    f'Type name must be a string when parsing "{key} <{_ReservedFlag.type}>: {value}"'
+                    f'When parsing "{key} <{_ReservedTag.type}>: {value}":\n  type name must be a string.'
                 )
             fullname = value
         else:
-            fullname = flag
-        clsname = fullname.rsplit("::", 1)
-        if len(clsname) == 1:
-            modname = None
-            clsname = clsname[0]
-        else:
-            modname, clsname = clsname
+            fullname = tag
+        clsname = fullname.split("::", 1)
+        match len(clsname):
+            case 1:
+                modname, clsname = None, clsname[0]
+            case 2:
+                modname, clsname = clsname
+            case _:
+                raise ValueError(f'Invalid import format "{fullname}".')
         if modname is None:
             if self.base is None:
                 modname = "builtins"
@@ -205,7 +207,7 @@ class TypeParser:  # flag: <type>
             for name in clsname:
                 cls = getattr(cls, name)
 
-        if flag is None:
+        if tag is None:
             return key, cls
 
         # parse args and kwargs
@@ -220,10 +222,10 @@ class TypeParser:  # flag: <type>
         return key, cls(*args, **kwargs)
 
 
-class AttrParser:  # flag: <attr>
-    @_flag_parser
-    def __call__(self, flag: Optional[str], key: str, value):
-        for attr in flag.split("."):
+class AttrParser:  # tag: <attr>
+    @_tag_parser
+    def __call__(self, tag: Optional[str], key: str, value):
+        for attr in tag.split("."):
             value = getattr(value, attr)
         return key, value
 
@@ -251,7 +253,7 @@ class RecursiveExtend:
         return new
 
 
-class ExtendParser:  # flag: <extend>
+class ExtendParser:  # tag: <extend>
     methods = {
         None: RecursiveExtend(op.add),
         "add": op.add,
@@ -264,19 +266,19 @@ class ExtendParser:  # flag: <extend>
         if methods:
             self.methods = methods | self.methods
 
-    @_flag_parser
-    def __call__(self, local: dict[str, Any], flag: Optional[str], key: str, value):
+    @_tag_parser
+    def __call__(self, local: dict[str, Any], tag: Optional[str], key: str, value):
         if key not in local:
             return key, value
         try:
-            return key, self.methods[flag](local[key], value)
+            return key, self.methods[tag](local[key], value)
         except KeyError:
             raise ValueError(
-                f'Unknown method when parsing "<{_ReservedFlag.extend}={flag}>"'
+                f'When parsing "<{_ReservedTag.extend}={tag}>":\n  unknown method.'
             )
 
 
-class VariableParser:  # flag: <var> <ref> <copy> <deepcopy>
+class VariableParser:  # tag: <var> <ref> <copy> <deepcopy>
     def __init__(self):
         self.local = {}
 
@@ -287,42 +289,42 @@ class VariableParser:  # flag: <var> <ref> <copy> <deepcopy>
                 return arg
         raise ValueError
 
-    @_flag_parser
-    def var(self, flag: Optional[str], key: str, value):
+    @_tag_parser
+    def var(self, tag: Optional[str], key: str, value):
         try:
-            self.local[self._get_name(flag, key)] = value
+            self.local[self._get_name(tag, key)] = value
         except ValueError:
             raise ValueError(
-                f'Variable name cannot be None when parsing "<{_ReservedFlag.var}>"'
+                f'When parsing "<{_ReservedTag.var}>":\n  variable name cannot be None.'
             )
         return key, value
 
-    def _get(self, flag: Optional[str], key: str, value, op: str):
+    def _get(self, tag: Optional[str], key: str, value, op: str):
         try:
-            name = self._get_name(flag, value, key)
+            name = self._get_name(tag, value, key)
             return self.local[name]
         except KeyError:
             raise KeyError(
-                f'Variable "{name}" does not exist when parsing "{key} <{op}={flag}>: {value}"'
+                f'When parsing "{key} <{op}={tag}>: {value}":\n  variable "{name}" does not exist.'
             )
         except ValueError:
             raise ValueError(f'Variable name cannot be None when parsing "<{op}>"')
 
-    @_flag_parser
-    def ref(self, flag: Optional[str], key: str, value):
-        return key, self._get(flag, key, value, _ReservedFlag.ref)
+    @_tag_parser
+    def ref(self, tag: Optional[str], key: str, value):
+        return key, self._get(tag, key, value, _ReservedTag.ref)
 
-    @_flag_parser
-    def copy(self, flag: Optional[str], key: str, value):
-        return key, copy.copy(self._get(flag, key, value, _ReservedFlag.copy))
+    @_tag_parser
+    def copy(self, tag: Optional[str], key: str, value):
+        return key, copy.copy(self._get(tag, key, value, _ReservedTag.copy))
 
-    @_flag_parser
-    def deepcopy(self, flag: Optional[str], key: str, value):
-        return key, copy.deepcopy(self._get(flag, key, value, _ReservedFlag.deepcopy))
+    @_tag_parser
+    def deepcopy(self, tag: Optional[str], key: str, value):
+        return key, copy.deepcopy(self._get(tag, key, value, _ReservedTag.deepcopy))
 
 
-def switch_parser(flag: str, flags: dict[str, Optional[str]], default: bool) -> bool:
-    match flags.get(flag, 0):
+def switch_parser(tag: str, tags: dict[str, Optional[str]], default: bool) -> bool:
+    match tags.get(tag, 0):
         case 0:
             return default
         case "on":
@@ -330,27 +332,27 @@ def switch_parser(flag: str, flags: dict[str, Optional[str]], default: bool) -> 
         case "off":
             return False
         case _:
-            raise ValueError(f'Unknown value when parsing "<{flag}={flags[flag]}>"')
+            raise ValueError(f'When parsing "<{tag}={tags[tag]}>":\n  unknown value')
 
 
-class FileParser:  # flag: <file>
-    @_flag_parser
+class FileParser:  # tag: <file>
+    @_tag_parser
     def __call__(
         self,
         path: str,
-        flag: Optional[str],
-        flags: dict[str, Optional[str]],
+        tag: Optional[str],
+        tags: dict[str, Optional[str]],
         key: str,
         value,
     ):
-        use_cache = switch_parser(_ReservedFlag.file_cache, flags, True)
+        use_cache = switch_parser(_ReservedTag.file_cache, tags, True)
         obj = next(
             load_url(
                 partial(
                     ConfigParser.io.load,
                     use_cache=use_cache,
                 ),
-                next(resolve_path(path, flag, value)),
+                next(resolve_path(path, tag, value)),
                 parse_query=False,
             )
         )
@@ -370,19 +372,19 @@ class _Parser:
         if result is None:
             result = {}
         for k, v in data.items():
-            key, flags, v = self.eval(k, v)
-            if (include_flag := flags.get(_ReservedFlag.include)) is not ...:
+            key, tags, v = self.eval(k, v)
+            if (include_tag := tags.get(_ReservedTag.include)) is not ...:
                 if key is None:
-                    self.include(v, include_flag, result=result)
+                    self.include(v, include_tag, result=result)
                     continue
                 else:
                     raise ValueError(f"Cannot use include with non-empty key: {key}")
-            self.setitem(result, flags, key, v)
+            self.setitem(result, tags, key, v)
         if (
             singleton
             and len(result) == 1
             and None in result
-            and not flags.has(_ReservedFlag.literal)
+            and not tags.has(_ReservedTag.literal)
         ):
             return result[None]
         return result
@@ -398,18 +400,16 @@ class _Parser:
         return parsed
 
     def eval(self, k: str, v: Any):
-        key, flags = self.custom.match(k)
-        if flags.has(_ReservedFlag.code):
+        key, tags = self.custom.match(k)
+        if tags.has(_ReservedTag.code):
             v = eval(v, None, self.custom.vars.local)
-        return key, flags, v
+        return key, tags, v
 
-    def setitem(
-        self, local: dict[str, Any], flags: _MatchedFlags, key: str, value: Any
-    ):
+    def setitem(self, local: dict[str, Any], tags: _MatchedTags, key: str, value: Any):
         if (
             self.custom.expand
             and key is not None
-            and not flags.has(_ReservedFlag.literal)
+            and not tags.has(_ReservedTag.literal)
         ):
             keys = key.split(".")
             local = SimpleTree.init(local, keys[:-1])
@@ -418,16 +418,16 @@ class _Parser:
             value = self.dict(value)
         elif isinstance(value, list):
             value = self.list(value)
-        key, value = flags.apply(path=self.base, local=local, key=key, value=value)
-        if not flags.has(_ReservedFlag.discard):
+        key, value = tags.apply(path=self.base, local=local, key=key, value=value)
+        if not tags.has(_ReservedTag.discard):
             local[key] = value
 
-    def include(self, paths, flag: str, result: dict[str, Any] = None):
+    def include(self, paths, tag: str, result: dict[str, Any] = None):
         if isinstance(paths, str):
             paths = [paths]
         if isinstance(paths, list) and all(isinstance(path, str) for path in paths):
             return self.custom.parse(
-                *resolve_path(self.base, flag, *paths), result=result
+                *resolve_path(self.base, tag, *paths), result=result
             )
         raise ValueError(f"Cannot include the configs from: {paths}")
 
@@ -435,41 +435,38 @@ class _Parser:
 @dataclass
 class _ParserCustomization:
     expand: bool = True
-    custom_flags: dict[str, Optional[FlagParser]] = field(default_factory=dict)
+    custom_tags: dict[str, Optional[TagParser]] = field(default_factory=dict)
     extend_methods: dict[str, ExtendMethod] = field(default_factory=dict)
 
 
 @dataclass
 class _ParserInitializer(_ParserCustomization):
-    pattern_match = re.compile(r"(?P<key>.*?)\s*(?P<flags>(\<[^\>\<]*\>\s*)*)\s*")
-    pattern_split = re.compile(r"\<(?P<flag>[^\>\<]*)\>")
+    pattern_match = re.compile(r"(?P<key>.*?)\s*(?P<tags>(\<[^\>\<]*\>\s*)*)\s*")
+    pattern_split = re.compile(r"\<(?P<tag>[^\>\<]*)\>")
 
     static_parsers = {
-        _ReservedFlag.code: None,
-        _ReservedFlag.include: None,
-        _ReservedFlag.literal: None,
-        _ReservedFlag.discard: None,
-        _ReservedFlag.dummy: None,
-        _ReservedFlag.file: FileParser(),
-        _ReservedFlag.file_cache: None,
-        _ReservedFlag.type: TypeParser(),
-        _ReservedFlag.attr: AttrParser(),
+        _ReservedTag.code: None,
+        _ReservedTag.include: None,
+        _ReservedTag.literal: None,
+        _ReservedTag.discard: None,
+        _ReservedTag.dummy: None,
+        _ReservedTag.file: FileParser(),
+        _ReservedTag.file_cache: None,
+        _ReservedTag.type: TypeParser(),
+        _ReservedTag.attr: AttrParser(),
     }
 
     def __post_init__(self):
         self.vars = VariableParser()
         self.parsers = (
-            {
-                k: v if v is None else _flag_parser(v)
-                for k, v in self.custom_flags.items()
-            }
+            {k: v if v is None else _tag_parser(v) for k, v in self.custom_tags.items()}
             | self.static_parsers
             | {
-                _ReservedFlag.var: self.vars.var,
-                _ReservedFlag.ref: self.vars.ref,
-                _ReservedFlag.copy: self.vars.copy,
-                _ReservedFlag.deepcopy: self.vars.deepcopy,
-                _ReservedFlag.extend: ExtendParser(self.extend_methods),
+                _ReservedTag.var: self.vars.var,
+                _ReservedTag.ref: self.vars.ref,
+                _ReservedTag.copy: self.vars.copy,
+                _ReservedTag.deepcopy: self.vars.deepcopy,
+                _ReservedTag.extend: ExtendParser(self.extend_methods),
             }
         )
 
@@ -498,26 +495,26 @@ class _ParserInitializer(_ParserCustomization):
                 parser.dict(config, result=result)
         return result
 
-    def match(self, key: Optional[str]) -> tuple[Optional[str], _MatchedFlags]:
+    def match(self, key: Optional[str]) -> tuple[Optional[str], _MatchedTags]:
         if key is None:
-            return None, _NoFlag
+            return None, _NoTag
         matched = self.pattern_match.fullmatch(key)
         if not matched:
-            return key, _NoFlag
-        flags = []
-        for flag in self.pattern_split.finditer(matched["flags"]):
-            k = flag["flag"].split("=")
+            return key, _NoTag
+        tags = []
+        for tag in self.pattern_split.finditer(matched["tags"]):
+            k = tag["tag"].split("=")
             if len(k) == 1:
                 v = None
             elif len(k) == 2:
                 v = k[1]
             else:
-                raise ValueError(f"Invalid flag format: <{flag}> in {key}")
-            flags.append((k[0], v))
+                raise ValueError(f"Invalid tag format: <{tag}> in {key}")
+            tags.append((k[0], v))
         key = matched["key"]
         if not key or key == "~":
             key = None
-        return key, _MatchedFlags(flags, self.parsers)
+        return key, _MatchedTags(tags, self.parsers)
 
 
 class ConfigParser(_ParserCustomization):
@@ -528,8 +525,8 @@ class ConfigParser(_ParserCustomization):
     ----------
     expand : bool, optional, default=False
         Expand dot-separated keys to nested dicts.
-    custom_flags : dict[str, Optional[FlagParser]], optional
-        Customized flags
+    custom_tags : dict[str, Optional[TagParser]], optional
+        Customized tags.
     extend_methods : dict[str, ExtendMethod], optional
         Customized <extend> methods.
 
@@ -549,7 +546,7 @@ class ConfigParser(_ParserCustomization):
         Parameters
         ----------
         *path_or_dict : ConfigSource
-            Paths to config files or deserialized configs.
+            Dictionaries or paths to config files.
         result : dict[str, Any], optional
             If provided, the configs will be loaded into this dict.
 

@@ -2,48 +2,51 @@
 Config Parser
 **************
 
-This tool provides a consistent solution to load multiple configuration files into a single nested dictionary and extend the commonly used dictionary-like formats (``JSON``, ``YAML``, ``TOML``, ``INI``) by adding flags to keys.
+This tool provides a consistent solution to load multiple configuration files into a single nested dictionary and extend the commonly used dictionary-like formats (``JSON``, ``YAML``, ``TOML``, ``INI``) by adding tags to keys.
 
 Parser
 ================
 # TODO
 
-Flag
+Tag
 ================
 
 Syntax
 --------------
-- A flag is defined as a key-value pair given by ``<flag_key=flag_value>`` or ``<flag_key>`` if the value is ``None``. 
-- The number of flags is unlimited.
-- The spaces between key and flags are optional.
+
+- A tag is defined as a key-value pair given by ``<tag_key=tag_value>`` or ``<tag_key>`` if the tag value is ``None``. 
+- Arbitrary number of tags can be attached to a key.
+- The spaces between key and tags are optional.
 
 .. admonition:: example
   :class: guide-config-example, dropdown
 
-  The following key and flags are valid:
+  The following key and tags are valid:
 
   .. code-block:: yaml
 
     key: value
-    key<flag_key>: value
-    key <flag_key=flag_value>: value
-    key   <flag_key1=flag_value1><flag_key2>  <flag_key3=flag_value3>  : value
-    <flag_key1> <flag_key2=flag_value2>  : value
+    key<tag_key>: value
+    key <tag_key=tag_value>: value
+    key   <tag_key1=tag_value1><tag_key2>  <tag_key3=tag_value3>  : value
+    <tag_key1> <tag_key2=tag_value2>  : value
 
 
 Parsing
 --------------
-- The flags are parsed from left to right, with some exceptions.
-- Each parser will use the key and value from the previous parser, so the order of flags matters.
-- If a flag occurs multiple times, each will be parsed based on the order, with some exceptions.
-- Exceptions: :ref:`config-flag-code` and :ref:`config-flag-include` have higher priority than all others and will only be parsed once.
-- Exceptions: :ref:`config-flag-discard`, :ref:`config-flag-dummy` and :ref:`config-flag-cache` will not trigger any parser.
+
+- The tags are parsed from left to right, with some exceptions.
+- Each parser will use the key and value from the previous parser, so the order of tags matters.
+- If a tag occurs multiple times, each will be parsed based on the order, with some exceptions.
+- Exceptions: :ref:`config-tag-code` and :ref:`config-tag-include` have higher priority than all others and will only be parsed once.
+- Exceptions: :ref:`config-tag-discard`, :ref:`config-tag-dummy` and :ref:`config-tag-cache` will not trigger any parser.
 
 .. _config-url-io:
 
 URL and IO
 ------------
-Both the :class:`~heptools.config.ConfigParser` and built-in flags :ref:`config-flag-include`, :ref:`config-flag-file` shares the same IO mechanism.
+
+Both the :class:`~heptools.config.ConfigParser` and built-in tags :ref:`config-tag-include`, :ref:`config-tag-file` shares the same IO mechanism.
 
 The file path is described by a standard URL accepted by :func:`urllib.parse.urlparse` with the format:
 
@@ -97,7 +100,7 @@ Special
 ``expand=True`` in :class:`~heptools.config.ConfigParser`
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-When ``expand=True`` (default), the dot-separated keys will be interpreted as accessing a nested dictionary and the parents will not be overriden. Use :ref:`config-flag-literal` to escape the keys with dot.
+When ``expand=True`` (default), the dot-separated keys will be interpreted as accessing a nested dictionary and the parents will not be overriden. Use :ref:`config-tag-literal` to escape the keys with dot.
 
 .. admonition:: example
   :class: guide-config-example, dropdown
@@ -117,7 +120,21 @@ When ``expand=True`` (default), the dot-separated keys will be interpreted as ac
     # create a nested dict
     parent2.child.grandchild: value4
 
-  will be parsed into ``{"parent1": {"child2": "value2", "child3": "value3"}, "parent2": {"child": {"grandchild": "value4"}}}``
+  will be parsed into 
+
+  .. code-block:: python
+
+    {
+      "parent1": {
+        "child2": "value2",
+        "child3": "value3"
+      },
+      "parent2": {
+        "child": {
+          "grandchild": "value4"
+        }
+      }
+    }
 
 ``None`` key
 ^^^^^^^^^^^^
@@ -131,20 +148,20 @@ Besides the standard rules, both ``~`` and empty string in the key will be parse
 
     # None
     ~: value
-    ~ <flag>: value
+    ~ <tag>: value
     "": value
-    <flag>: value
+    <tag>: value
     null: value
 
     # not None
-    null <flag>: value
+    null <tag>: value
 
 .. _config-special-list:
 
 Apply to ``list`` elements
 ^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-When the element is a dictionary and the only key is ``None``, the element will be replaced by the value. Use :ref:`config-flag-literal` to retain the original dictionary.
+When the element is a dictionary and the only key is ``None``, the element will be replaced with the value. Use :ref:`config-tag-literal` to retain the original dictionary.
 
 .. admonition:: example
   :class: guide-config-example, dropdown
@@ -152,21 +169,30 @@ When the element is a dictionary and the only key is ``None``, the element will 
   .. code-block:: yaml
 
     - key1: value1 
-      <flag>: value2 # regular None key
-    - <flag>: value3 # replace element by value
-    - <flag> <literal>: value4 # escape the None key
+      <tag>: value2 # regular None key
+    - <tag>: value3 # replace the whole element with its value
+    - <tag> <literal>: value4 # escape the None key
 
-  will be parsed into ``[{"key1": "value1", None: "value2"}, "value3", {None: "value4"}]``. 
+  will be parsed into
 
-Built-in flags
+  .. code-block:: python
+  
+    [
+      {"key1": "value1", None: "value2"},
+      "value3",
+      {None: "value4"},
+    ]
+
+
+Built-in tags
 ===============
 
-.. _config-flag-code:
+.. _config-tag-code:
 
 ``<code>``
 --------------
 
-This flag will replace the value by the result of :func:`eval`. The variables defined with :ref:`config-flag-var` are available as ``locals``.
+This tag will replace the current value by the result of :func:`eval`. The variables defined with :ref:`config-tag-var` are available as ``locals``.
 
 .. admonition:: value
   :class: guide-config-value
@@ -180,25 +206,25 @@ This flag will replace the value by the result of :func:`eval`. The variables de
 
     key <code>: '[f"item{i}" for i in range(100)]'
 
-.. _config-flag-include:
+.. _config-tag-include:
 
 ``<include>``
 --------------
 
-This flag allows to merge dictionaries from other config files into the given level and will be parsed under the current context. See :ref:`config-url-io` for details.
+This tag allows to merge dictionaries from other config files into the given level and will be parsed under the current context. See :ref:`config-url-io` for details.
 
-.. admonition:: flag
-  :class: guide-config-flag
+.. admonition:: tag
+  :class: guide-config-tag
 
   - ``<include>``: the type of the path will be inferred.
   - ``<include=absolute>``: resolve as an absolute path.
   - ``<include=relative>``: resolve as an path relative to the current config file.
 
 .. admonition:: key
-  :class: guide-config-key
+  :class: guide-config-value
 
-  - the key is required to be empty.
-  - any flag other than :ref:`config-flag-code` will be ignored.
+  - the key must be empty.
+  - any tag other than :ref:`config-tag-code` will not be parsed.
 
 
 .. admonition:: value
@@ -219,6 +245,7 @@ This flag allows to merge dictionaries from other config files into the given le
 
     --- # file2.yml
     key2:
+      key2_1: value1
       key2_2: value2
 
     key3:
@@ -226,9 +253,17 @@ This flag allows to merge dictionaries from other config files into the given le
         - file1.yml#key1
         - .#key2
 
-  Then ``file2.yml#key3`` will give ``{'key1_1': 'value1', 'key2_2': 'value2'}``.
+  Then ``file2.yml#key3`` will give
 
-.. _config-flag-literal:
+  .. code-block:: python
+
+    {
+      "key1_1": "value1",
+      "key2_1": "value1",
+      "key2_2": "value2",
+    }
+
+.. _config-tag-literal:
 
 ``<literal>``
 --------------
@@ -239,7 +274,7 @@ The keys marked as ``<literal>`` will not trigger the following rules:
 -  :ref:`config-special-list`
 
 
-.. _config-flag-discard:
+.. _config-tag-discard:
 
 ``<discard>``
 --------------
@@ -260,12 +295,12 @@ The keys marked as ``<discard>`` will not be added into the current dictionary b
 
   The example above will print ``Hello World`` and be parsed into ``{'key1': 'value1'}``.
 
-.. _config-flag-dummy:
+.. _config-tag-dummy:
 
 ``<dummy>``
 ------------
 
-This flag is reserved to never trigger any parser.
+This tag is reserved to never trigger any parser.
 
 .. admonition:: example
   :class: guide-config-example, dropdown
@@ -282,15 +317,15 @@ This flag is reserved to never trigger any parser.
   The example above will be parsed into ``{'key': 10}``.
 
 
-.. _config-flag-file:
+.. _config-tag-file:
 
 ``<file>``
 ----------
 
-This flag allows to insert any deserialized object from a URL. Unlike :ref:`config-flag-include`, this flag will only replace the value by a deep copy of the loaded object, instead of merging it into the current dictionary. See :ref:`config-url-io` for details. If the object is large and only used once, ``<file-cache=off>`` can be used to temporarily disable the cache and avoid the deep copy.
+This tag allows to insert any deserialized object from a URL. Unlike :ref:`config-tag-include`, this tag will only replace the current value by a deep copy of the loaded object, instead of merging it into the current dictionary. See :ref:`config-url-io` for details. If the object is large and only used once, ``<file-cache=off>`` can be used to temporarily disable the cache and avoid the deep copy.
 
-.. admonition:: flag
-  :class: guide-config-flag
+.. admonition:: tag
+  :class: guide-config-tag
 
   - ``<file>``: the type of the path will be inferred.
   - ``<file=absolute>``: resolve as an absolute path.
@@ -319,31 +354,195 @@ This flag allows to insert any deserialized object from a URL. Unlike :ref:`conf
     key1 <file>: database.pkl.lz4#column1
     key2 <file-cache=off> <file>: database.pkl.lz4#column1
 
-  will be parsed into ``{"key1": [0, 0, ..., 0], "key2": [0, 0, ..., 0]}``, while the cache is disabled in key2.
+  will be parsed into ``{"key1": [0, ..., 0], "key2": [0, ..., 0]}``, while the cache is disabled when parsing key2.
 
-.. _config-flag-type:
+.. _config-tag-type:
 
 ``<type>``
 ----------
-# TODO
 
-.. _config-flag-attr:
+This tag can be used to import a module/attribute, create an instance of a class, or call a function.
+
+.. admonition:: flag
+  :class: guide-config-flag
+
+  - An import path is defined as ``{module}::{attribute}``, which is roughly equivalent to the python statement ``from {module} import {attribute}``.
+    - ``{module}::`` can be omitted for :mod:`functions`.
+    - If ``{attribute}`` is not provided, the whole module will be returned.
+    - ``{attribute}`` can be a dot separated string to get a similar effect as :ref:`config-tag-attr`.
+  - ``<type>``: when the tag value is not provided, the value must be a valid import path ande will be replaced by the imported object.
+  - ``<type={module::attribute}>``: when the tag value is provided, the imported object will be called with the value as its arguments.
+
+.. admonition:: value
+  :class: guide-config-value
+
+  - ``<type>``:
+    - ``str``: a valid import path ``{module}::{attribute}``.
+  - ``<type={module::attribute}>``:
+    - ``module.attribute(*value)``: if the value is a list, it will be used as positional arguments.
+    - ``module.attribute(**value)``: If the value is a dict and only contains string keys, the string keys will be used as keyword arguments.
+    - ``module.attribute(*value[None], **value[others])``: If the value is a dict and the ``None`` key is a list, the ``None`` key will be used as positional arguments.
+    - ``module.attribute(value[None], **value[others])``: If the value is a dict and the ``None`` key is not a list, the ``None`` key will be used as the first argument.
+    - ``module.attribute(value)``: If the value is neither a list nor a dict, it will be used as the first argument.
+
+.. admonition:: example
+  :class: guide-config-example, dropdown
+
+  .. code-block:: yaml
+
+    key1 <type>: "json::" # import a module
+    key2 <type>: json::loads # import a function
+    key3 <type>: json::loads.__qualname__ # import a nested attribute
+    key4 <type=range>: [0, 100, 10] # positional arguments
+    <discard>:
+      <type=logging::basicConfig>:
+        level <type>: logging::INFO # tags can be nested
+      <type=logging::info>: message  # call a function with one argument
+    <discard><type=print>: # create an instance of a built-in class
+      ~: # positional arguments
+        - message1
+        - message2
+        - message3
+      sep: "\n" # keyword arguments
+
+  will be parsed into
+
+  .. code-block:: python
+
+    import json
+    import logging
+
+    {
+      "key1": json,
+      "key2": json.loads,
+      "key3": json.loads.__qualname__,
+      "key4": range(0, 100, 10),
+    }
+    logging.info("message")
+    print("message1", "message2", "message3", sep="\n")
+
+.. _config-tag-attr:
 
 ``<attr>``
 ----------
-# TODO
 
-.. _config-flag-var:
+This tag will replace the current value by the its attribute. A tag like ``<attr=attr1.attr2>`` is equivalent to the pseudo code ``value.attr1.attr2``.
+
+.. admonition:: flag
+  :class: guide-config-flag
+
+  - ``<attr={attribute}>``: where the attribute can be a dot separated string.
+
+.. _config-tag-var:
 
 ``<var>``
 ---------
-# TODO var, ref, copy, deepcopy
 
-.. _config-flag-extend:
+This tag can be used to create a variable from the current value. The variable has a lifecycle spans the entire parser :meth:`~heptools.config.ConfigParser.__call__` and is shared by all files within the same call. The variable can be accessed using ``<ref>``, ``<copy>`` or ``<deepcopy>`` and is also available as ``locals`` in :ref:`config-tag-code`.
+
+.. admonition:: flag
+  :class: guide-config-flag
+
+  - The first of the following that is a string will be used as the variable name:
+    - ``<var>``: tag value, key
+    - ``<ref>``, ``<copy>``, ``<deepcopy>``: tag value, value, key
+  - ``<var>``, ``<var={variable}>``: define a new variable. 
+  - ``<ref>``, ``<ref={variable}>``: replace the value by a reference to the variable. 
+  - ``<copy>``, ``<copy={variable}>``: replace the value by a :func:`~copy.copy` of the variable.
+  - ``<deepcopy>``, ``<deepcopy={variable}>``: replace the value by a :func:`~copy.deepcopy` of the variable.
+
+.. admonition:: example
+  :class: guide-config-example, dropdown
+
+  .. code-block:: yaml
+
+    --- # file1.yml
+    var1 <var>: [value1_1] # use the key as variable name
+    key1 <var=var2>: [value2_1, value2_2] # use the tag value as variable name
+
+    --- # file2.yml
+    <discard>: # only make use of the variables
+      <include>: file1.yml
+    key1 <var=var3>: [value3_1, value3_2, value3_3]
+    key2 <ref=var1>: # a reference to var1 in file1.yml, use the tag value as variable name
+    key3 <copy>: var2 # a copy of var2 in file1.yml, use the value as variable name
+    var3 <deepcopy>: # a deepcopy of var3 in the same file, use the key as variable name
+    var3 <extend>: [value3_4] # append to the deepcopy
+
+  ``"file2.yml"`` will be parsed into:
+
+  .. code-block:: python
+
+    {
+      "key1": ["value3_1", "value3_2", "value3_3"],
+      "key2": ["value1_1"],
+      "key3": ["value2_1", "value2_2"],
+      "var3": ["value3_1", "value3_2", "value3_3", "value3_4"],
+    }
+
+
+.. _config-tag-extend:
 
 ``<extend>``
 ------------
-# TODO
+
+This tag will try to extend the existing value of the same key by the current value, in a way given by the pseudo code:
+
+.. code-block:: python
+  
+  if key in local:
+    return extend(local[key], value)
+  else:
+    return value
+
+where the ``extend`` function is a binary operation specified by the tag value.
+
+.. admonition:: flag
+  :class: guide-config-flag
+
+  - ``<extend>``, ``<extend=recursive>``: recursively merge dictionaries or add up other types.
+  - ``<extend=add>``: ``local[key] + value``
+  - ``<extend=or>``: ``local[key] | value``
+  - ``<extend=and>``: ``local[key] & value``
+  - ``<extend={operation}>``: see :ref:`config-custom-extend`
+
+.. warning::
+  
+  None of the above operation will modify the existing value in-place.
+
+
+.. admonition:: example
+  :class: guide-config-example, dropdown
+
+  .. code-block:: yaml
+    parent1 <var=old>:
+      child1: 
+        - a
+        - b
+      child2: 1
+    # recursively merge dictionaries
+    parent1 <extend>:
+      child1:
+        - c
+      child2: 2
+    # the old value will not be modified in-place
+    parent2 <ref>: old 
+    
+  
+  will be parsed into
+
+  .. code-block:: python
+
+    {
+      "parent1": {
+        "child1": ["a", "b", "c"],
+        "child2": 3
+      },
+      "parent2": {
+        "child1": ["a", "b"],
+        "child2": 1
+      }
+    }
 
 Customization
 ===============
