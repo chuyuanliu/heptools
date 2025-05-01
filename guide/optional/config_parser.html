@@ -520,7 +520,7 @@
 <h2>Built-in tags<a class="headerlink" href="#built-in-tags" title="Link to this heading">#</a></h2>
 <section id="code">
 <span id="config-tag-code"></span><h3><code class="docutils literal notranslate"><span class="pre">&lt;code&gt;</span></code><a class="headerlink" href="#code" title="Link to this heading">#</a></h3>
-<p>This tag will replace the current value by the result of <a class="reference external" href="https://docs.python.org/3/library/functions.html#eval" title="(in Python v3.13)"><code class="xref py py-func docutils literal notranslate"><span class="pre">eval()</span></code></a>. The variables defined with <a class="reference internal" href="#config-tag-var"><span class="std std-ref">&lt;var&gt;</span></a> are available as <code class="docutils literal notranslate"><span class="pre">locals</span></code>.</p>
+<p>This tag will replace the value by the result of <a class="reference external" href="https://docs.python.org/3/library/functions.html#eval" title="(in Python v3.13)"><code class="xref py py-func docutils literal notranslate"><span class="pre">eval()</span></code></a>. The variables defined with <a class="reference internal" href="#config-tag-var"><span class="std std-ref">&lt;var&gt;</span></a> are available as <code class="docutils literal notranslate"><span class="pre">locals</span></code>.</p>
 <div class="guide-config-value admonition">
 <p class="admonition-title">value</p>
 <ul class="simple">
@@ -625,7 +625,7 @@
 </section>
 <section id="file">
 <span id="config-tag-file"></span><h3><code class="docutils literal notranslate"><span class="pre">&lt;file&gt;</span></code><a class="headerlink" href="#file" title="Link to this heading">#</a></h3>
-<p>This tag allows to insert any deserialized object from a URL. Unlike <a class="reference internal" href="#config-tag-include"><span class="std std-ref">&lt;include&gt;</span></a>, this tag will only replace the current value by a deep copy of the loaded object, instead of merging it into the current dictionary. See <a class="reference internal" href="#config-url-io"><span class="std std-ref">URL and IO</span></a> for details. If the object is large and only used once, <code class="docutils literal notranslate"><span class="pre">&lt;file-cache=off&gt;</span></code> can be used to temporarily disable the cache and avoid the deep copy.</p>
+<p>This tag allows to insert any deserialized object from a URL. Unlike <a class="reference internal" href="#config-tag-include"><span class="std std-ref">&lt;include&gt;</span></a>, this tag will only replace the value by a deep copy of the loaded object, instead of merging it into the current dictionary. See <a class="reference internal" href="#config-url-io"><span class="std std-ref">URL and IO</span></a> for details. If the object is large and only used once, <code class="docutils literal notranslate"><span class="pre">&lt;file-cache=off&gt;</span></code> can be used to temporarily disable the cache and avoid the deep copy.</p>
 <div class="guide-config-tag admonition">
 <p class="admonition-title">tag</p>
 <ul class="simple">
@@ -640,6 +640,7 @@
 <p class="admonition-title">value</p>
 <ul class="simple">
 <li><p><code class="docutils literal notranslate"><span class="pre">str</span></code>: a URL to any object</p></li>
+<li><p>The rules in <a class="reference internal" href="#config-url-io"><span class="std std-ref">URL and IO</span></a> apply.</p></li>
 </ul>
 </div>
 <div class="guide-config-example dropdown admonition">
@@ -728,7 +729,7 @@
 </section>
 <section id="attr">
 <span id="config-tag-attr"></span><h3><code class="docutils literal notranslate"><span class="pre">&lt;attr&gt;</span></code><a class="headerlink" href="#attr" title="Link to this heading">#</a></h3>
-<p>This tag will replace the current value by the its attribute. A tag like <code class="docutils literal notranslate"><span class="pre">&lt;attr=attr1.attr2&gt;</span></code> is equivalent to the pseudo code <code class="docutils literal notranslate"><span class="pre">value.attr1.attr2</span></code>.</p>
+<p>This tag will replace the value by the its attribute. A tag like <code class="docutils literal notranslate"><span class="pre">&lt;attr=attr1.attr2&gt;</span></code> is equivalent to the pseudo code <code class="docutils literal notranslate"><span class="pre">value.attr1.attr2</span></code>.</p>
 <div class="guide-config-tag admonition">
 <p class="admonition-title">tag</p>
 <ul class="simple">
@@ -738,7 +739,7 @@
 </section>
 <section id="var">
 <span id="config-tag-var"></span><h3><code class="docutils literal notranslate"><span class="pre">&lt;var&gt;</span></code><a class="headerlink" href="#var" title="Link to this heading">#</a></h3>
-<p>This tag can be used to create a variable from the current value. The variable has a lifecycle spans the entire parser <a class="reference internal" href="../../api/config.html#heptools.config.ConfigParser.__call__" title="heptools.config.ConfigParser.__call__"><code class="xref py py-meth docutils literal notranslate"><span class="pre">__call__()</span></code></a> and is shared by all files within the same call. The variable can be accessed using <code class="docutils literal notranslate"><span class="pre">&lt;ref&gt;</span></code>, <code class="docutils literal notranslate"><span class="pre">&lt;copy&gt;</span></code> or <code class="docutils literal notranslate"><span class="pre">&lt;deepcopy&gt;</span></code> and is also available as <code class="docutils literal notranslate"><span class="pre">locals</span></code> in <a class="reference internal" href="#config-tag-code"><span class="std std-ref">&lt;code&gt;</span></a>.</p>
+<p>This tag can be used to create a variable from the value. The variable has a lifecycle spans the entire parser <a class="reference internal" href="../../api/config.html#heptools.config.ConfigParser.__call__" title="heptools.config.ConfigParser.__call__"><code class="xref py py-meth docutils literal notranslate"><span class="pre">__call__()</span></code></a> and is shared by all files within the same call. The variable can be accessed using <code class="docutils literal notranslate"><span class="pre">&lt;ref&gt;</span></code>, <code class="docutils literal notranslate"><span class="pre">&lt;copy&gt;</span></code> or <code class="docutils literal notranslate"><span class="pre">&lt;deepcopy&gt;</span></code> and is also available as <code class="docutils literal notranslate"><span class="pre">locals</span></code> in <a class="reference internal" href="#config-tag-code"><span class="std std-ref">&lt;code&gt;</span></a>.</p>
 <div class="guide-config-tag admonition">
 <p class="admonition-title">tag</p>
 <ul class="simple">
@@ -783,7 +784,7 @@
 </section>
 <section id="extend">
 <span id="config-tag-extend"></span><h3><code class="docutils literal notranslate"><span class="pre">&lt;extend&gt;</span></code><a class="headerlink" href="#extend" title="Link to this heading">#</a></h3>
-<p>This tag will try to extend the existing value of the same key by the current value, in a way given by the pseudo code:</p>
+<p>This tag will try to extend the existing value of the same key by the value, in a way given by the pseudo code:</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">if</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">local</span><span class="p">:</span>
   <span class="k">return</span> <span class="n">extend</span><span class="p">(</span><span class="n">local</span><span class="p">[</span><span class="n">key</span><span class="p">],</span> <span class="n">value</span><span class="p">)</span>
 <span class="k">else</span><span class="p">:</span>
