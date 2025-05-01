@@ -126,12 +126,11 @@ When ``expand=True`` (default), the dot-separated keys will be interpreted as ac
   .. code-block:: python
 
     {
-      "parent1":
-      {
+      "parent1": {
         "child2": "value2",
-        "child3": "value3"
+        "child3": "value3",
       },
-      "parent2": {"child": {"grandchild": "value4"}}
+      "parent2": {"child": {"grandchild": "value4"}},
     }
 
 ``None`` key
@@ -277,7 +276,7 @@ The keys marked as ``<literal>`` will not trigger the following rules:
 ``<discard>``
 --------------
 
-The keys marked as ``<discard>`` will not be added into the current dictionary but will still be parsed. This is useful when you only want to make use of the side effects of parsing. e.g. define variables, execute code, etc.
+The keys marked as ``<discard>`` will not be added into the current dictionary but will still be parsed. This is useful when only the side effects of the parsing are needed. e.g. define variables, execute code, etc.
 
 .. admonition:: example
   :class: guide-config-example, dropdown
@@ -296,7 +295,7 @@ The keys marked as ``<discard>`` will not be added into the current dictionary b
 ``<dummy>``
 ------------
 
-This tag is reserved to never trigger any parser. This is useful when you want to create duplicate keys.
+This tag is reserved to never trigger any parser. This is useful when there are duplicate keys.
 
 .. admonition:: example
   :class: guide-config-example, dropdown
@@ -516,17 +515,13 @@ where the ``extend`` function is a binary operation specified by the tag value.
 
   .. code-block:: yaml
 
-    parent1 <var=old>:
-      child1: 
-        - a
-        - b
+    parent1 <var=original>:
+      child1: [a, b]
       child2: 1
     parent1 <extend>: # recursively merge dictionaries
-      child1:
-        - c
+      child1: [c]
       child2: 2
-    parent2 <ref>: old # the old value will not be modified in-place
-    
+    parent2 <ref>: original # the original value is unmodified
   
   will be parsed into
 

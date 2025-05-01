@@ -465,12 +465,11 @@
 </div>
 <p>will be parsed into</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="p">{</span>
-  <span class="s2">&quot;parent1&quot;</span><span class="p">:</span>
-  <span class="p">{</span>
+  <span class="s2">&quot;parent1&quot;</span><span class="p">:</span> <span class="p">{</span>
     <span class="s2">&quot;child2&quot;</span><span class="p">:</span> <span class="s2">&quot;value2&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;child3&quot;</span><span class="p">:</span> <span class="s2">&quot;value3&quot;</span>
+    <span class="s2">&quot;child3&quot;</span><span class="p">:</span> <span class="s2">&quot;value3&quot;</span><span class="p">,</span>
   <span class="p">},</span>
-  <span class="s2">&quot;parent2&quot;</span><span class="p">:</span> <span class="p">{</span><span class="s2">&quot;child&quot;</span><span class="p">:</span> <span class="p">{</span><span class="s2">&quot;grandchild&quot;</span><span class="p">:</span> <span class="s2">&quot;value4&quot;</span><span class="p">}}</span>
+  <span class="s2">&quot;parent2&quot;</span><span class="p">:</span> <span class="p">{</span><span class="s2">&quot;child&quot;</span><span class="p">:</span> <span class="p">{</span><span class="s2">&quot;grandchild&quot;</span><span class="p">:</span> <span class="s2">&quot;value4&quot;</span><span class="p">}},</span>
 <span class="p">}</span>
 </pre></div>
 </div>
@@ -598,7 +597,7 @@
 </section>
 <section id="discard">
 <span id="config-tag-discard"></span><h3><code class="docutils literal notranslate"><span class="pre">&lt;discard&gt;</span></code><a class="headerlink" href="#discard" title="Link to this heading">#</a></h3>
-<p>The keys marked as <code class="docutils literal notranslate"><span class="pre">&lt;discard&gt;</span></code> will not be added into the current dictionary but will still be parsed. This is useful when you only want to make use of the side effects of parsing. e.g. define variables, execute code, etc.</p>
+<p>The keys marked as <code class="docutils literal notranslate"><span class="pre">&lt;discard&gt;</span></code> will not be added into the current dictionary but will still be parsed. This is useful when only the side effects of the parsing are needed. e.g. define variables, execute code, etc.</p>
 <div class="guide-config-example dropdown admonition">
 <p class="admonition-title">example</p>
 <div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">&lt;discard&gt;</span><span class="p">:</span>
@@ -612,7 +611,7 @@
 </section>
 <section id="dummy">
 <span id="config-tag-dummy"></span><h3><code class="docutils literal notranslate"><span class="pre">&lt;dummy&gt;</span></code><a class="headerlink" href="#dummy" title="Link to this heading">#</a></h3>
-<p>This tag is reserved to never trigger any parser. This is useful when you want to create duplicate keys.</p>
+<p>This tag is reserved to never trigger any parser. This is useful when there are duplicate keys.</p>
 <div class="guide-config-example dropdown admonition">
 <p class="admonition-title">example</p>
 <div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">key</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">1</span>
@@ -807,16 +806,13 @@
 </div>
 <div class="guide-config-example dropdown admonition">
 <p class="admonition-title">example</p>
-<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">parent1 &lt;var=old&gt;</span><span class="p">:</span>
-<span class="w">  </span><span class="nt">child1</span><span class="p">:</span>
-<span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">a</span>
-<span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">b</span>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">parent1 &lt;var=original&gt;</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">child1</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">a</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">b</span><span class="p p-Indicator">]</span>
 <span class="w">  </span><span class="nt">child2</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">1</span>
 <span class="nt">parent1 &lt;extend&gt;</span><span class="p">:</span><span class="w"> </span><span class="c1"># recursively merge dictionaries</span>
-<span class="w">  </span><span class="nt">child1</span><span class="p">:</span>
-<span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">c</span>
+<span class="w">  </span><span class="nt">child1</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">c</span><span class="p p-Indicator">]</span>
 <span class="w">  </span><span class="nt">child2</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">2</span>
-<span class="nt">parent2 &lt;ref&gt;</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">old</span><span class="w"> </span><span class="c1"># the old value will not be modified in-place</span>
+<span class="nt">parent2 &lt;ref&gt;</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">original</span><span class="w"> </span><span class="c1"># the original value is unmodified</span>
 </pre></div>
 </div>
 <p>will be parsed into</p>
