@@ -666,10 +666,13 @@
 <div class="guide-config-flag admonition">
 <p class="admonition-title">flag</p>
 <ul class="simple">
-<li><p>An import path is defined as <code class="docutils literal notranslate"><span class="pre">{module}::{attribute}</span></code>, which is roughly equivalent to the python statement <code class="docutils literal notranslate"><span class="pre">from</span> <span class="pre">{module}</span> <span class="pre">import</span> <span class="pre">{attribute}</span></code>.
-* <code class="docutils literal notranslate"><span class="pre">{module}::</span></code> can be omitted for <a class="reference external" href="https://docs.python.org/3/library/functions.html" title="(in Python v3.13)"><span>Built-in Functions</span></a>.
-* If <code class="docutils literal notranslate"><span class="pre">{attribute}</span></code> is not provided, the whole module will be returned.
-* <code class="docutils literal notranslate"><span class="pre">{attribute}</span></code> can be a dot separated string to get a similar effect as <a class="reference internal" href="#config-tag-attr"><span class="std std-ref">&lt;attr&gt;</span></a>.</p></li>
+<li><p>An import path is defined as <code class="docutils literal notranslate"><span class="pre">{module}::{attribute}</span></code>, which is roughly equivalent to the python statement <code class="docutils literal notranslate"><span class="pre">from</span> <span class="pre">{module}</span> <span class="pre">import</span> <span class="pre">{attribute}</span></code>.</p>
+<ul>
+<li><p><code class="docutils literal notranslate"><span class="pre">{module}::</span></code> can be omitted for <a class="reference external" href="https://docs.python.org/3/library/functions.html" title="(in Python v3.13)"><span>Built-in Functions</span></a>.</p></li>
+<li><p>If <code class="docutils literal notranslate"><span class="pre">{attribute}</span></code> is not provided, the whole module will be returned.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">{attribute}</span></code> can be a dot separated string to get a similar effect as <a class="reference internal" href="#config-tag-attr"><span class="std std-ref">&lt;attr&gt;</span></a>.</p></li>
+</ul>
+</li>
 <li><p><code class="docutils literal notranslate"><span class="pre">&lt;type&gt;</span></code>: when the tag value is not provided, the value must be a valid import path ande will be replaced by the imported object.</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">&lt;type={module::attribute}&gt;</span></code>: when the tag value is provided, the imported object will be called with the value as its arguments.</p></li>
 </ul>
@@ -677,14 +680,20 @@
 <div class="guide-config-value admonition">
 <p class="admonition-title">value</p>
 <ul class="simple">
-<li><p><code class="docutils literal notranslate"><span class="pre">&lt;type&gt;</span></code>:
-* <code class="docutils literal notranslate"><span class="pre">str</span></code>: a valid import path <code class="docutils literal notranslate"><span class="pre">{module}::{attribute}</span></code>.</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">&lt;type={module::attribute}&gt;</span></code>:
-* <code class="docutils literal notranslate"><span class="pre">module.attribute(*value)</span></code>: if the value is a list, it will be used as positional arguments.
-* <code class="docutils literal notranslate"><span class="pre">module.attribute(**value)</span></code>: If the value is a dict and only contains string keys, the string keys will be used as keyword arguments.
-* <code class="docutils literal notranslate"><span class="pre">module.attribute(*value[None],</span> <span class="pre">**value[others])</span></code>: If the value is a dict and the <code class="docutils literal notranslate"><span class="pre">None</span></code> key is a list, the <code class="docutils literal notranslate"><span class="pre">None</span></code> key will be used as positional arguments.
-* <code class="docutils literal notranslate"><span class="pre">module.attribute(value[None],</span> <span class="pre">**value[others])</span></code>: If the value is a dict and the <code class="docutils literal notranslate"><span class="pre">None</span></code> key is not a list, the <code class="docutils literal notranslate"><span class="pre">None</span></code> key will be used as the first argument.
-* <code class="docutils literal notranslate"><span class="pre">module.attribute(value)</span></code>: If the value is neither a list nor a dict, it will be used as the first argument.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">&lt;type&gt;</span></code>:</p>
+<ul>
+<li><p><code class="docutils literal notranslate"><span class="pre">str</span></code>: a valid import path <code class="docutils literal notranslate"><span class="pre">{module}::{attribute}</span></code>.</p></li>
+</ul>
+</li>
+<li><p><code class="docutils literal notranslate"><span class="pre">&lt;type={module::attribute}&gt;</span></code>:</p>
+<ul>
+<li><p><code class="docutils literal notranslate"><span class="pre">module.attribute(*value)</span></code>: if the value is a list, it will be used as positional arguments.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">module.attribute(**value)</span></code>: If the value is a dict and only contains string keys, the string keys will be used as keyword arguments.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">module.attribute(*value[None],</span> <span class="pre">**value[others])</span></code>: If the value is a dict and the <code class="docutils literal notranslate"><span class="pre">None</span></code> key is a list, the <code class="docutils literal notranslate"><span class="pre">None</span></code> key will be used as positional arguments.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">module.attribute(value[None],</span> <span class="pre">**value[others])</span></code>: If the value is a dict and the <code class="docutils literal notranslate"><span class="pre">None</span></code> key is not a list, the <code class="docutils literal notranslate"><span class="pre">None</span></code> key will be used as the first argument.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">module.attribute(value)</span></code>: If the value is neither a list nor a dict, it will be used as the first argument.</p></li>
+</ul>
+</li>
 </ul>
 </div>
 <div class="guide-config-example dropdown admonition">
@@ -737,9 +746,12 @@
 <div class="guide-config-flag admonition">
 <p class="admonition-title">flag</p>
 <ul class="simple">
-<li><p>The first of the following that is a string will be used as the variable name:
-* <code class="docutils literal notranslate"><span class="pre">&lt;var&gt;</span></code>: tag value, key
-* <code class="docutils literal notranslate"><span class="pre">&lt;ref&gt;</span></code>, <code class="docutils literal notranslate"><span class="pre">&lt;copy&gt;</span></code>, <code class="docutils literal notranslate"><span class="pre">&lt;deepcopy&gt;</span></code>: tag value, value, key</p></li>
+<li><p>The first of the following that is a string will be used as the variable name:</p>
+<ul>
+<li><p><code class="docutils literal notranslate"><span class="pre">&lt;var&gt;</span></code>: tag value, key</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">&lt;ref&gt;</span></code>, <code class="docutils literal notranslate"><span class="pre">&lt;copy&gt;</span></code>, <code class="docutils literal notranslate"><span class="pre">&lt;deepcopy&gt;</span></code>: tag value, value, key</p></li>
+</ul>
+</li>
 <li><p><code class="docutils literal notranslate"><span class="pre">&lt;var&gt;</span></code>, <code class="docutils literal notranslate"><span class="pre">&lt;var={variable}&gt;</span></code>: define a new variable.</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">&lt;ref&gt;</span></code>, <code class="docutils literal notranslate"><span class="pre">&lt;ref={variable}&gt;</span></code>: replace the value by a reference to the variable.</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">&lt;copy&gt;</span></code>, <code class="docutils literal notranslate"><span class="pre">&lt;copy={variable}&gt;</span></code>: replace the value by a <a class="reference external" href="https://docs.python.org/3/library/copy.html#copy.copy" title="(in Python v3.13)"><code class="xref py py-func docutils literal notranslate"><span class="pre">copy()</span></code></a> of the variable.</p></li>
