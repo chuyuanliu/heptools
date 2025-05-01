@@ -356,8 +356,8 @@ This tag allows to insert any deserialized object from a URL. Unlike :ref:`confi
 
 This tag can be used to import a module/attribute, create an instance of a class, or call a function.
 
-.. admonition:: flag
-  :class: guide-config-flag
+.. admonition:: tag
+  :class: guide-config-tag
 
   * An import path is defined as ``{module}::{attribute}``, which is roughly equivalent to the python statement ``from {module} import {attribute}``.
 
@@ -426,8 +426,8 @@ This tag can be used to import a module/attribute, create an instance of a class
 
 This tag will replace the current value by the its attribute. A tag like ``<attr=attr1.attr2>`` is equivalent to the pseudo code ``value.attr1.attr2``.
 
-.. admonition:: flag
-  :class: guide-config-flag
+.. admonition:: tag
+  :class: guide-config-tag
 
   - ``<attr={attribute}>``: where the attribute can be a dot separated string.
 
@@ -438,8 +438,8 @@ This tag will replace the current value by the its attribute. A tag like ``<attr
 
 This tag can be used to create a variable from the current value. The variable has a lifecycle spans the entire parser :meth:`~heptools.config.ConfigParser.__call__` and is shared by all files within the same call. The variable can be accessed using ``<ref>``, ``<copy>`` or ``<deepcopy>`` and is also available as ``locals`` in :ref:`config-tag-code`.
 
-.. admonition:: flag
-  :class: guide-config-flag
+.. admonition:: tag
+  :class: guide-config-tag
 
   * The first of the following that is a string will be used as the variable name:
 
@@ -497,8 +497,8 @@ This tag will try to extend the existing value of the same key by the current va
 
 where the ``extend`` function is a binary operation specified by the tag value.
 
-.. admonition:: flag
-  :class: guide-config-flag
+.. admonition:: tag
+  :class: guide-config-tag
 
   * ``<extend>``, ``<extend=add>``: recursively merge dictionaries or apply ``+`` to other types.
   * ``<extend=and>``: apply ``&`` operation.
