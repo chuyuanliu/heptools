@@ -189,7 +189,7 @@ Built-in tags
 ``<code>``
 --------------
 
-This tag will replace the current value by the result of :func:`eval`. The variables defined with :ref:`config-tag-var` are available as ``locals``.
+This tag will replace the value by the result of :func:`eval`. The variables defined with :ref:`config-tag-var` are available as ``locals``.
 
 .. admonition:: value
   :class: guide-config-value
@@ -315,7 +315,7 @@ This tag is reserved to never trigger any parser. This is useful when there are 
 ``<file>``
 ----------
 
-This tag allows to insert any deserialized object from a URL. Unlike :ref:`config-tag-include`, this tag will only replace the current value by a deep copy of the loaded object, instead of merging it into the current dictionary. See :ref:`config-url-io` for details. If the object is large and only used once, ``<file-cache=off>`` can be used to temporarily disable the cache and avoid the deep copy.
+This tag allows to insert any deserialized object from a URL. Unlike :ref:`config-tag-include`, this tag will only replace the value by a deep copy of the loaded object, instead of merging it into the current dictionary. See :ref:`config-url-io` for details. If the object is large and only used once, ``<file-cache=off>`` can be used to temporarily disable the cache and avoid the deep copy.
 
 .. admonition:: tag
   :class: guide-config-tag
@@ -330,6 +330,7 @@ This tag allows to insert any deserialized object from a URL. Unlike :ref:`confi
   :class: guide-config-value
 
   * ``str``: a URL to any object
+  * The rules in :ref:`config-url-io` apply.
 
 
 .. admonition:: example
@@ -424,7 +425,7 @@ This tag can be used to import a module/attribute, create an instance of a class
 ``<attr>``
 ----------
 
-This tag will replace the current value by the its attribute. A tag like ``<attr=attr1.attr2>`` is equivalent to the pseudo code ``value.attr1.attr2``.
+This tag will replace the value by the its attribute. A tag like ``<attr=attr1.attr2>`` is equivalent to the pseudo code ``value.attr1.attr2``.
 
 .. admonition:: tag
   :class: guide-config-tag
@@ -436,7 +437,7 @@ This tag will replace the current value by the its attribute. A tag like ``<attr
 ``<var>``
 ---------
 
-This tag can be used to create a variable from the current value. The variable has a lifecycle spans the entire parser :meth:`~heptools.config.ConfigParser.__call__` and is shared by all files within the same call. The variable can be accessed using ``<ref>``, ``<copy>`` or ``<deepcopy>`` and is also available as ``locals`` in :ref:`config-tag-code`.
+This tag can be used to create a variable from the value. The variable has a lifecycle spans the entire parser :meth:`~heptools.config.ConfigParser.__call__` and is shared by all files within the same call. The variable can be accessed using ``<ref>``, ``<copy>`` or ``<deepcopy>`` and is also available as ``locals`` in :ref:`config-tag-code`.
 
 .. admonition:: tag
   :class: guide-config-tag
@@ -486,7 +487,7 @@ This tag can be used to create a variable from the current value. The variable h
 ``<extend>``
 ------------
 
-This tag will try to extend the existing value of the same key by the current value, in a way given by the pseudo code:
+This tag will try to extend the existing value of the same key by the value, in a way given by the pseudo code:
 
 .. code-block:: python
   
