@@ -38,8 +38,11 @@ Parsing
 * The tags are parsed from left to right, with some exceptions.
 * Each parser will use the key and value from the previous parser, so the order of tags matters.
 * If a tag occurs multiple times, each will be parsed based on the order, with some exceptions.
-* Exceptions: :ref:`config-tag-code` and :ref:`config-tag-include` have higher priority than all others and will only be parsed once.
-* Exceptions: :ref:`config-tag-discard`, :ref:`config-tag-dummy` and :ref:`config-tag-cache` will not trigger any parser.
+* Exceptions:
+
+  * :ref:`config-tag-code` and :ref:`config-tag-include` have higher priority than all others and will only be parsed once.
+  * :ref:`config-tag-discard` and :ref:`config-tag-dummy` will not trigger any parser.
+
 
 .. _config-url-io:
 
@@ -48,17 +51,17 @@ URL and IO
 
 Both the :class:`~heptools.config.ConfigParser` and built-in tags :ref:`config-tag-include`, :ref:`config-tag-file` shares the same IO mechanism.
 
-The file path is described by a standard URL accepted by :func:`urllib.parse.urlparse` with the format:
+The file path is described by a standard URL accepted by :func:`~urllib.parse.urlparse` with the format:
 
 .. code-block::
 
   [scheme://netloc/]path[;parameters][?query][#fragment]
 
 * ``scheme://netloc/`` can be omitted for local path.
-* ``;parameters`` is always ignored.
+* ``;parameters`` is never used.
 * ``?query`` can be used to provide additional key-value pairs. If a key appears multiple times, all values will be collected into a list. Values are interpreted as JSON strings.
-* ``#fragment`` can be used to access nested dictionaries or lists by dot-separated keys or indices.
-* The `percentage-encoding <https://en.wikipedia.org/wiki/Percent-encoding>`_ rule (``%XX``) is supported in the path to escape special characters.
+* ``#fragment`` is a dot-separated path, allowing to access nested dictionaries or lists.
+* The `percentage-encoding <https://en.wikipedia.org/wiki/Percent-encoding>`_ rule (``%XX``) is supported in the ``path`` to escape special characters.
 
 .. admonition:: example
   :class: guide-config-example, dropdown
@@ -70,7 +73,7 @@ The file path is described by a standard URL accepted by :func:`urllib.parse.url
     local path: /path/to/file.yml
     XRootD path: root://server.host//path/to/file.yml
     fragment: /path/to/file.yml#key1.key2.0.key3
-    query: /path/to/file.yml?key1=value1&key2=value2&key1=value3&key3=[1,2,3]
+    query: /path/to/file.yml?key1=value1&key2=value2&key1=value3&key3=[1,2,3]&parent.child=value4
 
   The ``fragment`` example above is equivalent to the pseudo code:
 
@@ -78,19 +81,23 @@ The file path is described by a standard URL accepted by :func:`urllib.parse.url
 
     yaml.load(open("/path/to/file.yml"))["key1"]["key2"][int("0")]["key3"]
 
-  The ``query`` example above will give an additional dictionary ``{"key1": ["value1", "value3"], "key2": "value2", "key3": [1, 2, 3]}``.
+  The ``query`` example above will give an additional dictionary 
+
+  .. code-block:: python
+
+    {
+      "key1": ["value1", "value3"],
+      "key2": "value2",
+      "key3": [1, 2, 3],
+      "parent": {"child": "value4"},
+    }
 
 
-File IO is handled by :func:`fsspec.open` and the deserialization is handled by :data:`~heptools.config.ConfigParser.io`, an instance of :class:`~heptools.config.FileLoader`.
+File IO is handled by :func:`fsspec.open` and the deserialization is handled by :data:`ConfigParser.io <heptools.config.ConfigParser.io>`, an instance of :class:`~heptools.config.FileLoader`.
 
 * The compression format is inferred from the last extension, see :data:`fsspec.utils.compressions`.
 * The deserializer is inferred from the last extension that does not match any compression format.
-* The deserialized objects will be catched, and can be cleared by :meth:`ConfigParser.io.clear_cache`.
-
-
-.. warning::
-
-  When using with :class:`~heptools.config.ConfigParser`, the final deserialized object (after all fragments) is required to be a dictionary.
+* The deserialized objects will be catched, and can be cleared by :meth:`ConfigParser.io.clear_cache<heptools.config.FileLoader.clear_cache>`.
 
 Special
 ---------
@@ -109,31 +116,22 @@ When ``expand=True`` (default), the dot-separated keys will be interpreted as ac
 
     parent1:
       child1: value1
-
-    # override the parent
-    parent1 <dummy>:
+    parent1 <dummy>: # override the parent
       child2: value2
-
-    # only modify the child
-    parent1.child3: value3
-
-    # create a nested dict
-    parent2.child.grandchild: value4
+    parent1.child3: value3 # modify the child without overriding the parent
+    parent2.child.grandchild: value4 # create a nested dict
 
   will be parsed into 
 
   .. code-block:: python
 
     {
-      "parent1": {
+      "parent1":
+      {
         "child2": "value2",
         "child3": "value3"
       },
-      "parent2": {
-        "child": {
-          "grandchild": "value4"
-        }
-      }
+      "parent2": {"child": {"grandchild": "value4"}}
     }
 
 ``None`` key
@@ -161,7 +159,7 @@ Besides the standard rules, both ``~`` and empty string in the key will be parse
 Apply to ``list`` elements
 ^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-When the element is a dictionary and the only key is ``None``, the element will be replaced with the value. Use :ref:`config-tag-literal` to retain the original dictionary.
+When the element is a dictionary and the only key is ``None``, the element will be replaced by its value. Use :ref:`config-tag-literal` to retain the original dictionary.
 
 .. admonition:: example
   :class: guide-config-example, dropdown
@@ -211,7 +209,7 @@ This tag will replace the current value by the result of :func:`eval`. The varia
 ``<include>``
 --------------
 
-This tag allows to merge dictionaries from other config files into the given level and will be parsed under the current context. See :ref:`config-url-io` for details.
+This tag allows to merge dictionaries from other config files into the given level and will be parsed under the current context.
 
 .. admonition:: tag
   :class: guide-config-tag
@@ -233,6 +231,7 @@ This tag allows to merge dictionaries from other config files into the given lev
   * ``str``: a URL to a dictionary
   * ``list``: a list of URLs
   * To include within the same file, use ``.`` as path.
+  * The rules in :ref:`config-url-io` apply.
 
 .. admonition:: example
   :class: guide-config-example, dropdown
@@ -247,11 +246,10 @@ This tag allows to merge dictionaries from other config files into the given lev
     key2:
       key2_1: value1
       key2_2: value2
-
     key3:
       <include>:
-        - file1.yml#key1
-        - .#key2
+        - file1.yml#key1 # include another file using a relative path
+        - .#key2 # include within the same file
 
   Then ``file2.yml#key3`` will give
 
@@ -279,12 +277,10 @@ The keys marked as ``<literal>`` will not trigger the following rules:
 ``<discard>``
 --------------
 
-The keys marked as ``<discard>`` will not be added into the current dictionary but will still be parsed. 
+The keys marked as ``<discard>`` will not be added into the current dictionary but will still be parsed. This is useful when you only want to make use of the side effects of parsing. e.g. define variables, execute code, etc.
 
 .. admonition:: example
   :class: guide-config-example, dropdown
-
-  This is useful when you only want to make use of the side effects of parsing. e.g. define variables, execute code, etc.
 
   .. code-block:: yaml
 
@@ -300,12 +296,10 @@ The keys marked as ``<discard>`` will not be added into the current dictionary b
 ``<dummy>``
 ------------
 
-This tag is reserved to never trigger any parser.
+This tag is reserved to never trigger any parser. This is useful when you want to create duplicate keys.
 
 .. admonition:: example
   :class: guide-config-example, dropdown
-
-  This is useful when you want to duplicate keys.
 
   .. code-block:: yaml
 
@@ -507,10 +501,9 @@ where the ``extend`` function is a binary operation specified by the tag value.
 .. admonition:: flag
   :class: guide-config-flag
 
-  * ``<extend>``, ``<extend=recursive>``: recursively merge dictionaries or add up other types.
-  * ``<extend=add>``: ``local[key] + value``
-  * ``<extend=or>``: ``local[key] | value``
-  * ``<extend=and>``: ``local[key] & value``
+  * ``<extend>``, ``<extend=add>``: recursively merge dictionaries or apply ``+`` to other types.
+  * ``<extend=and>``: apply ``&`` operation.
+  * ``<extend=or>``: apply ``|`` operation.
   * ``<extend={operation}>``: see :ref:`config-custom-extend`
 
 .. warning::
@@ -522,18 +515,17 @@ where the ``extend`` function is a binary operation specified by the tag value.
   :class: guide-config-example, dropdown
 
   .. code-block:: yaml
+
     parent1 <var=old>:
       child1: 
         - a
         - b
       child2: 1
-    # recursively merge dictionaries
-    parent1 <extend>:
+    parent1 <extend>: # recursively merge dictionaries
       child1:
         - c
       child2: 2
-    # the old value will not be modified in-place
-    parent2 <ref>: old 
+    parent2 <ref>: old # the old value will not be modified in-place
     
   
   will be parsed into
