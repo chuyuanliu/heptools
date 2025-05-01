@@ -14,9 +14,9 @@ Tag
 Syntax
 --------------
 
-- A tag is defined as a key-value pair given by ``<tag_key=tag_value>`` or ``<tag_key>`` if the tag value is ``None``. 
-- Arbitrary number of tags can be attached to a key.
-- The spaces between key and tags are optional.
+* A tag is defined as a key-value pair given by ``<tag_key=tag_value>`` or ``<tag_key>`` if the tag value is ``None``. 
+* Arbitrary number of tags can be attached to a key.
+* The spaces between key and tags are optional.
 
 .. admonition:: example
   :class: guide-config-example, dropdown
@@ -35,11 +35,11 @@ Syntax
 Parsing
 --------------
 
-- The tags are parsed from left to right, with some exceptions.
-- Each parser will use the key and value from the previous parser, so the order of tags matters.
-- If a tag occurs multiple times, each will be parsed based on the order, with some exceptions.
-- Exceptions: :ref:`config-tag-code` and :ref:`config-tag-include` have higher priority than all others and will only be parsed once.
-- Exceptions: :ref:`config-tag-discard`, :ref:`config-tag-dummy` and :ref:`config-tag-cache` will not trigger any parser.
+* The tags are parsed from left to right, with some exceptions.
+* Each parser will use the key and value from the previous parser, so the order of tags matters.
+* If a tag occurs multiple times, each will be parsed based on the order, with some exceptions.
+* Exceptions: :ref:`config-tag-code` and :ref:`config-tag-include` have higher priority than all others and will only be parsed once.
+* Exceptions: :ref:`config-tag-discard`, :ref:`config-tag-dummy` and :ref:`config-tag-cache` will not trigger any parser.
 
 .. _config-url-io:
 
@@ -54,11 +54,11 @@ The file path is described by a standard URL accepted by :func:`urllib.parse.url
 
   [scheme://netloc/]path[;parameters][?query][#fragment]
 
-- ``scheme://netloc/`` can be omitted for local path.
-- ``;parameters`` is always ignored.
-- ``?query`` can be used to provide additional key-value pairs. If a key appears multiple times, all values will be collected into a list. Values are interpreted as JSON strings.
-- ``#fragment`` can be used to access nested dictionaries or lists by dot-separated keys or indices.
-- The `percentage-encoding <https://en.wikipedia.org/wiki/Percent-encoding>`_ rule (``%XX``) is supported in the path to escape special characters.
+* ``scheme://netloc/`` can be omitted for local path.
+* ``;parameters`` is always ignored.
+* ``?query`` can be used to provide additional key-value pairs. If a key appears multiple times, all values will be collected into a list. Values are interpreted as JSON strings.
+* ``#fragment`` can be used to access nested dictionaries or lists by dot-separated keys or indices.
+* The `percentage-encoding <https://en.wikipedia.org/wiki/Percent-encoding>`_ rule (``%XX``) is supported in the path to escape special characters.
 
 .. admonition:: example
   :class: guide-config-example, dropdown
@@ -83,9 +83,9 @@ The file path is described by a standard URL accepted by :func:`urllib.parse.url
 
 File IO is handled by :func:`fsspec.open` and the deserialization is handled by :data:`~heptools.config.ConfigParser.io`, an instance of :class:`~heptools.config.FileLoader`.
 
-- The compression format is inferred from the last extension, see :data:`fsspec.utils.compressions`.
-- The deserializer is inferred from the last extension that does not match any compression format.
-- The deserialized objects will be catched, and can be cleared by :meth:`ConfigParser.io.clear_cache`.
+* The compression format is inferred from the last extension, see :data:`fsspec.utils.compressions`.
+* The deserializer is inferred from the last extension that does not match any compression format.
+* The deserialized objects will be catched, and can be cleared by :meth:`ConfigParser.io.clear_cache`.
 
 
 .. warning::
@@ -216,23 +216,23 @@ This tag allows to merge dictionaries from other config files into the given lev
 .. admonition:: tag
   :class: guide-config-tag
 
-  - ``<include>``: the type of the path will be inferred.
-  - ``<include=absolute>``: resolve as an absolute path.
-  - ``<include=relative>``: resolve as an path relative to the current config file.
+  * ``<include>``: the type of the path will be inferred.
+  * ``<include=absolute>``: resolve as an absolute path.
+  * ``<include=relative>``: resolve as an path relative to the current config file.
 
 .. admonition:: key
   :class: guide-config-value
 
-  - the key must be empty.
-  - any tag other than :ref:`config-tag-code` will not be parsed.
+  * the key must be empty.
+  * any tag other than :ref:`config-tag-code` will not be parsed.
 
 
 .. admonition:: value
   :class: guide-config-value
 
-  - ``str``: a URL to a dictionary
-  - ``list``: a list of URLs
-  - To include within the same file, use ``.`` as path.
+  * ``str``: a URL to a dictionary
+  * ``list``: a list of URLs
+  * To include within the same file, use ``.`` as path.
 
 .. admonition:: example
   :class: guide-config-example, dropdown
@@ -270,8 +270,8 @@ This tag allows to merge dictionaries from other config files into the given lev
 
 The keys marked as ``<literal>`` will not trigger the following rules:
 
--  :ref:`config-special-expand`
--  :ref:`config-special-list`
+*  :ref:`config-special-expand`
+*  :ref:`config-special-list`
 
 
 .. _config-tag-discard:
@@ -327,16 +327,16 @@ This tag allows to insert any deserialized object from a URL. Unlike :ref:`confi
 .. admonition:: tag
   :class: guide-config-tag
 
-  - ``<file>``: the type of the path will be inferred.
-  - ``<file=absolute>``: resolve as an absolute path.
-  - ``<file=relative>``: resolve as an path relative to the current config file.
-  - ``<file-cache=off>``: turn off the cache.
-  - ``<file-cache=on>``: turn on the cache.
+  * ``<file>``: the type of the path will be inferred.
+  * ``<file=absolute>``: resolve as an absolute path.
+  * ``<file=relative>``: resolve as an path relative to the current config file.
+  * ``<file-cache=off>``: turn off the cache.
+  * ``<file-cache=on>``: turn on the cache.
 
 .. admonition:: value
   :class: guide-config-value
 
-  - ``str``: a URL to any object
+  * ``str``: a URL to any object
 
 
 .. admonition:: example
@@ -366,24 +366,24 @@ This tag can be used to import a module/attribute, create an instance of a class
 .. admonition:: flag
   :class: guide-config-flag
 
-  - An import path is defined as ``{module}::{attribute}``, which is roughly equivalent to the python statement ``from {module} import {attribute}``.
-    - ``{module}::`` can be omitted for :mod:`functions`.
-    - If ``{attribute}`` is not provided, the whole module will be returned.
-    - ``{attribute}`` can be a dot separated string to get a similar effect as :ref:`config-tag-attr`.
-  - ``<type>``: when the tag value is not provided, the value must be a valid import path ande will be replaced by the imported object.
-  - ``<type={module::attribute}>``: when the tag value is provided, the imported object will be called with the value as its arguments.
+  * An import path is defined as ``{module}::{attribute}``, which is roughly equivalent to the python statement ``from {module} import {attribute}``.
+    * ``{module}::`` can be omitted for :doc:`python:library/functions`.
+    * If ``{attribute}`` is not provided, the whole module will be returned.
+    * ``{attribute}`` can be a dot separated string to get a similar effect as :ref:`config-tag-attr`.
+  * ``<type>``: when the tag value is not provided, the value must be a valid import path ande will be replaced by the imported object.
+  * ``<type={module::attribute}>``: when the tag value is provided, the imported object will be called with the value as its arguments.
 
 .. admonition:: value
   :class: guide-config-value
 
-  - ``<type>``:
-    - ``str``: a valid import path ``{module}::{attribute}``.
-  - ``<type={module::attribute}>``:
-    - ``module.attribute(*value)``: if the value is a list, it will be used as positional arguments.
-    - ``module.attribute(**value)``: If the value is a dict and only contains string keys, the string keys will be used as keyword arguments.
-    - ``module.attribute(*value[None], **value[others])``: If the value is a dict and the ``None`` key is a list, the ``None`` key will be used as positional arguments.
-    - ``module.attribute(value[None], **value[others])``: If the value is a dict and the ``None`` key is not a list, the ``None`` key will be used as the first argument.
-    - ``module.attribute(value)``: If the value is neither a list nor a dict, it will be used as the first argument.
+  * ``<type>``:
+    * ``str``: a valid import path ``{module}::{attribute}``.
+  * ``<type={module::attribute}>``:
+    * ``module.attribute(*value)``: if the value is a list, it will be used as positional arguments.
+    * ``module.attribute(**value)``: If the value is a dict and only contains string keys, the string keys will be used as keyword arguments.
+    * ``module.attribute(*value[None], **value[others])``: If the value is a dict and the ``None`` key is a list, the ``None`` key will be used as positional arguments.
+    * ``module.attribute(value[None], **value[others])``: If the value is a dict and the ``None`` key is not a list, the ``None`` key will be used as the first argument.
+    * ``module.attribute(value)``: If the value is neither a list nor a dict, it will be used as the first argument.
 
 .. admonition:: example
   :class: guide-config-example, dropdown
@@ -443,13 +443,13 @@ This tag can be used to create a variable from the current value. The variable h
 .. admonition:: flag
   :class: guide-config-flag
 
-  - The first of the following that is a string will be used as the variable name:
-    - ``<var>``: tag value, key
-    - ``<ref>``, ``<copy>``, ``<deepcopy>``: tag value, value, key
-  - ``<var>``, ``<var={variable}>``: define a new variable. 
-  - ``<ref>``, ``<ref={variable}>``: replace the value by a reference to the variable. 
-  - ``<copy>``, ``<copy={variable}>``: replace the value by a :func:`~copy.copy` of the variable.
-  - ``<deepcopy>``, ``<deepcopy={variable}>``: replace the value by a :func:`~copy.deepcopy` of the variable.
+  * The first of the following that is a string will be used as the variable name:
+    * ``<var>``: tag value, key
+    * ``<ref>``, ``<copy>``, ``<deepcopy>``: tag value, value, key
+  * ``<var>``, ``<var={variable}>``: define a new variable. 
+  * ``<ref>``, ``<ref={variable}>``: replace the value by a reference to the variable. 
+  * ``<copy>``, ``<copy={variable}>``: replace the value by a :func:`~copy.copy` of the variable.
+  * ``<deepcopy>``, ``<deepcopy={variable}>``: replace the value by a :func:`~copy.deepcopy` of the variable.
 
 .. admonition:: example
   :class: guide-config-example, dropdown
@@ -500,15 +500,15 @@ where the ``extend`` function is a binary operation specified by the tag value.
 .. admonition:: flag
   :class: guide-config-flag
 
-  - ``<extend>``, ``<extend=recursive>``: recursively merge dictionaries or add up other types.
-  - ``<extend=add>``: ``local[key] + value``
-  - ``<extend=or>``: ``local[key] | value``
-  - ``<extend=and>``: ``local[key] & value``
-  - ``<extend={operation}>``: see :ref:`config-custom-extend`
+  * ``<extend>``, ``<extend=recursive>``: recursively merge dictionaries or add up other types.
+  * ``<extend=add>``: ``local[key] + value``
+  * ``<extend=or>``: ``local[key] | value``
+  * ``<extend=and>``: ``local[key] & value``
+  * ``<extend={operation}>``: see :ref:`config-custom-extend`
 
 .. warning::
   
-  None of the above operation will modify the existing value in-place.
+  The built-in extend methods will not modify the original value in-place.
 
 
 .. admonition:: example
