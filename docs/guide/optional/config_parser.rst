@@ -197,7 +197,7 @@ This tag will replace the current value by the result of :func:`eval`. The varia
 .. admonition:: value
   :class: guide-config-value
 
-  - ``str``: a python expression
+  * ``str``: a python expression
 
 .. admonition:: example
   :class: guide-config-example, dropdown 
@@ -367,9 +367,11 @@ This tag can be used to import a module/attribute, create an instance of a class
   :class: guide-config-flag
 
   * An import path is defined as ``{module}::{attribute}``, which is roughly equivalent to the python statement ``from {module} import {attribute}``.
+
     * ``{module}::`` can be omitted for :doc:`python:library/functions`.
     * If ``{attribute}`` is not provided, the whole module will be returned.
     * ``{attribute}`` can be a dot separated string to get a similar effect as :ref:`config-tag-attr`.
+
   * ``<type>``: when the tag value is not provided, the value must be a valid import path ande will be replaced by the imported object.
   * ``<type={module::attribute}>``: when the tag value is provided, the imported object will be called with the value as its arguments.
 
@@ -377,8 +379,11 @@ This tag can be used to import a module/attribute, create an instance of a class
   :class: guide-config-value
 
   * ``<type>``:
+
     * ``str``: a valid import path ``{module}::{attribute}``.
+
   * ``<type={module::attribute}>``:
+
     * ``module.attribute(*value)``: if the value is a list, it will be used as positional arguments.
     * ``module.attribute(**value)``: If the value is a dict and only contains string keys, the string keys will be used as keyword arguments.
     * ``module.attribute(*value[None], **value[others])``: If the value is a dict and the ``None`` key is a list, the ``None`` key will be used as positional arguments.
@@ -444,8 +449,10 @@ This tag can be used to create a variable from the current value. The variable h
   :class: guide-config-flag
 
   * The first of the following that is a string will be used as the variable name:
+
     * ``<var>``: tag value, key
     * ``<ref>``, ``<copy>``, ``<deepcopy>``: tag value, value, key
+
   * ``<var>``, ``<var={variable}>``: define a new variable. 
   * ``<ref>``, ``<ref={variable}>``: replace the value by a reference to the variable. 
   * ``<copy>``, ``<copy={variable}>``: replace the value by a :func:`~copy.copy` of the variable.
