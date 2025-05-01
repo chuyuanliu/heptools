@@ -33,7 +33,7 @@
     <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=8f2a1f02" />
     <link rel="stylesheet" type="text/css" href="../../_static/togglebutton.css?v=13237357" />
     <link rel="stylesheet" type="text/css" href="../../_static/graphviz.css?v=4ae1632d" />
-    <link rel="stylesheet" type="text/css" href="../../_static/css/admonition.css?v=58d1a3c2" />
+    <link rel="stylesheet" type="text/css" href="../../_static/css/admonition.css?v=c8b93dda" />
   
   <!-- So that users can add custom icons -->
   <script src="../../_static/scripts/fontawesome.js?digest=8878045cc6db502f8baf"></script>
@@ -364,28 +364,28 @@
                   
   <section id="config-parser">
 <h1>Config Parser<a class="headerlink" href="#config-parser" title="Link to this heading">#</a></h1>
-<p>This tool provides a consistent solution to load multiple configuration files into a single nested dictionary and extend the commonly used dictionary-like formats (<code class="docutils literal notranslate"><span class="pre">JSON</span></code>, <code class="docutils literal notranslate"><span class="pre">YAML</span></code>, <code class="docutils literal notranslate"><span class="pre">TOML</span></code>, <code class="docutils literal notranslate"><span class="pre">INI</span></code>) by adding flags to keys.</p>
+<p>This tool provides a consistent solution to load multiple configuration files into a single nested dictionary and extend the commonly used dictionary-like formats (<code class="docutils literal notranslate"><span class="pre">JSON</span></code>, <code class="docutils literal notranslate"><span class="pre">YAML</span></code>, <code class="docutils literal notranslate"><span class="pre">TOML</span></code>, <code class="docutils literal notranslate"><span class="pre">INI</span></code>) by adding tags to keys.</p>
 <section id="parser">
 <h2>Parser<a class="headerlink" href="#parser" title="Link to this heading">#</a></h2>
 <p># TODO</p>
 </section>
-<section id="flag">
-<h2>Flag<a class="headerlink" href="#flag" title="Link to this heading">#</a></h2>
+<section id="tag">
+<h2>Tag<a class="headerlink" href="#tag" title="Link to this heading">#</a></h2>
 <section id="syntax">
 <h3>Syntax<a class="headerlink" href="#syntax" title="Link to this heading">#</a></h3>
 <ul class="simple">
-<li><p>A flag is defined as a key-value pair given by <code class="docutils literal notranslate"><span class="pre">&lt;flag_key=flag_value&gt;</span></code> or <code class="docutils literal notranslate"><span class="pre">&lt;flag_key&gt;</span></code> if the value is <code class="docutils literal notranslate"><span class="pre">None</span></code>.</p></li>
-<li><p>The number of flags is unlimited.</p></li>
-<li><p>The spaces between key and flags are optional.</p></li>
+<li><p>A tag is defined as a key-value pair given by <code class="docutils literal notranslate"><span class="pre">&lt;tag_key=tag_value&gt;</span></code> or <code class="docutils literal notranslate"><span class="pre">&lt;tag_key&gt;</span></code> if the tag value is <code class="docutils literal notranslate"><span class="pre">None</span></code>.</p></li>
+<li><p>Arbitrary number of tags can be attached to a key.</p></li>
+<li><p>The spaces between key and tags are optional.</p></li>
 </ul>
 <div class="guide-config-example dropdown admonition">
 <p class="admonition-title">example</p>
-<p>The following key and flags are valid:</p>
+<p>The following key and tags are valid:</p>
 <div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">key</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">value</span>
-<span class="nt">key&lt;flag_key&gt;</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">value</span>
-<span class="nt">key &lt;flag_key=flag_value&gt;</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">value</span>
-<span class="nt">key   &lt;flag_key1=flag_value1&gt;&lt;flag_key2&gt;  &lt;flag_key3=flag_value3&gt;  </span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">value</span>
-<span class="nt">&lt;flag_key1&gt; &lt;flag_key2=flag_value2&gt;  </span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">value</span>
+<span class="nt">key&lt;tag_key&gt;</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">value</span>
+<span class="nt">key &lt;tag_key=tag_value&gt;</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">value</span>
+<span class="nt">key   &lt;tag_key1=tag_value1&gt;&lt;tag_key2&gt;  &lt;tag_key3=tag_value3&gt;  </span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">value</span>
+<span class="nt">&lt;tag_key1&gt; &lt;tag_key2=tag_value2&gt;  </span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">value</span>
 </pre></div>
 </div>
 </div>
@@ -393,16 +393,16 @@
 <section id="parsing">
 <h3>Parsing<a class="headerlink" href="#parsing" title="Link to this heading">#</a></h3>
 <ul class="simple">
-<li><p>The flags are parsed from left to right, with some exceptions.</p></li>
-<li><p>Each parser will use the key and value from the previous parser, so the order of flags matters.</p></li>
-<li><p>If a flag occurs multiple times, each will be parsed based on the order, with some exceptions.</p></li>
-<li><p>Exceptions: <a class="reference internal" href="#config-flag-code"><span class="std std-ref">&lt;code&gt;</span></a> and <a class="reference internal" href="#config-flag-include"><span class="std std-ref">&lt;include&gt;</span></a> have higher priority than all others and will only be parsed once.</p></li>
-<li><p>Exceptions: <a class="reference internal" href="#config-flag-discard"><span class="std std-ref">&lt;discard&gt;</span></a>, <a class="reference internal" href="#config-flag-dummy"><span class="std std-ref">&lt;dummy&gt;</span></a> and <span class="xref std std-ref">config-flag-cache</span> will not trigger any parser.</p></li>
+<li><p>The tags are parsed from left to right, with some exceptions.</p></li>
+<li><p>Each parser will use the key and value from the previous parser, so the order of tags matters.</p></li>
+<li><p>If a tag occurs multiple times, each will be parsed based on the order, with some exceptions.</p></li>
+<li><p>Exceptions: <a class="reference internal" href="#config-tag-code"><span class="std std-ref">&lt;code&gt;</span></a> and <a class="reference internal" href="#config-tag-include"><span class="std std-ref">&lt;include&gt;</span></a> have higher priority than all others and will only be parsed once.</p></li>
+<li><p>Exceptions: <a class="reference internal" href="#config-tag-discard"><span class="std std-ref">&lt;discard&gt;</span></a>, <a class="reference internal" href="#config-tag-dummy"><span class="std std-ref">&lt;dummy&gt;</span></a> and <span class="xref std std-ref">config-tag-cache</span> will not trigger any parser.</p></li>
 </ul>
 </section>
 <section id="url-and-io">
 <span id="config-url-io"></span><h3>URL and IO<a class="headerlink" href="#url-and-io" title="Link to this heading">#</a></h3>
-<p>Both the <a class="reference internal" href="../../api/config.html#heptools.config.ConfigParser" title="heptools.config.ConfigParser"><code class="xref py py-class docutils literal notranslate"><span class="pre">ConfigParser</span></code></a> and built-in flags <a class="reference internal" href="#config-flag-include"><span class="std std-ref">&lt;include&gt;</span></a>, <a class="reference internal" href="#config-flag-file"><span class="std std-ref">&lt;file&gt;</span></a> shares the same IO mechanism.</p>
+<p>Both the <a class="reference internal" href="../../api/config.html#heptools.config.ConfigParser" title="heptools.config.ConfigParser"><code class="xref py py-class docutils literal notranslate"><span class="pre">ConfigParser</span></code></a> and built-in tags <a class="reference internal" href="#config-tag-include"><span class="std std-ref">&lt;include&gt;</span></a>, <a class="reference internal" href="#config-tag-file"><span class="std std-ref">&lt;file&gt;</span></a> shares the same IO mechanism.</p>
 <p>The file path is described by a standard URL accepted by <a class="reference external" href="https://docs.python.org/3/library/urllib.parse.html#urllib.parse.urlparse" title="(in Python v3.13)"><code class="xref py py-func docutils literal notranslate"><span class="pre">urllib.parse.urlparse()</span></code></a> with the format:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span>[scheme://netloc/]path[;parameters][?query][#fragment]
 </pre></div>
@@ -444,7 +444,7 @@
 <h3>Special<a class="headerlink" href="#special" title="Link to this heading">#</a></h3>
 <section id="expand-true-in-configparser">
 <span id="config-special-expand"></span><h4><code class="docutils literal notranslate"><span class="pre">expand=True</span></code> in <a class="reference internal" href="../../api/config.html#heptools.config.ConfigParser" title="heptools.config.ConfigParser"><code class="xref py py-class docutils literal notranslate"><span class="pre">ConfigParser</span></code></a><a class="headerlink" href="#expand-true-in-configparser" title="Link to this heading">#</a></h4>
-<p>When <code class="docutils literal notranslate"><span class="pre">expand=True</span></code> (default), the dot-separated keys will be interpreted as accessing a nested dictionary and the parents will not be overriden. Use <a class="reference internal" href="#config-flag-literal"><span class="std std-ref">&lt;literal&gt;</span></a> to escape the keys with dot.</p>
+<p>When <code class="docutils literal notranslate"><span class="pre">expand=True</span></code> (default), the dot-separated keys will be interpreted as accessing a nested dictionary and the parents will not be overriden. Use <a class="reference internal" href="#config-tag-literal"><span class="std std-ref">&lt;literal&gt;</span></a> to escape the keys with dot.</p>
 <div class="guide-config-example dropdown admonition">
 <p class="admonition-title">example</p>
 <div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">parent1</span><span class="p">:</span>
@@ -461,7 +461,20 @@
 <span class="nt">parent2.child.grandchild</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">value4</span>
 </pre></div>
 </div>
-<p>will be parsed into <code class="docutils literal notranslate"><span class="pre">{&quot;parent1&quot;:</span> <span class="pre">{&quot;child2&quot;:</span> <span class="pre">&quot;value2&quot;,</span> <span class="pre">&quot;child3&quot;:</span> <span class="pre">&quot;value3&quot;},</span> <span class="pre">&quot;parent2&quot;:</span> <span class="pre">{&quot;child&quot;:</span> <span class="pre">{&quot;grandchild&quot;:</span> <span class="pre">&quot;value4&quot;}}}</span></code></p>
+<p>will be parsed into</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="p">{</span>
+  <span class="s2">&quot;parent1&quot;</span><span class="p">:</span> <span class="p">{</span>
+    <span class="s2">&quot;child2&quot;</span><span class="p">:</span> <span class="s2">&quot;value2&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;child3&quot;</span><span class="p">:</span> <span class="s2">&quot;value3&quot;</span>
+  <span class="p">},</span>
+  <span class="s2">&quot;parent2&quot;</span><span class="p">:</span> <span class="p">{</span>
+    <span class="s2">&quot;child&quot;</span><span class="p">:</span> <span class="p">{</span>
+      <span class="s2">&quot;grandchild&quot;</span><span class="p">:</span> <span class="s2">&quot;value4&quot;</span>
+    <span class="p">}</span>
+  <span class="p">}</span>
+<span class="p">}</span>
+</pre></div>
+</div>
 </div>
 </section>
 <section id="none-key">
@@ -471,38 +484,45 @@
 <p class="admonition-title">example</p>
 <div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="c1"># None</span>
 <span class="nt">~</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">value</span>
-<span class="nt">~ &lt;flag&gt;</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">value</span>
+<span class="nt">~ &lt;tag&gt;</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">value</span>
 <span class="s">&quot;&quot;</span><span class="p p-Indicator">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">value</span>
-<span class="nt">&lt;flag&gt;</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">value</span>
+<span class="nt">&lt;tag&gt;</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">value</span>
 <span class="nt">null</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">value</span>
 
 <span class="c1"># not None</span>
-<span class="nt">null &lt;flag&gt;</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">value</span>
+<span class="nt">null &lt;tag&gt;</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">value</span>
 </pre></div>
 </div>
 </div>
 </section>
 <section id="apply-to-list-elements">
 <span id="config-special-list"></span><h4>Apply to <code class="docutils literal notranslate"><span class="pre">list</span></code> elements<a class="headerlink" href="#apply-to-list-elements" title="Link to this heading">#</a></h4>
-<p>When the element is a dictionary and the only key is <code class="docutils literal notranslate"><span class="pre">None</span></code>, the element will be replaced by the value. Use <a class="reference internal" href="#config-flag-literal"><span class="std std-ref">&lt;literal&gt;</span></a> to retain the original dictionary.</p>
+<p>When the element is a dictionary and the only key is <code class="docutils literal notranslate"><span class="pre">None</span></code>, the element will be replaced with the value. Use <a class="reference internal" href="#config-tag-literal"><span class="std std-ref">&lt;literal&gt;</span></a> to retain the original dictionary.</p>
 <div class="guide-config-example dropdown admonition">
 <p class="admonition-title">example</p>
 <div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">key1</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">value1</span>
-<span class="w">  </span><span class="nt">&lt;flag&gt;</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">value2</span><span class="w"> </span><span class="c1"># regular None key</span>
-<span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">&lt;flag&gt;</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">value3</span><span class="w"> </span><span class="c1"># replace element by value</span>
-<span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">&lt;flag&gt; &lt;literal&gt;</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">value4</span><span class="w"> </span><span class="c1"># escape the None key</span>
+<span class="w">  </span><span class="nt">&lt;tag&gt;</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">value2</span><span class="w"> </span><span class="c1"># regular None key</span>
+<span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">&lt;tag&gt;</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">value3</span><span class="w"> </span><span class="c1"># replace the whole element with its value</span>
+<span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">&lt;tag&gt; &lt;literal&gt;</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">value4</span><span class="w"> </span><span class="c1"># escape the None key</span>
 </pre></div>
 </div>
-<p>will be parsed into <code class="docutils literal notranslate"><span class="pre">[{&quot;key1&quot;:</span> <span class="pre">&quot;value1&quot;,</span> <span class="pre">None:</span> <span class="pre">&quot;value2&quot;},</span> <span class="pre">&quot;value3&quot;,</span> <span class="pre">{None:</span> <span class="pre">&quot;value4&quot;}]</span></code>.</p>
+<p>will be parsed into</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="p">[</span>
+  <span class="p">{</span><span class="s2">&quot;key1&quot;</span><span class="p">:</span> <span class="s2">&quot;value1&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">:</span> <span class="s2">&quot;value2&quot;</span><span class="p">},</span>
+  <span class="s2">&quot;value3&quot;</span><span class="p">,</span>
+  <span class="p">{</span><span class="kc">None</span><span class="p">:</span> <span class="s2">&quot;value4&quot;</span><span class="p">},</span>
+<span class="p">]</span>
+</pre></div>
+</div>
 </div>
 </section>
 </section>
 </section>
-<section id="built-in-flags">
-<h2>Built-in flags<a class="headerlink" href="#built-in-flags" title="Link to this heading">#</a></h2>
+<section id="built-in-tags">
+<h2>Built-in tags<a class="headerlink" href="#built-in-tags" title="Link to this heading">#</a></h2>
 <section id="code">
-<span id="config-flag-code"></span><h3><code class="docutils literal notranslate"><span class="pre">&lt;code&gt;</span></code><a class="headerlink" href="#code" title="Link to this heading">#</a></h3>
-<p>This flag will replace the value by the result of <a class="reference external" href="https://docs.python.org/3/library/functions.html#eval" title="(in Python v3.13)"><code class="xref py py-func docutils literal notranslate"><span class="pre">eval()</span></code></a>. The variables defined with <a class="reference internal" href="#config-flag-var"><span class="std std-ref">&lt;var&gt;</span></a> are available as <code class="docutils literal notranslate"><span class="pre">locals</span></code>.</p>
+<span id="config-tag-code"></span><h3><code class="docutils literal notranslate"><span class="pre">&lt;code&gt;</span></code><a class="headerlink" href="#code" title="Link to this heading">#</a></h3>
+<p>This tag will replace the current value by the result of <a class="reference external" href="https://docs.python.org/3/library/functions.html#eval" title="(in Python v3.13)"><code class="xref py py-func docutils literal notranslate"><span class="pre">eval()</span></code></a>. The variables defined with <a class="reference internal" href="#config-tag-var"><span class="std std-ref">&lt;var&gt;</span></a> are available as <code class="docutils literal notranslate"><span class="pre">locals</span></code>.</p>
 <div class="guide-config-value admonition">
 <p class="admonition-title">value</p>
 <ul class="simple">
@@ -517,21 +537,21 @@
 </div>
 </section>
 <section id="include">
-<span id="config-flag-include"></span><h3><code class="docutils literal notranslate"><span class="pre">&lt;include&gt;</span></code><a class="headerlink" href="#include" title="Link to this heading">#</a></h3>
-<p>This flag allows to merge dictionaries from other config files into the given level and will be parsed under the current context. See <a class="reference internal" href="#config-url-io"><span class="std std-ref">URL and IO</span></a> for details.</p>
-<div class="guide-config-flag admonition">
-<p class="admonition-title">flag</p>
+<span id="config-tag-include"></span><h3><code class="docutils literal notranslate"><span class="pre">&lt;include&gt;</span></code><a class="headerlink" href="#include" title="Link to this heading">#</a></h3>
+<p>This tag allows to merge dictionaries from other config files into the given level and will be parsed under the current context. See <a class="reference internal" href="#config-url-io"><span class="std std-ref">URL and IO</span></a> for details.</p>
+<div class="guide-config-tag admonition">
+<p class="admonition-title">tag</p>
 <ul class="simple">
 <li><p><code class="docutils literal notranslate"><span class="pre">&lt;include&gt;</span></code>: the type of the path will be inferred.</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">&lt;include=absolute&gt;</span></code>: resolve as an absolute path.</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">&lt;include=relative&gt;</span></code>: resolve as an path relative to the current config file.</p></li>
 </ul>
 </div>
-<div class="guide-config-key admonition">
+<div class="guide-config-value admonition">
 <p class="admonition-title">key</p>
 <ul class="simple">
-<li><p>the key is required to be empty.</p></li>
-<li><p>any flag other than <a class="reference internal" href="#config-flag-code"><span class="std std-ref">&lt;code&gt;</span></a> will be ignored.</p></li>
+<li><p>the key must be empty.</p></li>
+<li><p>any tag other than <a class="reference internal" href="#config-tag-code"><span class="std std-ref">&lt;code&gt;</span></a> will not be parsed.</p></li>
 </ul>
 </div>
 <div class="guide-config-value admonition">
@@ -550,6 +570,7 @@
 
 <span class="nn">---</span><span class="w"> </span><span class="c1"># file2.yml</span>
 <span class="nt">key2</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">key2_1</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">value1</span>
 <span class="w">  </span><span class="nt">key2_2</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">value2</span>
 
 <span class="nt">key3</span><span class="p">:</span>
@@ -558,11 +579,18 @@
 <span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">.#key2</span>
 </pre></div>
 </div>
-<p>Then <code class="docutils literal notranslate"><span class="pre">file2.yml#key3</span></code> will give <code class="docutils literal notranslate"><span class="pre">{'key1_1':</span> <span class="pre">'value1',</span> <span class="pre">'key2_2':</span> <span class="pre">'value2'}</span></code>.</p>
+<p>Then <code class="docutils literal notranslate"><span class="pre">file2.yml#key3</span></code> will give</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="p">{</span>
+  <span class="s2">&quot;key1_1&quot;</span><span class="p">:</span> <span class="s2">&quot;value1&quot;</span><span class="p">,</span>
+  <span class="s2">&quot;key2_1&quot;</span><span class="p">:</span> <span class="s2">&quot;value1&quot;</span><span class="p">,</span>
+  <span class="s2">&quot;key2_2&quot;</span><span class="p">:</span> <span class="s2">&quot;value2&quot;</span><span class="p">,</span>
+<span class="p">}</span>
+</pre></div>
+</div>
 </div>
 </section>
 <section id="literal">
-<span id="config-flag-literal"></span><h3><code class="docutils literal notranslate"><span class="pre">&lt;literal&gt;</span></code><a class="headerlink" href="#literal" title="Link to this heading">#</a></h3>
+<span id="config-tag-literal"></span><h3><code class="docutils literal notranslate"><span class="pre">&lt;literal&gt;</span></code><a class="headerlink" href="#literal" title="Link to this heading">#</a></h3>
 <p>The keys marked as <code class="docutils literal notranslate"><span class="pre">&lt;literal&gt;</span></code> will not trigger the following rules:</p>
 <ul class="simple">
 <li><p><a class="reference internal" href="#config-special-expand"><span class="std std-ref">expand=True in ConfigParser</span></a></p></li>
@@ -570,7 +598,7 @@
 </ul>
 </section>
 <section id="discard">
-<span id="config-flag-discard"></span><h3><code class="docutils literal notranslate"><span class="pre">&lt;discard&gt;</span></code><a class="headerlink" href="#discard" title="Link to this heading">#</a></h3>
+<span id="config-tag-discard"></span><h3><code class="docutils literal notranslate"><span class="pre">&lt;discard&gt;</span></code><a class="headerlink" href="#discard" title="Link to this heading">#</a></h3>
 <p>The keys marked as <code class="docutils literal notranslate"><span class="pre">&lt;discard&gt;</span></code> will not be added into the current dictionary but will still be parsed.</p>
 <div class="guide-config-example dropdown admonition">
 <p class="admonition-title">example</p>
@@ -585,8 +613,8 @@
 </div>
 </section>
 <section id="dummy">
-<span id="config-flag-dummy"></span><h3><code class="docutils literal notranslate"><span class="pre">&lt;dummy&gt;</span></code><a class="headerlink" href="#dummy" title="Link to this heading">#</a></h3>
-<p>This flag is reserved to never trigger any parser.</p>
+<span id="config-tag-dummy"></span><h3><code class="docutils literal notranslate"><span class="pre">&lt;dummy&gt;</span></code><a class="headerlink" href="#dummy" title="Link to this heading">#</a></h3>
+<p>This tag is reserved to never trigger any parser.</p>
 <div class="guide-config-example dropdown admonition">
 <p class="admonition-title">example</p>
 <p>This is useful when you want to duplicate keys.</p>
@@ -600,10 +628,10 @@
 </div>
 </section>
 <section id="file">
-<span id="config-flag-file"></span><h3><code class="docutils literal notranslate"><span class="pre">&lt;file&gt;</span></code><a class="headerlink" href="#file" title="Link to this heading">#</a></h3>
-<p>This flag allows to insert any deserialized object from a URL. Unlike <a class="reference internal" href="#config-flag-include"><span class="std std-ref">&lt;include&gt;</span></a>, this flag will only replace the value by a deep copy of the loaded object, instead of merging it into the current dictionary. See <a class="reference internal" href="#config-url-io"><span class="std std-ref">URL and IO</span></a> for details. If the object is large and only used once, <code class="docutils literal notranslate"><span class="pre">&lt;file-cache=off&gt;</span></code> can be used to temporarily disable the cache and avoid the deep copy.</p>
-<div class="guide-config-flag admonition">
-<p class="admonition-title">flag</p>
+<span id="config-tag-file"></span><h3><code class="docutils literal notranslate"><span class="pre">&lt;file&gt;</span></code><a class="headerlink" href="#file" title="Link to this heading">#</a></h3>
+<p>This tag allows to insert any deserialized object from a URL. Unlike <a class="reference internal" href="#config-tag-include"><span class="std std-ref">&lt;include&gt;</span></a>, this tag will only replace the current value by a deep copy of the loaded object, instead of merging it into the current dictionary. See <a class="reference internal" href="#config-url-io"><span class="std std-ref">URL and IO</span></a> for details. If the object is large and only used once, <code class="docutils literal notranslate"><span class="pre">&lt;file-cache=off&gt;</span></code> can be used to temporarily disable the cache and avoid the deep copy.</p>
+<div class="guide-config-tag admonition">
+<p class="admonition-title">tag</p>
 <ul class="simple">
 <li><p><code class="docutils literal notranslate"><span class="pre">&lt;file&gt;</span></code>: the type of the path will be inferred.</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">&lt;file=absolute&gt;</span></code>: resolve as an absolute path.</p></li>
@@ -629,24 +657,162 @@
 <span class="nt">key2 &lt;file-cache=off&gt; &lt;file&gt;</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">database.pkl.lz4#column1</span>
 </pre></div>
 </div>
-<p>will be parsed into <code class="docutils literal notranslate"><span class="pre">{&quot;key1&quot;:</span> <span class="pre">[0,</span> <span class="pre">0,</span> <span class="pre">...,</span> <span class="pre">0],</span> <span class="pre">&quot;key2&quot;:</span> <span class="pre">[0,</span> <span class="pre">0,</span> <span class="pre">...,</span> <span class="pre">0]}</span></code>, while the cache is disabled in key2.</p>
+<p>will be parsed into <code class="docutils literal notranslate"><span class="pre">{&quot;key1&quot;:</span> <span class="pre">[0,</span> <span class="pre">...,</span> <span class="pre">0],</span> <span class="pre">&quot;key2&quot;:</span> <span class="pre">[0,</span> <span class="pre">...,</span> <span class="pre">0]}</span></code>, while the cache is disabled when parsing key2.</p>
 </div>
 </section>
 <section id="type">
-<span id="config-flag-type"></span><h3><code class="docutils literal notranslate"><span class="pre">&lt;type&gt;</span></code><a class="headerlink" href="#type" title="Link to this heading">#</a></h3>
-<p># TODO</p>
+<span id="config-tag-type"></span><h3><code class="docutils literal notranslate"><span class="pre">&lt;type&gt;</span></code><a class="headerlink" href="#type" title="Link to this heading">#</a></h3>
+<p>This tag can be used to import a module/attribute, create an instance of a class, or call a function.</p>
+<div class="guide-config-flag admonition">
+<p class="admonition-title">flag</p>
+<ul class="simple">
+<li><p>An import path is defined as <code class="docutils literal notranslate"><span class="pre">{module}::{attribute}</span></code>, which is roughly equivalent to the python statement <code class="docutils literal notranslate"><span class="pre">from</span> <span class="pre">{module}</span> <span class="pre">import</span> <span class="pre">{attribute}</span></code>.
+- <code class="docutils literal notranslate"><span class="pre">{module}::</span></code> can be omitted for <code class="xref py py-mod docutils literal notranslate"><span class="pre">functions</span></code>.
+- If <code class="docutils literal notranslate"><span class="pre">{attribute}</span></code> is not provided, the whole module will be returned.
+- <code class="docutils literal notranslate"><span class="pre">{attribute}</span></code> can be a dot separated string to get a similar effect as <a class="reference internal" href="#config-tag-attr"><span class="std std-ref">&lt;attr&gt;</span></a>.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">&lt;type&gt;</span></code>: when the tag value is not provided, the value must be a valid import path ande will be replaced by the imported object.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">&lt;type={module::attribute}&gt;</span></code>: when the tag value is provided, the imported object will be called with the value as its arguments.</p></li>
+</ul>
+</div>
+<div class="guide-config-value admonition">
+<p class="admonition-title">value</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">&lt;type&gt;</span></code>:
+- <code class="docutils literal notranslate"><span class="pre">str</span></code>: a valid import path <code class="docutils literal notranslate"><span class="pre">{module}::{attribute}</span></code>.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">&lt;type={module::attribute}&gt;</span></code>:
+- <code class="docutils literal notranslate"><span class="pre">module.attribute(*value)</span></code>: if the value is a list, it will be used as positional arguments.
+- <code class="docutils literal notranslate"><span class="pre">module.attribute(**value)</span></code>: If the value is a dict and only contains string keys, the string keys will be used as keyword arguments.
+- <code class="docutils literal notranslate"><span class="pre">module.attribute(*value[None],</span> <span class="pre">**value[others])</span></code>: If the value is a dict and the <code class="docutils literal notranslate"><span class="pre">None</span></code> key is a list, the <code class="docutils literal notranslate"><span class="pre">None</span></code> key will be used as positional arguments.
+- <code class="docutils literal notranslate"><span class="pre">module.attribute(value[None],</span> <span class="pre">**value[others])</span></code>: If the value is a dict and the <code class="docutils literal notranslate"><span class="pre">None</span></code> key is not a list, the <code class="docutils literal notranslate"><span class="pre">None</span></code> key will be used as the first argument.
+- <code class="docutils literal notranslate"><span class="pre">module.attribute(value)</span></code>: If the value is neither a list nor a dict, it will be used as the first argument.</p></li>
+</ul>
+</div>
+<div class="guide-config-example dropdown admonition">
+<p class="admonition-title">example</p>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">key1 &lt;type&gt;</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;json::&quot;</span><span class="w"> </span><span class="c1"># import a module</span>
+<span class="nt">key2 &lt;type&gt;</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">json::loads</span><span class="w"> </span><span class="c1"># import a function</span>
+<span class="nt">key3 &lt;type&gt;</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">json::loads.__qualname__</span><span class="w"> </span><span class="c1"># import a nested attribute</span>
+<span class="nt">key4 &lt;type=range&gt;</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">0</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">100</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">10</span><span class="p p-Indicator">]</span><span class="w"> </span><span class="c1"># positional arguments</span>
+<span class="nt">&lt;discard&gt;</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">&lt;type=logging::basicConfig&gt;</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">level &lt;type&gt;</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">logging::INFO</span><span class="w"> </span><span class="c1"># tags can be nested</span>
+<span class="w">  </span><span class="nt">&lt;type=logging::info&gt;</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">message</span><span class="w">  </span><span class="c1"># call a function with one argument</span>
+<span class="nt">&lt;discard&gt;&lt;type=print&gt;</span><span class="p">:</span><span class="w"> </span><span class="c1"># create an instance of a built-in class</span>
+<span class="w">  </span><span class="nt">~</span><span class="p">:</span><span class="w"> </span><span class="c1"># positional arguments</span>
+<span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">message1</span>
+<span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">message2</span>
+<span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">message3</span>
+<span class="w">  </span><span class="nt">sep</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;\n&quot;</span><span class="w"> </span><span class="c1"># keyword arguments</span>
+</pre></div>
+</div>
+<p>will be parsed into</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">json</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">logging</span>
+
+<span class="p">{</span>
+  <span class="s2">&quot;key1&quot;</span><span class="p">:</span> <span class="n">json</span><span class="p">,</span>
+  <span class="s2">&quot;key2&quot;</span><span class="p">:</span> <span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">,</span>
+  <span class="s2">&quot;key3&quot;</span><span class="p">:</span> <span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="o">.</span><span class="vm">__qualname__</span><span class="p">,</span>
+  <span class="s2">&quot;key4&quot;</span><span class="p">:</span> <span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">100</span><span class="p">,</span> <span class="mi">10</span><span class="p">),</span>
+<span class="p">}</span>
+<span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;message&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;message1&quot;</span><span class="p">,</span> <span class="s2">&quot;message2&quot;</span><span class="p">,</span> <span class="s2">&quot;message3&quot;</span><span class="p">,</span> <span class="n">sep</span><span class="o">=</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
 </section>
 <section id="attr">
-<span id="config-flag-attr"></span><h3><code class="docutils literal notranslate"><span class="pre">&lt;attr&gt;</span></code><a class="headerlink" href="#attr" title="Link to this heading">#</a></h3>
-<p># TODO</p>
+<span id="config-tag-attr"></span><h3><code class="docutils literal notranslate"><span class="pre">&lt;attr&gt;</span></code><a class="headerlink" href="#attr" title="Link to this heading">#</a></h3>
+<p>This tag will replace the current value by the its attribute. A tag like <code class="docutils literal notranslate"><span class="pre">&lt;attr=attr1.attr2&gt;</span></code> is equivalent to the pseudo code <code class="docutils literal notranslate"><span class="pre">value.attr1.attr2</span></code>.</p>
+<div class="guide-config-flag admonition">
+<p class="admonition-title">flag</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">&lt;attr={attribute}&gt;</span></code>: where the attribute can be a dot separated string.</p></li>
+</ul>
+</div>
 </section>
 <section id="var">
-<span id="config-flag-var"></span><h3><code class="docutils literal notranslate"><span class="pre">&lt;var&gt;</span></code><a class="headerlink" href="#var" title="Link to this heading">#</a></h3>
-<p># TODO var, ref, copy, deepcopy</p>
+<span id="config-tag-var"></span><h3><code class="docutils literal notranslate"><span class="pre">&lt;var&gt;</span></code><a class="headerlink" href="#var" title="Link to this heading">#</a></h3>
+<p>This tag can be used to create a variable from the current value. The variable has a lifecycle spans the entire parser <a class="reference internal" href="../../api/config.html#heptools.config.ConfigParser.__call__" title="heptools.config.ConfigParser.__call__"><code class="xref py py-meth docutils literal notranslate"><span class="pre">__call__()</span></code></a> and is shared by all files within the same call. The variable can be accessed using <code class="docutils literal notranslate"><span class="pre">&lt;ref&gt;</span></code>, <code class="docutils literal notranslate"><span class="pre">&lt;copy&gt;</span></code> or <code class="docutils literal notranslate"><span class="pre">&lt;deepcopy&gt;</span></code> and is also available as <code class="docutils literal notranslate"><span class="pre">locals</span></code> in <a class="reference internal" href="#config-tag-code"><span class="std std-ref">&lt;code&gt;</span></a>.</p>
+<div class="guide-config-flag admonition">
+<p class="admonition-title">flag</p>
+<ul class="simple">
+<li><p>The first of the following that is a string will be used as the variable name:
+- <code class="docutils literal notranslate"><span class="pre">&lt;var&gt;</span></code>: tag value, key
+- <code class="docutils literal notranslate"><span class="pre">&lt;ref&gt;</span></code>, <code class="docutils literal notranslate"><span class="pre">&lt;copy&gt;</span></code>, <code class="docutils literal notranslate"><span class="pre">&lt;deepcopy&gt;</span></code>: tag value, value, key</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">&lt;var&gt;</span></code>, <code class="docutils literal notranslate"><span class="pre">&lt;var={variable}&gt;</span></code>: define a new variable.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">&lt;ref&gt;</span></code>, <code class="docutils literal notranslate"><span class="pre">&lt;ref={variable}&gt;</span></code>: replace the value by a reference to the variable.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">&lt;copy&gt;</span></code>, <code class="docutils literal notranslate"><span class="pre">&lt;copy={variable}&gt;</span></code>: replace the value by a <a class="reference external" href="https://docs.python.org/3/library/copy.html#copy.copy" title="(in Python v3.13)"><code class="xref py py-func docutils literal notranslate"><span class="pre">copy()</span></code></a> of the variable.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">&lt;deepcopy&gt;</span></code>, <code class="docutils literal notranslate"><span class="pre">&lt;deepcopy={variable}&gt;</span></code>: replace the value by a <a class="reference external" href="https://docs.python.org/3/library/copy.html#copy.deepcopy" title="(in Python v3.13)"><code class="xref py py-func docutils literal notranslate"><span class="pre">deepcopy()</span></code></a> of the variable.</p></li>
+</ul>
+</div>
+<div class="guide-config-example dropdown admonition">
+<p class="admonition-title">example</p>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nn">---</span><span class="w"> </span><span class="c1"># file1.yml</span>
+<span class="nt">var1 &lt;var&gt;</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">value1_1</span><span class="p p-Indicator">]</span><span class="w"> </span><span class="c1"># use the key as variable name</span>
+<span class="nt">key1 &lt;var=var2&gt;</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">value2_1</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">value2_2</span><span class="p p-Indicator">]</span><span class="w"> </span><span class="c1"># use the tag value as variable name</span>
+
+<span class="nn">---</span><span class="w"> </span><span class="c1"># file2.yml</span>
+<span class="nt">&lt;discard&gt;</span><span class="p">:</span><span class="w"> </span><span class="c1"># only make use of the variables</span>
+<span class="w">  </span><span class="nt">&lt;include&gt;</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">file1.yml</span>
+<span class="nt">key1 &lt;var=var3&gt;</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">value3_1</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">value3_2</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">value3_3</span><span class="p p-Indicator">]</span>
+<span class="nt">key2 &lt;ref=var1&gt;</span><span class="p">:</span><span class="w"> </span><span class="c1"># a reference to var1 in file1.yml, use the tag value as variable name</span>
+<span class="nt">key3 &lt;copy&gt;</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">var2</span><span class="w"> </span><span class="c1"># a copy of var2 in file1.yml, use the value as variable name</span>
+<span class="nt">var3 &lt;deepcopy&gt;</span><span class="p">:</span><span class="w"> </span><span class="c1"># a deepcopy of var3 in the same file, use the key as variable name</span>
+<span class="nt">var3 &lt;extend&gt;</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">value3_4</span><span class="p p-Indicator">]</span><span class="w"> </span><span class="c1"># append to the deepcopy</span>
+</pre></div>
+</div>
+<p><code class="docutils literal notranslate"><span class="pre">&quot;file2.yml&quot;</span></code> will be parsed into:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="p">{</span>
+  <span class="s2">&quot;key1&quot;</span><span class="p">:</span> <span class="p">[</span><span class="s2">&quot;value3_1&quot;</span><span class="p">,</span> <span class="s2">&quot;value3_2&quot;</span><span class="p">,</span> <span class="s2">&quot;value3_3&quot;</span><span class="p">],</span>
+  <span class="s2">&quot;key2&quot;</span><span class="p">:</span> <span class="p">[</span><span class="s2">&quot;value1_1&quot;</span><span class="p">],</span>
+  <span class="s2">&quot;key3&quot;</span><span class="p">:</span> <span class="p">[</span><span class="s2">&quot;value2_1&quot;</span><span class="p">,</span> <span class="s2">&quot;value2_2&quot;</span><span class="p">],</span>
+  <span class="s2">&quot;var3&quot;</span><span class="p">:</span> <span class="p">[</span><span class="s2">&quot;value3_1&quot;</span><span class="p">,</span> <span class="s2">&quot;value3_2&quot;</span><span class="p">,</span> <span class="s2">&quot;value3_3&quot;</span><span class="p">,</span> <span class="s2">&quot;value3_4&quot;</span><span class="p">],</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+</div>
 </section>
 <section id="extend">
-<span id="config-flag-extend"></span><h3><code class="docutils literal notranslate"><span class="pre">&lt;extend&gt;</span></code><a class="headerlink" href="#extend" title="Link to this heading">#</a></h3>
-<p># TODO</p>
+<span id="config-tag-extend"></span><h3><code class="docutils literal notranslate"><span class="pre">&lt;extend&gt;</span></code><a class="headerlink" href="#extend" title="Link to this heading">#</a></h3>
+<p>This tag will try to extend the existing value of the same key by the current value, in a way given by the pseudo code:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">if</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">local</span><span class="p">:</span>
+  <span class="k">return</span> <span class="n">extend</span><span class="p">(</span><span class="n">local</span><span class="p">[</span><span class="n">key</span><span class="p">],</span> <span class="n">value</span><span class="p">)</span>
+<span class="k">else</span><span class="p">:</span>
+  <span class="k">return</span> <span class="n">value</span>
+</pre></div>
+</div>
+<p>where the <code class="docutils literal notranslate"><span class="pre">extend</span></code> function is a binary operation specified by the tag value.</p>
+<div class="guide-config-flag admonition">
+<p class="admonition-title">flag</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">&lt;extend&gt;</span></code>, <code class="docutils literal notranslate"><span class="pre">&lt;extend=recursive&gt;</span></code>: recursively merge dictionaries or add up other types.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">&lt;extend=add&gt;</span></code>: <code class="docutils literal notranslate"><span class="pre">local[key]</span> <span class="pre">+</span> <span class="pre">value</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">&lt;extend=or&gt;</span></code>: <code class="docutils literal notranslate"><span class="pre">local[key]</span> <span class="pre">|</span> <span class="pre">value</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">&lt;extend=and&gt;</span></code>: <code class="docutils literal notranslate"><span class="pre">local[key]</span> <span class="pre">&amp;</span> <span class="pre">value</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">&lt;extend={operation}&gt;</span></code>: see <span class="xref std std-ref">config-custom-extend</span></p></li>
+</ul>
+</div>
+<div class="admonition warning">
+<p class="admonition-title">Warning</p>
+<p>None of the above operation will modify the existing value in-place.</p>
+</div>
+<div class="guide-config-example dropdown admonition">
+<p class="admonition-title">example</p>
+<p>will be parsed into</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="p">{</span>
+  <span class="s2">&quot;parent1&quot;</span><span class="p">:</span> <span class="p">{</span>
+    <span class="s2">&quot;child1&quot;</span><span class="p">:</span> <span class="p">[</span><span class="s2">&quot;a&quot;</span><span class="p">,</span> <span class="s2">&quot;b&quot;</span><span class="p">,</span> <span class="s2">&quot;c&quot;</span><span class="p">],</span>
+    <span class="s2">&quot;child2&quot;</span><span class="p">:</span> <span class="mi">3</span>
+  <span class="p">},</span>
+  <span class="s2">&quot;parent2&quot;</span><span class="p">:</span> <span class="p">{</span>
+    <span class="s2">&quot;child1&quot;</span><span class="p">:</span> <span class="p">[</span><span class="s2">&quot;a&quot;</span><span class="p">,</span> <span class="s2">&quot;b&quot;</span><span class="p">],</span>
+    <span class="s2">&quot;child2&quot;</span><span class="p">:</span> <span class="mi">1</span>
+  <span class="p">}</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+</div>
 </section>
 </section>
 <section id="customization">
@@ -707,7 +873,7 @@
   <nav class="bd-toc-nav page-toc" aria-labelledby="pst-page-navigation-heading-2">
     <ul class="visible nav section-nav flex-column">
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#parser">Parser</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#flag">Flag</a><ul class="nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#tag">Tag</a><ul class="nav section-nav flex-column">
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#syntax">Syntax</a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#parsing">Parsing</a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#url-and-io">URL and IO</a></li>
@@ -719,7 +885,7 @@
 </li>
 </ul>
 </li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#built-in-flags">Built-in flags</a><ul class="nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#built-in-tags">Built-in tags</a><ul class="nav section-nav flex-column">
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#code"><code class="docutils literal notranslate"><span class="pre">&lt;code&gt;</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#include"><code class="docutils literal notranslate"><span class="pre">&lt;include&gt;</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#literal"><code class="docutils literal notranslate"><span class="pre">&lt;literal&gt;</span></code></a></li>

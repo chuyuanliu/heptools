@@ -1,42 +1,38 @@
+@use "sass:map";
+
 $styles: (
-  "config-flag": (
-    "border": red,
-    "background": blue,
-    "foreground": white,
-    "icon": "👀"
-  ),
-  "config-key": (
-    "border": green,
-    "background": yellow,
+  "config-tag": (
+    "border": hsl(0, 100%, 69%),
+    "background": hsl(0, 100%, 89%),
     "foreground": black,
-    "icon": "👀"
+    "icon": "\f02b"
   ),
   "config-value": (
-    "border": green,
-    "background": yellow,
+    "border": hsl(42, 100%, 50%),
+    "background": hsl(42, 100%, 89%),
     "foreground": black,
-    "icon": "👀"
+    "icon": "\f03a"
   ),
-  "note": (
-    "border": green,
-    "background": yellow,
+  "config-example": (
+    "border": hsl(176, 59%, 53%),
+    "background": hsl(176, 59%, 89%),
     "foreground": black,
-    "icon": "👀"
+    "icon": "\f121"
   )
 );
 
 @each $name, $style in $styles {
   div.admonition.guide-#{$name} {
-    border-color: map-get($style, "border");
+    border-color: map.get($style, "border");
   }
 
   div.admonition.guide-#{$name} > .admonition-title {
-    background-color: map-get($style, "background");
-    color: map-get($style, "foreground");
+    background-color: map.get($style, "background");
+    color: map.get($style, "foreground");
   }
 
   div.admonition.guide-#{$name} > .admonition-title::after {
-    content: map-get($style, "icon");
-    color: map-get($style, "border");
+    content: map.get($style, "icon");
+    color: map.get($style, "border");
   }
 }
