@@ -1,7 +1,9 @@
 from __future__ import annotations
 
 import json
+import pickle
 from collections import defaultdict
+from io import BytesIO
 from os import fspath
 from pathlib import PurePosixPath
 from types import MethodType
@@ -9,6 +11,7 @@ from typing import (
     Any,
     Callable,
     Generator,
+    Generic,
     Iterable,
     Optional,
     TypeVar,
@@ -108,7 +111,7 @@ def _maybe_classmethod(method: T) -> T:
     return _MaybeClassMethod(method)
 
 
-class FileIO:
+class FileIORegistry(Generic[HandlerT]):
     def __init_subclass__(cls):
         cls.__handler = {}
 
@@ -145,7 +148,7 @@ class FileIO:
 
     @overload
     @classmethod
-    def register(cls, handler: HandlerT, *extensions: str) -> HandlerT: ...
+    def register(cls, handler: HandlerT, *extensions: str) -> None: ...
     @overload
     @classmethod
     def register(cls, *extensions: str) -> Callable[[T], T]: ...
@@ -163,11 +166,15 @@ class FileIO:
             File extensions to register.
         """
         if isinstance(handler, str):
-            return lambda x: this.register(x, handler, *extensions)
+
+            def wrapper(func):
+                this.register(func, handler, *extensions)
+                return func
+
+            return wrapper
         for extension in this.__normalize_extensions(extensions):
             this.__handler[extension] = handler
             this._hook_extension(extension)
-        return handler
 
     @_maybe_classmethod
     def unregister(this, *extensions: str):
@@ -191,7 +198,7 @@ class FileIO:
         return sorted(type(this).__handler | this.__handler)
 
 
-class FileLoader(FileIO):
+class FileLoader(FileIORegistry[Callable[[BytesIO], Any]]):
     """
     A module to load and deserialize objects from URL.
 
@@ -210,7 +217,7 @@ class FileLoader(FileIO):
         if not isinstance(self, type) and self.__cache is not None:
             self.__cache.pop(extension, None)
 
-    def load(self, url: str, use_cache: bool = True):
+    def load(self, url: str, use_cache: bool = True, use_buffer: bool = True):
         """
         Load objects from URL.
 
@@ -220,10 +227,12 @@ class FileLoader(FileIO):
             URL to an object.
         use_cache: bool, optional, default=True
             If True, use the cache if enabled.
+        use_buffer: bool, optional, default=True
+            If True, the whole file will be read into memory before deserialization.
         """
         use_cache &= self.__cache is not None
         compression, extension = self._get_extensions(url)
-        handler = self._get_handler(extension)
+        deserializer = self._get_handler(extension)
 
         if use_cache:
             cache = self.__cache[extension]
@@ -231,8 +240,12 @@ class FileLoader(FileIO):
                 return cache[url]
 
         with fsspec.open(url, mode="rb", compression=compression) as f:
-            data = f.read()
-        data = handler(data)
+            if use_buffer:
+                data = f.read()
+            else:
+                data = deserializer(f)
+        if use_buffer:
+            data = deserializer(BytesIO(data))
 
         if use_cache:
             cache[url] = data
@@ -245,35 +258,24 @@ class FileLoader(FileIO):
 
 
 @FileLoader.register("json")
-def json_deserializer(data: bytes):
-    return json.loads(data)
+def json_deserializer(data: BytesIO):
+    return json.load(data)
 
 
 @FileLoader.register("yaml", "yml")
-def yaml_deserializer(data: bytes):
+def yaml_deserializer(data: BytesIO):
     import yaml
 
     return yaml.safe_load(data)
 
 
 @FileLoader.register("pkl")
-def pkl_deserializer(data: bytes):
-    import pickle
-
-    return pickle.loads(data)
+def pkl_deserializer(data: BytesIO):
+    return pickle.load(data)
 
 
 @FileLoader.register("toml")
-def toml_deserializer(data: bytes):
+def toml_deserializer(data: BytesIO):
     import tomllib
 
-    return tomllib.loads(data.decode("utf-8"))
-
-
-@FileLoader.register("ini")
-def ini_deserializer(data: bytes):
-    import configparser
-
-    parser = configparser.ConfigParser()
-    parser.read_string(data.decode("utf-8"))
-    return {k: dict(v.items()) for k, v in parser.items()}
+    return tomllib.load(data)

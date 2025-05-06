@@ -75,7 +75,7 @@ class _pickler:
 
 
 class ConfigManager:
-    __parser = ConfigParser(expand=True)
+    __parser = ConfigParser(nested=True)
 
     @classmethod
     def update(

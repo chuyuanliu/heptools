@@ -1,7 +1,7 @@
-from ._parser import RecursiveExtend, TypeParser, switch_parser
+from ._parser import FlagParser, RecursiveExtend, TypeParser
 
 __all__ = [
     "RecursiveExtend",
     "TypeParser",
-    "switch_parser",
+    "FlagParser",
 ]
