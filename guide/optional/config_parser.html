@@ -409,9 +409,7 @@
 <li><p>The order of the following tags are ill-defined, as they are not supposed to simply modify the key-value pairs. As a result, they cannot be directly chained with other regular tags, unless through <a class="reference internal" href="#config-tag-code"><span class="std std-ref">&lt;code&gt;</span></a>. See how to <a class="reference internal" href="#config-tips-include"><span class="std std-ref">Use &lt;include&gt; with other tags</span></a> as an example.</p>
 <ul>
 <li><p><a class="reference internal" href="#config-tag-include"><span class="std std-ref">&lt;include&gt;</span></a></p></li>
-<li><p><a class="reference internal" href="#config-tag-patch"><span class="std std-ref">&lt;patch&gt;, &lt;install&gt;, &lt;uninstall&gt;</span></a></p></li>
-<li><p><a class="reference internal" href="#config-tag-install"><span class="std std-ref">&lt;patch&gt;, &lt;install&gt;, &lt;uninstall&gt;</span></a></p></li>
-<li><p><a class="reference internal" href="#config-tag-uninstall"><span class="std std-ref">&lt;patch&gt;, &lt;install&gt;, &lt;uninstall&gt;</span></a></p></li>
+<li><p><a class="reference internal" href="#config-tag-patch"><span class="std std-ref">&lt;patch&gt;</span></a></p></li>
 </ul>
 </li>
 </ul>
@@ -534,7 +532,7 @@
 <h2>Built-in tags<a class="headerlink" href="#built-in-tags" title="Link to this heading">#</a></h2>
 <section id="code">
 <span id="config-tag-code"></span><h3><code class="docutils literal notranslate"><span class="pre">&lt;code&gt;</span></code><a class="headerlink" href="#code" title="Link to this heading">#</a></h3>
-<p>This tag will replace the value by the result of <a class="reference external" href="https://docs.python.org/3/library/functions.html#eval" title="(in Python v3.13)"><code class="xref py py-func docutils literal notranslate"><span class="pre">eval()</span></code></a>. The variables defined with <a class="reference internal" href="#config-tag-var"><span class="std std-ref">&lt;var&gt;, &lt;ref&gt;, &lt;copy&gt;, &lt;deepcopy&gt;</span></a> are available as <code class="docutils literal notranslate"><span class="pre">locals</span></code>.</p>
+<p>This tag will replace the value by the result of <a class="reference external" href="https://docs.python.org/3/library/functions.html#eval" title="(in Python v3.13)"><code class="xref py py-func docutils literal notranslate"><span class="pre">eval()</span></code></a>. The variables defined with <a class="reference internal" href="#config-tag-var"><span class="std std-ref">&lt;var&gt;</span></a> are available as <code class="docutils literal notranslate"><span class="pre">locals</span></code>.</p>
 <div class="guide-config-value admonition">
 <p class="admonition-title">value</p>
 <ul class="simple">
@@ -735,21 +733,19 @@
 </div>
 </div>
 </section>
-<section id="key-type-value-type">
-<h3><code class="docutils literal notranslate"><span class="pre">&lt;key-type&gt;</span></code>, <code class="docutils literal notranslate"><span class="pre">&lt;value-type&gt;</span></code><a class="headerlink" href="#key-type-value-type" title="Link to this heading">#</a></h3>
+<section id="key-type">
+<h3><code class="docutils literal notranslate"><span class="pre">&lt;key-type&gt;</span></code><a class="headerlink" href="#key-type" title="Link to this heading">#</a></h3>
 <div class="guide-config-tag admonition">
 <p class="admonition-title">tag</p>
 <ul class="simple">
 <li><p><code class="docutils literal notranslate"><span class="pre">&lt;key-type&gt;</span></code>: similar to <a class="reference internal" href="#config-tag-type"><span class="std std-ref">&lt;type&gt;</span></a>, but applied to the key instead.</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">&lt;value-type&gt;</span></code>: an alias to <code class="docutils literal notranslate"><span class="pre">&lt;type&gt;</span></code>.</p></li>
 </ul>
 </div>
 <div class="guide-config-example dropdown admonition">
 <p class="admonition-title">example</p>
 <div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">list &lt;key-type&gt; &lt;type=float&gt;</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">1</span>
-<span class="nt">dict &lt;key-type&gt; &lt;value-type=str&gt;</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">2</span><span class="w"> </span><span class="c1"># use the alias for clarity</span>
-<span class="nt">100 &lt;key-type=float&gt;</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">3</span>
-<span class="nt">json::loads.__qualname__ &lt;key-type&gt; &lt;literal&gt;</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">4</span><span class="w"> </span><span class="c1"># use literal to escape the dot</span>
+<span class="nt">100 &lt;key-type=float&gt;</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">2</span>
+<span class="nt">json::loads.__qualname__ &lt;key-type&gt; &lt;literal&gt;</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">3</span><span class="w"> </span><span class="c1"># use literal to escape the dot</span>
 </pre></div>
 </div>
 <p>will be parsed into</p>
@@ -757,9 +753,8 @@
 
 <span class="p">{</span>
   <span class="nb">list</span><span class="p">:</span> <span class="mf">1.0</span><span class="p">,</span>
-  <span class="nb">dict</span><span class="p">:</span> <span class="s2">&quot;2&quot;</span><span class="p">,</span>
-  <span class="mf">100.0</span><span class="p">:</span> <span class="mi">3</span><span class="p">,</span>
-  <span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="o">.</span><span class="vm">__qualname__</span><span class="p">:</span> <span class="mi">4</span><span class="p">,</span>
+  <span class="mf">100.0</span><span class="p">:</span> <span class="mi">2</span><span class="p">,</span>
+  <span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="o">.</span><span class="vm">__qualname__</span><span class="p">:</span> <span class="mi">3</span><span class="p">,</span>
 <span class="p">}</span>
 </pre></div>
 </div>
@@ -824,22 +819,14 @@
 </div>
 </div>
 </section>
-<section id="var-ref-copy-deepcopy">
-<span id="config-tag-deepcopy"></span><span id="config-tag-copy"></span><span id="config-tag-ref"></span><span id="config-tag-var"></span><h3><code class="docutils literal notranslate"><span class="pre">&lt;var&gt;</span></code>, <code class="docutils literal notranslate"><span class="pre">&lt;ref&gt;</span></code>, <code class="docutils literal notranslate"><span class="pre">&lt;copy&gt;</span></code>, <code class="docutils literal notranslate"><span class="pre">&lt;deepcopy&gt;</span></code><a class="headerlink" href="#var-ref-copy-deepcopy" title="Link to this heading">#</a></h3>
-<p>This tag can be used to create a variable from the value. The variable has a lifecycle spans the entire parser <a class="reference internal" href="../../api/config.html#heptools.config.ConfigParser.__call__" title="heptools.config.ConfigParser.__call__"><code class="xref py py-meth docutils literal notranslate"><span class="pre">__call__()</span></code></a> and is shared by all files within the same call. The variable can be accessed using <code class="docutils literal notranslate"><span class="pre">&lt;ref&gt;</span></code>, <code class="docutils literal notranslate"><span class="pre">&lt;copy&gt;</span></code> or <code class="docutils literal notranslate"><span class="pre">&lt;deepcopy&gt;</span></code> and is also available as <code class="docutils literal notranslate"><span class="pre">locals</span></code> in <a class="reference internal" href="#config-tag-code"><span class="std std-ref">&lt;code&gt;</span></a>.</p>
+<section id="var">
+<span id="config-tag-var"></span><h3><code class="docutils literal notranslate"><span class="pre">&lt;var&gt;</span></code><a class="headerlink" href="#var" title="Link to this heading">#</a></h3>
+<p>This tag can be used to create a variable from the value. The variable has a lifecycle spans the entire parser <a class="reference internal" href="../../api/config.html#heptools.config.ConfigParser.__call__" title="heptools.config.ConfigParser.__call__"><code class="xref py py-meth docutils literal notranslate"><span class="pre">__call__()</span></code></a> and is shared by all files within the same call. The variable can be accessed using <a class="reference internal" href="#config-tag-ref"><span class="std std-ref">&lt;ref&gt;</span></a> and is also available as <code class="docutils literal notranslate"><span class="pre">locals</span></code> in <a class="reference internal" href="#config-tag-code"><span class="std std-ref">&lt;code&gt;</span></a>.</p>
 <div class="guide-config-tag admonition">
 <p class="admonition-title">tag</p>
 <ul class="simple">
-<li><p>The first of the following that is a string will be used as the variable name:</p>
-<ul>
-<li><p><code class="docutils literal notranslate"><span class="pre">&lt;var&gt;</span></code>: tag value, key</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">&lt;ref&gt;</span></code>, <code class="docutils literal notranslate"><span class="pre">&lt;copy&gt;</span></code>, <code class="docutils literal notranslate"><span class="pre">&lt;deepcopy&gt;</span></code>: tag value, value, key</p></li>
-</ul>
-</li>
+<li><p>If a tag value is provided, it will be used as the variable name. Otherwise, the key will be used.</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">&lt;var&gt;</span></code>, <code class="docutils literal notranslate"><span class="pre">&lt;var={variable}&gt;</span></code>: define a new variable.</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">&lt;ref&gt;</span></code>, <code class="docutils literal notranslate"><span class="pre">&lt;ref={variable}&gt;</span></code>: replace the value by a reference to the variable.</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">&lt;copy&gt;</span></code>, <code class="docutils literal notranslate"><span class="pre">&lt;copy={variable}&gt;</span></code>: replace the value by a <a class="reference external" href="https://docs.python.org/3/library/copy.html#copy.copy" title="(in Python v3.13)"><code class="xref py py-func docutils literal notranslate"><span class="pre">copy()</span></code></a> of the variable.</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">&lt;deepcopy&gt;</span></code>, <code class="docutils literal notranslate"><span class="pre">&lt;deepcopy={variable}&gt;</span></code>: replace the value by a <a class="reference external" href="https://docs.python.org/3/library/copy.html#copy.deepcopy" title="(in Python v3.13)"><code class="xref py py-func docutils literal notranslate"><span class="pre">deepcopy()</span></code></a> of the variable.</p></li>
 </ul>
 </div>
 <div class="guide-config-example dropdown admonition">
@@ -852,9 +839,9 @@
 <span class="nt">&lt;discard&gt;</span><span class="p">:</span><span class="w"> </span><span class="c1"># only make use of the variables</span>
 <span class="w">  </span><span class="nt">&lt;include&gt;</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">file1.yml</span>
 <span class="nt">key1 &lt;var=var3&gt;</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">value3_1</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">value3_2</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">value3_3</span><span class="p p-Indicator">]</span>
-<span class="nt">key2 &lt;ref=var1&gt;</span><span class="p">:</span><span class="w"> </span><span class="c1"># a reference to var1 in file1.yml, use the tag value as variable name</span>
-<span class="nt">key3 &lt;copy&gt;</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">var2</span><span class="w"> </span><span class="c1"># a copy of var2 in file1.yml, use the value as variable name</span>
-<span class="nt">var3 &lt;deepcopy&gt;</span><span class="p">:</span><span class="w"> </span><span class="c1"># a deepcopy of var3 in the same file, use the key as variable name</span>
+<span class="nt">key2 &lt;ref&gt;</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">var1</span><span class="w"> </span><span class="c1"># a reference to var1 in file1.yml, use the tag value as variable name</span>
+<span class="nt">key3 &lt;ref=copy&gt;</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">var2</span><span class="w"> </span><span class="c1"># a copy of var2 in file1.yml, use the value as variable name</span>
+<span class="nt">var3 &lt;ref=deepcopy&gt;</span><span class="p">:</span><span class="w"> </span><span class="c1"># a deepcopy of var3 in the same file, use the key as variable name</span>
 <span class="nt">var3 &lt;extend&gt;</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">value3_4</span><span class="p p-Indicator">]</span><span class="w"> </span><span class="c1"># append to the deepcopy</span>
 </pre></div>
 </div>
@@ -867,6 +854,19 @@
 <span class="p">}</span>
 </pre></div>
 </div>
+</div>
+</section>
+<section id="ref">
+<span id="config-tag-ref"></span><h3><code class="docutils literal notranslate"><span class="pre">&lt;ref&gt;</span></code><a class="headerlink" href="#ref" title="Link to this heading">#</a></h3>
+<p>This tag can be used to access the variables defined with <a class="reference internal" href="#config-tag-var"><span class="std std-ref">&lt;var&gt;</span></a>.</p>
+<div class="guide-config-tag admonition">
+<p class="admonition-title">tag</p>
+<ul class="simple">
+<li><p>If the value is a string, it will be used as the variable name. Otherwise, the key will be used.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">&lt;ref&gt;</span></code>: replace the value by a reference to the variable.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">&lt;ref=copy&gt;</span></code>: replace the value by a <a class="reference external" href="https://docs.python.org/3/library/copy.html#copy.copy" title="(in Python v3.13)"><code class="xref py py-func docutils literal notranslate"><span class="pre">copy()</span></code></a> of the variable.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">&lt;ref=deepcopy&gt;</span></code>: replace the value by a <a class="reference external" href="https://docs.python.org/3/library/copy.html#copy.deepcopy" title="(in Python v3.13)"><code class="xref py py-func docutils literal notranslate"><span class="pre">deepcopy()</span></code></a> of the variable.</p></li>
+</ul>
 </div>
 </section>
 </section>
@@ -890,8 +890,9 @@
 </section>
 <section id="advanced">
 <h2>Advanced<a class="headerlink" href="#advanced" title="Link to this heading">#</a></h2>
-<section id="patch-install-uninstall">
-<span id="config-tag-uninstall"></span><span id="config-tag-install"></span><span id="config-tag-patch"></span><h3><code class="docutils literal notranslate"><span class="pre">&lt;patch&gt;</span></code>, <code class="docutils literal notranslate"><span class="pre">&lt;install&gt;</span></code>, <code class="docutils literal notranslate"><span class="pre">&lt;uninstall&gt;</span></code><a class="headerlink" href="#patch-install-uninstall" title="Link to this heading">#</a></h3>
+<section id="patch">
+<span id="config-tag-patch"></span><h3><code class="docutils literal notranslate"><span class="pre">&lt;patch&gt;</span></code><a class="headerlink" href="#patch" title="Link to this heading">#</a></h3>
+<p># TODO patch</p>
 </section>
 </section>
 </section>
@@ -964,10 +965,11 @@
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#dummy"><code class="docutils literal notranslate"><span class="pre">&lt;dummy&gt;</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#file"><code class="docutils literal notranslate"><span class="pre">&lt;file&gt;</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#type"><code class="docutils literal notranslate"><span class="pre">&lt;type&gt;</span></code></a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#key-type-value-type"><code class="docutils literal notranslate"><span class="pre">&lt;key-type&gt;</span></code>, <code class="docutils literal notranslate"><span class="pre">&lt;value-type&gt;</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#key-type"><code class="docutils literal notranslate"><span class="pre">&lt;key-type&gt;</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#attr"><code class="docutils literal notranslate"><span class="pre">&lt;attr&gt;</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#extend"><code class="docutils literal notranslate"><span class="pre">&lt;extend&gt;</span></code></a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#var-ref-copy-deepcopy"><code class="docutils literal notranslate"><span class="pre">&lt;var&gt;</span></code>, <code class="docutils literal notranslate"><span class="pre">&lt;ref&gt;</span></code>, <code class="docutils literal notranslate"><span class="pre">&lt;copy&gt;</span></code>, <code class="docutils literal notranslate"><span class="pre">&lt;deepcopy&gt;</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#var"><code class="docutils literal notranslate"><span class="pre">&lt;var&gt;</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#ref"><code class="docutils literal notranslate"><span class="pre">&lt;ref&gt;</span></code></a></li>
 </ul>
 </li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#customization">Customization</a><ul class="nav section-nav flex-column">
@@ -981,7 +983,7 @@
 </ul>
 </li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#advanced">Advanced</a><ul class="nav section-nav flex-column">
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#patch-install-uninstall"><code class="docutils literal notranslate"><span class="pre">&lt;patch&gt;</span></code>, <code class="docutils literal notranslate"><span class="pre">&lt;install&gt;</span></code>, <code class="docutils literal notranslate"><span class="pre">&lt;uninstall&gt;</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#patch"><code class="docutils literal notranslate"><span class="pre">&lt;patch&gt;</span></code></a></li>
 </ul>
 </li>
 </ul>

@@ -52,8 +52,6 @@ Precedence
 
     * :ref:`config-tag-include`
     * :ref:`config-tag-patch`
-    * :ref:`config-tag-install`
-    * :ref:`config-tag-uninstall`
 
 .. _config-rule-url:
 
@@ -425,14 +423,14 @@ This tag can be used to import a module/attribute, create an instance of a class
     logging.info("message")
     print("message1", "message2", "message3", sep="\n")
 
-``<key-type>``, ``<value-type>``
-----------------------------------
+
+``<key-type>``
+----------------
 
 .. admonition:: tag
   :class: guide-config-tag
 
   * ``<key-type>``: similar to :ref:`config-tag-type`, but applied to the key instead.
-  * ``<value-type>``: an alias to ``<type>``.
 
 .. admonition:: example
   :class: guide-config-example, dropdown
@@ -440,9 +438,8 @@ This tag can be used to import a module/attribute, create an instance of a class
   .. code-block:: yaml
 
     list <key-type> <type=float>: 1
-    dict <key-type> <value-type=str>: 2 # use the alias for clarity
-    100 <key-type=float>: 3
-    json::loads.__qualname__ <key-type> <literal>: 4 # use literal to escape the dot
+    100 <key-type=float>: 2
+    json::loads.__qualname__ <key-type> <literal>: 3 # use literal to escape the dot
   
   will be parsed into
 
@@ -452,9 +449,8 @@ This tag can be used to import a module/attribute, create an instance of a class
 
     {
       list: 1.0,
-      dict: "2",
-      100.0: 3,
-      json.loads.__qualname__: 4,
+      100.0: 2,
+      json.loads.__qualname__: 3,
     }
 
 
@@ -528,35 +524,18 @@ where the ``extend`` function is a binary operation specified by the tag value.
     }
 
 .. _config-tag-var:
-.. label:: <var>
-
-.. _config-tag-ref:
-.. label:: <ref>
-
-.. _config-tag-copy:
-.. label:: <copy>
-
-.. _config-tag-deepcopy:
-.. label:: <deepcopy>
 
 
-``<var>``, ``<ref>``, ``<copy>``, ``<deepcopy>``
---------------------------------------------------
+``<var>``
+----------
 
-This tag can be used to create a variable from the value. The variable has a lifecycle spans the entire parser :meth:`~heptools.config.ConfigParser.__call__` and is shared by all files within the same call. The variable can be accessed using ``<ref>``, ``<copy>`` or ``<deepcopy>`` and is also available as ``locals`` in :ref:`config-tag-code`.
+This tag can be used to create a variable from the value. The variable has a lifecycle spans the entire parser :meth:`~heptools.config.ConfigParser.__call__` and is shared by all files within the same call. The variable can be accessed using :ref:`config-tag-ref` and is also available as ``locals`` in :ref:`config-tag-code`.
 
 .. admonition:: tag
   :class: guide-config-tag
 
-  * The first of the following that is a string will be used as the variable name:
-
-    * ``<var>``: tag value, key
-    * ``<ref>``, ``<copy>``, ``<deepcopy>``: tag value, value, key
-
+  * If a tag value is provided, it will be used as the variable name. Otherwise, the key will be used.
   * ``<var>``, ``<var={variable}>``: define a new variable. 
-  * ``<ref>``, ``<ref={variable}>``: replace the value by a reference to the variable. 
-  * ``<copy>``, ``<copy={variable}>``: replace the value by a :func:`~copy.copy` of the variable.
-  * ``<deepcopy>``, ``<deepcopy={variable}>``: replace the value by a :func:`~copy.deepcopy` of the variable.
 
 .. admonition:: example
   :class: guide-config-example, dropdown
@@ -571,9 +550,9 @@ This tag can be used to create a variable from the value. The variable has a lif
     <discard>: # only make use of the variables
       <include>: file1.yml
     key1 <var=var3>: [value3_1, value3_2, value3_3]
-    key2 <ref=var1>: # a reference to var1 in file1.yml, use the tag value as variable name
-    key3 <copy>: var2 # a copy of var2 in file1.yml, use the value as variable name
-    var3 <deepcopy>: # a deepcopy of var3 in the same file, use the key as variable name
+    key2 <ref>: var1 # a reference to var1 in file1.yml, use the tag value as variable name
+    key3 <ref=copy>: var2 # a copy of var2 in file1.yml, use the value as variable name
+    var3 <ref=deepcopy>: # a deepcopy of var3 in the same file, use the key as variable name
     var3 <extend>: [value3_4] # append to the deepcopy
 
   ``"file2.yml"`` will be parsed into:
@@ -586,6 +565,21 @@ This tag can be used to create a variable from the value. The variable has a lif
       "key3": ["value2_1", "value2_2"],
       "var3": ["value3_1", "value3_2", "value3_3", "value3_4"],
     }
+
+.. _config-tag-ref:
+
+``<ref>``
+---------
+
+This tag can be used to access the variables defined with :ref:`config-tag-var`.
+
+.. admonition:: tag
+  :class: guide-config-tag
+
+  * If the value is a string, it will be used as the variable name. Otherwise, the key will be used.
+  * ``<ref>``: replace the value by a reference to the variable. 
+  * ``<ref=copy>``: replace the value by a :func:`~copy.copy` of the variable.
+  * ``<ref=deepcopy>``: replace the value by a :func:`~copy.deepcopy` of the variable.
 
 Customization
 ===============
@@ -615,13 +609,9 @@ Advanced
 ========
 
 .. _config-tag-patch:
-.. label:: <patch>
 
-.. _config-tag-install:
-.. label:: <install>
+``<patch>``
+-------------
+# TODO patch
 
-.. _config-tag-uninstall:
-.. label:: <uninstall>
 
-``<patch>``, ``<install>``, ``<uninstall>``
-----------------------------------------------
