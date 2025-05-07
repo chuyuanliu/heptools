@@ -4,7 +4,7 @@ import json
 import pickle
 from collections import defaultdict
 from io import BytesIO
-from os import fspath
+from os import fspath, getcwd
 from pathlib import PurePosixPath
 from types import MethodType
 from typing import (
@@ -39,7 +39,8 @@ def _maybe_json(data: str):
         return data
 
 
-def resolve_path(base: str, scheme: str, *paths: str):
+def resolve_path(base: Optional[str], scheme: str, *paths: str):
+    base = base or getcwd()
     match scheme:
         case "absolute":
             yield from paths

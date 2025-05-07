@@ -9,7 +9,7 @@ from dataclasses import dataclass, field, fields
 from enum import StrEnum, auto
 from functools import partial
 from inspect import _ParameterKind as ParKind
-from os import PathLike, fspath, getcwd
+from os import PathLike, fspath
 from textwrap import indent
 from types import MappingProxyType, MethodType
 from typing import Any, Callable, Iterable, Optional, ParamSpec, Protocol, TypeVar
@@ -26,24 +26,35 @@ str, ~os.PathLike, dict: A path to the config file or a nested dict.
 """
 
 
-def _error_msg(error: Exception, key: str, value=..., tag: str = ...) -> str:
-    if tag is ...:
-        head = "When parsing"
-    else:
-        head = f"When parsing <{tag}> in"
-    if value is ...:
-        value = ""
-    else:
-        value = indent(repr(value), "    ") + "\n"
-    return f"""
+def _error_msg(
+    error: Exception, tag: str = ..., path: str = None, key: str = ..., value=...
+):
+    info = "When parsing"
+    if tag is not ...:
+        info += f" tag <{tag}> in config"
+    if path is not None:
+        info += f"\n{path}"
+    if key is not ...:
+        if value is ...:
+            info += f"\n  {key}:\n"
+        else:
+            try:
+                import yaml
 
-{head}
-  {key}: 
-{value}
+                value_msg = indent(
+                    yaml.safe_dump({key: value}, indent=2, sort_keys=False),
+                    "  ",
+                )
+            except Exception:
+                value_msg = f' {key}:\n{indent(str(value), "    ")}\n'
+            info += "\n" + value_msg
+    return SyntaxError(
+        f"""
+{info}
 The following error occurred:
   {type(error).__name__}:
-{indent(str(error), "    ")}
-"""
+{indent(str(error), "    ")}"""
+    )
 
 
 class _ReservedTag(StrEnum):
@@ -103,15 +114,22 @@ class _MatchedTags:
             _ReservedTag.uninstall,
         )
     )
+    skip = frozenset(
+        (
+            _ReservedTag.code,
+            _ReservedTag.dummy,
+        )
+    )
 
     def __init__(
         self,
-        raw: str,
+        key: str,
         tags: list[tuple[str, str]],
-        parsers: dict[str, Optional[TagParser]],
+        parser: _Parser,
     ):
-        self.raw_key = raw
-        self.parsers = parsers
+        self.raw_key = key
+        self.parser = parser
+        self.parsers = parser.custom.parsers
         self.tags = list[tuple[str, str]]()
         self.parsed = dict[str, str]()
         self.unique: Optional[tuple[str, str]] = None
@@ -119,7 +137,7 @@ class _MatchedTags:
         unique_check = 0
 
         for k, v in tags:
-            if k != _ReservedTag.code:
+            if k not in self.skip:
                 unique_check += 1
             if k in self.flags:
                 self.parsed[k] = v
@@ -129,11 +147,11 @@ class _MatchedTags:
                 self.tags.append((k, v))
 
         if self.unique is not None and unique_check > 1:
-            raise SyntaxError(
-                _error_msg(
-                    error=ValueError(f"cannot use <{self.unique[0]}> with other tags"),
-                    key=self.raw_key,
-                )
+            raise _error_msg(
+                error=ValueError(f"cannot use <{self.unique[0]}> with other tags"),
+                tag=self.unique[0],
+                path=self.parser.path,
+                key=self.raw_key,
             )
 
     def has(self, tag: str):
@@ -142,7 +160,7 @@ class _MatchedTags:
     def get(self, tag: str):
         return self.parsed.get(tag, ...)
 
-    def apply(self, *, key: str, value, **kwargs):
+    def apply(self, *, key: str, value, local: dict):
         raw_value = value
         for tag_k, tag_v in self.tags:
             if (parser := self.parsers.get(tag_k)) is not None:
@@ -152,24 +170,44 @@ class _MatchedTags:
                         value=value,
                         tag=tag_v,
                         tags=MappingProxyType(self.parsed),
-                        **kwargs,
+                        local=local,
+                        path=self.parser.path,
                     )
                 except RecursionError:
                     raise
                 except Exception as e:
-                    raise SyntaxError(
-                        _error_msg(
-                            key=self.raw_key,
-                            value=raw_value,
-                            error=e,
-                            tag=tag_k,
-                        )
+                    raise _error_msg(
+                        error=e,
+                        tag=tag_k,
+                        path=self.parser.path,
+                        key=self.raw_key,
+                        value=raw_value,
                     )
             self.parsed[tag_k] = tag_v
         return key, value
 
-    def __repr__(self):
-        return " ".join(f"<{k}={v}>" for k, v in self.tags)
+    def include(self, paths: str | list[str], tag: str, result: dict[str, Any]):
+        error = None
+        if isinstance(paths, str):
+            paths = [paths]
+        if isinstance(paths, list) and all(isinstance(path, str) for path in paths):
+            try:
+                return self.parser.custom.parse(
+                    *resolve_path(self.parser.path, tag, *paths), result=result
+                )
+            except RecursionError:
+                error = RecursionError("Recursive include may exist.")
+            except Exception as e:
+                error = e
+        else:
+            error = ValueError("Invalid path.")
+        raise _error_msg(
+            error=error,
+            tag=_ReservedTag.include,
+            path=self.parser.path,
+            key=self.raw_key,
+            value=paths,
+        )
 
 
 class TagParser(Protocol):
@@ -200,7 +238,7 @@ class TagParser(Protocol):
             All parsed tags of the current key.
         local: dict[str, Any], optional
             All parsed items in the current dictionary.
-        path: str, optional
+        path: str or None, optional
             The path to the current config file.
 
         Returns
@@ -446,11 +484,38 @@ class FileParser:  # tag: <file>
 
 
 class _Parser:
-    __cwd = getcwd()
+    re_match = re.compile(r"(?P<key>.*?)\s*(?P<tags>(\<[^\>\<]*\>\s*)*)\s*")
+    re_split = re.compile(r"\<(?P<tag>[^\>\<]*)\>")
 
-    def __init__(self, base: Optional[str], custom: _ParserInitializer):
-        self.base = base or self.__cwd
+    def __init__(self, path: Optional[str], custom: _ParserInitializer):
+        self.path = path
         self.custom = custom
+
+    def match(self, raw: Optional[str]) -> tuple[Optional[str], _MatchedTags]:
+        if raw is None:
+            return None, _NoTag
+        matched = self.re_match.fullmatch(raw)
+        if not matched:
+            return raw, _NoTag
+        tags = []
+        for tag in self.re_split.finditer(matched["tags"]):
+            k = tag["tag"].split("=")
+            if len(k) == 1:
+                v = None
+            elif len(k) == 2:
+                v = k[1]
+            else:
+                raise _error_msg(
+                    error=ValueError("Invalid tag format."),
+                    tag=tag["tag"],
+                    path=self.path,
+                    key=raw,
+                )
+            tags.append((k[0], v))
+        key = matched["key"]
+        if not key or key == "~":
+            key = None
+        return key, _MatchedTags(raw, tags, self)
 
     def dict(self, data: dict[str, Any], singleton: bool = False, result: dict = None):
         if result is None:
@@ -458,13 +523,13 @@ class _Parser:
         for k, v in data.items():
             key, tags, v = self.eval(k, v)
             match tags.unique:
-                case ("include", tag):
-                    self.include(v, tag, result=result)
-                case ("patch", tag):
+                case (_ReservedTag.include, tag):
+                    tags.include(v, tag, result)
+                case (_ReservedTag.patch, tag):
                     ...  # TODO
-                case ("install", tag):
+                case (_ReservedTag.install, tag):
                     ...  # TODO
-                case ("uninstall", tag):
+                case (_ReservedTag.uninstall, tag):
                     ...  # TODO
                 case None:
                     self.setitem(result, tags, key, v)
@@ -488,12 +553,18 @@ class _Parser:
         return parsed
 
     def eval(self, k: str, v: Any):
-        key, tags = self.custom.match(k)
+        key, tags = self.match(k)
         if tags.has(_ReservedTag.code):
             try:
                 v = eval(v, None, self.custom.vars.local)
             except Exception as e:
-                raise SyntaxError(_error_msg(k, v, e))
+                raise _error_msg(
+                    error=e,
+                    tag=_ReservedTag.code,
+                    path=self.path,
+                    key=k,
+                    value=v,
+                )
         return key, tags, v
 
     def setitem(self, local: dict[str, Any], tags: _MatchedTags, key: str, value: Any):
@@ -509,30 +580,13 @@ class _Parser:
             value = self.dict(value)
         elif isinstance(value, list):
             value = self.list(value)
-        key, value = tags.apply(path=self.base, local=local, key=key, value=value)
+        key, value = tags.apply(
+            key=key,
+            value=value,
+            local=local,
+        )
         if not tags.has(_ReservedTag.discard):
             local[key] = value
-
-    def include(self, paths, tag: str, result: dict[str, Any] = None):
-        if isinstance(paths, str):
-            paths = [paths]
-        if isinstance(paths, list) and all(isinstance(path, str) for path in paths):
-            try:
-                return self.custom.parse(
-                    *resolve_path(self.base, tag, *paths), result=result
-                )
-            except RecursionError:
-                raise RecursionError(
-                    "\n".join(
-                        [
-                            "Recursion may exist in",
-                            f"  {self.base}",
-                            "when <include>:",
-                            *(f"  - {p}" for p in paths),
-                        ]
-                    )
-                )
-        raise SyntaxError(f"Invalid include path: {paths}")
 
 
 @dataclass
@@ -544,10 +598,7 @@ class _ParserCustomization:
 
 @dataclass
 class _ParserInitializer(_ParserCustomization):
-    pattern_match = re.compile(r"(?P<key>.*?)\s*(?P<tags>(\<[^\>\<]*\>\s*)*)\s*")
-    pattern_split = re.compile(r"\<(?P<tag>[^\>\<]*)\>")
-
-    __type = TypeParser()
+    type_parser = TypeParser()
     static_parsers = {
         _ReservedTag.code: None,
         _ReservedTag.include: None,
@@ -555,8 +606,8 @@ class _ParserInitializer(_ParserCustomization):
         _ReservedTag.discard: None,
         _ReservedTag.dummy: None,
         _ReservedTag.file: FileParser(),
-        _ReservedTag.type: __type,
-        _ReservedTag.value_type: __type,
+        _ReservedTag.type: type_parser,
+        _ReservedTag.value_type: type_parser,
         _ReservedTag.key_type: KeyTypeParser(),
         _ReservedTag.attr: AttrParser(),
     }
@@ -596,30 +647,9 @@ class _ParserInitializer(_ParserCustomization):
             parser = _Parser(path, self)
             for config in configs:
                 if not isinstance(config, dict):
-                    raise SyntaxError(f"Cannot parse non-dict config: {path}")
+                    raise ValueError(f"Config must be a dict or a path, got {path}")
                 parser.dict(config, result=result)
         return result
-
-    def match(self, raw: Optional[str]) -> tuple[Optional[str], _MatchedTags]:
-        if raw is None:
-            return None, _NoTag
-        matched = self.pattern_match.fullmatch(raw)
-        if not matched:
-            return raw, _NoTag
-        tags = []
-        for tag in self.pattern_split.finditer(matched["tags"]):
-            k = tag["tag"].split("=")
-            if len(k) == 1:
-                v = None
-            elif len(k) == 2:
-                v = k[1]
-            else:
-                raise SyntaxError(f"Invalid tag format: <{tag}> in {raw}")
-            tags.append((k[0], v))
-        key = matched["key"]
-        if not key or key == "~":
-            key = None
-        return key, _MatchedTags(raw, tags, self.parsers)
 
 
 class ConfigParser(_ParserCustomization):
