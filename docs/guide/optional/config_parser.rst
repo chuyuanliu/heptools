@@ -72,6 +72,11 @@ The file path is described by a standard URL accepted by :func:`~urllib.parse.ur
 * ``#fragment`` is a dot-separated path, allowing to access nested dictionaries or lists.
 * The `percentage-encoding <https://en.wikipedia.org/wiki/Percent-encoding>`_ rule (``%XX``) is supported in the ``path`` to escape special characters.
 
+.. warning::
+
+  The ``#fragment`` is extracted before any parsing.
+
+
 .. admonition:: example
   :class: guide-config-example, dropdown
 
@@ -81,14 +86,14 @@ The file path is described by a standard URL accepted by :func:`~urllib.parse.ur
 
     local path: /path/to/file.yml
     XRootD path: root://server.host//path/to/file.yml
-    fragment: /path/to/file.yml#key1.key2.0.key3
+    fragment: /path/to/file.yml#key1.key2<extend>.0.key3
     query: /path/to/file.yml?key1=value1&key2=value2&key1=value3&key3=[1,2,3]&parent.child=value4
 
   The ``fragment`` example above is equivalent to the pseudo code:
 
   .. code-block:: python
 
-    yaml.load(open("/path/to/file.yml"))["key1"]["key2"][int("0")]["key3"]
+    yaml.load(open("/path/to/file.yml"))["key1"]["key2<extend>"][int("0")]["key3"]
 
   The ``query`` example above will give an additional dictionary 
 
@@ -608,10 +613,16 @@ Use keyword in tag values
 Advanced
 ========
 
+The following tags are not recommended for general usage and may lead to unexpected results.
+
 .. _config-tag-patch:
 
 ``<patch>``
 -------------
 # TODO patch
 
+.. _config-custom-patch:
+
+Customized ``<patch>`` action
+------------------------------
 

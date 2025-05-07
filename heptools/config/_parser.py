@@ -9,7 +9,7 @@ from dataclasses import dataclass, field, fields
 from enum import StrEnum, auto
 from functools import partial
 from inspect import _ParameterKind as ParKind
-from os import PathLike, fspath
+from os import PathLike, fspath, get_terminal_size
 from textwrap import indent
 from types import MappingProxyType, MethodType
 from typing import (
@@ -35,34 +35,49 @@ str, ~os.PathLike, dict: A path to the config file or a nested dict.
 """
 
 
+def _error_repr(value: Any, maxlines: int = None):
+    if isinstance(value, dict):
+        text = "\n".join(
+            f"{k}:\n{indent(_error_repr(v), '  ')}" for k, v in value.items()
+        )
+    elif isinstance(value, list):
+        text = "\n".join(f"- {_error_repr(v)}" for v in value)
+    elif isinstance(value, (str, int, float, bool, type(None))):
+        text = str(value)
+    else:
+        text = repr(value)
+    if maxlines is not None:
+        lines = text.split("\n")
+        if len(lines) > maxlines:
+            lines[maxlines - 1] = f"+ {len(lines) - maxlines + 1} more lines"
+        text = "\n".join(lines[:maxlines])
+    return text
+
+
 def _error_msg(
-    error: Exception, tag: str = ..., path: str = None, key: str = ..., value=...
+    error: Exception,
+    path: str = None,
+    key: str = ...,
+    span: tuple[int, int] = None,
+    value=...,
 ):
-    info = "When parsing"
-    if tag is not ...:
-        info += f" tag <{tag}> in config"
+    error_msg = str(error)
+    info = "When parsing config:\n"
     if path is not None:
         info += f"\n{path}"
     if key is not ...:
-        if value is ...:
-            info += f"\n  {key}:\n"
-        else:
-            try:
-                import yaml
-
-                value_msg = indent(
-                    yaml.safe_dump({key: value}, indent=2, sort_keys=False),
-                    "  ",
-                )
-            except Exception:
-                value_msg = f' {key}:\n{indent(str(value), "    ")}\n'
-            info += "\n" + value_msg
+        info += f"\n  {key}:\n"
+        if span is not None:
+            info += " " * (span[0] + 2) + "^" * (span[1] - span[0]) + "\n"
+        if value is not ...:
+            valuelines = get_terminal_size().lines - 15 - error_msg.count("\n")
+            info += indent(_error_repr(value, max(5, valuelines)), "    ") + "\n"
     return SyntaxError(
         f"""
 {info}
 The following error occurred:
   {type(error).__name__}:
-{indent(str(error), "    ")}"""
+{indent(error_msg, "    ")}"""
     )
 
 
@@ -125,11 +140,18 @@ class _MatchedTags:
 
     def __init__(
         self,
-        key: str,
         tags: list[tuple[str, str]],
         parser: _Parser,
+        debug: dict,
     ):
-        self.raw_key = key
+        self.debug = {
+            "key": debug["key"],
+            "spans": {
+                "flags": {},
+                "tags": [],
+                "unique": None,
+            },
+        }
         self.parser = parser
         self.parsers = parser.custom.parsers
         self.tags = list[tuple[str, str]]()
@@ -138,22 +160,25 @@ class _MatchedTags:
 
         unique_check = 0
 
-        for k, v in tags:
+        for (k, v), span in zip(tags, debug["spans"]):
             if k not in self.skip:
                 unique_check += 1
             if k in self.flags:
                 self.parsed[k] = v
+                self.debug["spans"]["flags"][k] = span
             elif k in self.uniques:
                 self.unique = (k, v)
+                self.debug["spans"]["unique"] = span
             else:
                 self.tags.append((k, v))
+                self.debug["spans"]["tags"].append(span)
 
         if self.unique is not None and unique_check > 1:
             raise _error_msg(
                 error=ValueError(f"cannot use <{self.unique[0]}> with other tags"),
-                tag=self.unique[0],
                 path=self.parser.path,
-                key=self.raw_key,
+                key=self.debug["key"],
+                span=self.debug["spans"]["unique"],
             )
 
     def has(self, tag: str):
@@ -164,7 +189,7 @@ class _MatchedTags:
 
     def apply(self, *, key: str, value, local: dict):
         raw_value = value
-        for tag_k, tag_v in self.tags:
+        for i, (tag_k, tag_v) in enumerate(self.tags):
             if (parser := self.parsers.get(tag_k)) is not None:
                 try:
                     key, value = parser(
@@ -180,9 +205,9 @@ class _MatchedTags:
                 except Exception as e:
                     raise _error_msg(
                         error=e,
-                        tag=tag_k,
                         path=self.parser.path,
-                        key=self.raw_key,
+                        key=self.debug["key"],
+                        span=self.debug["spans"]["tags"][i],
                         value=raw_value,
                     )
             self.parsed[tag_k] = tag_v
@@ -197,6 +222,8 @@ class _MatchedTags:
                 return self.parser.custom.parse(
                     *resolve_path(self.parser.path, tag, *paths), result=result
                 )
+            except SyntaxError:
+                raise
             except RecursionError:
                 error = RecursionError("Recursive include may exist.")
             except Exception as e:
@@ -205,9 +232,9 @@ class _MatchedTags:
             error = ValueError("Invalid path.")
         raise _error_msg(
             error=error,
-            tag=_ReservedTag.include,
             path=self.parser.path,
-            key=self.raw_key,
+            key=self.debug["key"],
+            span=self.debug["spans"]["unique"],
             value=paths,
         )
 
@@ -504,9 +531,11 @@ class _Parser:
         matched = self.re_match.fullmatch(raw)
         if not matched:
             return raw, _NoTag
-        tags = []
+        tags, spans = [], []
+        start = matched.start("tags")
         for tag in self.re_split.finditer(matched["tags"]):
             k = tag["tag"].split("=")
+            span = tag.start() + start, tag.end() + start
             if len(k) == 1:
                 v = None
             elif len(k) == 2:
@@ -514,15 +543,16 @@ class _Parser:
             else:
                 raise _error_msg(
                     error=ValueError("Invalid tag format."),
-                    tag=tag["tag"],
                     path=self.path,
                     key=raw,
+                    span=span,
                 )
             tags.append((k[0], v))
+            spans.append(span)
         key = matched["key"]
         if not key or key == "~":
             key = None
-        return key, _MatchedTags(raw, tags, self)
+        return key, _MatchedTags(tags, self, {"key": raw, "spans": spans})
 
     def dict(self, data: dict[str, Any], singleton: bool = False, result: dict = None):
         if result is None:
@@ -563,9 +593,9 @@ class _Parser:
             except Exception as e:
                 raise _error_msg(
                     error=e,
-                    tag=_ReservedTag.code,
                     path=self.path,
-                    key=k,
+                    key=tags.debug["key"],
+                    span=tags.debug["spans"]["flags"][_ReservedTag.code],
                     value=v,
                 )
         return key, tags, v
@@ -646,7 +676,13 @@ class _ParserInitializer(_ParserCustomization):
             parser = _Parser(path, self)
             for config in configs:
                 if not isinstance(config, dict):
-                    raise ValueError(f"Config must be a dict or a path, got {path}")
+                    if config is None:
+                        content = "None (empty file)"
+                    else:
+                        content = type(config).__name__
+                    raise ValueError(
+                        f'Config must be a dict, got a {content} in "{path}"'
+                    )
                 parser.dict(config, result=result)
         return result
 
