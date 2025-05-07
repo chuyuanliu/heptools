@@ -16,6 +16,7 @@ from typing import (
     Optional,
     TypeVar,
     overload,
+    Literal,
 )
 from urllib.parse import parse_qs, unquote, urlparse
 
@@ -39,7 +40,9 @@ def _maybe_json(data: str):
         return data
 
 
-def resolve_path(base: Optional[str], scheme: str, *paths: str):
+def resolve_path(
+    base: Optional[str], scheme: Optional[Literal["absolute", "relative"]], *paths: str
+):
     base = base or getcwd()
     match scheme:
         case "absolute":
@@ -82,8 +85,11 @@ def load_url(
     loader: Callable[[str], Any], url: str, parse_query: bool = True
 ) -> Generator[Any, None, None]:
     parsed = urlparse(url)
-    path = unquote(parsed.path)
-    data = loader(parsed._replace(path=path, params="", query="", fragment="").geturl())
+    data = loader(
+        parsed._replace(
+            path=unquote(parsed.path), params="", query="", fragment=""
+        ).geturl()
+    )
 
     if parsed.fragment:
         for k in parsed.fragment.split("."):

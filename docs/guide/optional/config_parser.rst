@@ -534,8 +534,8 @@ This tag can be used to create a variable from the value. The variable has a lif
 .. admonition:: tag
   :class: guide-config-tag
 
-  * If a tag value is provided, it will be used as the variable name. Otherwise, the key will be used.
-  * ``<var>``, ``<var={variable}>``: define a new variable. 
+  * ``<var>``: use the key as variable name.
+  * ``<var={variable}>``: use the tag value as variable name.
 
 .. admonition:: example
   :class: guide-config-example, dropdown
@@ -550,7 +550,7 @@ This tag can be used to create a variable from the value. The variable has a lif
     <discard>: # only make use of the variables
       <include>: file1.yml
     key1 <var=var3>: [value3_1, value3_2, value3_3]
-    key2 <ref>: var1 # a reference to var1 in file1.yml, use the tag value as variable name
+    key2 <ref>: var1 # a reference to var1 in file1.yml, use the value as variable name
     key3 <ref=copy>: var2 # a copy of var2 in file1.yml, use the value as variable name
     var3 <ref=deepcopy>: # a deepcopy of var3 in the same file, use the key as variable name
     var3 <extend>: [value3_4] # append to the deepcopy
