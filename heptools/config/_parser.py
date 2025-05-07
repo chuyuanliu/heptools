@@ -35,13 +35,19 @@ str, ~os.PathLike, dict: A path to the config file or a nested dict.
 """
 
 
-def _error_repr(value: Any, maxlines: int = None):
+def _error_repr(value: Any, maxlines: int = None) -> str:
     if isinstance(value, dict):
-        text = "\n".join(
-            f"{k}:\n{indent(_error_repr(v), '  ')}" for k, v in value.items()
-        )
+        lines = []
+        for k, v in value.items():
+            line = _error_repr(v)
+            if isinstance(v, (dict, list)) or line.count("\n") > 0:
+                line = f"{k}:\n{indent(line, '  ')}"
+            else:
+                line = f"{k}: {line}"
+            lines.append(line)
+        text = "\n".join(lines)
     elif isinstance(value, list):
-        text = "\n".join(f"- {_error_repr(v)}" for v in value)
+        text = "\n".join("- " + _error_repr(v).replace("\n", "\n  ") for v in value)
     elif isinstance(value, (str, int, float, bool, type(None))):
         text = str(value)
     else:
@@ -215,27 +221,28 @@ class _MatchedTags:
 
     def include(self, paths: str | list[str], tag: str, result: dict[str, Any]):
         error = None
-        if isinstance(paths, str):
-            paths = [paths]
-        if isinstance(paths, list) and all(isinstance(path, str) for path in paths):
-            try:
-                return self.parser.custom.parse(
-                    *resolve_path(self.parser.path, tag, *paths), result=result
-                )
-            except SyntaxError:
-                raise
-            except RecursionError:
-                error = RecursionError("Recursive include may exist.")
-            except Exception as e:
-                error = e
+        raw_paths = paths
+        if isinstance(paths, list):
+            paths = self.parser.list(paths)
         else:
-            error = ValueError("Invalid path.")
+            paths = [paths]
+        try:
+            return self.parser.custom.parse(
+                *resolve_path(self.parser.path, tag, *map(fspath, paths)),
+                result=result,
+            )
+        except SyntaxError:
+            raise
+        except RecursionError:
+            error = RecursionError("Recursive include may exist.")
+        except Exception as e:
+            error = e
         raise _error_msg(
             error=error,
             path=self.parser.path,
             key=self.debug["key"],
             span=self.debug["spans"]["unique"],
-            value=paths,
+            value=raw_paths,
         )
 
 
