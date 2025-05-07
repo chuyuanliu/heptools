@@ -31,9 +31,9 @@ Syntax
     key   <tag_key1=tag_value1><tag_key2>  <tag_key3=tag_value3>  : value
     <tag_key1> <tag_key2=tag_value2>  : value
 
-.. _config-rule-priority:
+.. _config-rule-precedence:
 
-Priority
+Precedence 
 ---------
 
 * The tags are parsed from left to right based on the order of appearance. 
@@ -41,17 +41,19 @@ Priority
 * The parsing result is order dependent. See :ref:`config-custom-tag`.
 * Some of the built-in tags follow special rules:
 
-  * :ref:`config-tag-code` have the highest priority and will only be parsed once.
+  * :ref:`config-tag-code` have the highest precedence and will only be parsed once.
   * The following tags will not trigger any parser.
 
     * :ref:`config-tag-literal`
     * :ref:`config-tag-discard`
     * :ref:`config-tag-dummy`
 
-  * The order of the following tags are ill-defined, as they are not supposed to simply modify the key-value pairs. As a result, they cannot directly be chained with other regular tags, unless through :ref:`config-tag-code`. See how to :ref:`config-tip-include` as an example.
+  * The order of the following tags are ill-defined, as they are not supposed to simply modify the key-value pairs. As a result, they cannot be directly chained with other regular tags, unless through :ref:`config-tag-code`. See how to :ref:`config-tips-include` as an example.
 
     * :ref:`config-tag-include`
-    * :ref:`config-advanced-patch`
+    * :ref:`config-tag-patch`
+    * :ref:`config-tag-install`
+    * :ref:`config-tag-uninstall`
 
 .. _config-rule-url:
 
@@ -116,7 +118,7 @@ Special
 ``nested=True`` in :class:`~heptools.config.ConfigParser`
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-The ``nested=True`` (default) option enables a behavior similar to ``TOML``'s section name, where the dot-separated keys will be interpreted as accessing a nested dictionary and the parents will not be overriden. Use :ref:`config-tag-literal` to escape the keys with dot.
+The ``nested=True`` (default) option enables a behavior similar to ``TOML``'s `table <https://toml.io/en/v1.0.0#table>`_, where the dot-separated keys will be interpreted as accessing a nested dictionary and the parents will not be overriden. Use :ref:`config-tag-literal` to escape the keys with dot.
 
 .. admonition:: example
   :class: guide-config-example, dropdown
@@ -430,8 +432,7 @@ This tag can be used to import a module/attribute, create an instance of a class
   :class: guide-config-tag
 
   * ``<key-type>``: similar to :ref:`config-tag-type`, but applied to the key instead.
-  * ``<value-type>``: an alias to :ref:`config-tag-type`, just for better readability when used together with ``<key-type>``.
-
+  * ``<value-type>``: an alias to ``<type>``.
 
 .. admonition:: example
   :class: guide-config-example, dropdown
@@ -439,7 +440,7 @@ This tag can be used to import a module/attribute, create an instance of a class
   .. code-block:: yaml
 
     list <key-type> <type=float>: 1
-    dict <key-type> <value-type=str>: 2 # value-type is simply an alias to type
+    dict <key-type> <value-type=str>: 2 # use the alias for clarity
     100 <key-type=float>: 3
     json::loads.__qualname__ <key-type> <literal>: 4 # use literal to escape the dot
   
@@ -527,6 +528,17 @@ where the ``extend`` function is a binary operation specified by the tag value.
     }
 
 .. _config-tag-var:
+.. label:: <var>
+
+.. _config-tag-ref:
+.. label:: <ref>
+
+.. _config-tag-copy:
+.. label:: <copy>
+
+.. _config-tag-deepcopy:
+.. label:: <deepcopy>
+
 
 ``<var>``, ``<ref>``, ``<copy>``, ``<deepcopy>``
 --------------------------------------------------
@@ -602,7 +614,14 @@ Use keyword in tag values
 Advanced
 ========
 
-.. _config-advanced-patch:
+.. _config-tag-patch:
+.. label:: <patch>
+
+.. _config-tag-install:
+.. label:: <install>
+
+.. _config-tag-uninstall:
+.. label:: <uninstall>
 
 ``<patch>``, ``<install>``, ``<uninstall>``
 ----------------------------------------------
