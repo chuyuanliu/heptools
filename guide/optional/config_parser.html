@@ -364,7 +364,7 @@
                   
   <section id="config-parser">
 <h1>Config Parser<a class="headerlink" href="#config-parser" title="Link to this heading">#</a></h1>
-<p>This tool provides a consistent solution to load multiple configuration files into a single nested dictionary and extend the commonly used dictionary-like formats (<code class="docutils literal notranslate"><span class="pre">JSON</span></code>, <code class="docutils literal notranslate"><span class="pre">YAML</span></code>, <code class="docutils literal notranslate"><span class="pre">TOML</span></code>, <code class="docutils literal notranslate"><span class="pre">INI</span></code>) by adding tags to keys.</p>
+<p>This tool provides a consistent solution to load multiple configuration files into a single nested dictionary and extend the commonly used dictionary-like formats (<code class="docutils literal notranslate"><span class="pre">JSON</span></code>, <code class="docutils literal notranslate"><span class="pre">YAML</span></code>, <code class="docutils literal notranslate"><span class="pre">TOML</span></code>) by adding tags to keys.</p>
 <section id="parser">
 <h2>Parser<a class="headerlink" href="#parser" title="Link to this heading">#</a></h2>
 <p># TODO</p>
@@ -390,22 +390,34 @@
 </div>
 </div>
 </section>
-<section id="parsing">
-<h3>Parsing<a class="headerlink" href="#parsing" title="Link to this heading">#</a></h3>
+<section id="priority">
+<span id="config-rule-priority"></span><h3>Priority<a class="headerlink" href="#priority" title="Link to this heading">#</a></h3>
 <ul class="simple">
-<li><p>The tags are parsed from left to right, with some exceptions.</p></li>
-<li><p>Each parser will use the key and value from the previous parser, so the order of tags matters.</p></li>
-<li><p>If a tag occurs multiple times, each will be parsed based on the order, with some exceptions.</p></li>
-<li><p>Exceptions:</p>
+<li><p>The tags are parsed from left to right based on the order of appearance.</p></li>
+<li><p>The same tag can be applied multiple times.</p></li>
+<li><p>The parsing result is order dependent. See <a class="reference internal" href="#config-custom-tag"><span class="std std-ref">Customized tag parser</span></a>.</p></li>
+<li><p>Some of the built-in tags follow special rules:</p>
 <ul>
-<li><p><a class="reference internal" href="#config-tag-code"><span class="std std-ref">&lt;code&gt;</span></a> and <a class="reference internal" href="#config-tag-include"><span class="std std-ref">&lt;include&gt;</span></a> have higher priority than all others and will only be parsed once.</p></li>
-<li><p><a class="reference internal" href="#config-tag-discard"><span class="std std-ref">&lt;discard&gt;</span></a> and <a class="reference internal" href="#config-tag-dummy"><span class="std std-ref">&lt;dummy&gt;</span></a> will not trigger any parser.</p></li>
+<li><p><a class="reference internal" href="#config-tag-code"><span class="std std-ref">&lt;code&gt;</span></a> have the highest priority and will only be parsed once.</p></li>
+<li><p>The following tags will not trigger any parser.</p>
+<ul>
+<li><p><a class="reference internal" href="#config-tag-literal"><span class="std std-ref">&lt;literal&gt;</span></a></p></li>
+<li><p><a class="reference internal" href="#config-tag-discard"><span class="std std-ref">&lt;discard&gt;</span></a></p></li>
+<li><p><a class="reference internal" href="#config-tag-dummy"><span class="std std-ref">&lt;dummy&gt;</span></a></p></li>
+</ul>
+</li>
+<li><p>The order of the following tags are ill-defined, as they are not supposed to simply modify the key-value pairs. As a result, they cannot directly be chained with other regular tags, unless through <a class="reference internal" href="#config-tag-code"><span class="std std-ref">&lt;code&gt;</span></a>. See how to <span class="xref std std-ref">config-tip-include</span> as an example.</p>
+<ul>
+<li><p><a class="reference internal" href="#config-tag-include"><span class="std std-ref">&lt;include&gt;</span></a></p></li>
+<li><p><a class="reference internal" href="#config-advanced-patch"><span class="std std-ref">&lt;patch&gt;, &lt;install&gt;, &lt;uninstall&gt;</span></a></p></li>
+</ul>
+</li>
 </ul>
 </li>
 </ul>
 </section>
 <section id="url-and-io">
-<span id="config-url-io"></span><h3>URL and IO<a class="headerlink" href="#url-and-io" title="Link to this heading">#</a></h3>
+<span id="config-rule-url"></span><h3>URL and IO<a class="headerlink" href="#url-and-io" title="Link to this heading">#</a></h3>
 <p>Both the <a class="reference internal" href="../../api/config.html#heptools.config.ConfigParser" title="heptools.config.ConfigParser"><code class="xref py py-class docutils literal notranslate"><span class="pre">ConfigParser</span></code></a> and built-in tags <a class="reference internal" href="#config-tag-include"><span class="std std-ref">&lt;include&gt;</span></a>, <a class="reference internal" href="#config-tag-file"><span class="std std-ref">&lt;file&gt;</span></a> shares the same IO mechanism.</p>
 <p>The file path is described by a standard URL accepted by <a class="reference external" href="https://docs.python.org/3/library/urllib.parse.html#urllib.parse.urlparse" title="(in Python v3.13)"><code class="xref py py-func docutils literal notranslate"><span class="pre">urlparse()</span></code></a> with the format:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span>[scheme://netloc/]path[;parameters][?query][#fragment]
@@ -450,9 +462,9 @@
 </section>
 <section id="special">
 <h3>Special<a class="headerlink" href="#special" title="Link to this heading">#</a></h3>
-<section id="expand-true-in-configparser">
-<span id="config-special-expand"></span><h4><code class="docutils literal notranslate"><span class="pre">expand=True</span></code> in <a class="reference internal" href="../../api/config.html#heptools.config.ConfigParser" title="heptools.config.ConfigParser"><code class="xref py py-class docutils literal notranslate"><span class="pre">ConfigParser</span></code></a><a class="headerlink" href="#expand-true-in-configparser" title="Link to this heading">#</a></h4>
-<p>When <code class="docutils literal notranslate"><span class="pre">expand=True</span></code> (default), the dot-separated keys will be interpreted as accessing a nested dictionary and the parents will not be overriden. Use <a class="reference internal" href="#config-tag-literal"><span class="std std-ref">&lt;literal&gt;</span></a> to escape the keys with dot.</p>
+<section id="nested-true-in-configparser">
+<span id="config-special-nested"></span><h4><code class="docutils literal notranslate"><span class="pre">nested=True</span></code> in <a class="reference internal" href="../../api/config.html#heptools.config.ConfigParser" title="heptools.config.ConfigParser"><code class="xref py py-class docutils literal notranslate"><span class="pre">ConfigParser</span></code></a><a class="headerlink" href="#nested-true-in-configparser" title="Link to this heading">#</a></h4>
+<p>The <code class="docutils literal notranslate"><span class="pre">nested=True</span></code> (default) option enables a behavior similar to <code class="docutils literal notranslate"><span class="pre">TOML</span></code>’s section name, where the dot-separated keys will be interpreted as accessing a nested dictionary and the parents will not be overriden. Use <a class="reference internal" href="#config-tag-literal"><span class="std std-ref">&lt;literal&gt;</span></a> to escape the keys with dot.</p>
 <div class="guide-config-example dropdown admonition">
 <p class="admonition-title">example</p>
 <div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">parent1</span><span class="p">:</span>
@@ -520,7 +532,7 @@
 <h2>Built-in tags<a class="headerlink" href="#built-in-tags" title="Link to this heading">#</a></h2>
 <section id="code">
 <span id="config-tag-code"></span><h3><code class="docutils literal notranslate"><span class="pre">&lt;code&gt;</span></code><a class="headerlink" href="#code" title="Link to this heading">#</a></h3>
-<p>This tag will replace the value by the result of <a class="reference external" href="https://docs.python.org/3/library/functions.html#eval" title="(in Python v3.13)"><code class="xref py py-func docutils literal notranslate"><span class="pre">eval()</span></code></a>. The variables defined with <a class="reference internal" href="#config-tag-var"><span class="std std-ref">&lt;var&gt;</span></a> are available as <code class="docutils literal notranslate"><span class="pre">locals</span></code>.</p>
+<p>This tag will replace the value by the result of <a class="reference external" href="https://docs.python.org/3/library/functions.html#eval" title="(in Python v3.13)"><code class="xref py py-func docutils literal notranslate"><span class="pre">eval()</span></code></a>. The variables defined with <a class="reference internal" href="#config-tag-var"><span class="std std-ref">&lt;var&gt;, &lt;ref&gt;, &lt;copy&gt;, &lt;deepcopy&gt;</span></a> are available as <code class="docutils literal notranslate"><span class="pre">locals</span></code>.</p>
 <div class="guide-config-value admonition">
 <p class="admonition-title">value</p>
 <ul class="simple">
@@ -546,19 +558,12 @@
 </ul>
 </div>
 <div class="guide-config-value admonition">
-<p class="admonition-title">key</p>
-<ul class="simple">
-<li><p>the key must be empty.</p></li>
-<li><p>any tag other than <a class="reference internal" href="#config-tag-code"><span class="std std-ref">&lt;code&gt;</span></a> will not be parsed.</p></li>
-</ul>
-</div>
-<div class="guide-config-value admonition">
 <p class="admonition-title">value</p>
 <ul class="simple">
 <li><p><code class="docutils literal notranslate"><span class="pre">str</span></code>: a URL to a dictionary</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">list</span></code>: a list of URLs</p></li>
 <li><p>To include within the same file, use <code class="docutils literal notranslate"><span class="pre">.</span></code> as path.</p></li>
-<li><p>The rules in <a class="reference internal" href="#config-url-io"><span class="std std-ref">URL and IO</span></a> apply.</p></li>
+<li><p>The rules in <a class="reference internal" href="#config-rule-url"><span class="std std-ref">URL and IO</span></a> apply.</p></li>
 </ul>
 </div>
 <div class="guide-config-example dropdown admonition">
@@ -591,7 +596,7 @@
 <span id="config-tag-literal"></span><h3><code class="docutils literal notranslate"><span class="pre">&lt;literal&gt;</span></code><a class="headerlink" href="#literal" title="Link to this heading">#</a></h3>
 <p>The keys marked as <code class="docutils literal notranslate"><span class="pre">&lt;literal&gt;</span></code> will not trigger the following rules:</p>
 <ul class="simple">
-<li><p><a class="reference internal" href="#config-special-expand"><span class="std std-ref">expand=True in ConfigParser</span></a></p></li>
+<li><p><a class="reference internal" href="#config-special-nested"><span class="std std-ref">nested=True in ConfigParser</span></a></p></li>
 <li><p><a class="reference internal" href="#config-special-list"><span class="std std-ref">Apply to list elements</span></a></p></li>
 </ul>
 </section>
@@ -625,22 +630,23 @@
 </section>
 <section id="file">
 <span id="config-tag-file"></span><h3><code class="docutils literal notranslate"><span class="pre">&lt;file&gt;</span></code><a class="headerlink" href="#file" title="Link to this heading">#</a></h3>
-<p>This tag allows to insert any deserialized object from a URL. Unlike <a class="reference internal" href="#config-tag-include"><span class="std std-ref">&lt;include&gt;</span></a>, this tag will only replace the value by a deep copy of the loaded object, instead of merging it into the current dictionary. See <a class="reference internal" href="#config-url-io"><span class="std std-ref">URL and IO</span></a> for details. If the object is large and only used once, <code class="docutils literal notranslate"><span class="pre">&lt;file-cache=off&gt;</span></code> can be used to temporarily disable the cache and avoid the deep copy.</p>
+<p>This tag allows to insert any deserialized object from a URL. Unlike <a class="reference internal" href="#config-tag-include"><span class="std std-ref">&lt;include&gt;</span></a>, this tag will only replace the value by a deep copy of the loaded object, instead of merging it into the current dictionary. If the object is large and only used once, it is recommended to turn off the cache to avoid the deep copy.</p>
 <div class="guide-config-tag admonition">
 <p class="admonition-title">tag</p>
 <ul class="simple">
 <li><p><code class="docutils literal notranslate"><span class="pre">&lt;file&gt;</span></code>: the type of the path will be inferred.</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">&lt;file=absolute&gt;</span></code>: resolve as an absolute path.</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">&lt;file=relative&gt;</span></code>: resolve as an path relative to the current config file.</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">&lt;file-cache=off&gt;</span></code>: turn off the cache.</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">&lt;file-cache=on&gt;</span></code>: turn on the cache.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">&lt;file=nocache&gt;</span></code>: turn off the cache.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">&lt;file=nobuffer&gt;</span></code>: turn off the buffer.</p></li>
+<li><p>Use <code class="docutils literal notranslate"><span class="pre">|</span></code> to separate multiple flags: <code class="docutils literal notranslate"><span class="pre">&lt;file=relative|nocache|nobuffer&gt;</span></code></p></li>
 </ul>
 </div>
 <div class="guide-config-value admonition">
 <p class="admonition-title">value</p>
 <ul class="simple">
 <li><p><code class="docutils literal notranslate"><span class="pre">str</span></code>: a URL to any object</p></li>
-<li><p>The rules in <a class="reference internal" href="#config-url-io"><span class="std std-ref">URL and IO</span></a> apply.</p></li>
+<li><p>The rules in <a class="reference internal" href="#config-rule-url"><span class="std std-ref">URL and IO</span></a> apply.</p></li>
 </ul>
 </div>
 <div class="guide-config-example dropdown admonition">
@@ -651,7 +657,7 @@
 </pre></div>
 </div>
 <div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">key1 &lt;file&gt;</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">database.pkl.lz4#column1</span>
-<span class="nt">key2 &lt;file-cache=off&gt; &lt;file&gt;</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">database.pkl.lz4#column1</span>
+<span class="nt">key2 &lt;file=nocache&gt;</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">database.pkl.lz4#column1</span>
 </pre></div>
 </div>
 <p>will be parsed into <code class="docutils literal notranslate"><span class="pre">{&quot;key1&quot;:</span> <span class="pre">[0,</span> <span class="pre">...,</span> <span class="pre">0],</span> <span class="pre">&quot;key2&quot;:</span> <span class="pre">[0,</span> <span class="pre">...,</span> <span class="pre">0]}</span></code>, while the cache is disabled when parsing key2.</p>
@@ -727,6 +733,36 @@
 </div>
 </div>
 </section>
+<section id="key-type-value-type">
+<h3><code class="docutils literal notranslate"><span class="pre">&lt;key-type&gt;</span></code>, <code class="docutils literal notranslate"><span class="pre">&lt;value-type&gt;</span></code><a class="headerlink" href="#key-type-value-type" title="Link to this heading">#</a></h3>
+<div class="guide-config-tag admonition">
+<p class="admonition-title">tag</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">&lt;key-type&gt;</span></code>: similar to <a class="reference internal" href="#config-tag-type"><span class="std std-ref">&lt;type&gt;</span></a>, but applied to the key instead.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">&lt;value-type&gt;</span></code>: an alias to <a class="reference internal" href="#config-tag-type"><span class="std std-ref">&lt;type&gt;</span></a>, just for better readability when used together with <code class="docutils literal notranslate"><span class="pre">&lt;key-type&gt;</span></code>.</p></li>
+</ul>
+</div>
+<div class="guide-config-example dropdown admonition">
+<p class="admonition-title">example</p>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">list &lt;key-type&gt; &lt;type=float&gt;</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">1</span>
+<span class="nt">dict &lt;key-type&gt; &lt;value-type=str&gt;</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">2</span><span class="w"> </span><span class="c1"># value-type is simply an alias to type</span>
+<span class="nt">100 &lt;key-type=float&gt;</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">3</span>
+<span class="nt">json::loads.__qualname__ &lt;key-type&gt; &lt;literal&gt;</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">4</span><span class="w"> </span><span class="c1"># use literal to escape the dot</span>
+</pre></div>
+</div>
+<p>will be parsed into</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">json</span>
+
+<span class="p">{</span>
+  <span class="nb">list</span><span class="p">:</span> <span class="mf">1.0</span><span class="p">,</span>
+  <span class="nb">dict</span><span class="p">:</span> <span class="s2">&quot;2&quot;</span><span class="p">,</span>
+  <span class="mf">100.0</span><span class="p">:</span> <span class="mi">3</span><span class="p">,</span>
+  <span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="o">.</span><span class="vm">__qualname__</span><span class="p">:</span> <span class="mi">4</span><span class="p">,</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+</div>
+</section>
 <section id="attr">
 <span id="config-tag-attr"></span><h3><code class="docutils literal notranslate"><span class="pre">&lt;attr&gt;</span></code><a class="headerlink" href="#attr" title="Link to this heading">#</a></h3>
 <p>This tag will replace the value by the its attribute. A tag like <code class="docutils literal notranslate"><span class="pre">&lt;attr=attr1.attr2&gt;</span></code> is equivalent to the pseudo code <code class="docutils literal notranslate"><span class="pre">value.attr1.attr2</span></code>.</p>
@@ -737,8 +773,57 @@
 </ul>
 </div>
 </section>
-<section id="var">
-<span id="config-tag-var"></span><h3><code class="docutils literal notranslate"><span class="pre">&lt;var&gt;</span></code><a class="headerlink" href="#var" title="Link to this heading">#</a></h3>
+<section id="extend">
+<span id="config-tag-extend"></span><h3><code class="docutils literal notranslate"><span class="pre">&lt;extend&gt;</span></code><a class="headerlink" href="#extend" title="Link to this heading">#</a></h3>
+<p>This tag will try to extend the existing value of the same key by the value, in a way given by the pseudo code:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">if</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">local</span><span class="p">:</span>
+  <span class="k">return</span> <span class="n">extend</span><span class="p">(</span><span class="n">local</span><span class="p">[</span><span class="n">key</span><span class="p">],</span> <span class="n">value</span><span class="p">)</span>
+<span class="k">else</span><span class="p">:</span>
+  <span class="k">return</span> <span class="n">value</span>
+</pre></div>
+</div>
+<p>where the <code class="docutils literal notranslate"><span class="pre">extend</span></code> function is a binary operation specified by the tag value.</p>
+<div class="guide-config-tag admonition">
+<p class="admonition-title">tag</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">&lt;extend&gt;</span></code>, <code class="docutils literal notranslate"><span class="pre">&lt;extend=add&gt;</span></code>: recursively merge dictionaries or apply <code class="docutils literal notranslate"><span class="pre">+</span></code> to other types.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">&lt;extend=and&gt;</span></code>: apply <code class="docutils literal notranslate"><span class="pre">&amp;</span></code> operation.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">&lt;extend=or&gt;</span></code>: apply <code class="docutils literal notranslate"><span class="pre">|</span></code> operation.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">&lt;extend={operation}&gt;</span></code>: see <a class="reference internal" href="#config-custom-extend"><span class="std std-ref">Customized &lt;extend&gt; operation</span></a></p></li>
+</ul>
+</div>
+<div class="admonition warning">
+<p class="admonition-title">Warning</p>
+<p>The built-in extend methods will not modify the original value in-place.</p>
+</div>
+<div class="guide-config-example dropdown admonition">
+<p class="admonition-title">example</p>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">parent1 &lt;var=original&gt;</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">child1</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">a</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">b</span><span class="p p-Indicator">]</span>
+<span class="w">  </span><span class="nt">child2</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">1</span>
+<span class="nt">parent1 &lt;extend&gt;</span><span class="p">:</span><span class="w"> </span><span class="c1"># recursively merge dictionaries</span>
+<span class="w">  </span><span class="nt">child1</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">c</span><span class="p p-Indicator">]</span>
+<span class="w">  </span><span class="nt">child2</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">2</span>
+<span class="nt">parent2 &lt;ref&gt;</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">original</span><span class="w"> </span><span class="c1"># the original value is unmodified</span>
+</pre></div>
+</div>
+<p>will be parsed into</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="p">{</span>
+  <span class="s2">&quot;parent1&quot;</span><span class="p">:</span> <span class="p">{</span>
+    <span class="s2">&quot;child1&quot;</span><span class="p">:</span> <span class="p">[</span><span class="s2">&quot;a&quot;</span><span class="p">,</span> <span class="s2">&quot;b&quot;</span><span class="p">,</span> <span class="s2">&quot;c&quot;</span><span class="p">],</span>
+    <span class="s2">&quot;child2&quot;</span><span class="p">:</span> <span class="mi">3</span>
+  <span class="p">},</span>
+  <span class="s2">&quot;parent2&quot;</span><span class="p">:</span> <span class="p">{</span>
+    <span class="s2">&quot;child1&quot;</span><span class="p">:</span> <span class="p">[</span><span class="s2">&quot;a&quot;</span><span class="p">,</span> <span class="s2">&quot;b&quot;</span><span class="p">],</span>
+    <span class="s2">&quot;child2&quot;</span><span class="p">:</span> <span class="mi">1</span>
+  <span class="p">}</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+</div>
+</section>
+<section id="var-ref-copy-deepcopy">
+<span id="config-tag-var"></span><h3><code class="docutils literal notranslate"><span class="pre">&lt;var&gt;</span></code>, <code class="docutils literal notranslate"><span class="pre">&lt;ref&gt;</span></code>, <code class="docutils literal notranslate"><span class="pre">&lt;copy&gt;</span></code>, <code class="docutils literal notranslate"><span class="pre">&lt;deepcopy&gt;</span></code><a class="headerlink" href="#var-ref-copy-deepcopy" title="Link to this heading">#</a></h3>
 <p>This tag can be used to create a variable from the value. The variable has a lifecycle spans the entire parser <a class="reference internal" href="../../api/config.html#heptools.config.ConfigParser.__call__" title="heptools.config.ConfigParser.__call__"><code class="xref py py-meth docutils literal notranslate"><span class="pre">__call__()</span></code></a> and is shared by all files within the same call. The variable can be accessed using <code class="docutils literal notranslate"><span class="pre">&lt;ref&gt;</span></code>, <code class="docutils literal notranslate"><span class="pre">&lt;copy&gt;</span></code> or <code class="docutils literal notranslate"><span class="pre">&lt;deepcopy&gt;</span></code> and is also available as <code class="docutils literal notranslate"><span class="pre">locals</span></code> in <a class="reference internal" href="#config-tag-code"><span class="std std-ref">&lt;code&gt;</span></a>.</p>
 <div class="guide-config-tag admonition">
 <p class="admonition-title">tag</p>
@@ -782,63 +867,30 @@
 </div>
 </div>
 </section>
-<section id="extend">
-<span id="config-tag-extend"></span><h3><code class="docutils literal notranslate"><span class="pre">&lt;extend&gt;</span></code><a class="headerlink" href="#extend" title="Link to this heading">#</a></h3>
-<p>This tag will try to extend the existing value of the same key by the value, in a way given by the pseudo code:</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">if</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">local</span><span class="p">:</span>
-  <span class="k">return</span> <span class="n">extend</span><span class="p">(</span><span class="n">local</span><span class="p">[</span><span class="n">key</span><span class="p">],</span> <span class="n">value</span><span class="p">)</span>
-<span class="k">else</span><span class="p">:</span>
-  <span class="k">return</span> <span class="n">value</span>
-</pre></div>
-</div>
-<p>where the <code class="docutils literal notranslate"><span class="pre">extend</span></code> function is a binary operation specified by the tag value.</p>
-<div class="guide-config-tag admonition">
-<p class="admonition-title">tag</p>
-<ul class="simple">
-<li><p><code class="docutils literal notranslate"><span class="pre">&lt;extend&gt;</span></code>, <code class="docutils literal notranslate"><span class="pre">&lt;extend=add&gt;</span></code>: recursively merge dictionaries or apply <code class="docutils literal notranslate"><span class="pre">+</span></code> to other types.</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">&lt;extend=and&gt;</span></code>: apply <code class="docutils literal notranslate"><span class="pre">&amp;</span></code> operation.</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">&lt;extend=or&gt;</span></code>: apply <code class="docutils literal notranslate"><span class="pre">|</span></code> operation.</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">&lt;extend={operation}&gt;</span></code>: see <span class="xref std std-ref">config-custom-extend</span></p></li>
-</ul>
-</div>
-<div class="admonition warning">
-<p class="admonition-title">Warning</p>
-<p>The built-in extend methods will not modify the original value in-place.</p>
-</div>
-<div class="guide-config-example dropdown admonition">
-<p class="admonition-title">example</p>
-<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">parent1 &lt;var=original&gt;</span><span class="p">:</span>
-<span class="w">  </span><span class="nt">child1</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">a</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">b</span><span class="p p-Indicator">]</span>
-<span class="w">  </span><span class="nt">child2</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">1</span>
-<span class="nt">parent1 &lt;extend&gt;</span><span class="p">:</span><span class="w"> </span><span class="c1"># recursively merge dictionaries</span>
-<span class="w">  </span><span class="nt">child1</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">c</span><span class="p p-Indicator">]</span>
-<span class="w">  </span><span class="nt">child2</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">2</span>
-<span class="nt">parent2 &lt;ref&gt;</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">original</span><span class="w"> </span><span class="c1"># the original value is unmodified</span>
-</pre></div>
-</div>
-<p>will be parsed into</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="p">{</span>
-  <span class="s2">&quot;parent1&quot;</span><span class="p">:</span> <span class="p">{</span>
-    <span class="s2">&quot;child1&quot;</span><span class="p">:</span> <span class="p">[</span><span class="s2">&quot;a&quot;</span><span class="p">,</span> <span class="s2">&quot;b&quot;</span><span class="p">,</span> <span class="s2">&quot;c&quot;</span><span class="p">],</span>
-    <span class="s2">&quot;child2&quot;</span><span class="p">:</span> <span class="mi">3</span>
-  <span class="p">},</span>
-  <span class="s2">&quot;parent2&quot;</span><span class="p">:</span> <span class="p">{</span>
-    <span class="s2">&quot;child1&quot;</span><span class="p">:</span> <span class="p">[</span><span class="s2">&quot;a&quot;</span><span class="p">,</span> <span class="s2">&quot;b&quot;</span><span class="p">],</span>
-    <span class="s2">&quot;child2&quot;</span><span class="p">:</span> <span class="mi">1</span>
-  <span class="p">}</span>
-<span class="p">}</span>
-</pre></div>
-</div>
-</div>
-</section>
 </section>
 <section id="customization">
 <h2>Customization<a class="headerlink" href="#customization" title="Link to this heading">#</a></h2>
-<p># TODO</p>
+<section id="customized-tag-parser">
+<span id="config-custom-tag"></span><h3>Customized tag parser<a class="headerlink" href="#customized-tag-parser" title="Link to this heading">#</a></h3>
 </section>
-<section id="comparing-to-yaml">
-<h2>Comparing to <code class="docutils literal notranslate"><span class="pre">YAML</span></code><a class="headerlink" href="#comparing-to-yaml" title="Link to this heading">#</a></h2>
-<p># TODO</p>
+<section id="customized-extend-operation">
+<span id="config-custom-extend"></span><h3>Customized <code class="docutils literal notranslate"><span class="pre">&lt;extend&gt;</span></code> operation<a class="headerlink" href="#customized-extend-operation" title="Link to this heading">#</a></h3>
+</section>
+</section>
+<section id="tips-tricks">
+<h2>Tips &amp; Tricks<a class="headerlink" href="#tips-tricks" title="Link to this heading">#</a></h2>
+<section id="use-include-with-other-tags">
+<span id="config-tips-include"></span><h3>Use <code class="docutils literal notranslate"><span class="pre">&lt;include&gt;</span></code> with other tags<a class="headerlink" href="#use-include-with-other-tags" title="Link to this heading">#</a></h3>
+</section>
+<section id="use-keyword-in-tag-values">
+<h3>Use keyword in tag values<a class="headerlink" href="#use-keyword-in-tag-values" title="Link to this heading">#</a></h3>
+</section>
+</section>
+<section id="advanced">
+<h2>Advanced<a class="headerlink" href="#advanced" title="Link to this heading">#</a></h2>
+<section id="patch-install-uninstall">
+<span id="config-advanced-patch"></span><h3><code class="docutils literal notranslate"><span class="pre">&lt;patch&gt;</span></code>, <code class="docutils literal notranslate"><span class="pre">&lt;install&gt;</span></code>, <code class="docutils literal notranslate"><span class="pre">&lt;uninstall&gt;</span></code><a class="headerlink" href="#patch-install-uninstall" title="Link to this heading">#</a></h3>
+</section>
 </section>
 </section>
 
@@ -892,10 +944,10 @@
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#parser">Parser</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#tag">Tag</a><ul class="nav section-nav flex-column">
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#syntax">Syntax</a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#parsing">Parsing</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#priority">Priority</a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#url-and-io">URL and IO</a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#special">Special</a><ul class="nav section-nav flex-column">
-<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#expand-true-in-configparser"><code class="docutils literal notranslate"><span class="pre">expand=True</span></code> in <code class="xref py py-class docutils literal notranslate"><span class="pre">ConfigParser</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#nested-true-in-configparser"><code class="docutils literal notranslate"><span class="pre">nested=True</span></code> in <code class="xref py py-class docutils literal notranslate"><span class="pre">ConfigParser</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#none-key"><code class="docutils literal notranslate"><span class="pre">None</span></code> key</a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#apply-to-list-elements">Apply to <code class="docutils literal notranslate"><span class="pre">list</span></code> elements</a></li>
 </ul>
@@ -910,13 +962,26 @@
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#dummy"><code class="docutils literal notranslate"><span class="pre">&lt;dummy&gt;</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#file"><code class="docutils literal notranslate"><span class="pre">&lt;file&gt;</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#type"><code class="docutils literal notranslate"><span class="pre">&lt;type&gt;</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#key-type-value-type"><code class="docutils literal notranslate"><span class="pre">&lt;key-type&gt;</span></code>, <code class="docutils literal notranslate"><span class="pre">&lt;value-type&gt;</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#attr"><code class="docutils literal notranslate"><span class="pre">&lt;attr&gt;</span></code></a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#var"><code class="docutils literal notranslate"><span class="pre">&lt;var&gt;</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#extend"><code class="docutils literal notranslate"><span class="pre">&lt;extend&gt;</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#var-ref-copy-deepcopy"><code class="docutils literal notranslate"><span class="pre">&lt;var&gt;</span></code>, <code class="docutils literal notranslate"><span class="pre">&lt;ref&gt;</span></code>, <code class="docutils literal notranslate"><span class="pre">&lt;copy&gt;</span></code>, <code class="docutils literal notranslate"><span class="pre">&lt;deepcopy&gt;</span></code></a></li>
 </ul>
 </li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#customization">Customization</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#comparing-to-yaml">Comparing to <code class="docutils literal notranslate"><span class="pre">YAML</span></code></a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#customization">Customization</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#customized-tag-parser">Customized tag parser</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#customized-extend-operation">Customized <code class="docutils literal notranslate"><span class="pre">&lt;extend&gt;</span></code> operation</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#tips-tricks">Tips &amp; Tricks</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#use-include-with-other-tags">Use <code class="docutils literal notranslate"><span class="pre">&lt;include&gt;</span></code> with other tags</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#use-keyword-in-tag-values">Use keyword in tag values</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#advanced">Advanced</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#patch-install-uninstall"><code class="docutils literal notranslate"><span class="pre">&lt;patch&gt;</span></code>, <code class="docutils literal notranslate"><span class="pre">&lt;install&gt;</span></code>, <code class="docutils literal notranslate"><span class="pre">&lt;uninstall&gt;</span></code></a></li>
+</ul>
+</li>
 </ul>
   </nav></div>
 

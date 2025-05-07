@@ -2,7 +2,7 @@
 Config Parser
 **************
 
-This tool provides a consistent solution to load multiple configuration files into a single nested dictionary and extend the commonly used dictionary-like formats (``JSON``, ``YAML``, ``TOML``, ``INI``) by adding tags to keys.
+This tool provides a consistent solution to load multiple configuration files into a single nested dictionary and extend the commonly used dictionary-like formats (``JSON``, ``YAML``, ``TOML``) by adding tags to keys.
 
 Parser
 ================
@@ -31,20 +31,29 @@ Syntax
     key   <tag_key1=tag_value1><tag_key2>  <tag_key3=tag_value3>  : value
     <tag_key1> <tag_key2=tag_value2>  : value
 
+.. _config-rule-priority:
 
-Parsing
---------------
+Priority
+---------
 
-* The tags are parsed from left to right, with some exceptions.
-* Each parser will use the key and value from the previous parser, so the order of tags matters.
-* If a tag occurs multiple times, each will be parsed based on the order, with some exceptions.
-* Exceptions:
+* The tags are parsed from left to right based on the order of appearance. 
+* The same tag can be applied multiple times.
+* The parsing result is order dependent. See :ref:`config-custom-tag`.
+* Some of the built-in tags follow special rules:
 
-  * :ref:`config-tag-code` and :ref:`config-tag-include` have higher priority than all others and will only be parsed once.
-  * :ref:`config-tag-discard` and :ref:`config-tag-dummy` will not trigger any parser.
+  * :ref:`config-tag-code` have the highest priority and will only be parsed once.
+  * The following tags will not trigger any parser.
 
+    * :ref:`config-tag-literal`
+    * :ref:`config-tag-discard`
+    * :ref:`config-tag-dummy`
 
-.. _config-url-io:
+  * The order of the following tags are ill-defined, as they are not supposed to simply modify the key-value pairs. As a result, they cannot directly be chained with other regular tags, unless through :ref:`config-tag-code`. See how to :ref:`config-tip-include` as an example.
+
+    * :ref:`config-tag-include`
+    * :ref:`config-advanced-patch`
+
+.. _config-rule-url:
 
 URL and IO
 ------------
@@ -102,12 +111,12 @@ File IO is handled by :func:`fsspec.open` and the deserialization is handled by 
 Special
 ---------
 
-.. _config-special-expand:
+.. _config-special-nested:
 
-``expand=True`` in :class:`~heptools.config.ConfigParser`
+``nested=True`` in :class:`~heptools.config.ConfigParser`
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-When ``expand=True`` (default), the dot-separated keys will be interpreted as accessing a nested dictionary and the parents will not be overriden. Use :ref:`config-tag-literal` to escape the keys with dot.
+The ``nested=True`` (default) option enables a behavior similar to ``TOML``'s section name, where the dot-separated keys will be interpreted as accessing a nested dictionary and the parents will not be overriden. Use :ref:`config-tag-literal` to escape the keys with dot.
 
 .. admonition:: example
   :class: guide-config-example, dropdown
@@ -217,20 +226,13 @@ This tag allows to merge dictionaries from other config files into the given lev
   * ``<include=absolute>``: resolve as an absolute path.
   * ``<include=relative>``: resolve as an path relative to the current config file.
 
-.. admonition:: key
-  :class: guide-config-value
-
-  * the key must be empty.
-  * any tag other than :ref:`config-tag-code` will not be parsed.
-
-
 .. admonition:: value
   :class: guide-config-value
 
   * ``str``: a URL to a dictionary
   * ``list``: a list of URLs
   * To include within the same file, use ``.`` as path.
-  * The rules in :ref:`config-url-io` apply.
+  * The rules in :ref:`config-rule-url` apply.
 
 .. admonition:: example
   :class: guide-config-example, dropdown
@@ -267,7 +269,7 @@ This tag allows to merge dictionaries from other config files into the given lev
 
 The keys marked as ``<literal>`` will not trigger the following rules:
 
-*  :ref:`config-special-expand`
+*  :ref:`config-special-nested`
 *  :ref:`config-special-list`
 
 
@@ -315,7 +317,7 @@ This tag is reserved to never trigger any parser. This is useful when there are 
 ``<file>``
 ----------
 
-This tag allows to insert any deserialized object from a URL. Unlike :ref:`config-tag-include`, this tag will only replace the value by a deep copy of the loaded object, instead of merging it into the current dictionary. See :ref:`config-url-io` for details. If the object is large and only used once, ``<file-cache=off>`` can be used to temporarily disable the cache and avoid the deep copy.
+This tag allows to insert any deserialized object from a URL. Unlike :ref:`config-tag-include`, this tag will only replace the value by a deep copy of the loaded object, instead of merging it into the current dictionary. If the object is large and only used once, it is recommended to turn off the cache to avoid the deep copy.
 
 .. admonition:: tag
   :class: guide-config-tag
@@ -323,14 +325,15 @@ This tag allows to insert any deserialized object from a URL. Unlike :ref:`confi
   * ``<file>``: the type of the path will be inferred.
   * ``<file=absolute>``: resolve as an absolute path.
   * ``<file=relative>``: resolve as an path relative to the current config file.
-  * ``<file-cache=off>``: turn off the cache.
-  * ``<file-cache=on>``: turn on the cache.
+  * ``<file=nocache>``: turn off the cache.
+  * ``<file=nobuffer>``: turn off the buffer.
+  * Use ``|`` to separate multiple flags: ``<file=relative|nocache|nobuffer>``
 
 .. admonition:: value
   :class: guide-config-value
 
   * ``str``: a URL to any object
-  * The rules in :ref:`config-url-io` apply.
+  * The rules in :ref:`config-rule-url` apply.
 
 
 .. admonition:: example
@@ -346,7 +349,7 @@ This tag allows to insert any deserialized object from a URL. Unlike :ref:`confi
   .. code-block:: yaml
 
     key1 <file>: database.pkl.lz4#column1
-    key2 <file-cache=off> <file>: database.pkl.lz4#column1
+    key2 <file=nocache>: database.pkl.lz4#column1
 
   will be parsed into ``{"key1": [0, ..., 0], "key2": [0, ..., 0]}``, while the cache is disabled when parsing key2.
 
@@ -420,6 +423,40 @@ This tag can be used to import a module/attribute, create an instance of a class
     logging.info("message")
     print("message1", "message2", "message3", sep="\n")
 
+``<key-type>``, ``<value-type>``
+----------------------------------
+
+.. admonition:: tag
+  :class: guide-config-tag
+
+  * ``<key-type>``: similar to :ref:`config-tag-type`, but applied to the key instead.
+  * ``<value-type>``: an alias to :ref:`config-tag-type`, just for better readability when used together with ``<key-type>``.
+
+
+.. admonition:: example
+  :class: guide-config-example, dropdown
+
+  .. code-block:: yaml
+
+    list <key-type> <type=float>: 1
+    dict <key-type> <value-type=str>: 2 # value-type is simply an alias to type
+    100 <key-type=float>: 3
+    json::loads.__qualname__ <key-type> <literal>: 4 # use literal to escape the dot
+  
+  will be parsed into
+
+  .. code-block:: python
+
+    import json
+
+    {
+      list: 1.0,
+      dict: "2",
+      100.0: 3,
+      json.loads.__qualname__: 4,
+    }
+
+
 .. _config-tag-attr:
 
 ``<attr>``
@@ -431,56 +468,6 @@ This tag will replace the value by the its attribute. A tag like ``<attr=attr1.a
   :class: guide-config-tag
 
   - ``<attr={attribute}>``: where the attribute can be a dot separated string.
-
-.. _config-tag-var:
-
-``<var>``
----------
-
-This tag can be used to create a variable from the value. The variable has a lifecycle spans the entire parser :meth:`~heptools.config.ConfigParser.__call__` and is shared by all files within the same call. The variable can be accessed using ``<ref>``, ``<copy>`` or ``<deepcopy>`` and is also available as ``locals`` in :ref:`config-tag-code`.
-
-.. admonition:: tag
-  :class: guide-config-tag
-
-  * The first of the following that is a string will be used as the variable name:
-
-    * ``<var>``: tag value, key
-    * ``<ref>``, ``<copy>``, ``<deepcopy>``: tag value, value, key
-
-  * ``<var>``, ``<var={variable}>``: define a new variable. 
-  * ``<ref>``, ``<ref={variable}>``: replace the value by a reference to the variable. 
-  * ``<copy>``, ``<copy={variable}>``: replace the value by a :func:`~copy.copy` of the variable.
-  * ``<deepcopy>``, ``<deepcopy={variable}>``: replace the value by a :func:`~copy.deepcopy` of the variable.
-
-.. admonition:: example
-  :class: guide-config-example, dropdown
-
-  .. code-block:: yaml
-
-    --- # file1.yml
-    var1 <var>: [value1_1] # use the key as variable name
-    key1 <var=var2>: [value2_1, value2_2] # use the tag value as variable name
-
-    --- # file2.yml
-    <discard>: # only make use of the variables
-      <include>: file1.yml
-    key1 <var=var3>: [value3_1, value3_2, value3_3]
-    key2 <ref=var1>: # a reference to var1 in file1.yml, use the tag value as variable name
-    key3 <copy>: var2 # a copy of var2 in file1.yml, use the value as variable name
-    var3 <deepcopy>: # a deepcopy of var3 in the same file, use the key as variable name
-    var3 <extend>: [value3_4] # append to the deepcopy
-
-  ``"file2.yml"`` will be parsed into:
-
-  .. code-block:: python
-
-    {
-      "key1": ["value3_1", "value3_2", "value3_3"],
-      "key2": ["value1_1"],
-      "key3": ["value2_1", "value2_2"],
-      "var3": ["value3_1", "value3_2", "value3_3", "value3_4"],
-    }
-
 
 .. _config-tag-extend:
 
@@ -539,12 +526,83 @@ where the ``extend`` function is a binary operation specified by the tag value.
       }
     }
 
+.. _config-tag-var:
+
+``<var>``, ``<ref>``, ``<copy>``, ``<deepcopy>``
+--------------------------------------------------
+
+This tag can be used to create a variable from the value. The variable has a lifecycle spans the entire parser :meth:`~heptools.config.ConfigParser.__call__` and is shared by all files within the same call. The variable can be accessed using ``<ref>``, ``<copy>`` or ``<deepcopy>`` and is also available as ``locals`` in :ref:`config-tag-code`.
+
+.. admonition:: tag
+  :class: guide-config-tag
+
+  * The first of the following that is a string will be used as the variable name:
+
+    * ``<var>``: tag value, key
+    * ``<ref>``, ``<copy>``, ``<deepcopy>``: tag value, value, key
+
+  * ``<var>``, ``<var={variable}>``: define a new variable. 
+  * ``<ref>``, ``<ref={variable}>``: replace the value by a reference to the variable. 
+  * ``<copy>``, ``<copy={variable}>``: replace the value by a :func:`~copy.copy` of the variable.
+  * ``<deepcopy>``, ``<deepcopy={variable}>``: replace the value by a :func:`~copy.deepcopy` of the variable.
+
+.. admonition:: example
+  :class: guide-config-example, dropdown
+
+  .. code-block:: yaml
+
+    --- # file1.yml
+    var1 <var>: [value1_1] # use the key as variable name
+    key1 <var=var2>: [value2_1, value2_2] # use the tag value as variable name
+
+    --- # file2.yml
+    <discard>: # only make use of the variables
+      <include>: file1.yml
+    key1 <var=var3>: [value3_1, value3_2, value3_3]
+    key2 <ref=var1>: # a reference to var1 in file1.yml, use the tag value as variable name
+    key3 <copy>: var2 # a copy of var2 in file1.yml, use the value as variable name
+    var3 <deepcopy>: # a deepcopy of var3 in the same file, use the key as variable name
+    var3 <extend>: [value3_4] # append to the deepcopy
+
+  ``"file2.yml"`` will be parsed into:
+
+  .. code-block:: python
+
+    {
+      "key1": ["value3_1", "value3_2", "value3_3"],
+      "key2": ["value1_1"],
+      "key3": ["value2_1", "value2_2"],
+      "var3": ["value3_1", "value3_2", "value3_3", "value3_4"],
+    }
+
 Customization
 ===============
-# TODO
+.. _config-custom-tag:
+
+Customized tag parser
+----------------------
+
+.. _config-custom-extend:
+
+Customized ``<extend>`` operation
+---------------------------------
 
 
+Tips & Tricks
+==============
 
-Comparing to ``YAML``
-===================
-# TODO
+.. _config-tips-include:
+
+Use ``<include>`` with other tags
+----------------------------------
+
+Use keyword in tag values
+--------------------------
+
+Advanced
+========
+
+.. _config-advanced-patch:
+
+``<patch>``, ``<install>``, ``<uninstall>``
+----------------------------------------------
