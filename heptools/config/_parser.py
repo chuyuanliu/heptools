@@ -12,7 +12,16 @@ from inspect import _ParameterKind as ParKind
 from os import PathLike, fspath
 from textwrap import indent
 from types import MappingProxyType, MethodType
-from typing import Any, Callable, Iterable, Optional, ParamSpec, Protocol, TypeVar
+from typing import (
+    Any,
+    Callable,
+    Iterable,
+    Optional,
+    ParamSpec,
+    Protocol,
+    TypeVar,
+    overload,
+)
 
 from ._io import FileLoader, load_url, resolve_path
 from ._utils import SimpleTree
@@ -65,8 +74,6 @@ class _ReservedTag(StrEnum):
 
     include = auto()
     patch = auto()  # TODO add
-    install = auto()  # TODO add
-    uninstall = auto()  # TODO add
 
     literal = auto()
     discard = auto()
@@ -75,13 +82,10 @@ class _ReservedTag(StrEnum):
     file = auto()
     type = auto()
     key_type = auto()
-    value_type = auto()
     attr = auto()
     extend = auto()
     var = auto()
     ref = auto()
-    copy = auto()
-    deepcopy = auto()
 
 
 class _NoTag:
@@ -110,8 +114,6 @@ class _MatchedTags:
         (
             _ReservedTag.include,
             _ReservedTag.patch,
-            _ReservedTag.install,
-            _ReservedTag.uninstall,
         )
     )
     skip = frozenset(
@@ -208,6 +210,43 @@ class _MatchedTags:
             key=self.raw_key,
             value=paths,
         )
+
+
+class FlagParser:
+    def __init__(self, *booleans, **enums: Iterable[str]):
+        self._flags: dict[str, Optional[bool | str]] = {}
+        self._categories: dict[str, str] = {}
+        for k, vs in enums.items():
+            self._flags[k] = None
+            for v in vs:
+                self._categories[v] = k
+        for f in booleans:
+            self._flags[f] = False
+            self._categories[f] = ...
+
+    @overload
+    def __call__(self, flags: Optional[str], sep: Optional[str] = None): ...
+    @overload
+    def __call__(self, flags: Iterable[str]): ...
+    def __call__(self, flags: Iterable[str], sep: str = None):
+        if flags is None:
+            flags = ()
+        elif isinstance(flags, str):
+            flags = flags.split(sep)
+        parsed = self._flags.copy()
+        for flag in flags:
+            if cat := self._categories.get(flag):
+                if cat == ...:
+                    parsed[flag] = True
+                elif parsed[cat] is not None:
+                    raise ValueError(
+                        f'flag "{flag}" and "{parsed[cat]}" cannot be used together.'
+                    )
+                else:
+                    parsed[cat] = flag
+            else:
+                raise ValueError(f'unknown flag "{flag}".')
+        return parsed
 
 
 class TagParser(Protocol):
@@ -387,7 +426,9 @@ class ExtendParser:  # tag: <extend>
             raise ValueError(f'unknown extend method "{tag}".')
 
 
-class VariableParser:  # tag: <var> <ref> <copy> <deepcopy>
+class VariableParser:  # tag: <var> <ref>
+    __flags = FlagParser(method=("copy", "deepcopy"))
+
     def __init__(self):
         self.local = {}
 
@@ -403,55 +444,21 @@ class VariableParser:  # tag: <var> <ref> <copy> <deepcopy>
         self.local[self._get_name(tag, key)] = value
         return key, value
 
-    def _get(self, tag: Optional[str], key: str, value):
+    @_tag_parser
+    def ref(self, tag: Optional[str], key: str, value):
         try:
-            name = self._get_name(tag, value, key)
-            return self.local[name]
+            name = self._get_name(value, key)
+            obj = self.local[name]
+            match self.__flags(tag)["method"]:
+                case "copy":
+                    obj = copy.copy(obj)
+                case "deepcopy":
+                    obj = copy.deepcopy(obj)
+            return key, obj
         except KeyError:
             raise KeyError(f'variable "{name}" does not exist.')
         except Exception:
             raise
-
-    @_tag_parser
-    def ref(self, tag: Optional[str], key: str, value):
-        return key, self._get(tag, key, value)
-
-    @_tag_parser
-    def copy(self, tag: Optional[str], key: str, value):
-        return key, copy.copy(self._get(tag, key, value))
-
-    @_tag_parser
-    def deepcopy(self, tag: Optional[str], key: str, value):
-        return key, copy.deepcopy(self._get(tag, key, value))
-
-
-class FlagParser:
-    def __init__(self, *booleans, **enums: Iterable[str]):
-        self._flags: dict[str, Optional[bool | str]] = {}
-        self._categories: dict[str, str] = {}
-        for k, vs in enums.items():
-            self._flags[k] = None
-            for v in vs:
-                self._categories[v] = k
-        for f in booleans:
-            self._flags[f] = False
-            self._categories[f] = ...
-
-    def __call__(self, flags: list[str]):
-        parsed = self._flags.copy()
-        for flag in flags:
-            if cat := self._categories.get(flag):
-                if cat == ...:
-                    parsed[flag] = True
-                elif parsed[cat] is not None:
-                    raise ValueError(
-                        f'flag "{flag}" and "{parsed[cat]}" cannot be used together.'
-                    )
-                else:
-                    parsed[cat] = flag
-            else:
-                raise ValueError(f'unknown flag "{flag}".')
-        return parsed
 
 
 class FileParser:  # tag: <file>
@@ -465,7 +472,7 @@ class FileParser:  # tag: <file>
         key: str,
         value,
     ):
-        flags = self.__flags(() if tag is None else tag.split("|"))
+        flags = self.__flags(tag, sep="|")
         use_cache = not flags["nocache"]
         obj = next(
             load_url(
@@ -526,10 +533,6 @@ class _Parser:
                 case (_ReservedTag.include, tag):
                     tags.include(v, tag, result)
                 case (_ReservedTag.patch, tag):
-                    ...  # TODO
-                case (_ReservedTag.install, tag):
-                    ...  # TODO
-                case (_ReservedTag.uninstall, tag):
                     ...  # TODO
                 case None:
                     self.setitem(result, tags, key, v)
@@ -598,7 +601,6 @@ class _ParserCustomization:
 
 @dataclass
 class _ParserInitializer(_ParserCustomization):
-    type_parser = TypeParser()
     static_parsers = {
         _ReservedTag.code: None,
         _ReservedTag.include: None,
@@ -606,8 +608,7 @@ class _ParserInitializer(_ParserCustomization):
         _ReservedTag.discard: None,
         _ReservedTag.dummy: None,
         _ReservedTag.file: FileParser(),
-        _ReservedTag.type: type_parser,
-        _ReservedTag.value_type: type_parser,
+        _ReservedTag.type: TypeParser(),
         _ReservedTag.key_type: KeyTypeParser(),
         _ReservedTag.attr: AttrParser(),
     }
@@ -621,8 +622,6 @@ class _ParserInitializer(_ParserCustomization):
                 _ReservedTag.extend: ExtendParser(self.extend_methods),
                 _ReservedTag.var: self.vars.var,
                 _ReservedTag.ref: self.vars.ref,
-                _ReservedTag.copy: self.vars.copy,
-                _ReservedTag.deepcopy: self.vars.deepcopy,
             }
         )
 
