@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 import pickle
+import re
 from collections import defaultdict
 from io import BytesIO
 from os import fspath, getcwd
@@ -13,10 +14,10 @@ from typing import (
     Generator,
     Generic,
     Iterable,
+    Literal,
     Optional,
     TypeVar,
     overload,
-    Literal,
 )
 from urllib.parse import parse_qs, unquote, urlparse
 
@@ -38,6 +39,26 @@ def _maybe_json(data: str):
         return json.loads(data)
     except json.JSONDecodeError:
         return data
+
+
+def _enter(data: dict | list, path: Iterable[str | int]):
+    for part in path:
+        if isinstance(data, list):
+            part = int(part)
+        data = data[part]
+    return data
+
+
+class split_path:
+    pattern = r"\"(?P<key1>[^\"]+)\"(\.|$)|(?P<key2>[^.\"]+)(\.|$)"
+    re_match = re.compile(f"({pattern})+")
+    re_split = re.compile(pattern)
+
+    def __new__(cls, path: str):
+        if not cls.re_match.fullmatch(path):
+            raise ValueError(f"Invalid path format: {path}")
+        for match in cls.re_split.finditer(path):
+            yield match["key1"] or match["key2"]
 
 
 def resolve_path(
@@ -92,10 +113,7 @@ def load_url(
     )
 
     if parsed.fragment:
-        for k in parsed.fragment.split("."):
-            if isinstance(data, list):
-                k = int(k)
-            data = data[k]
+        data = _enter(data, split_path(parsed.fragment))
     yield data
 
     if parse_query and parsed.query:

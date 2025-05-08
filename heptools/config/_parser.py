@@ -23,13 +23,13 @@ from typing import (
     overload,
 )
 
-from ._io import FileLoader, load_url, resolve_path
+from ._io import FileLoader, load_url, resolve_path, split_path
 from ._utils import SimpleTree
 
 P = ParamSpec("P")
 T = TypeVar("T")
 
-ConfigSource = str | PathLike | dict[str, Any]
+ConfigSource = str | PathLike | dict
 """
 str, ~os.PathLike, dict: A path to the config file or a nested dict.
 """
@@ -110,6 +110,8 @@ class _ReservedTag(StrEnum):
 
 
 class _NoTag:
+    unique = None
+
     @staticmethod
     def has(_: str):
         return False
@@ -219,7 +221,7 @@ class _MatchedTags:
             self.parsed[tag_k] = tag_v
         return key, value
 
-    def include(self, paths: str | list[str], tag: str, result: dict[str, Any]):
+    def include(self, paths: str | list[str], tag: str, result: dict):
         error = None
         raw_paths = paths
         if isinstance(paths, list):
@@ -295,7 +297,7 @@ class TagParser(Protocol):
         value: Optional[Any],
         tag: Optional[str],
         tags: Optional[dict[str, Optional[str]]],
-        local: Optional[dict[str, Any]],
+        local: Optional[dict],
         path: Optional[str],
     ) -> tuple[str, Any]:
         """
@@ -309,7 +311,7 @@ class TagParser(Protocol):
             The value of the current tag.
         tags: dict[str, Optional[str]], optional
             All parsed tags of the current key.
-        local: dict[str, Any], optional
+        local: dict, optional
             All parsed items in the current dictionary.
         path: str or None, optional
             The path to the current config file.
@@ -360,30 +362,30 @@ class TypeParser:  # tag: <type>
             fullname = value
         else:
             fullname = tag
-        clsname = fullname.split("::", 1)
-        match len(clsname):
+        attrs = fullname.split("::", 1)
+        match len(attrs):
             case 1:
-                modname, clsname = None, clsname[0]
+                mod, attrs = None, attrs[0]
             case 2:
-                modname, clsname = clsname
+                mod, attrs = attrs
             case _:
                 raise ImportError(f'invalid import format "{fullname}".')
-        if modname is None:
+        if mod is None:
             if self.base is None:
-                modname = "builtins"
+                mod = "builtins"
             else:
-                modname = self.base
+                mod = self.base
         elif self.base is not None:
-            modname = f"{self.base}.{modname}"
+            mod = f"{self.base}.{mod}"
 
-        cls = importlib.import_module(modname)
-        clsname = clsname.split(".")
-        if any(clsname):
-            for name in clsname:
-                cls = getattr(cls, name)
+        obj = importlib.import_module(mod)
+        attrs = attrs.split(".")
+        if any(attrs):
+            for attr in attrs:
+                obj = getattr(obj, attr)
 
         if tag is None:
-            return cls
+            return obj
 
         # parse args and kwargs
         if isinstance(value, dict):
@@ -394,7 +396,7 @@ class TypeParser:  # tag: <type>
             args = value
         if not isinstance(args, list):
             args = [args]
-        return cls(*args, **kwargs)
+        return obj(*args, **kwargs)
 
     @_tag_parser
     def __call__(self, tag: Optional[str], key: str, value: Any):
@@ -451,7 +453,7 @@ class ExtendParser:  # tag: <extend>
             self.methods = methods | self.methods
 
     @_tag_parser
-    def __call__(self, local: dict[str, Any], tag: Optional[str], key: str, value):
+    def __call__(self, local: dict, tag: Optional[str], key: str, value):
         if key not in local:
             return key, value
         try:
@@ -561,7 +563,7 @@ class _Parser:
             key = None
         return key, _MatchedTags(tags, self, {"key": raw, "spans": spans})
 
-    def dict(self, data: dict[str, Any], singleton: bool = False, result: dict = None):
+    def dict(self, data: dict, singleton: bool = False, result: dict = None):
         if result is None:
             result = {}
         for k, v in data.items():
@@ -607,13 +609,13 @@ class _Parser:
                 )
         return key, tags, v
 
-    def setitem(self, local: dict[str, Any], tags: _MatchedTags, key: str, value: Any):
+    def setitem(self, local: dict, tags: _MatchedTags, key: str, value: Any):
         if (
             self.custom.nested
             and key is not None
             and not tags.has(_ReservedTag.literal)
         ):
-            keys = key.split(".")
+            keys = [*split_path(key)]
             local = SimpleTree.init(local, keys[:-1])
             key = keys[-1]
         if isinstance(value, dict):
@@ -669,8 +671,8 @@ class _ParserInitializer(_ParserCustomization):
     def parse(
         self,
         *path_or_dict: ConfigSource,
-        result: Optional[dict[str, Any]] = None,
-    ) -> dict[str, Any]:
+        result: Optional[dict] = None,
+    ) -> dict:
         if result is None:
             result = {}
         for configs in path_or_dict:
@@ -715,8 +717,8 @@ class ConfigParser(_ParserCustomization):
     """
 
     def __call__(
-        self, *path_or_dict: ConfigSource, result: Optional[dict[str, Any]] = None
-    ) -> dict[str, Any]:
+        self, *path_or_dict: ConfigSource, result: Optional[dict] = None
+    ) -> dict:
         """
         Load configs from multiple sources.
 
@@ -724,12 +726,12 @@ class ConfigParser(_ParserCustomization):
         ----------
         *path_or_dict : ConfigSource
             Dictionaries or paths to config files.
-        result : dict[str, Any], optional
+        result : dict, optional
             If provided, the configs will be loaded into this dict.
 
         Returns
         -------
-        dict[str, Any]
+        dict
             The loaded configs.
         """
         return _ParserInitializer.new(self).parse(*path_or_dict, result=result)

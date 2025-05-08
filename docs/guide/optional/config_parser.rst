@@ -69,7 +69,7 @@ The file path is described by a standard URL accepted by :func:`~urllib.parse.ur
 * ``scheme://netloc/`` can be omitted for local path.
 * ``;parameters`` is never used.
 * ``?query`` can be used to provide additional key-value pairs. If a key appears multiple times, all values will be collected into a list. Values are interpreted as JSON strings.
-* ``#fragment`` is a dot-separated path, allowing to access nested dictionaries or lists.
+* ``#fragment`` is a dot-separated path, allowing to access nested dictionaries or lists. Similar to ``TOML``'s `table <https://toml.io/en/v1.0.0#table>`_, double quotes can be used to escape the dot, 
 * The `percentage-encoding <https://en.wikipedia.org/wiki/Percent-encoding>`_ rule (``%XX``) is supported in the ``path`` to escape special characters.
 
 .. warning::
@@ -86,14 +86,14 @@ The file path is described by a standard URL accepted by :func:`~urllib.parse.ur
 
     local path: /path/to/file.yml
     XRootD path: root://server.host//path/to/file.yml
-    fragment: /path/to/file.yml#key1.key2<extend>.0.key3
+    fragment: /path/to/file.yml#key1.key2 <extend>.0."key3.key4"
     query: /path/to/file.yml?key1=value1&key2=value2&key1=value3&key3=[1,2,3]&parent.child=value4
 
   The ``fragment`` example above is equivalent to the pseudo code:
 
   .. code-block:: python
 
-    yaml.load(open("/path/to/file.yml"))["key1"]["key2<extend>"][int("0")]["key3"]
+    yaml.load(open("/path/to/file.yml"))["key1"]["key2 <extend>"][int("0")]["key3.key4"]
 
   The ``query`` example above will give an additional dictionary 
 
@@ -121,7 +121,7 @@ Special
 ``nested=True`` in :class:`~heptools.config.ConfigParser`
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-The ``nested=True`` (default) option enables a behavior similar to ``TOML``'s `table <https://toml.io/en/v1.0.0#table>`_, where the dot-separated keys will be interpreted as accessing a nested dictionary and the parents will not be overriden. Use :ref:`config-tag-literal` to escape the keys with dot.
+The ``nested=True`` (default) option enables a behavior similar to ``TOML``'s `table <https://toml.io/en/v1.0.0#table>`_, where the dot-separated keys will be interpreted as accessing a nested dictionary and the parents will not be overriden. Use double quotes or :ref:`config-tag-literal` to escape the keys with dot.
 
 .. admonition:: example
   :class: guide-config-example, dropdown
@@ -371,7 +371,7 @@ This tag can be used to import a module/attribute, create an instance of a class
   * An import path is defined as ``{module}::{attribute}``, which is roughly equivalent to the python statement ``from {module} import {attribute}``.
 
     * ``{module}::`` can be omitted for :doc:`python:library/functions`.
-    * If ``{attribute}`` is not provided, the whole module will be returned.
+    * If ``{attribute}`` is not provided or only contains dots, the whole module will be returned.
     * ``{attribute}`` can be a dot separated string to get a similar effect as :ref:`config-tag-attr`.
 
   * ``<type>``: when the tag value is not provided, the value must be a valid import path ande will be replaced by the imported object.
@@ -398,9 +398,10 @@ This tag can be used to import a module/attribute, create an instance of a class
   .. code-block:: yaml
 
     key1 <type>: "json::" # import a module
-    key2 <type>: json::loads # import a function
-    key3 <type>: json::loads.__qualname__ # import a nested attribute
-    key4 <type=range>: [0, 100, 10] # positional arguments
+    key2 <type>: json::. # the same as key1
+    key3 <type>: json::loads # import a function
+    key4 <type>: json::loads.__qualname__ # import a nested attribute
+    key5 <type=range>: [0, 100, 10] # positional arguments
     <discard>:
       <type=logging::basicConfig>:
         level <type>: logging::INFO # tags can be nested
@@ -421,9 +422,10 @@ This tag can be used to import a module/attribute, create an instance of a class
 
     {
       "key1": json,
-      "key2": json.loads,
-      "key3": json.loads.__qualname__,
-      "key4": range(0, 100, 10),
+      "key2": json,
+      "key3": json.loads,
+      "key4": json.loads.__qualname__,
+      "key5": range(0, 100, 10),
     }
     logging.info("message")
     print("message1", "message2", "message3", sep="\n")
