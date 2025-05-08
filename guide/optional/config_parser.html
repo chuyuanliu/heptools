@@ -427,7 +427,7 @@
 <li><p><code class="docutils literal notranslate"><span class="pre">scheme://netloc/</span></code> can be omitted for local path.</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">;parameters</span></code> is never used.</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">?query</span></code> can be used to provide additional key-value pairs. If a key appears multiple times, all values will be collected into a list. Values are interpreted as JSON strings.</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">#fragment</span></code> is a dot-separated path, allowing to access nested dictionaries or lists.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">#fragment</span></code> is a dot-separated path, allowing to access nested dictionaries or lists. Similar to <code class="docutils literal notranslate"><span class="pre">TOML</span></code>’s <a class="reference external" href="https://toml.io/en/v1.0.0#table">table</a>, double quotes can be used to escape the dot,</p></li>
 <li><p>The <a class="reference external" href="https://en.wikipedia.org/wiki/Percent-encoding">percentage-encoding</a> rule (<code class="docutils literal notranslate"><span class="pre">%XX</span></code>) is supported in the <code class="docutils literal notranslate"><span class="pre">path</span></code> to escape special characters.</p></li>
 </ul>
 <div class="admonition warning">
@@ -439,12 +439,12 @@
 <p>The following URLs are all valid:</p>
 <div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">local path</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">/path/to/file.yml</span>
 <span class="nt">XRootD path</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">root://server.host//path/to/file.yml</span>
-<span class="nt">fragment</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">/path/to/file.yml#key1.key2&lt;extend&gt;.0.key3</span>
+<span class="nt">fragment</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">/path/to/file.yml#key1.key2 &lt;extend&gt;.0.&quot;key3.key4&quot;</span>
 <span class="nt">query</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">/path/to/file.yml?key1=value1&amp;key2=value2&amp;key1=value3&amp;key3=[1,2,3]&amp;parent.child=value4</span>
 </pre></div>
 </div>
 <p>The <code class="docutils literal notranslate"><span class="pre">fragment</span></code> example above is equivalent to the pseudo code:</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">yaml</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="nb">open</span><span class="p">(</span><span class="s2">&quot;/path/to/file.yml&quot;</span><span class="p">))[</span><span class="s2">&quot;key1&quot;</span><span class="p">][</span><span class="s2">&quot;key2&lt;extend&gt;&quot;</span><span class="p">][</span><span class="nb">int</span><span class="p">(</span><span class="s2">&quot;0&quot;</span><span class="p">)][</span><span class="s2">&quot;key3&quot;</span><span class="p">]</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">yaml</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="nb">open</span><span class="p">(</span><span class="s2">&quot;/path/to/file.yml&quot;</span><span class="p">))[</span><span class="s2">&quot;key1&quot;</span><span class="p">][</span><span class="s2">&quot;key2 &lt;extend&gt;&quot;</span><span class="p">][</span><span class="nb">int</span><span class="p">(</span><span class="s2">&quot;0&quot;</span><span class="p">)][</span><span class="s2">&quot;key3.key4&quot;</span><span class="p">]</span>
 </pre></div>
 </div>
 <p>The <code class="docutils literal notranslate"><span class="pre">query</span></code> example above will give an additional dictionary</p>
@@ -468,7 +468,7 @@
 <h3>Special<a class="headerlink" href="#special" title="Link to this heading">#</a></h3>
 <section id="nested-true-in-configparser">
 <span id="config-special-nested"></span><h4><code class="docutils literal notranslate"><span class="pre">nested=True</span></code> in <a class="reference internal" href="../../api/config.html#heptools.config.ConfigParser" title="heptools.config.ConfigParser"><code class="xref py py-class docutils literal notranslate"><span class="pre">ConfigParser</span></code></a><a class="headerlink" href="#nested-true-in-configparser" title="Link to this heading">#</a></h4>
-<p>The <code class="docutils literal notranslate"><span class="pre">nested=True</span></code> (default) option enables a behavior similar to <code class="docutils literal notranslate"><span class="pre">TOML</span></code>’s <a class="reference external" href="https://toml.io/en/v1.0.0#table">table</a>, where the dot-separated keys will be interpreted as accessing a nested dictionary and the parents will not be overriden. Use <a class="reference internal" href="#config-tag-literal"><span class="std std-ref">&lt;literal&gt;</span></a> to escape the keys with dot.</p>
+<p>The <code class="docutils literal notranslate"><span class="pre">nested=True</span></code> (default) option enables a behavior similar to <code class="docutils literal notranslate"><span class="pre">TOML</span></code>’s <a class="reference external" href="https://toml.io/en/v1.0.0#table">table</a>, where the dot-separated keys will be interpreted as accessing a nested dictionary and the parents will not be overriden. Use double quotes or <a class="reference internal" href="#config-tag-literal"><span class="std std-ref">&lt;literal&gt;</span></a> to escape the keys with dot.</p>
 <div class="guide-config-example dropdown admonition">
 <p class="admonition-title">example</p>
 <div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">parent1</span><span class="p">:</span>
@@ -676,7 +676,7 @@
 <li><p>An import path is defined as <code class="docutils literal notranslate"><span class="pre">{module}::{attribute}</span></code>, which is roughly equivalent to the python statement <code class="docutils literal notranslate"><span class="pre">from</span> <span class="pre">{module}</span> <span class="pre">import</span> <span class="pre">{attribute}</span></code>.</p>
 <ul>
 <li><p><code class="docutils literal notranslate"><span class="pre">{module}::</span></code> can be omitted for <a class="reference external" href="https://docs.python.org/3/library/functions.html" title="(in Python v3.13)"><span>Built-in Functions</span></a>.</p></li>
-<li><p>If <code class="docutils literal notranslate"><span class="pre">{attribute}</span></code> is not provided, the whole module will be returned.</p></li>
+<li><p>If <code class="docutils literal notranslate"><span class="pre">{attribute}</span></code> is not provided or only contains dots, the whole module will be returned.</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">{attribute}</span></code> can be a dot separated string to get a similar effect as <a class="reference internal" href="#config-tag-attr"><span class="std std-ref">&lt;attr&gt;</span></a>.</p></li>
 </ul>
 </li>
@@ -706,9 +706,10 @@
 <div class="guide-config-example dropdown admonition">
 <p class="admonition-title">example</p>
 <div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">key1 &lt;type&gt;</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;json::&quot;</span><span class="w"> </span><span class="c1"># import a module</span>
-<span class="nt">key2 &lt;type&gt;</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">json::loads</span><span class="w"> </span><span class="c1"># import a function</span>
-<span class="nt">key3 &lt;type&gt;</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">json::loads.__qualname__</span><span class="w"> </span><span class="c1"># import a nested attribute</span>
-<span class="nt">key4 &lt;type=range&gt;</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">0</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">100</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">10</span><span class="p p-Indicator">]</span><span class="w"> </span><span class="c1"># positional arguments</span>
+<span class="nt">key2 &lt;type&gt;</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">json::.</span><span class="w"> </span><span class="c1"># the same as key1</span>
+<span class="nt">key3 &lt;type&gt;</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">json::loads</span><span class="w"> </span><span class="c1"># import a function</span>
+<span class="nt">key4 &lt;type&gt;</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">json::loads.__qualname__</span><span class="w"> </span><span class="c1"># import a nested attribute</span>
+<span class="nt">key5 &lt;type=range&gt;</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">0</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">100</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">10</span><span class="p p-Indicator">]</span><span class="w"> </span><span class="c1"># positional arguments</span>
 <span class="nt">&lt;discard&gt;</span><span class="p">:</span>
 <span class="w">  </span><span class="nt">&lt;type=logging::basicConfig&gt;</span><span class="p">:</span>
 <span class="w">    </span><span class="nt">level &lt;type&gt;</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">logging::INFO</span><span class="w"> </span><span class="c1"># tags can be nested</span>
@@ -727,9 +728,10 @@
 
 <span class="p">{</span>
   <span class="s2">&quot;key1&quot;</span><span class="p">:</span> <span class="n">json</span><span class="p">,</span>
-  <span class="s2">&quot;key2&quot;</span><span class="p">:</span> <span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">,</span>
-  <span class="s2">&quot;key3&quot;</span><span class="p">:</span> <span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="o">.</span><span class="vm">__qualname__</span><span class="p">,</span>
-  <span class="s2">&quot;key4&quot;</span><span class="p">:</span> <span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">100</span><span class="p">,</span> <span class="mi">10</span><span class="p">),</span>
+  <span class="s2">&quot;key2&quot;</span><span class="p">:</span> <span class="n">json</span><span class="p">,</span>
+  <span class="s2">&quot;key3&quot;</span><span class="p">:</span> <span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">,</span>
+  <span class="s2">&quot;key4&quot;</span><span class="p">:</span> <span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="o">.</span><span class="vm">__qualname__</span><span class="p">,</span>
+  <span class="s2">&quot;key5&quot;</span><span class="p">:</span> <span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">100</span><span class="p">,</span> <span class="mi">10</span><span class="p">),</span>
 <span class="p">}</span>
 <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;message&quot;</span><span class="p">)</span>
 <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;message1&quot;</span><span class="p">,</span> <span class="s2">&quot;message2&quot;</span><span class="p">,</span> <span class="s2">&quot;message3&quot;</span><span class="p">,</span> <span class="n">sep</span><span class="o">=</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
