@@ -1,5 +1,5 @@
 *********************
-Optional Tools
+Optional Components
 *********************
 
 .. toctree::

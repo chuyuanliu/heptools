@@ -53,7 +53,7 @@
     <link rel="index" title="Index" href="../../genindex.html" />
     <link rel="search" title="Search" href="../../search.html" />
     <link rel="next" title="API reference" href="../../api.html" />
-    <link rel="prev" title="Optional Tools" href="../optional.html" />
+    <link rel="prev" title="Optional Components" href="../optional.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
   <meta name="docsearch:version" content="" />
@@ -295,7 +295,7 @@
 <li class="toctree-l2"><a class="reference internal" href="../howto/construct_friend_tree.html">Construct <code class="xref py py-class docutils literal notranslate"><span class="pre">Friend</span></code> Tree</a></li>
 </ul>
 </details></li>
-<li class="toctree-l1 current active has-children"><a class="reference internal" href="../optional.html">Optional Tools</a><details open="open"><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul class="current">
+<li class="toctree-l1 current active has-children"><a class="reference internal" href="../optional.html">Optional Components</a><details open="open"><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul class="current">
 <li class="toctree-l2 current active"><a class="current reference internal" href="#">Config Parser</a></li>
 </ul>
 </details></li>
@@ -343,7 +343,7 @@
     <li class="breadcrumb-item"><a href="../../guide.html" class="nav-link">User guide</a></li>
     
     
-    <li class="breadcrumb-item"><a href="../optional.html" class="nav-link">Optional Tools</a></li>
+    <li class="breadcrumb-item"><a href="../optional.html" class="nav-link">Optional Components</a></li>
     
     <li class="breadcrumb-item active" aria-current="page"><span class="ellipsis">Config Parser</span></li>
   </ul>
@@ -427,7 +427,7 @@
 <li><p><code class="docutils literal notranslate"><span class="pre">scheme://netloc/</span></code> can be omitted for local path.</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">;parameters</span></code> is never used.</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">?query</span></code> can be used to provide additional key-value pairs. If a key appears multiple times, all values will be collected into a list. Values are interpreted as JSON strings.</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">#fragment</span></code> is a dot-separated path, allowing to access nested dictionaries or lists. Similar to <code class="docutils literal notranslate"><span class="pre">TOML</span></code>’s <a class="reference external" href="https://toml.io/en/v1.0.0#table">table</a>, double quotes can be used to escape the dot,</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">#fragment</span></code> is a dot-separated path, allowing to access nested dictionaries or lists. Similar to <code class="docutils literal notranslate"><span class="pre">TOML</span></code>’s <a class="reference external" href="https://toml.io/en/v1.0.0#table">table</a>, double quotes can be used to escape the dot.</p></li>
 <li><p>The <a class="reference external" href="https://en.wikipedia.org/wiki/Percent-encoding">percentage-encoding</a> rule (<code class="docutils literal notranslate"><span class="pre">%XX</span></code>) is supported in the <code class="docutils literal notranslate"><span class="pre">path</span></code> to escape special characters.</p></li>
 </ul>
 <div class="admonition warning">
@@ -712,7 +712,7 @@
 <span class="nt">key5 &lt;type=range&gt;</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">0</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">100</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">10</span><span class="p p-Indicator">]</span><span class="w"> </span><span class="c1"># positional arguments</span>
 <span class="nt">&lt;discard&gt;</span><span class="p">:</span>
 <span class="w">  </span><span class="nt">&lt;type=logging::basicConfig&gt;</span><span class="p">:</span>
-<span class="w">    </span><span class="nt">level &lt;type&gt;</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">logging::INFO</span><span class="w"> </span><span class="c1"># tags can be nested</span>
+<span class="w">    </span><span class="nt">level &lt;type&gt;</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">logging::INFO</span><span class="w"> </span><span class="c1"># import an object</span>
 <span class="w">  </span><span class="nt">&lt;type=logging::info&gt;</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">message</span><span class="w">  </span><span class="c1"># call a function with one argument</span>
 <span class="nt">&lt;discard&gt;&lt;type=print&gt;</span><span class="p">:</span><span class="w"> </span><span class="c1"># create an instance of a built-in class</span>
 <span class="w">  </span><span class="nt">~</span><span class="p">:</span><span class="w"> </span><span class="c1"># positional arguments</span>
@@ -923,7 +923,7 @@
       <i class="fa-solid fa-angle-left"></i>
       <div class="prev-next-info">
         <p class="prev-next-subtitle">previous</p>
-        <p class="prev-next-title">Optional Tools</p>
+        <p class="prev-next-title">Optional Components</p>
       </div>
     </a>
     <a class="right-next"
