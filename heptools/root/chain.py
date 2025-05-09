@@ -12,6 +12,7 @@ from ._backend import (
     rename_record,
 )
 from .chunk import Chunk
+from .friend import Friend
 from .io import BRANCH_FILTER, ReaderOptions, TreeReader
 
 if TYPE_CHECKING:
@@ -21,7 +22,6 @@ if TYPE_CHECKING:
     import numpy as np
     import pandas as pd
 
-    from .friend import Friend
     from .io import DelayedRecordLike, RecordLike
 
 

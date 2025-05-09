@@ -69,7 +69,7 @@ The file path is described by a standard URL accepted by :func:`~urllib.parse.ur
 * ``scheme://netloc/`` can be omitted for local path.
 * ``;parameters`` is never used.
 * ``?query`` can be used to provide additional key-value pairs. If a key appears multiple times, all values will be collected into a list. Values are interpreted as JSON strings.
-* ``#fragment`` is a dot-separated path, allowing to access nested dictionaries or lists. Similar to ``TOML``'s `table <https://toml.io/en/v1.0.0#table>`_, double quotes can be used to escape the dot, 
+* ``#fragment`` is a dot-separated path, allowing to access nested dictionaries or lists. Similar to ``TOML``'s `table <https://toml.io/en/v1.0.0#table>`_, double quotes can be used to escape the dot.
 * The `percentage-encoding <https://en.wikipedia.org/wiki/Percent-encoding>`_ rule (``%XX``) is supported in the ``path`` to escape special characters.
 
 .. warning::
@@ -404,7 +404,7 @@ This tag can be used to import a module/attribute, create an instance of a class
     key5 <type=range>: [0, 100, 10] # positional arguments
     <discard>:
       <type=logging::basicConfig>:
-        level <type>: logging::INFO # tags can be nested
+        level <type>: logging::INFO # import an object
       <type=logging::info>: message  # call a function with one argument
     <discard><type=print>: # create an instance of a built-in class
       ~: # positional arguments
