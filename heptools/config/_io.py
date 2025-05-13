@@ -41,7 +41,7 @@ def _maybe_json(data: str):
         return data
 
 
-def _enter(data: dict | list, path: Iterable[str | int]):
+def _enter(data: dict | list, path: Iterable[str]) -> dict | list:
     for part in path:
         if isinstance(data, list):
             part = int(part)

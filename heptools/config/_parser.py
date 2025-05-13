@@ -24,7 +24,7 @@ from typing import (
 )
 
 from ._io import FileLoader, load_url, resolve_path, split_path
-from ._utils import SimpleTree
+from ._utils import SimpleTree, format_repr
 
 P = ParamSpec("P")
 T = TypeVar("T")
@@ -35,56 +35,44 @@ str, ~os.PathLike, dict: A path to the config file or a nested dict.
 """
 
 
-def _error_repr(value: Any, maxlines: int = None) -> str:
-    if isinstance(value, dict):
-        lines = []
-        for k, v in value.items():
-            line = _error_repr(v)
-            if isinstance(v, (dict, list)) or line.count("\n") > 0:
-                line = f"{k}:\n{indent(line, '  ')}"
-            else:
-                line = f"{k}: {line}"
-            lines.append(line)
-        text = "\n".join(lines)
-    elif isinstance(value, list):
-        text = "\n".join("- " + _error_repr(v).replace("\n", "\n  ") for v in value)
-    elif isinstance(value, (str, int, float, bool, type(None))):
-        text = str(value)
-    else:
-        text = repr(value)
-    if maxlines is not None:
-        lines = text.split("\n")
-        if len(lines) > maxlines:
-            lines[maxlines - 1] = f"+ {len(lines) - maxlines + 1} more lines"
-        text = "\n".join(lines[:maxlines])
-    return text
+class _error_msg:
+    other_lines = 15
+    value_lines = 5
 
+    @classmethod
+    def divider(cls):
+        return "-" * min(50, get_terminal_size().columns)
 
-def _error_msg(
-    error: Exception,
-    path: str = None,
-    key: str = ...,
-    span: tuple[int, int] = None,
-    value=...,
-):
-    error_msg = str(error)
-    info = "When parsing config:\n"
-    if path is not None:
-        info += f"\n{path}"
-    if key is not ...:
-        info += f"\n  {key}:\n"
-        if span is not None:
-            info += " " * (span[0] + 2) + "^" * (span[1] - span[0]) + "\n"
-        if value is not ...:
-            valuelines = get_terminal_size().lines - 15 - error_msg.count("\n")
-            info += indent(_error_repr(value, max(5, valuelines)), "    ") + "\n"
-    return SyntaxError(
-        f"""
-{info}
-The following error occurred:
-  {type(error).__name__}:
+    def __new__(
+        cls,
+        error: Exception,
+        path: str = None,
+        key: str = ...,
+        span: tuple[int, int] = None,
+        value=...,
+    ):
+        error_msg = str(error)
+        divider = cls.divider()
+        info = f"When parsing config:\n{divider}"
+        if path is not None:
+            info += f"\n{path}"
+        if key is not ...:
+            info += f"\n  {key}:\n"
+            if span is not None:
+                info += " " * (span[0] + 2) + "^" * (span[1] - span[0]) + "\n"
+            if value is not ...:
+                value_lines = max(
+                    cls.value_lines,
+                    get_terminal_size().lines - cls.other_lines - error_msg.count("\n"),
+                )
+                info += indent(format_repr(value, value_lines), "    ") + "\n"
+        return SyntaxError(
+            f"""
+{info}{divider}
+The following exception occurred:
+{type(error).__name__}:
 {indent(error_msg, "    ")}"""
-    )
+        )
 
 
 class _ReservedTag(StrEnum):
@@ -139,7 +127,7 @@ class _MatchedTags:
             _ReservedTag.patch,
         )
     )
-    skip = frozenset(
+    skips = frozenset(
         (
             _ReservedTag.code,
             _ReservedTag.dummy,
@@ -169,12 +157,14 @@ class _MatchedTags:
         unique_check = 0
 
         for (k, v), span in zip(tags, debug["spans"]):
-            if k not in self.skip:
+            if k not in self.skips:
                 unique_check += 1
             if k in self.flags:
                 self.parsed[k] = v
                 self.debug["spans"]["flags"][k] = span
             elif k in self.uniques:
+                if self.unique is not None:
+                    break
                 self.unique = (k, v)
                 self.debug["spans"]["unique"] = span
             else:
@@ -456,10 +446,9 @@ class ExtendParser:  # tag: <extend>
     def __call__(self, local: dict, tag: Optional[str], key: str, value):
         if key not in local:
             return key, value
-        try:
-            return key, self.methods[tag](local[key], value)
-        except KeyError:
+        if tag not in self.methods:
             raise ValueError(f'unknown extend method "{tag}".')
+        return key, self.methods[tag](local[key], value)
 
 
 class VariableParser:  # tag: <var> <ref>
@@ -631,15 +620,7 @@ class _Parser:
             local[key] = value
 
 
-@dataclass
-class _ParserCustomization:
-    nested: bool = True
-    custom_tags: dict[str, Optional[TagParser]] = field(default_factory=dict)
-    extend_methods: dict[str, ExtendMethod] = field(default_factory=dict)
-
-
-@dataclass
-class _ParserInitializer(_ParserCustomization):
+class _ParserInitializer:
     static_parsers = {
         _ReservedTag.code: None,
         _ReservedTag.include: None,
@@ -652,21 +633,21 @@ class _ParserInitializer(_ParserCustomization):
         _ReservedTag.attr: AttrParser(),
     }
 
-    def __post_init__(self):
+    def __init__(self, parser: ConfigParser):
+        self.nested = parser.nested
         self.vars = VariableParser()
         self.parsers = (
-            {k: v if v is None else _tag_parser(v) for k, v in self.custom_tags.items()}
+            {
+                k: v if v is None else _tag_parser(v)
+                for k, v in parser.custom_tags.items()
+            }
             | self.static_parsers
             | {
-                _ReservedTag.extend: ExtendParser(self.extend_methods),
+                _ReservedTag.extend: ExtendParser(parser.extend_methods),
                 _ReservedTag.var: self.vars.var,
                 _ReservedTag.ref: self.vars.ref,
             }
         )
-
-    @classmethod
-    def new(cls, other: _ParserCustomization):
-        return cls(**{k.name: getattr(other, k.name) for k in fields(other)})
 
     def parse(
         self,
@@ -696,7 +677,12 @@ class _ParserInitializer(_ParserCustomization):
         return result
 
 
-class ConfigParser(_ParserCustomization):
+@dataclass
+class ConfigParser:
+    nested: bool = True
+    custom_tags: dict[str, Optional[TagParser]] = field(default_factory=dict)
+    extend_methods: dict[str, ExtendMethod] = field(default_factory=dict)
+
     """
     A customizable config parser.
 
@@ -734,4 +720,4 @@ class ConfigParser(_ParserCustomization):
         dict
             The loaded configs.
         """
-        return _ParserInitializer.new(self).parse(*path_or_dict, result=result)
+        return _ParserInitializer(self).parse(*path_or_dict, result=result)
