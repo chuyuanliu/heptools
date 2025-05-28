@@ -41,7 +41,7 @@ def _maybe_json(data: str):
         return data
 
 
-def _enter(data: dict | list, path: Iterable[str]) -> dict | list:
+def _enter_path(data: dict | list, path: Iterable[str]) -> dict | list:
     for part in path:
         if isinstance(data, list):
             part = int(part)
@@ -49,12 +49,24 @@ def _enter(data: dict | list, path: Iterable[str]) -> dict | list:
     return data
 
 
-class split_path:
+def _parse_url(url: str):
+    parsed = urlparse(url)
+    return (
+        parsed,
+        parsed._replace(
+            path=unquote(parsed.path), params="", query="", fragment=""
+        ).geturl(),
+    )
+
+
+class _split_path:
     pattern = r"\"(?P<key1>[^\"]+)\"(\.|$)|(?P<key2>[^.\"]+)(\.|$)"
     re_match = re.compile(f"({pattern})+")
     re_split = re.compile(pattern)
 
     def __new__(cls, path: str):
+        if not path:
+            return
         if not cls.re_match.fullmatch(path):
             raise ValueError(f"Invalid path format: {path}")
         for match in cls.re_split.finditer(path):
@@ -105,15 +117,11 @@ def resolve_path(
 def load_url(
     loader: Callable[[str], Any], url: str, parse_query: bool = True
 ) -> Generator[Any, None, None]:
-    parsed = urlparse(url)
-    data = loader(
-        parsed._replace(
-            path=unquote(parsed.path), params="", query="", fragment=""
-        ).geturl()
-    )
+    parsed, url = _parse_url(url)
+    data = loader(url)
 
     if parsed.fragment:
-        data = _enter(data, split_path(parsed.fragment))
+        data = _enter_path(data, _split_path(parsed.fragment))
     yield data
 
     if parse_query and parsed.query:

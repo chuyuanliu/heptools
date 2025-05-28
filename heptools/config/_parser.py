@@ -5,12 +5,11 @@ import importlib
 import inspect
 import operator as op
 import re
-from dataclasses import dataclass, field, fields
+from dataclasses import dataclass, field
 from enum import StrEnum, auto
 from functools import partial
 from inspect import _ParameterKind as ParKind
 from os import PathLike, fspath, get_terminal_size
-from textwrap import indent
 from types import MappingProxyType, MethodType
 from typing import (
     Any,
@@ -23,8 +22,9 @@ from typing import (
     overload,
 )
 
-from ._io import FileLoader, load_url, resolve_path, split_path
-from ._utils import SimpleTree, format_repr
+from ._io import FileLoader, _split_path, load_url, resolve_path
+from ._patch import PatchAction, PatchedLoader
+from ._utils import SimpleTree, block_divider, block_indent, format_repr
 
 P = ParamSpec("P")
 T = TypeVar("T")
@@ -39,10 +39,6 @@ class _error_msg:
     other_lines = 15
     value_lines = 5
 
-    @classmethod
-    def divider(cls):
-        return "-" * min(50, get_terminal_size().columns)
-
     def __new__(
         cls,
         error: Exception,
@@ -52,8 +48,8 @@ class _error_msg:
         value=...,
     ):
         error_msg = str(error)
-        divider = cls.divider()
-        info = f"When parsing config:\n{divider}"
+        block_start, block_end = block_divider()
+        info = f"When parsing config:\n{block_start}"
         if path is not None:
             info += f"\n{path}"
         if key is not ...:
@@ -65,13 +61,13 @@ class _error_msg:
                     cls.value_lines,
                     get_terminal_size().lines - cls.other_lines - error_msg.count("\n"),
                 )
-                info += indent(format_repr(value, value_lines), "    ") + "\n"
+                info += block_indent(format_repr(value, value_lines), "    ") + "\n"
         return SyntaxError(
             f"""
-{info}{divider}
-The following exception occurred:
-{type(error).__name__}:
-{indent(error_msg, "    ")}"""
+{info}{block_end}
+the following exception occurred:
+  {type(error).__name__}:
+{block_indent(error_msg, "    ")}"""
         )
 
 
@@ -82,7 +78,7 @@ class _ReservedTag(StrEnum):
     code = auto()
 
     include = auto()
-    patch = auto()  # TODO add
+    patch = auto()
 
     literal = auto()
     discard = auto()
@@ -149,7 +145,6 @@ class _MatchedTags:
             },
         }
         self.parser = parser
-        self.parsers = parser.custom.parsers
         self.tags = list[tuple[str, str]]()
         self.parsed = dict[str, str]()
         self.unique: Optional[tuple[str, str]] = None
@@ -187,8 +182,9 @@ class _MatchedTags:
 
     def apply(self, *, key: str, value, local: dict):
         raw_value = value
+        parsers = self.parser.custom.parsers
         for i, (tag_k, tag_v) in enumerate(self.tags):
-            if (parser := self.parsers.get(tag_k)) is not None:
+            if (parser := parsers.get(tag_k)) is not None:
                 try:
                     key, value = parser(
                         key=key,
@@ -207,13 +203,11 @@ class _MatchedTags:
                         key=self.debug["key"],
                         span=self.debug["spans"]["tags"][i],
                         value=raw_value,
-                    )
+                    ) from None
             self.parsed[tag_k] = tag_v
         return key, value
 
-    def include(self, paths: str | list[str], tag: str, result: dict):
-        error = None
-        raw_paths = paths
+    def include(self, tag: str, paths: str | list[str], result: dict):
         if isinstance(paths, list):
             paths = self.parser.list(paths)
         else:
@@ -223,19 +217,31 @@ class _MatchedTags:
                 *resolve_path(self.parser.path, tag, *map(fspath, paths)),
                 result=result,
             )
-        except SyntaxError:
-            raise
         except RecursionError:
-            error = RecursionError("Recursive include may exist.")
-        except Exception as e:
-            error = e
-        raise _error_msg(
-            error=error,
-            path=self.parser.path,
-            key=self.debug["key"],
-            span=self.debug["spans"]["unique"],
-            value=raw_paths,
-        )
+            raise RecursionError("Recursive include may exist.") from None
+        except Exception:
+            raise
+
+    def patch(self, tag: Optional[str], key: str, value: Any):
+        patch = self.parser.custom.patches
+        if not isinstance(value, list):
+            value = [value]
+        match tag:
+            case None | "absolute" | "relative":
+                value = copy.deepcopy(value)
+                for i, path in enumerate(
+                    resolve_path(
+                        self.parser.path, tag, *(patch["path"] for patch in value)
+                    )
+                ):
+                    value[i]["path"] = path
+                patch.register(value, key, self.parser.path)
+            case "install":
+                patch.install(value)
+            case "uninstall":
+                patch.uninstall(value)
+            case _:
+                raise ValueError(f"Unknown patch flag: {tag}")
 
 
 class FlagParser:
@@ -277,7 +283,7 @@ class FlagParser:
 
 class TagParser(Protocol):
     """
-    Tag parser protocol
+    Tag parser protocol.
     """
 
     def __call__(
@@ -481,7 +487,7 @@ class VariableParser:  # tag: <var> <ref>
                     obj = copy.deepcopy(obj)
             return key, obj
         except KeyError:
-            raise KeyError(f'variable "{name}" does not exist.')
+            raise NameError(f'name "{name}" is not defined.') from None
         except Exception:
             raise
 
@@ -490,13 +496,7 @@ class FileParser:  # tag: <file>
     __flags = FlagParser("nocache", "nobuffer", path=("relative", "absolute"))
 
     @_tag_parser
-    def __call__(
-        self,
-        path: str,
-        tag: Optional[str],
-        key: str,
-        value,
-    ):
+    def __call__(self, path: str, tag: Optional[str], key: str, value):
         flags = self.__flags(tag, sep="|")
         use_cache = not flags["nocache"]
         obj = next(
@@ -556,14 +556,26 @@ class _Parser:
         if result is None:
             result = {}
         for k, v in data.items():
-            key, tags, v = self.eval(k, v)
-            match tags.unique:
-                case (_ReservedTag.include, tag):
-                    tags.include(v, tag, result)
-                case (_ReservedTag.patch, tag):
-                    ...  # TODO
-                case None:
-                    self.setitem(result, tags, key, v)
+            key, tags, value = self.eval(k, v)
+            try:
+                match tags.unique:
+                    case (_ReservedTag.include, tag):
+                        tags.include(tag, value, result)
+                    case (_ReservedTag.patch, tag):
+                        tags.patch(tag, key, value)
+            except SyntaxError:
+                raise
+            except Exception as e:
+                raise _error_msg(
+                    error=e,
+                    path=self.path,
+                    key=tags.debug["key"],
+                    span=tags.debug["spans"]["unique"],
+                    value=v,
+                ) from None
+
+            if tags.unique is None:
+                self.setitem(tags, key, value, result)
         if (
             singleton
             and len(result) == 1
@@ -595,16 +607,16 @@ class _Parser:
                     key=tags.debug["key"],
                     span=tags.debug["spans"]["flags"][_ReservedTag.code],
                     value=v,
-                )
+                ) from None
         return key, tags, v
 
-    def setitem(self, local: dict, tags: _MatchedTags, key: str, value: Any):
+    def setitem(self, tags: _MatchedTags, key: str, value: Any, local: dict):
         if (
             self.custom.nested
             and key is not None
             and not tags.has(_ReservedTag.literal)
         ):
-            keys = [*split_path(key)]
+            keys = [*_split_path(key)]
             local = SimpleTree.init(local, keys[:-1])
             key = keys[-1]
         if isinstance(value, dict):
@@ -636,6 +648,7 @@ class _ParserInitializer:
     def __init__(self, parser: ConfigParser):
         self.nested = parser.nested
         self.vars = VariableParser()
+        self.patches = PatchedLoader(parser)
         self.parsers = (
             {
                 k: v if v is None else _tag_parser(v)
@@ -660,7 +673,7 @@ class _ParserInitializer:
             path = None
             if not isinstance(configs, dict):
                 path = fspath(configs)
-                configs = load_url(ConfigParser.io.load, path)
+                configs = load_url(self.patches.load, path)
             else:
                 configs = (configs,)
             parser = _Parser(path, self)
@@ -679,10 +692,6 @@ class _ParserInitializer:
 
 @dataclass
 class ConfigParser:
-    nested: bool = True
-    custom_tags: dict[str, Optional[TagParser]] = field(default_factory=dict)
-    extend_methods: dict[str, ExtendMethod] = field(default_factory=dict)
-
     """
     A customizable config parser.
 
@@ -694,8 +703,15 @@ class ConfigParser:
         Customized tags.
     extend_methods : dict[str, ExtendMethod], optional
         Customized <extend> methods.
+    patch_actions : dict[str, PatchAction], optional
+        Customized patch actions.
 
     """
+
+    nested: bool = True
+    custom_tags: dict[str, Optional[TagParser]] = field(default_factory=dict)
+    extend_methods: dict[str, ExtendMethod] = field(default_factory=dict)
+    patch_actions: dict[str, PatchAction] = field(default_factory=dict)
 
     io = FileLoader()
     """

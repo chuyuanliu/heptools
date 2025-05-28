@@ -1,6 +1,34 @@
 from __future__ import annotations
 
+import re
+from os import get_terminal_size
 from textwrap import indent
+
+
+def block_divider(size: int = 50):
+    dash = "-" * max(min(size, get_terminal_size().columns) - 3, 1)
+    return f">>>{dash}", f"{dash}<<<"
+
+
+class _block_predicate:
+    start = re.compile(r">>>-+\n")
+    end = re.compile(r"-+<<<\n")
+
+    def __init__(self):
+        self._outside = True
+
+    def __call__(self, text: str):
+        if self.start.fullmatch(text):
+            self._outside = False
+            return False
+        elif self.end.fullmatch(text):
+            self._outside = True
+            return False
+        return self._outside
+
+
+def block_indent(text: str, prefix: str):
+    return indent(text, prefix, _block_predicate())
 
 
 def format_repr(value, maxlines: int = None) -> str:
@@ -9,7 +37,7 @@ def format_repr(value, maxlines: int = None) -> str:
         for k, v in value.items():
             line = format_repr(v)
             if isinstance(v, (dict, list)) or line.count("\n") > 0:
-                line = f"{k}:\n{indent(line, '  ')}"
+                line = f"{k}:\n{block_indent(line, '  ')}"
             else:
                 line = f"{k}: {line}"
             lines.append(line)

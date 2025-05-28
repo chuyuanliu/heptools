@@ -1,6 +1,7 @@
 from ._io import FileLoader
 from ._manager import ConfigManager
 from ._parser import ConfigParser, ConfigSource, ExtendMethod, TagParser
+from ._patch import PatchAction
 from ._protocol import Configurable, config, const
 
 __all__ = [
@@ -14,6 +15,7 @@ __all__ = [
     "ConfigSource",
     "TagParser",
     "ExtendMethod",
+    "PatchAction",
     # io
     "FileLoader",
 ]
