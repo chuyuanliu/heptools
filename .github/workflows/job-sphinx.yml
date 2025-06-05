@@ -22,7 +22,7 @@ jobs:
       - working-directory: docs
         run: npm install
       - working-directory: docs
-        run: npm run build:css
+        run: npm run build
 
       - name: Setup Python
         uses: actions/setup-python@v5

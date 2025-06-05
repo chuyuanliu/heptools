@@ -1,6 +1,6 @@
 {
   "scripts": {
-    "build:css": "sass _static/src:_static/css --no-source-map --style compressed"
+    "build": "bash scripts/build.sh"
   },
   "dependencies": {
     "sass": "1.87.0"

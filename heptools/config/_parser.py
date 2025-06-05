@@ -82,7 +82,7 @@ class _ReservedTag(StrEnum):
 
     literal = auto()
     discard = auto()
-    dummy = auto()
+    comment = auto()
 
     file = auto()
     type = auto()
@@ -126,7 +126,7 @@ class _MatchedTags:
     skips = frozenset(
         (
             _ReservedTag.code,
-            _ReservedTag.dummy,
+            _ReservedTag.comment,
         )
     )
 
@@ -638,7 +638,7 @@ class _ParserInitializer:
         _ReservedTag.include: None,
         _ReservedTag.literal: None,
         _ReservedTag.discard: None,
-        _ReservedTag.dummy: None,
+        _ReservedTag.comment: None,
         _ReservedTag.file: FileParser(),
         _ReservedTag.type: TypeParser(),
         _ReservedTag.key_type: KeyTypeParser(),

@@ -156,7 +156,9 @@ class FileIORegistry(Generic[HandlerT]):
             return handler
         if handler := type(self).__handler.get(ext):
             return handler
-        raise NotImplementedError(f"Unsupported file type: {ext}")
+        raise NotImplementedError(
+            f'".{ext}" file is not supported, you can register a custom handler.'
+        )
 
     @classmethod
     def __normalize_extensions(cls, exts: Iterable[str]):

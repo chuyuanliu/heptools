@@ -1,3 +1,8 @@
+# node.js
+node_modules
+/package.json
+/package-lock.json
+
 # Local test settings
 TEMP/
 test_*.py
