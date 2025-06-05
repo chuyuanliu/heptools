@@ -46,7 +46,7 @@ Precedence
 
     * :ref:`config-tag-literal`
     * :ref:`config-tag-discard`
-    * :ref:`config-tag-dummy`
+    * :ref:`config-tag-comment`
 
   * The order of the following tags are ill-defined, as they are not supposed to simply modify the key-value pairs. As a result, they cannot be directly chained with other regular tags, unless through :ref:`config-tag-code`. See how to :ref:`config-tips-include` as an example.
 
@@ -130,7 +130,7 @@ The ``nested=True`` (default) option enables a behavior similar to ``TOML``'s `t
 
     parent1:
       child1: value1
-    parent1 <dummy>: # override the parent
+    parent1 <comment>: # override the parent
       child2: value2
     parent1.child3: value3 # modify the child without overriding the parent
     parent2.child.grandchild: value4 # create a nested dict
@@ -297,22 +297,22 @@ The keys marked as ``<discard>`` will not be added into the current dictionary b
 
   The example above will print ``Hello World`` and be parsed into ``{'key1': 'value1'}``.
 
-.. _config-tag-dummy:
+.. _config-tag-comment:
 
-``<dummy>``
+``<comment>``
 ------------
 
-This tag is reserved to never trigger any parser. This is useful when there are duplicate keys.
+This tag is reserved to never trigger any parser. This is useful when you want to leave a comment or add keys with duplicate names.
 
 .. admonition:: example
   :class: guide-config-example, dropdown
 
   .. code-block:: yaml
 
-    key: 1
-    key <extend> <dummy=1>: 2
-    key <extend> <dummy=2>: 3
-    key <extend> <dummy=3>: 4
+    key <comment=this is a counter>: 1
+    key <extend> <comment=1>: 2
+    key <extend> <comment=2>: 3
+    key <extend> <comment=3>: 4
 
   The example above will be parsed into ``{'key': 10}``.
 
@@ -588,8 +588,11 @@ This tag can be used to access the variables defined with :ref:`config-tag-var`.
   * ``<ref=copy>``: replace the value by a :func:`~copy.copy` of the variable.
   * ``<ref=deepcopy>``: replace the value by a :func:`~copy.deepcopy` of the variable.
 
+.. _config-customization:
+
 Customization
 ===============
+
 .. _config-custom-tag:
 
 Customized tag parser
@@ -599,7 +602,10 @@ Customized tag parser
 
 Customized ``<extend>`` operation
 ---------------------------------
+.. _config-custom-deserializer:
 
+Customized deserializer
+------------------------
 
 Tips & Tricks
 ==============

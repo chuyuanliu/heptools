@@ -403,7 +403,7 @@
 <ul>
 <li><p><a class="reference internal" href="#config-tag-literal"><span class="std std-ref">&lt;literal&gt;</span></a></p></li>
 <li><p><a class="reference internal" href="#config-tag-discard"><span class="std std-ref">&lt;discard&gt;</span></a></p></li>
-<li><p><a class="reference internal" href="#config-tag-dummy"><span class="std std-ref">&lt;dummy&gt;</span></a></p></li>
+<li><p><a class="reference internal" href="#config-tag-comment"><span class="std std-ref">&lt;comment&gt;</span></a></p></li>
 </ul>
 </li>
 <li><p>The order of the following tags are ill-defined, as they are not supposed to simply modify the key-value pairs. As a result, they cannot be directly chained with other regular tags, unless through <a class="reference internal" href="#config-tag-code"><span class="std std-ref">&lt;code&gt;</span></a>. See how to <a class="reference internal" href="#config-tips-include"><span class="std std-ref">Use &lt;include&gt; with other tags</span></a> as an example.</p>
@@ -473,7 +473,7 @@
 <p class="admonition-title">example</p>
 <div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">parent1</span><span class="p">:</span>
 <span class="w">  </span><span class="nt">child1</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">value1</span>
-<span class="nt">parent1 &lt;dummy&gt;</span><span class="p">:</span><span class="w"> </span><span class="c1"># override the parent</span>
+<span class="nt">parent1 &lt;comment&gt;</span><span class="p">:</span><span class="w"> </span><span class="c1"># override the parent</span>
 <span class="w">  </span><span class="nt">child2</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">value2</span>
 <span class="nt">parent1.child3</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">value3</span><span class="w"> </span><span class="c1"># modify the child without overriding the parent</span>
 <span class="nt">parent2.child.grandchild</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">value4</span><span class="w"> </span><span class="c1"># create a nested dict</span>
@@ -618,15 +618,15 @@
 <p>The example above will print <code class="docutils literal notranslate"><span class="pre">Hello</span> <span class="pre">World</span></code> and be parsed into <code class="docutils literal notranslate"><span class="pre">{'key1':</span> <span class="pre">'value1'}</span></code>.</p>
 </div>
 </section>
-<section id="dummy">
-<span id="config-tag-dummy"></span><h3><code class="docutils literal notranslate"><span class="pre">&lt;dummy&gt;</span></code><a class="headerlink" href="#dummy" title="Link to this heading">#</a></h3>
-<p>This tag is reserved to never trigger any parser. This is useful when there are duplicate keys.</p>
+<section id="comment">
+<span id="config-tag-comment"></span><h3><code class="docutils literal notranslate"><span class="pre">&lt;comment&gt;</span></code><a class="headerlink" href="#comment" title="Link to this heading">#</a></h3>
+<p>This tag is reserved to never trigger any parser. This is useful when you want to leave a comment or add keys with duplicate names.</p>
 <div class="guide-config-example dropdown admonition">
 <p class="admonition-title">example</p>
-<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">key</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">1</span>
-<span class="nt">key &lt;extend&gt; &lt;dummy=1&gt;</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">2</span>
-<span class="nt">key &lt;extend&gt; &lt;dummy=2&gt;</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">3</span>
-<span class="nt">key &lt;extend&gt; &lt;dummy=3&gt;</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">4</span>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">key &lt;comment=this is a counter&gt;</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">1</span>
+<span class="nt">key &lt;extend&gt; &lt;comment=1&gt;</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">2</span>
+<span class="nt">key &lt;extend&gt; &lt;comment=2&gt;</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">3</span>
+<span class="nt">key &lt;extend&gt; &lt;comment=3&gt;</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">4</span>
 </pre></div>
 </div>
 <p>The example above will be parsed into <code class="docutils literal notranslate"><span class="pre">{'key':</span> <span class="pre">10}</span></code>.</p>
@@ -877,12 +877,15 @@
 </section>
 </section>
 <section id="customization">
-<h2>Customization<a class="headerlink" href="#customization" title="Link to this heading">#</a></h2>
+<span id="config-customization"></span><h2>Customization<a class="headerlink" href="#customization" title="Link to this heading">#</a></h2>
 <section id="customized-tag-parser">
 <span id="config-custom-tag"></span><h3>Customized tag parser<a class="headerlink" href="#customized-tag-parser" title="Link to this heading">#</a></h3>
 </section>
 <section id="customized-extend-operation">
 <span id="config-custom-extend"></span><h3>Customized <code class="docutils literal notranslate"><span class="pre">&lt;extend&gt;</span></code> operation<a class="headerlink" href="#customized-extend-operation" title="Link to this heading">#</a></h3>
+</section>
+<section id="customized-deserializer">
+<span id="config-custom-deserializer"></span><h3>Customized deserializer<a class="headerlink" href="#customized-deserializer" title="Link to this heading">#</a></h3>
 </section>
 </section>
 <section id="tips-tricks">
@@ -972,7 +975,7 @@
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#include"><code class="docutils literal notranslate"><span class="pre">&lt;include&gt;</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#literal"><code class="docutils literal notranslate"><span class="pre">&lt;literal&gt;</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#discard"><code class="docutils literal notranslate"><span class="pre">&lt;discard&gt;</span></code></a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#dummy"><code class="docutils literal notranslate"><span class="pre">&lt;dummy&gt;</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#comment"><code class="docutils literal notranslate"><span class="pre">&lt;comment&gt;</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#file"><code class="docutils literal notranslate"><span class="pre">&lt;file&gt;</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#type"><code class="docutils literal notranslate"><span class="pre">&lt;type&gt;</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#key-type"><code class="docutils literal notranslate"><span class="pre">&lt;key-type&gt;</span></code></a></li>
@@ -985,6 +988,7 @@
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#customization">Customization</a><ul class="nav section-nav flex-column">
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#customized-tag-parser">Customized tag parser</a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#customized-extend-operation">Customized <code class="docutils literal notranslate"><span class="pre">&lt;extend&gt;</span></code> operation</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#customized-deserializer">Customized deserializer</a></li>
 </ul>
 </li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#tips-tricks">Tips &amp; Tricks</a><ul class="nav section-nav flex-column">
