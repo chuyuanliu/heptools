@@ -1,6 +1,6 @@
 {
   "scripts": {
-    "build": "bash scripts/build.sh"
+    "build": "bash _scripts/build.sh"
   },
   "dependencies": {
     "sass": "1.87.0"
