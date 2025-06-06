@@ -2,7 +2,9 @@
   "name": "heptools-config-highlight",
   "displayName": "Heptools Config Highlight",
   "description": "Highlight the tags for heptools config files.",
-  "publisher": "Chuyuan Liu",
+  "author": {
+    "name": "Chuyuan Liu"
+  },
   "version": "0.1.0",
   "engines": {
     "vscode": "^1.100.0"
