@@ -20,7 +20,7 @@ jobs:
       - name: Create tag
         uses: actions/github-script@v7
         with:
-          script: | # https://stackoverflow.com/a/78010013
+          script: |
             const args = {
               owner: context.repo.owner,
               repo: context.repo.repo,

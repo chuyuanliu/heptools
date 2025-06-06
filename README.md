@@ -1,9 +1,11 @@
 # HEP Tools
 
+[![Release Nightly](https://img.shields.io/github/v/release/chuyuanliu/heptools?filter=nightly)](https://github.com/chuyuanliu/heptools/releases/tag/nightly)
 [![Documentation](https://img.shields.io/badge/docs-latest-blue?logo=sphinx)](https://chuyuanliu.github.io/heptools/)
 [![Docker Image](https://img.shields.io/badge/docker-latest-blue?logo=docker)](https://hub.docker.com/repository/docker/chuyuanliu/heptools)
 ![Python Version](https://img.shields.io/badge/python-3.11-blue?logo=python)
 ![Code Style](https://img.shields.io/badge/code%20style-black-black)
+![License](https://img.shields.io/badge/license-MIT-blue)
 
 A collection of tools for experimental high energy physics analysis.
 
