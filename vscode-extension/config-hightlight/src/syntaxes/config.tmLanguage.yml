@@ -1,0 +1,177 @@
+# scopes:
+#   <
+#     punctuation.definition.tag.begin.heptools-config
+#   >
+#     punctuation.definition.tag.end.heptools-config
+#   = | :: .
+#     keyword.operator.tag.heptools-config
+#   built-in tag key
+#     keyword.control.tag.heptools-config
+#   built-in tag value
+#     variable.other.enummember.tag.heptools-config
+#   <comment>
+#     punctuation.definition.tag.comment.heptools-config
+#     comment.line.tag.heptools-config
+#   <type>
+#     entity.name.namespace.tag.heptools-config
+#     entity.name.type.class.tag.heptools-config
+#     invalid.illegal.name.python
+#   custom tag key
+#     entity.name.function.tag.heptools-config
+#   custom tag value
+#     entity.name.variable.tag.heptools-config
+#   invalid
+#     invalid.illegal.tag.heptools-config
+
+name: heptools config
+scopeName: source.heptools-config
+repository:
+  tag:
+    patterns:
+      # built-in tags
+      - match: '(?<=\<)(code|literal|discard)(\=[^>=]*)?(?=\>)' # <code> <literal> <discard>
+        captures:
+          "1":
+            name: keyword.control.tag.heptools-config
+          "2":
+            name: invalid.illegal.tag.heptools-config
+      - match: '(?<=\<)(include)(\=([^>=]+)?)?(?=\>)' # <include(=[absolute|relative])>
+        captures:
+          "1":
+            name: keyword.control.tag.heptools-config
+          "2":
+            name: keyword.operator.tag.heptools-config
+          "3":
+            patterns:
+              - match: '(?<=\=)(absolute|relative)(?!.)'
+                name: variable.other.enummember.tag.heptools-config
+              - match: "[^>=]+"
+                name: invalid.illegal.tag.heptools-config
+      - match: '(?<=\<)(patch)(\=([^>=]+)?)?(?=\>)' # <patch(=[absolute|relative|install|uninstall])>
+        captures:
+          "1":
+            name: keyword.control.tag.heptools-config
+          "2":
+            name: keyword.operator.tag.heptools-config
+          "3":
+            patterns:
+              - match: '(?<=\=)(absolute|relative|install|uninstall)(?!.)'
+                name: variable.other.enummember.tag.heptools-config
+              - match: "[^>=]+"
+                name: invalid.illegal.tag.heptools-config
+      - match: '(?<=\<)(ref)(\=([^>=]+)?)?(?=\>)' # <ref(=[copy|deepcopy])>
+        captures:
+          "1":
+            name: keyword.control.tag.heptools-config
+          "2":
+            name: keyword.operator.tag.heptools-config
+          "3":
+            patterns:
+              - match: '(?<=\=)(copy|deepcopy)(?!.)'
+                name: variable.other.enummember.tag.heptools-config
+              - match: "[^>=]+"
+                name: invalid.illegal.tag.heptools-config
+      - match: '(?<=\<)(var)(\=([^>=]+)?)?(?=\>)' # <var(=[...])>
+        captures:
+          "1":
+            name: keyword.control.tag.heptools-config
+          "2":
+            name: keyword.operator.tag.heptools-config
+          "3":
+            name: entity.name.variable.tag.heptools-config
+      - match: '(?<=\<)(extend)(\=([^>=]+)?)?(?=\>)' # <extend(=[add|and|or|...])>
+        captures:
+          "1":
+            name: keyword.control.tag.heptools-config
+          "2":
+            name: keyword.operator.tag.heptools-config
+          "3":
+            patterns:
+              - match: '(?<=\=)(add|and|or)(?!.)'
+                name: variable.other.enummember.tag.heptools-config
+              - match: "[^>=]+"
+                name: entity.name.variable.tag.heptools-config
+      - match: '(?<=\<)(file)(\=([^>=]+)?)?(?=\>)' # <file(=[absolute|relative|nocache|nobuffer])>
+        captures:
+          "1":
+            name: keyword.control.tag.heptools-config
+          "2":
+            name: keyword.operator.tag.heptools-config
+          "3":
+            patterns:
+              - begin: (\|)|(?=)
+                end: (?![^|])
+                beginCaptures:
+                  "0":
+                    name: keyword.operator.tag.heptools-config
+                patterns:
+                  - match: "(?<!=[^|])(absolute|relative|nocache|nobuffer)(?![^|])"
+                    name: variable.other.enummember.tag.heptools-config
+                  - match: "[^>=|]+"
+                    name: invalid.illegal.tag.heptools-config
+      - match: '(?<=\<)(comment)(\=([^>=]+)?)?(?=\>)' # <comment(=...)>
+        captures:
+          "1":
+            name: punctuation.definition.tag.comment.heptools-config
+          "2":
+            name: punctuation.definition.tag.comment.heptools-config
+          "3":
+            name: comment.line.tag.heptools-config
+      - match: '(?<=\<)(type|key-type)(\=([^>=]+)?)?(?=\>)' # <type(=...)> <key-type(=...)>
+        captures:
+          "1":
+            name: keyword.control.tag.heptools-config
+          "2":
+            name: keyword.operator.tag.heptools-config
+          "3":
+            patterns:
+              - match: (?<=\=)(([^:=>]+)(::))?([^:=>]+)?(?!.)
+                captures:
+                  "2":
+                    name: entity.name.namespace.tag.heptools-config
+                    patterns:
+                      - include: "#python_identifier"
+                  "3":
+                    name: keyword.operator.tag.heptools-config
+                  "4":
+                    name: entity.name.type.class.tag.heptools-config
+                    patterns:
+                      - include: "#python_identifier"
+              - match: "[^>=]+"
+                name: invalid.illegal.tag.heptools-config
+      - match: '(?<=\<)(attr)(\=)([^>=]+)(?=\>)' # <attr=...>
+        captures:
+          "1":
+            name: keyword.control.tag.heptools-config
+          "2":
+            name: keyword.operator.tag.heptools-config
+          "3":
+            name: entity.name.variable.tag.heptools-config
+            patterns:
+              - include: "#python_identifier"
+      # invalid tags
+      - match: (?<=\<)(attr)(\=)?(?=\>) # <attr(=)>
+        name: invalid.illegal.tag.heptools-config
+      - match: (?<=\<)[^>=]*=[^>=]*=[^>]*(?=\>)
+        name: invalid.illegal.tag.heptools-config
+      # custom tags
+      - match: '(?<=\<)([^>=]+)(\=([^>=]+)?)?(?=\>)'
+        captures:
+          "1":
+            name: entity.name.function.tag.heptools-config
+          "2":
+            name: keyword.operator.tag.heptools-config
+          "3":
+            name: entity.name.variable.tag.heptools-config
+
+  python_identifier:
+    patterns:
+      - begin: (\.)|(?=)
+        end: (?![^.])
+        beginCaptures:
+          "0":
+            name: keyword.operator.tag.heptools-config
+        patterns:
+          - match: (?<![^.:=])[a-zA-Z_][a-zA-Z0-9_]*(?![^.:])
+          - match: "[^>=.]+"
+            name: invalid.illegal.name.python

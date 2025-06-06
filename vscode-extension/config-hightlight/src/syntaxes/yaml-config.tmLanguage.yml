@@ -1,0 +1,41 @@
+name: YAML (heptools config)
+scopeName: source.heptools-config.yaml
+patterns:
+  - include: source.yaml
+injections:
+  "L:meta.map.key.yaml string.unquoted.plain.yaml":
+    patterns:
+      - begin: \<(?=[^><]*\>\s*(\<[^><]*\>\s*)*(:|$))
+        end: \>
+        beginCaptures:
+          "0":
+            name: punctuation.definition.tag.begin.heptools-config
+        endCaptures:
+          "0":
+            name: punctuation.definition.tag.end.heptools-config
+        patterns:
+          - include: source.heptools-config#tag
+  "L:meta.map.key.yaml string.quoted.double.yaml":
+    patterns:
+      - begin: \<(?=[^><]*\>\s*(\<[^><]*\>\s*)*("\s*:|$))
+        end: \>
+        beginCaptures:
+          "0":
+            name: punctuation.definition.tag.begin.heptools-config
+        endCaptures:
+          "0":
+            name: punctuation.definition.tag.end.heptools-config
+        patterns:
+          - include: source.heptools-config#tag
+  "L:meta.map.key.yaml string.quoted.single.yaml":
+    patterns:
+      - begin: \<(?=[^><]*\>\s*(\<[^><]*\>\s*)*('\s*:|$))
+        end: \>
+        beginCaptures:
+          "0":
+            name: punctuation.definition.tag.begin.heptools-config
+        endCaptures:
+          "0":
+            name: punctuation.definition.tag.end.heptools-config
+        patterns:
+          - include: source.heptools-config#tag

@@ -1,0 +1,50 @@
+{
+  "name": "heptools-config-highlight",
+  "displayName": "Heptools Config Highlight",
+  "description": "Highlight the tags for heptools config files.",
+  "version": "0.1.0",
+  "engines": {
+    "vscode": "^1.100.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/chuyuanliu/heptools.git"
+  },
+  "contributes": {
+    "languages": [
+      {
+        "id": "heptools-config"
+      },
+      {
+        "id": "heptools-config-yaml",
+        "extensions": [
+          ".cfg.yaml",
+          ".cfg.yml"
+        ]
+      },
+      {
+        "id": "heptools-config-json",
+        "extensions": [
+          ".cfg.json"
+        ]
+      }
+    ],
+    "grammars": [
+      {
+        "language": "heptools-config",
+        "scopeName": "source.heptools-config",
+        "path": "./syntaxes/config.tmLanguage.json"
+      },
+      {
+        "language": "heptools-config-yaml",
+        "scopeName": "source.heptools-config.yaml",
+        "path": "./syntaxes/yaml-config.tmLanguage.json"
+      },
+      {
+        "language": "heptools-config-json",
+        "scopeName": "source.heptools-config.json",
+        "path": "./syntaxes/json-config.tmLanguage.json"
+      }
+    ]
+  }
+}

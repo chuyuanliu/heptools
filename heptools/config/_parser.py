@@ -516,8 +516,8 @@ class FileParser:  # tag: <file>
 
 
 class _Parser:
-    re_match = re.compile(r"(?P<key>.*?)\s*(?P<tags>(\<[^\>\<]*\>\s*)*)\s*")
-    re_split = re.compile(r"\<(?P<tag>[^\>\<]*)\>")
+    re_match = re.compile(r"(?P<key>.*?)\s*(?P<tags>(\<[^><]*\>\s*)*)\s*")
+    re_split = re.compile(r"\<(?P<tag>[^><]*)\>")
 
     def __init__(self, path: Optional[str], custom: _ParserInitializer):
         self.path = path

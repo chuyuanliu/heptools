@@ -1,0 +1,23 @@
+name: Create nightly release
+
+on:
+  push:
+    branches:
+      - master
+    paths:
+      - "vscode-extension/**"
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Create tag
+        uses: ./.github/workflows/job-create-tag.yml
+        with:
+          tag: nightly
+
+      - name: Release VSCode extension
+        uses: ./.github/workflows/job-vscode.yml
+        with:
+          tag: nightly

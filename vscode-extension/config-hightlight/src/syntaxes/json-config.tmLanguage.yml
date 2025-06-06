@@ -1,0 +1,17 @@
+name: JSON (heptools config)
+scopeName: source.heptools-config.json
+patterns:
+  - include: source.json
+injections:
+  "L:support.type.property-name.json":
+    patterns:
+      - begin: \<(?=[^><]*\>\s*(\<[^><]*\>\s*)*("\s*:|$))
+        end: \>
+        beginCaptures:
+          "0":
+            name: punctuation.definition.tag.begin.heptools-config
+        endCaptures:
+          "0":
+            name: punctuation.definition.tag.end.heptools-config
+        patterns:
+          - include: source.heptools-config#tag

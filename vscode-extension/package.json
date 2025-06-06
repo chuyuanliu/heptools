@@ -1,0 +1,9 @@
+{
+  "scripts": {
+    "build": "bash scripts/build.sh"
+  },
+  "dependencies": {
+    "@vscode/vsce": "3.5.0",
+    "js-yaml": "4.1.0"
+  }
+}

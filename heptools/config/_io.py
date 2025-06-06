@@ -60,7 +60,7 @@ def _parse_url(url: str):
 
 
 class _split_path:
-    pattern = r"\"(?P<key1>[^\"]+)\"(\.|$)|(?P<key2>[^.\"]+)(\.|$)"
+    pattern = r'"(?P<key1>[^"]+)"(\.|$)|(?P<key2>[^."]+)(\.|$)'
     re_match = re.compile(f"({pattern})+")
     re_split = re.compile(pattern)
 

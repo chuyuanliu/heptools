@@ -1,4 +1,4 @@
-name: Build with Sphinx and deploy to GitHub Pages
+name: Build documentation with Sphinx and deploy to GitHub Pages
 
 on:
   workflow_call:

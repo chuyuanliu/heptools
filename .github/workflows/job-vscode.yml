@@ -1,0 +1,38 @@
+name: Build VSCode extension and release
+
+on:
+  workflow_call:
+    inputs:
+      tag:
+        type: string
+        required: true
+
+jobs:
+  build-vscode-extension:
+    runs-on: ubuntu-latest
+    concurrency:
+      group: build_vscode_extension_${{ inputs.tag }}
+      cancel-in-progress: true
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: "npm"
+          cache-dependency-path: vscode-extension/package.json
+      - working-directory: vscode-extension
+        run: npm install
+      - working-directory: vscode-extension
+        run: npm run build
+
+      - name: Build and package extensions
+        working-directory: vscode-extension
+        run: npm run build
+
+      - name: Release packages
+        uses: softprops/action-gh-release@v1
+        with:
+          files: vscode-extension/dist/*.vsix
