@@ -8,12 +8,13 @@ on:
         required: true
 
 jobs:
-  release-vscode-extension:
-    uses: ./.github/workflows/job-vscode.yml
+  delete-release:
+    uses: ./.github/workflows/job-delete-release.yml
     with:
       tag: ${{ inputs.tag }}
 
-  release-license:
-    uses: ./.github/workflows/job-test.yml
+  release-vscode-extension:
+    needs: delete-release
+    uses: ./.github/workflows/job-vscode.yml
     with:
       tag: ${{ inputs.tag }}
