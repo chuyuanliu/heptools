@@ -12,3 +12,8 @@ jobs:
     uses: ./.github/workflows/job-vscode.yml
     with:
       tag: ${{ inputs.tag }}
+
+  release-license:
+    uses: ./.github/workflows/job-test.yml
+    with:
+      tag: ${{ inputs.tag }}
