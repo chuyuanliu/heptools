@@ -13,8 +13,6 @@ jobs:
     concurrency:
       group: create_tag_${{ inputs.tag }}
       cancel-in-progress: true
-    permissions:
-      contents: write
     steps:
       - name: Checkout
         uses: actions/checkout@v4

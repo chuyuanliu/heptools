@@ -35,4 +35,5 @@ jobs:
       - name: Release packages
         uses: softprops/action-gh-release@v1
         with:
+          tag_name: ${{ inputs.tag }}
           files: vscode-extension/dist/*.vsix
