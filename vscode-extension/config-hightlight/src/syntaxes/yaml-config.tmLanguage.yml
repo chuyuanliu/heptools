@@ -1,7 +1,7 @@
 name: YAML (heptools config)
 scopeName: source.heptools-config.yaml
 patterns:
-  - include: source.yaml
+  - include: source.yaml.1.2
 injections:
   "L:meta.map.key.yaml string.unquoted.plain.yaml":
     patterns:

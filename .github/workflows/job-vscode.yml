@@ -1,4 +1,4 @@
-name: Build VSCode extension and release
+name: Build VS Code extension and release
 
 on:
   workflow_call:
