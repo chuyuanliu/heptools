@@ -5,7 +5,7 @@
   "author": {
     "name": "Chuyuan Liu"
   },
-  "version": "0.2.0",
+  "version": "0.2.1",
   "engines": {
     "vscode": "^1.100.0"
   },
@@ -48,6 +48,14 @@
         "scopeName": "source.heptools-config.json",
         "path": "./syntaxes/json-config.tmLanguage.json"
       }
-    ]
+    ],
+    "configurationDefaults": {
+      "[heptools-config-yaml]": {
+        "editor.tabSize": 2
+      },
+      "[heptools-config-json]": {
+        "editor.tabSize": 2
+      }
+    }
   }
 }
