@@ -390,19 +390,19 @@
 <ul class="simple">
 <li><p>A tag is defined as a key-value pair given by <code class="docutils literal notranslate"><span class="pre">&lt;tag_key=tag_value&gt;</span></code> or <code class="docutils literal notranslate"><span class="pre">&lt;tag_key&gt;</span></code> if the tag value is <code class="docutils literal notranslate"><span class="pre">None</span></code>. Newlines are not allowed within a tag.</p></li>
 <li><p>Arbitrary number of tags can be attached to a key.</p></li>
-<li><p>The spaces and newlines between key and tags are optional.</p></li>
+<li><p>The spaces and newlines between the key and tags are optional.</p></li>
 </ul>
 <div class="guide-config-example dropdown admonition">
 <p class="admonition-title">example</p>
-<p>The following key and tags are valid:</p>
+<p>The following are examples of valid tags:</p>
 <div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">key</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">value</span>
 <span class="nt">key&lt;tag_key&gt;</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">value</span>
 <span class="nt">key &lt;tag_key=tag_value&gt;</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">value</span>
 <span class="nt">key   &lt;tag_key1=tag_value1&gt;&lt;tag_key2&gt;  &lt;tag_key3=tag_value3&gt;  </span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">value</span>
 <span class="nt">&lt;tag_key1&gt; &lt;tag_key2=tag_value2&gt;  </span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">value</span>
 <span class="p p-Indicator">?</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">key</span>
-<span class="w">  </span><span class="l l-Scalar l-Scalar-Plain">&lt;tag1&gt;&lt;tag2&gt;</span>
-<span class="w">  </span><span class="l l-Scalar l-Scalar-Plain">&lt;tag3=tag3_value&gt;</span>
+<span class="w">  </span><span class="l l-Scalar l-Scalar-Plain">&lt;tag_key1&gt; &lt;tag_key2=tag_value2&gt;</span>
+<span class="w">  </span><span class="l l-Scalar l-Scalar-Plain">&lt;tag_key3=tag_value3&gt;</span>
 <span class="p p-Indicator">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">value</span>
 </pre></div>
 </div>
@@ -915,7 +915,7 @@
 <li><p>no multiline key validation</p></li>
 </ul>
 <div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="p p-Indicator">?</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">key</span>
-<span class="w">  </span><span class="l l-Scalar l-Scalar-Plain">&lt;flag&gt;</span><span class="w"> </span><span class="c1"># this will be highlighted but not parsed</span>
+<span class="w">  </span><span class="l l-Scalar l-Scalar-Plain">&lt;tag&gt;</span><span class="w"> </span><span class="c1"># this will be highlighted but not parsed</span>
 <span class="w">  </span><span class="l l-Scalar l-Scalar-Plain">key</span>
 <span class="p p-Indicator">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">value</span>
 </pre></div>

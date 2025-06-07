@@ -37,12 +37,12 @@ Syntax
 
 * A tag is defined as a key-value pair given by ``<tag_key=tag_value>`` or ``<tag_key>`` if the tag value is ``None``. Newlines are not allowed within a tag.
 * Arbitrary number of tags can be attached to a key.
-* The spaces and newlines between key and tags are optional.
+* The spaces and newlines between the key and tags are optional.
 
 .. admonition:: example
   :class: guide-config-example, dropdown
 
-  The following key and tags are valid:
+  The following are examples of valid tags:
 
   .. code-block:: yaml
 
@@ -52,8 +52,8 @@ Syntax
     key   <tag_key1=tag_value1><tag_key2>  <tag_key3=tag_value3>  : value
     <tag_key1> <tag_key2=tag_value2>  : value
     ? key
-      <tag1><tag2>
-      <tag3=tag3_value>
+      <tag_key1> <tag_key2=tag_value2>
+      <tag_key3=tag_value3>
     : value
 
 .. _config-rule-precedence:
@@ -640,7 +640,7 @@ The tokenization is implemented using `TextMate grammars <https://macromates.com
 .. code-block:: yaml
 
   ? key
-    <flag> # this will be highlighted but not parsed
+    <tag> # this will be highlighted but not parsed
     key
   : value
 
