@@ -6,7 +6,7 @@ Parsers
 ---------
 
 .. autoapiclass:: heptools.config.ConfigParser
-    :members:
+    :members: io
     :special-members: __call__
 
 Protocols

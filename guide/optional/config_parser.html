@@ -374,7 +374,7 @@
 </section>
 <section id="load-configs">
 <h3>Load configs<a class="headerlink" href="#load-configs" title="Link to this heading">#</a></h3>
-<p>An instance of <a class="reference internal" href="../../api/config.html#heptools.config.ConfigParser" title="heptools.config.ConfigParser"><code class="xref py py-class docutils literal notranslate"><span class="pre">ConfigParser</span></code></a> is used to load config files and parse the tags. The default setup is sufficient for most use cases, while <a class="reference internal" href="#config-customization"><span class="std std-ref">Customization</span></a> is possible through the arguments of <a class="reference internal" href="../../api/config.html#heptools.config.ConfigParser" title="heptools.config.ConfigParser"><code class="xref py py-class docutils literal notranslate"><span class="pre">__init__</span></code></a>. Each <a class="reference internal" href="../../api/config.html#heptools.config.ConfigParser.__call__" title="heptools.config.ConfigParser.__call__"><code class="xref py py-meth docutils literal notranslate"><span class="pre">__call__()</span></code></a>  will create a new context to maintain local variables and return the parsed configs in a single dictionary.</p>
+<p>An instance of <a class="reference internal" href="../../api/config.html#heptools.config.ConfigParser" title="heptools.config.ConfigParser"><code class="xref py py-class docutils literal notranslate"><span class="pre">ConfigParser</span></code></a> is used to load config files and parse the tags. The default setup is sufficient for most use cases, while <a class="reference internal" href="#config-customization"><span class="std std-ref">Customization</span></a> is possible through the arguments of <a class="reference internal" href="../../api/config.html#heptools.config.ConfigParser" title="heptools.config.ConfigParser"><code class="xref py py-class docutils literal notranslate"><span class="pre">__init__()</span></code></a>. Each <a class="reference internal" href="../../api/config.html#heptools.config.ConfigParser.__call__" title="heptools.config.ConfigParser.__call__"><code class="xref py py-meth docutils literal notranslate"><span class="pre">__call__()</span></code></a>  will create a new context to maintain local variables and return the parsed configs in a single dictionary.</p>
 <p>The parsing is performed in two passes:</p>
 <ul class="simple">
 <li><p>Deserialize the files into dictionaries.</p></li>
@@ -388,9 +388,9 @@
 <section id="syntax">
 <h3>Syntax<a class="headerlink" href="#syntax" title="Link to this heading">#</a></h3>
 <ul class="simple">
-<li><p>A tag is defined as a key-value pair given by <code class="docutils literal notranslate"><span class="pre">&lt;tag_key=tag_value&gt;</span></code> or <code class="docutils literal notranslate"><span class="pre">&lt;tag_key&gt;</span></code> if the tag value is <code class="docutils literal notranslate"><span class="pre">None</span></code>.</p></li>
+<li><p>A tag is defined as a key-value pair given by <code class="docutils literal notranslate"><span class="pre">&lt;tag_key=tag_value&gt;</span></code> or <code class="docutils literal notranslate"><span class="pre">&lt;tag_key&gt;</span></code> if the tag value is <code class="docutils literal notranslate"><span class="pre">None</span></code>. Newlines are not allowed within a tag.</p></li>
 <li><p>Arbitrary number of tags can be attached to a key.</p></li>
-<li><p>The spaces and newlines between key and tags are optional, while the newline is not allowed within an individual tag.</p></li>
+<li><p>The spaces and newlines between key and tags are optional.</p></li>
 </ul>
 <div class="guide-config-example dropdown admonition">
 <p class="admonition-title">example</p>
@@ -904,13 +904,22 @@
 <p>To install the extension, download the <code class="docutils literal notranslate"><span class="pre">heptools-config-support-X.X.X.vsix</span></code> from one of the <a class="reference external" href="https://github.com/chuyuanliu/heptools/releases">releases</a>.</p>
 <section id="syntax-highlight">
 <h3>Syntax Highlight<a class="headerlink" href="#syntax-highlight" title="Link to this heading">#</a></h3>
-<p>The tokenization is implemented using <a class="reference external" href="https://github.com/abergmeier/TextMate-grammars">TextMate grammars</a>, which covers most of the tag rules except for the following:</p>
+<p>The tokenization is implemented using <a class="reference external" href="https://macromates.com/manual/en/language_grammars">TextMate grammars</a>, which covers most of the tag rules with the following exceptions:</p>
 <ul class="simple">
 <li><p>no flag conflicts check</p></li>
 </ul>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">&lt;file=absolute|relative&gt;</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">value</span><span class="w"> </span><span class="c1"># this will be highlighted but fail the parsing</span>
+</pre></div>
+</div>
 <ul class="simple">
 <li><p>no multiline key validation</p></li>
 </ul>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="p p-Indicator">?</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">key</span>
+<span class="w">  </span><span class="l l-Scalar l-Scalar-Plain">&lt;flag&gt;</span><span class="w"> </span><span class="c1"># this will be highlighted but not parsed</span>
+<span class="w">  </span><span class="l l-Scalar l-Scalar-Plain">key</span>
+<span class="p p-Indicator">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">value</span>
+</pre></div>
+</div>
 </section>
 </section>
 <section id="customization">
