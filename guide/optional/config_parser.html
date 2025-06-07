@@ -369,8 +369,8 @@
 <h2>Quick Start<a class="headerlink" href="#quick-start" title="Link to this heading">#</a></h2>
 <section id="write-configs">
 <h3>Write configs<a class="headerlink" href="#write-configs" title="Link to this heading">#</a></h3>
-<p>A config is any file that can be deserialized into a python dictionary. Common formats including <code class="docutils literal notranslate"><span class="pre">.yaml</span></code> (<code class="docutils literal notranslate"><span class="pre">.yml</span></code>), <code class="docutils literal notranslate"><span class="pre">.json</span></code> and <code class="docutils literal notranslate"><span class="pre">.toml</span></code> are supported out of the box. Other formats may require a <a class="reference internal" href="#config-custom-deserializer"><span class="std std-ref">Customized deserializer</span></a>.</p>
-<p><a class="reference internal" href="#config-tag"><span class="std std-ref">Tag</span></a> syntax extends the existing serialization languages to support complicated control flows or python specific features, e.g. include directive, variable definition, python object initialization, etc.</p>
+<p>A config is any file that can be deserialized into a python dictionary. Common formats including <code class="docutils literal notranslate"><span class="pre">.yaml</span></code> (<code class="docutils literal notranslate"><span class="pre">.yml</span></code>), <code class="docutils literal notranslate"><span class="pre">.json</span></code> and <code class="docutils literal notranslate"><span class="pre">.toml</span></code> are supported out of the box. Other formats may require a <a class="reference internal" href="#config-custom-deserializer"><span class="std std-ref">File deserializer</span></a>.</p>
+<p><a class="reference internal" href="#config-tag"><span class="std std-ref">Tag</span></a> syntax extends the existing serialization languages to support complicated control flows or python specific features, e.g. include directive, variable definition, python object initialization, etc. An example is available in <a class="reference external" href="https://github.com/chuyuanliu/heptools/tree/master/examples/advanced-yaml-config">advanced-yaml-config</a></p>
 </section>
 <section id="load-configs">
 <h3>Load configs<a class="headerlink" href="#load-configs" title="Link to this heading">#</a></h3>
@@ -413,7 +413,7 @@
 <ul class="simple">
 <li><p>The tags are parsed from left to right based on the order of appearance.</p></li>
 <li><p>The same tag can be applied multiple times.</p></li>
-<li><p>The parsing result is order dependent. See <a class="reference internal" href="#config-custom-tag"><span class="std std-ref">Customized tag parser</span></a>.</p></li>
+<li><p>The parsing result is order dependent. See <a class="reference internal" href="#config-custom-tag"><span class="std std-ref">Tag parser</span></a>.</p></li>
 <li><p>Some of the built-in tags follow special rules:</p>
 <ul>
 <li><p><a class="reference internal" href="#config-tag-code"><span class="std std-ref">&lt;code&gt;</span></a> have the highest precedence and will only be parsed once.</p></li>
@@ -424,7 +424,7 @@
 <li><p><a class="reference internal" href="#config-tag-comment"><span class="std std-ref">&lt;comment&gt;</span></a></p></li>
 </ul>
 </li>
-<li><p>The order of the following tags are ill-defined, as they are not supposed to simply modify the key-value pairs. As a result, they cannot be directly chained with other regular tags, unless through <a class="reference internal" href="#config-tag-code"><span class="std std-ref">&lt;code&gt;</span></a>. See how to <a class="reference internal" href="#config-tips-include"><span class="std std-ref">Use &lt;include&gt; with other tags</span></a> as an example.</p>
+<li><p>The order of the following tags are ill-defined, as they are not supposed to simply modify the key-value pairs. As a result, they cannot be directly chained with other regular tags, unless through <a class="reference internal" href="#config-tag-code"><span class="std std-ref">&lt;code&gt;</span></a>. See <a class="reference internal" href="#config-tips-include"><span class="std std-ref">Dynamic &lt;include&gt;</span></a>.</p>
 <ul>
 <li><p><a class="reference internal" href="#config-tag-include"><span class="std std-ref">&lt;include&gt;</span></a></p></li>
 <li><p><a class="reference internal" href="#config-tag-patch"><span class="std std-ref">&lt;patch&gt;</span></a></p></li>
@@ -810,7 +810,7 @@
 <li><p><code class="docutils literal notranslate"><span class="pre">&lt;extend&gt;</span></code>, <code class="docutils literal notranslate"><span class="pre">&lt;extend=add&gt;</span></code>: recursively merge dictionaries or apply <code class="docutils literal notranslate"><span class="pre">+</span></code> to other types.</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">&lt;extend=and&gt;</span></code>: apply <code class="docutils literal notranslate"><span class="pre">&amp;</span></code> operation.</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">&lt;extend=or&gt;</span></code>: apply <code class="docutils literal notranslate"><span class="pre">|</span></code> operation.</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">&lt;extend={operation}&gt;</span></code>: see <a class="reference internal" href="#config-custom-extend"><span class="std std-ref">Customized &lt;extend&gt; operation</span></a></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">&lt;extend={operation}&gt;</span></code>: see <a class="reference internal" href="#config-custom-extend"><span class="std std-ref">&lt;extend&gt; operation</span></a></p></li>
 </ul>
 </div>
 <div class="admonition warning">
@@ -924,28 +924,28 @@
 </section>
 <section id="customization">
 <span id="config-customization"></span><h2>Customization<a class="headerlink" href="#customization" title="Link to this heading">#</a></h2>
-<section id="customized-tag-parser">
-<span id="config-custom-tag"></span><h3>Customized tag parser<a class="headerlink" href="#customized-tag-parser" title="Link to this heading">#</a></h3>
+<section id="tag-parser">
+<span id="config-custom-tag"></span><h3>Tag parser<a class="headerlink" href="#tag-parser" title="Link to this heading">#</a></h3>
 </section>
-<section id="customized-extend-operation">
-<span id="config-custom-extend"></span><h3>Customized <code class="docutils literal notranslate"><span class="pre">&lt;extend&gt;</span></code> operation<a class="headerlink" href="#customized-extend-operation" title="Link to this heading">#</a></h3>
+<section id="extend-operation">
+<span id="config-custom-extend"></span><h3><code class="docutils literal notranslate"><span class="pre">&lt;extend&gt;</span></code> operation<a class="headerlink" href="#extend-operation" title="Link to this heading">#</a></h3>
 </section>
-<section id="customized-deserializer">
-<span id="config-custom-deserializer"></span><h3>Customized deserializer<a class="headerlink" href="#customized-deserializer" title="Link to this heading">#</a></h3>
+<section id="file-deserializer">
+<span id="config-custom-deserializer"></span><h3>File deserializer<a class="headerlink" href="#file-deserializer" title="Link to this heading">#</a></h3>
 </section>
 </section>
 <section id="tips-tricks">
 <h2>Tips &amp; Tricks<a class="headerlink" href="#tips-tricks" title="Link to this heading">#</a></h2>
-<section id="use-include-with-other-tags">
-<span id="config-tips-include"></span><h3>Use <code class="docutils literal notranslate"><span class="pre">&lt;include&gt;</span></code> with other tags<a class="headerlink" href="#use-include-with-other-tags" title="Link to this heading">#</a></h3>
+<section id="dynamic-include">
+<span id="config-tips-include"></span><h3>Dynamic <code class="docutils literal notranslate"><span class="pre">&lt;include&gt;</span></code><a class="headerlink" href="#dynamic-include" title="Link to this heading">#</a></h3>
 </section>
-<section id="use-keyword-in-tag-values">
-<h3>Use keyword in tag values<a class="headerlink" href="#use-keyword-in-tag-values" title="Link to this heading">#</a></h3>
+<section id="keyword-tag-values">
+<h3>Keyword tag values<a class="headerlink" href="#keyword-tag-values" title="Link to this heading">#</a></h3>
 </section>
 </section>
 <section id="advanced">
 <h2>Advanced<a class="headerlink" href="#advanced" title="Link to this heading">#</a></h2>
-<p>The following tags are not recommended for general usage and may lead to unexpected results.</p>
+<p>The following tags are not recommended for general usage and may lead to unexpected results or significantly increase the maintenance complexity.</p>
 <section id="patch">
 <span id="config-tag-patch"></span><h3><code class="docutils literal notranslate"><span class="pre">&lt;patch&gt;</span></code><a class="headerlink" href="#patch" title="Link to this heading">#</a></h3>
 <p># TODO patch</p>
@@ -1040,14 +1040,14 @@
 </ul>
 </li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#customization">Customization</a><ul class="nav section-nav flex-column">
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#customized-tag-parser">Customized tag parser</a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#customized-extend-operation">Customized <code class="docutils literal notranslate"><span class="pre">&lt;extend&gt;</span></code> operation</a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#customized-deserializer">Customized deserializer</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#tag-parser">Tag parser</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#extend-operation"><code class="docutils literal notranslate"><span class="pre">&lt;extend&gt;</span></code> operation</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#file-deserializer">File deserializer</a></li>
 </ul>
 </li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#tips-tricks">Tips &amp; Tricks</a><ul class="nav section-nav flex-column">
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#use-include-with-other-tags">Use <code class="docutils literal notranslate"><span class="pre">&lt;include&gt;</span></code> with other tags</a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#use-keyword-in-tag-values">Use keyword in tag values</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#dynamic-include">Dynamic <code class="docutils literal notranslate"><span class="pre">&lt;include&gt;</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#keyword-tag-values">Keyword tag values</a></li>
 </ul>
 </li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#advanced">Advanced</a><ul class="nav section-nav flex-column">

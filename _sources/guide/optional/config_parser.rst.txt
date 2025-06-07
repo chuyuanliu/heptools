@@ -12,7 +12,7 @@ Write configs
 
 A config is any file that can be deserialized into a python dictionary. Common formats including ``.yaml`` (``.yml``), ``.json`` and ``.toml`` are supported out of the box. Other formats may require a :ref:`config-custom-deserializer`. 
 
-:ref:`config-tag` syntax extends the existing serialization languages to support complicated control flows or python specific features, e.g. include directive, variable definition, python object initialization, etc.
+:ref:`config-tag` syntax extends the existing serialization languages to support complicated control flows or python specific features, e.g. include directive, variable definition, python object initialization, etc. An example is available in `advanced-yaml-config <https://github.com/chuyuanliu/heptools/tree/master/examples/advanced-yaml-config>`_
 
 Load configs
 -------------
@@ -73,7 +73,7 @@ Precedence
     * :ref:`config-tag-discard`
     * :ref:`config-tag-comment`
 
-  * The order of the following tags are ill-defined, as they are not supposed to simply modify the key-value pairs. As a result, they cannot be directly chained with other regular tags, unless through :ref:`config-tag-code`. See how to :ref:`config-tips-include` as an example.
+  * The order of the following tags are ill-defined, as they are not supposed to simply modify the key-value pairs. As a result, they cannot be directly chained with other regular tags, unless through :ref:`config-tag-code`. See :ref:`config-tips-include`.
 
     * :ref:`config-tag-include`
     * :ref:`config-tag-patch`
@@ -651,16 +651,16 @@ Customization
 
 .. _config-custom-tag:
 
-Customized tag parser
-----------------------
+Tag parser
+------------
 
 .. _config-custom-extend:
 
-Customized ``<extend>`` operation
----------------------------------
+``<extend>`` operation
+------------------------
 .. _config-custom-deserializer:
 
-Customized deserializer
+File deserializer
 ------------------------
 
 Tips & Tricks
@@ -668,16 +668,16 @@ Tips & Tricks
 
 .. _config-tips-include:
 
-Use ``<include>`` with other tags
-----------------------------------
+Dynamic ``<include>``
+----------------------
 
-Use keyword in tag values
---------------------------
+Keyword tag values
+-------------------
 
 Advanced
 ========
 
-The following tags are not recommended for general usage and may lead to unexpected results.
+The following tags are not recommended for general usage and may lead to unexpected results or significantly increase the maintenance complexity.
 
 .. _config-tag-patch:
 
