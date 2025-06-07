@@ -17,7 +17,7 @@ A config is any file that can be deserialized into a python dictionary. Common f
 Load configs
 -------------
 
-An instance of :class:`~heptools.config.ConfigParser` is used to load config files and parse the tags. The default setup is sufficient for most use cases, while :ref:`config-customization` is possible through the arguments of :class:`__init__ <heptools.config.ConfigParser>`. Each :meth:`~heptools.config.ConfigParser.__call__`  will create a new context to maintain local variables and return the parsed configs in a single dictionary.
+An instance of :class:`~heptools.config.ConfigParser` is used to load config files and parse the tags. The default setup is sufficient for most use cases, while :ref:`config-customization` is possible through the arguments of :class:`__init__() <heptools.config.ConfigParser>`. Each :meth:`~heptools.config.ConfigParser.__call__`  will create a new context to maintain local variables and return the parsed configs in a single dictionary.
 
 The parsing is performed in two passes:
 
@@ -35,9 +35,9 @@ Tag
 Syntax
 --------------
 
-* A tag is defined as a key-value pair given by ``<tag_key=tag_value>`` or ``<tag_key>`` if the tag value is ``None``. 
+* A tag is defined as a key-value pair given by ``<tag_key=tag_value>`` or ``<tag_key>`` if the tag value is ``None``. Newlines are not allowed within a tag.
 * Arbitrary number of tags can be attached to a key.
-* The spaces and newlines between key and tags are optional, while the newline is not allowed within an individual tag.
+* The spaces and newlines between key and tags are optional.
 
 .. admonition:: example
   :class: guide-config-example, dropdown
@@ -59,7 +59,7 @@ Syntax
 .. _config-rule-precedence:
 
 Precedence 
----------
+------------
 
 * The tags are parsed from left to right based on the order of appearance. 
 * The same tag can be applied multiple times.
@@ -325,7 +325,7 @@ The keys marked as ``<discard>`` will not be added into the current dictionary b
 .. _config-tag-comment:
 
 ``<comment>``
-------------
+--------------
 
 This tag is reserved to never trigger any parser. This is useful when you want to leave a comment or add keys with duplicate names.
 
@@ -627,16 +627,18 @@ To install the extension, download the ``heptools-config-support-X.X.X.vsix`` fr
 Syntax Highlight
 -----------------
 
-The tokenization is implemented using `TextMate grammars <https://github.com/abergmeier/TextMate-grammars>`_, which covers most of the tag rules except for the following:
+The tokenization is implemented using `TextMate grammars <https://macromates.com/manual/en/language_grammars>`_, which covers most of the tag rules with the following exceptions:
 
 * no flag conflicts check
 
 .. code-block:: yaml
+
   <file=absolute|relative>: value # this will be highlighted but fail the parsing
 
 * no multiline key validation
 
 .. code-block:: yaml
+
   ? key
     <flag> # this will be highlighted but not parsed
     key
