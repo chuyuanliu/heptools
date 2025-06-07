@@ -364,36 +364,33 @@
                   
   <section id="config-parser">
 <h1>Config Parser<a class="headerlink" href="#config-parser" title="Link to this heading">#</a></h1>
-<p>This tool provides a flexible framework to load and merge configurations from different sources for Python projects. A tag style syntax is used to control the loading or merging behavior.</p>
+<p>This tool provides a flexible framework to load and merge configurations from different sources for Python projects. A tag style syntax is introduced to control the loading or merging behavior.</p>
 <section id="quick-start">
 <h2>Quick Start<a class="headerlink" href="#quick-start" title="Link to this heading">#</a></h2>
 <section id="write-configs">
 <h3>Write configs<a class="headerlink" href="#write-configs" title="Link to this heading">#</a></h3>
 <p>A config is any file that can be deserialized into a python dictionary. Common formats including <code class="docutils literal notranslate"><span class="pre">.yaml</span></code> (<code class="docutils literal notranslate"><span class="pre">.yml</span></code>), <code class="docutils literal notranslate"><span class="pre">.json</span></code> and <code class="docutils literal notranslate"><span class="pre">.toml</span></code> are supported out of the box. Other formats may require a <a class="reference internal" href="#config-custom-deserializer"><span class="std std-ref">Customized deserializer</span></a>.</p>
-<p><span class="xref std std-ref">config-tag</span> is the only new syntax introduced by this tool. It extends the existing serialization languages to support complicated control flows or python specific features, e.g. include directive, variable definition, python object initialization, etc.</p>
+<p><a class="reference internal" href="#config-tag"><span class="std std-ref">Tag</span></a> syntax extends the existing serialization languages to support complicated control flows or python specific features, e.g. include directive, variable definition, python object initialization, etc.</p>
 </section>
 <section id="load-configs">
 <h3>Load configs<a class="headerlink" href="#load-configs" title="Link to this heading">#</a></h3>
-<p>An instance of <a class="reference internal" href="../../api/config.html#heptools.config.ConfigParser" title="heptools.config.ConfigParser"><code class="xref py py-class docutils literal notranslate"><span class="pre">ConfigParser</span></code></a> is used to load config files and parse the tags. The default setup is sufficient for most use cases, while <a class="reference internal" href="#config-customization"><span class="std std-ref">Customization</span></a> is possible through the arguments of <code class="xref py py-meth docutils literal notranslate"><span class="pre">__init__()</span></code>. Each <a class="reference internal" href="../../api/config.html#heptools.config.ConfigParser.__call__" title="heptools.config.ConfigParser.__call__"><code class="xref py py-meth docutils literal notranslate"><span class="pre">__call__()</span></code></a>  will create a new context to maintain local variables and return the parsed configs in a single dictionary.</p>
+<p>An instance of <a class="reference internal" href="../../api/config.html#heptools.config.ConfigParser" title="heptools.config.ConfigParser"><code class="xref py py-class docutils literal notranslate"><span class="pre">ConfigParser</span></code></a> is used to load config files and parse the tags. The default setup is sufficient for most use cases, while <a class="reference internal" href="#config-customization"><span class="std std-ref">Customization</span></a> is possible through the arguments of <a class="reference internal" href="../../api/config.html#heptools.config.ConfigParser" title="heptools.config.ConfigParser"><code class="xref py py-class docutils literal notranslate"><span class="pre">__init__</span></code></a>. Each <a class="reference internal" href="../../api/config.html#heptools.config.ConfigParser.__call__" title="heptools.config.ConfigParser.__call__"><code class="xref py py-meth docutils literal notranslate"><span class="pre">__call__()</span></code></a>  will create a new context to maintain local variables and return the parsed configs in a single dictionary.</p>
 <p>The parsing is performed in two passes:</p>
-<blockquote>
-<div><ul class="simple">
+<ul class="simple">
 <li><p>Deserialize the files into dictionaries.</p></li>
 <li><p>Apply the tags.</p></li>
 </ul>
-</div></blockquote>
-<p>The order of the paths provided to <a class="reference internal" href="../../api/config.html#heptools.config.ConfigParser.__call__" title="heptools.config.ConfigParser.__call__"><code class="xref py py-meth docutils literal notranslate"><span class="pre">__call__()</span></code></a> and the order of keys and items after the first pass are preserved to the final output. The tags are parsed recursively from innermost to outermost.
-.. _config-tag:</p>
+<p>The order of the paths provided to <a class="reference internal" href="../../api/config.html#heptools.config.ConfigParser.__call__" title="heptools.config.ConfigParser.__call__"><code class="xref py py-meth docutils literal notranslate"><span class="pre">__call__()</span></code></a> and the order of keys and items from the first pass are preserved to the final output. The tags are parsed recursively from innermost to outermost.</p>
 </section>
 </section>
 <section id="tag">
-<h2>Tag<a class="headerlink" href="#tag" title="Link to this heading">#</a></h2>
+<span id="config-tag"></span><h2>Tag<a class="headerlink" href="#tag" title="Link to this heading">#</a></h2>
 <section id="syntax">
 <h3>Syntax<a class="headerlink" href="#syntax" title="Link to this heading">#</a></h3>
 <ul class="simple">
 <li><p>A tag is defined as a key-value pair given by <code class="docutils literal notranslate"><span class="pre">&lt;tag_key=tag_value&gt;</span></code> or <code class="docutils literal notranslate"><span class="pre">&lt;tag_key&gt;</span></code> if the tag value is <code class="docutils literal notranslate"><span class="pre">None</span></code>.</p></li>
 <li><p>Arbitrary number of tags can be attached to a key.</p></li>
-<li><p>The spaces between key and tags are optional.</p></li>
+<li><p>The spaces and newlines between key and tags are optional, while the newline is not allowed within an individual tag.</p></li>
 </ul>
 <div class="guide-config-example dropdown admonition">
 <p class="admonition-title">example</p>
@@ -403,6 +400,10 @@
 <span class="nt">key &lt;tag_key=tag_value&gt;</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">value</span>
 <span class="nt">key   &lt;tag_key1=tag_value1&gt;&lt;tag_key2&gt;  &lt;tag_key3=tag_value3&gt;  </span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">value</span>
 <span class="nt">&lt;tag_key1&gt; &lt;tag_key2=tag_value2&gt;  </span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">value</span>
+<span class="p p-Indicator">?</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">key</span>
+<span class="w">  </span><span class="l l-Scalar l-Scalar-Plain">&lt;tag1&gt;&lt;tag2&gt;</span>
+<span class="w">  </span><span class="l l-Scalar l-Scalar-Plain">&lt;tag3=tag3_value&gt;</span>
+<span class="p p-Indicator">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">value</span>
 </pre></div>
 </div>
 </div>
@@ -893,30 +894,23 @@
 </div>
 </section>
 </section>
-<section id="syntax-highlight">
-<h2>Syntax Highlight<a class="headerlink" href="#syntax-highlight" title="Link to this heading">#</a></h2>
-<section id="vs-code-extension">
-<h3>VS Code extension<a class="headerlink" href="#vs-code-extension" title="Link to this heading">#</a></h3>
-<p>A <a class="reference external" href="https://code.visualstudio.com/">VS Code</a> extension is available to highlight the tag syntax using <a class="reference external" href="https://github.com/abergmeier/TextMate-grammars">TextMate grammars</a>. The extension is only enabled for the following files:</p>
-<blockquote>
-<div><ul class="simple">
+<section id="support">
+<h2>Support<a class="headerlink" href="#support" title="Link to this heading">#</a></h2>
+<p>An <a class="reference external" href="https://code.visualstudio.com/">VS Code</a> extension is provided for syntax highlight. The extension is enabled for the following files:</p>
+<ul class="simple">
 <li><p><code class="docutils literal notranslate"><span class="pre">YAML</span></code>: <code class="docutils literal notranslate"><span class="pre">*.cfg.yaml</span></code>, <code class="docutils literal notranslate"><span class="pre">*.cfg.yml</span></code></p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">JSON</span></code>: <code class="docutils literal notranslate"><span class="pre">*.cfg.json</span></code></p></li>
 </ul>
-</div></blockquote>
-<p>To install the extension, download the <code class="docutils literal notranslate"><span class="pre">heptools-config-highlight-X.X.X.vsix</span></code> from one of the <a class="reference external" href="https://github.com/chuyuanliu/heptools/releases">releases</a>.</p>
-<div class="admonition warning">
-<p class="admonition-title">Warning</p>
-<p>Limitations
-.. class:: dropdown</p>
-<p>The following features will not be implemented:</p>
+<p>To install the extension, download the <code class="docutils literal notranslate"><span class="pre">heptools-config-support-X.X.X.vsix</span></code> from one of the <a class="reference external" href="https://github.com/chuyuanliu/heptools/releases">releases</a>.</p>
+<section id="syntax-highlight">
+<h3>Syntax Highlight<a class="headerlink" href="#syntax-highlight" title="Link to this heading">#</a></h3>
+<p>The tokenization is implemented using <a class="reference external" href="https://github.com/abergmeier/TextMate-grammars">TextMate grammars</a>, which covers most of the tag rules except for the following:</p>
 <ul class="simple">
-<li><p>check flag conflicts</p></li>
+<li><p>no flag conflicts check</p></li>
 </ul>
 <ul class="simple">
-<li><p>check multiline key validity</p></li>
+<li><p>no multiline key validation</p></li>
 </ul>
-</div>
 </section>
 </section>
 <section id="customization">
@@ -1032,8 +1026,8 @@
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#ref"><code class="docutils literal notranslate"><span class="pre">&lt;ref&gt;</span></code></a></li>
 </ul>
 </li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#syntax-highlight">Syntax Highlight</a><ul class="nav section-nav flex-column">
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#vs-code-extension">VS Code extension</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#support">Support</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#syntax-highlight">Syntax Highlight</a></li>
 </ul>
 </li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#customization">Customization</a><ul class="nav section-nav flex-column">
