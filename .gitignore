@@ -1,8 +1,5 @@
 # vscode
 .vscode/
-out/
-LICENSE/
-!/LICENSE
 
 # node.js
 node_modules

@@ -2,7 +2,7 @@
 Config Parser
 **************
 
-This tool provides a flexible framework to load and merge configurations from different sources for Python projects. A tag style syntax is used to control the loading or merging behavior.
+This tool provides a flexible framework to load and merge configurations from different sources for Python projects. A tag style syntax is introduced to control the loading or merging behavior.
 
 Quick Start
 ================
@@ -12,19 +12,21 @@ Write configs
 
 A config is any file that can be deserialized into a python dictionary. Common formats including ``.yaml`` (``.yml``), ``.json`` and ``.toml`` are supported out of the box. Other formats may require a :ref:`config-custom-deserializer`. 
 
-:ref:`config-tag` is the only new syntax introduced by this tool. It extends the existing serialization languages to support complicated control flows or python specific features, e.g. include directive, variable definition, python object initialization, etc.
+:ref:`config-tag` syntax extends the existing serialization languages to support complicated control flows or python specific features, e.g. include directive, variable definition, python object initialization, etc.
 
 Load configs
 -------------
 
-An instance of :class:`~heptools.config.ConfigParser` is used to load config files and parse the tags. The default setup is sufficient for most use cases, while :ref:`config-customization` is possible through the arguments of :meth:`~heptools.config.ConfigParser.__init__`. Each :meth:`~heptools.config.ConfigParser.__call__`  will create a new context to maintain local variables and return the parsed configs in a single dictionary.
+An instance of :class:`~heptools.config.ConfigParser` is used to load config files and parse the tags. The default setup is sufficient for most use cases, while :ref:`config-customization` is possible through the arguments of :class:`__init__ <heptools.config.ConfigParser>`. Each :meth:`~heptools.config.ConfigParser.__call__`  will create a new context to maintain local variables and return the parsed configs in a single dictionary.
 
 The parsing is performed in two passes:
 
-  * Deserialize the files into dictionaries.
-  * Apply the tags.
+* Deserialize the files into dictionaries.
+* Apply the tags.
 
-The order of the paths provided to :meth:`~heptools.config.ConfigParser.__call__` and the order of keys and items after the first pass are preserved to the final output. The tags are parsed recursively from innermost to outermost.
+The order of the paths provided to :meth:`~heptools.config.ConfigParser.__call__` and the order of keys and items from the first pass are preserved to the final output. The tags are parsed recursively from innermost to outermost.
+
+
 .. _config-tag:
 
 Tag
@@ -35,7 +37,7 @@ Syntax
 
 * A tag is defined as a key-value pair given by ``<tag_key=tag_value>`` or ``<tag_key>`` if the tag value is ``None``. 
 * Arbitrary number of tags can be attached to a key.
-* The spaces between key and tags are optional.
+* The spaces and newlines between key and tags are optional, while the newline is not allowed within an individual tag.
 
 .. admonition:: example
   :class: guide-config-example, dropdown
@@ -49,6 +51,10 @@ Syntax
     key <tag_key=tag_value>: value
     key   <tag_key1=tag_value1><tag_key2>  <tag_key3=tag_value3>  : value
     <tag_key1> <tag_key2=tag_value2>  : value
+    ? key
+      <tag1><tag2>
+      <tag3=tag3_value>
+    : value
 
 .. _config-rule-precedence:
 
@@ -608,36 +614,33 @@ This tag can be used to access the variables defined with :ref:`config-tag-var`.
   * ``<ref=deepcopy>``: replace the value by a :func:`~copy.deepcopy` of the variable.
 
 
-Syntax Highlight
-================
+Support
+========
 
-VS Code extension
+An `VS Code <https://code.visualstudio.com/>`_ extension is provided for syntax highlight. The extension is enabled for the following files:
+
+* ``YAML``: ``*.cfg.yaml``, ``*.cfg.yml``
+* ``JSON``: ``*.cfg.json``
+
+To install the extension, download the ``heptools-config-support-X.X.X.vsix`` from one of the `releases <https://github.com/chuyuanliu/heptools/releases>`_.
+
+Syntax Highlight
 -----------------
 
-A `VS Code <https://code.visualstudio.com/>`_ extension is available to highlight the tag syntax using `TextMate grammars <https://github.com/abergmeier/TextMate-grammars>`_. The extension is only enabled for the following files:
-  
-  * ``YAML``: ``*.cfg.yaml``, ``*.cfg.yml``
-  * ``JSON``: ``*.cfg.json``
+The tokenization is implemented using `TextMate grammars <https://github.com/abergmeier/TextMate-grammars>`_, which covers most of the tag rules except for the following:
 
-To install the extension, download the ``heptools-config-highlight-X.X.X.vsix`` from one of the `releases <https://github.com/chuyuanliu/heptools/releases>`_.
+* no flag conflicts check
 
-.. warning:: Limitations
-    .. class:: dropdown
+.. code-block:: yaml
+  <file=absolute|relative>: value # this will be highlighted but fail the parsing
 
-    The following features will not be implemented:
+* no multiline key validation
 
-    * check flag conflicts
-
-    .. code-block:: yaml
-      <file=absolute|relative>: value # this will be highlighted but fail the parsing
-
-    * check multiline key validity
-
-    .. code-block:: yaml
-      ? key
-        <flag> # this will be highlighted but not parsed
-        key
-      : value
+.. code-block:: yaml
+  ? key
+    <flag> # this will be highlighted but not parsed
+    key
+  : value
 
 .. _config-customization:
 

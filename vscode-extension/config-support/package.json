@@ -1,11 +1,11 @@
 {
-  "name": "heptools-config-highlight",
-  "displayName": "Heptools Config Highlight",
-  "description": "Highlight the tags for heptools config files.",
+  "name": "heptools-config-support",
+  "displayName": "Heptools Config Support",
+  "description": "Provide syntax highlight for the tags in heptools config files.",
   "author": {
     "name": "Chuyuan Liu"
   },
-  "version": "0.1.1",
+  "version": "0.2.0",
   "engines": {
     "vscode": "^1.100.0"
   },
