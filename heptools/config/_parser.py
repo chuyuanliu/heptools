@@ -698,7 +698,7 @@ class ConfigParser:
     Parameters
     ----------
     nested : bool, optional, default=True
-        Parse dot-separated keys to nested dicts.
+        Parse dot-separated keys into nested dicts.
     custom_tags : dict[str, Optional[TagParser]], optional
         Customized tags.
     extend_methods : dict[str, ExtendMethod], optional
