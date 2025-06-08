@@ -135,7 +135,7 @@ The file path is described by a standard URL accepted by :func:`~urllib.parse.ur
 File IO is handled by :func:`fsspec.open` and the deserialization is handled by :data:`ConfigParser.io <heptools.config.ConfigParser.io>`, an instance of :class:`~heptools.config.FileLoader`.
 
 * The compression format is inferred from the last extension, see :data:`fsspec.utils.compressions`.
-* The deserializer is inferred from the last extension that does not match any compression format.
+* The deserializer is inferred from the longest registered extension that does not match any compression format.
 * The deserialized objects will be catched, and can be cleared by :meth:`ConfigParser.io.clear_cache<heptools.config.FileLoader.clear_cache>`.
 
 Special

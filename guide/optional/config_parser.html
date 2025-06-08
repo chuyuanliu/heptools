@@ -478,7 +478,7 @@
 <p>File IO is handled by <a class="reference external" href="https://filesystem-spec.readthedocs.io/en/latest/api.html#fsspec.open" title="(in fsspec v2025.5.1.post0+g66340a1.d20250524)"><code class="xref py py-func docutils literal notranslate"><span class="pre">fsspec.open()</span></code></a> and the deserialization is handled by <a class="reference internal" href="../../api/config.html#heptools.config.ConfigParser.io" title="heptools.config.ConfigParser.io"><code class="xref py py-data docutils literal notranslate"><span class="pre">ConfigParser.io</span></code></a>, an instance of <a class="reference internal" href="../../api/config.html#heptools.config.FileLoader" title="heptools.config.FileLoader"><code class="xref py py-class docutils literal notranslate"><span class="pre">FileLoader</span></code></a>.</p>
 <ul class="simple">
 <li><p>The compression format is inferred from the last extension, see <code class="xref py py-data docutils literal notranslate"><span class="pre">fsspec.utils.compressions</span></code>.</p></li>
-<li><p>The deserializer is inferred from the last extension that does not match any compression format.</p></li>
+<li><p>The deserializer is inferred from the longest registered extension that does not match any compression format.</p></li>
 <li><p>The deserialized objects will be catched, and can be cleared by <a class="reference internal" href="../../api/config.html#heptools.config.FileLoader.clear_cache" title="heptools.config.FileLoader.clear_cache"><code class="xref py py-meth docutils literal notranslate"><span class="pre">ConfigParser.io.clear_cache</span></code></a>.</p></li>
 </ul>
 </section>
