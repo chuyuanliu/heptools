@@ -144,42 +144,45 @@ def _maybe_classmethod(method: T) -> T:
     return _MaybeClassMethod(method)
 
 
+def _format_ext(ext: tuple[str, ...]):
+    return "".join(map(".{}".format, ext))
+
+
 class FileIORegistry(Generic[HandlerT]):
+    __handler: dict[tuple[str, ...], HandlerT]
+
     def __init_subclass__(cls):
         cls.__handler = {}
 
     def __init__(self):
         self.__handler = {}
 
-    def _get_handler(self, ext: str) -> Callable:
+    @classmethod
+    def __normalize_ext(cls, *exts: str):
+        for ext in exts:
+            for part in ext.split("."):
+                if part:
+                    yield part.lower()
+
+    def __get_handler(self, ext: tuple[str, ...]):
         if handler := self.__handler.get(ext):
             return handler
-        if handler := type(self).__handler.get(ext):
-            return handler
-        raise NotImplementedError(
-            f'".{ext}" file is not supported, you can register a custom handler.'
-        )
+        return type(self).__handler.get(ext)
 
-    @classmethod
-    def __normalize_extensions(cls, exts: Iterable[str]):
-        for ext in exts:
-            yield ext.strip(".").lower()
-
-    @classmethod
-    def _get_extensions(cls, url: str) -> tuple[Optional[str], str]:
-        suffixes = [*cls.__normalize_extensions(PurePosixPath(url).suffixes)]
-        compression = None
-        extension = ""
-        if not suffixes:
-            return compression, extension
-        if compression := fsspec.utils.compressions.get(suffixes[-1]):
-            suffixes = suffixes[:-1]
-        if suffixes:
-            extension = suffixes[-1]
-        return compression, extension
+    def _get_handler(self, url: str) -> tuple[HandlerT, tuple[str, ...], Optional[str]]:
+        ext = (*self.__normalize_ext(*PurePosixPath(url).suffixes),)
+        if not ext:
+            compression = None
+        elif compression := fsspec.utils.compressions.get(ext[-1]):
+            ext = ext[:-1]
+        for start in range(max(len(ext), 1)):
+            subext = ext[start:]
+            if handler := self.__get_handler(subext):
+                return handler, subext, compression
+        raise NotImplementedError(f'No handler registered for "{_format_ext(ext)}"')
 
     @_maybe_classmethod
-    def _hook_extension(self, _: str): ...
+    def _hook_extension(self, _: tuple[str, ...]): ...
 
     @overload
     @classmethod
@@ -188,7 +191,7 @@ class FileIORegistry(Generic[HandlerT]):
     @classmethod
     def register(cls, *extensions: str) -> Callable[[T], T]: ...
     @_maybe_classmethod
-    def register(this, handler=None, *extensions):
+    def register(this, handler=None, *extensions: str):
         """
         Register a handler for file extensions.
         This method can be used as a decorator.
@@ -207,9 +210,10 @@ class FileIORegistry(Generic[HandlerT]):
                 return func
 
             return wrapper
-        for extension in this.__normalize_extensions(extensions):
-            this.__handler[extension] = handler
-            this._hook_extension(extension)
+        for ext in extensions:
+            ext = (*this.__normalize_ext(ext),)
+            this.__handler[ext] = handler
+            this._hook_extension(ext)
 
     @_maybe_classmethod
     def unregister(this, *extensions: str):
@@ -221,16 +225,19 @@ class FileIORegistry(Generic[HandlerT]):
         *extensions : str
             File extensions to unregister.
         """
-        for extension in this.__normalize_extensions(extensions):
-            this.__handler.pop(extension, None)
-            this._hook_extension(extension)
+        for ext in extensions:
+            ext = (*this.__normalize_ext(ext),)
+            this.__handler.pop(ext, None)
+            this._hook_extension(ext)
 
     @_maybe_classmethod
     def registered(this) -> list[str]:
         """List all registered file extensions."""
         if isinstance(this, type):
-            return sorted(this.__handler)
-        return sorted(type(this).__handler | this.__handler)
+            exts = sorted(this.__handler)
+        else:
+            exts = sorted(type(this).__handler | this.__handler)
+        return [_format_ext(ext) for ext in exts]
 
 
 class FileLoader(FileIORegistry[Callable[[BytesIO], Any]]):
@@ -245,12 +252,14 @@ class FileLoader(FileIORegistry[Callable[[BytesIO], Any]]):
 
     def __init__(self, cache: bool = True):
         super().__init__()
-        self.__cache = defaultdict(dict) if cache else None
+        self.__cache = (
+            defaultdict[tuple[str, ...], dict[str, Any]](dict) if cache else None
+        )
 
     @_maybe_classmethod
-    def _hook_extension(self, extension: str):
+    def _hook_extension(self, ext: tuple[str, ...]):
         if not isinstance(self, type) and self.__cache is not None:
-            self.__cache.pop(extension, None)
+            self.__cache.pop(ext, None)
 
     def load(self, url: str, use_cache: bool = True, use_buffer: bool = True):
         """
@@ -261,13 +270,12 @@ class FileLoader(FileIORegistry[Callable[[BytesIO], Any]]):
         url : str
             URL to an object.
         use_cache: bool, optional, default=True
-            If True, use the cache if enabled.
+            If True, use the cache if exists.
         use_buffer: bool, optional, default=True
             If True, the whole file will be read into memory before deserialization.
         """
         use_cache &= self.__cache is not None
-        compression, extension = self._get_extensions(url)
-        deserializer = self._get_handler(extension)
+        deserializer, extension, compression = self._get_handler(url)
 
         if use_cache:
             cache = self.__cache[extension]
