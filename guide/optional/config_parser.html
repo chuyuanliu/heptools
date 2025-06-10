@@ -370,7 +370,7 @@
 <section id="write-configs">
 <h3>Write configs<a class="headerlink" href="#write-configs" title="Link to this heading">#</a></h3>
 <p>A config is any file that can be deserialized into a python dictionary. Common formats including <code class="docutils literal notranslate"><span class="pre">.yaml</span></code> (<code class="docutils literal notranslate"><span class="pre">.yml</span></code>), <code class="docutils literal notranslate"><span class="pre">.json</span></code> and <code class="docutils literal notranslate"><span class="pre">.toml</span></code> are supported out of the box. Other formats may require a <a class="reference internal" href="#config-custom-deserializer"><span class="std std-ref">File deserializer</span></a>.</p>
-<p><a class="reference internal" href="#config-tag"><span class="std std-ref">Tag</span></a> syntax extends the existing serialization languages to support complicated control flows or python specific features, e.g. include directive, variable definition, python object initialization, etc. An example is available in <a class="reference external" href="https://github.com/chuyuanliu/heptools/tree/master/examples/advanced-yaml-config">advanced-yaml-config</a></p>
+<p><a class="reference internal" href="#config-tag"><span class="std std-ref">Tag</span></a> syntax extends the existing serialization languages to support complicated control flows or python specific features, e.g. include directive, variable definition, python object initialization, etc. An example is available in <a class="reference external" href="https://github.com/chuyuanliu/heptools/tree/master/examples/advanced-yaml-config">advanced-yaml-config</a>.</p>
 </section>
 <section id="load-configs">
 <h3>Load configs<a class="headerlink" href="#load-configs" title="Link to this heading">#</a></h3>
@@ -757,33 +757,6 @@
 </div>
 </div>
 </section>
-<section id="key-type">
-<h3><code class="docutils literal notranslate"><span class="pre">&lt;key-type&gt;</span></code><a class="headerlink" href="#key-type" title="Link to this heading">#</a></h3>
-<div class="guide-config-tag admonition">
-<p class="admonition-title">tag</p>
-<ul class="simple">
-<li><p><code class="docutils literal notranslate"><span class="pre">&lt;key-type&gt;</span></code>: similar to <a class="reference internal" href="#config-tag-type"><span class="std std-ref">&lt;type&gt;</span></a>, but applied to the key instead.</p></li>
-</ul>
-</div>
-<div class="guide-config-example dropdown admonition">
-<p class="admonition-title">example</p>
-<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">list &lt;key-type&gt; &lt;type=float&gt;</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">1</span>
-<span class="nt">100 &lt;key-type=float&gt;</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">2</span>
-<span class="nt">json::loads.__qualname__ &lt;key-type&gt; &lt;literal&gt;</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">3</span><span class="w"> </span><span class="c1"># use literal to escape the dot</span>
-</pre></div>
-</div>
-<p>will be parsed into</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">json</span>
-
-<span class="p">{</span>
-  <span class="nb">list</span><span class="p">:</span> <span class="mf">1.0</span><span class="p">,</span>
-  <span class="mf">100.0</span><span class="p">:</span> <span class="mi">2</span><span class="p">,</span>
-  <span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="o">.</span><span class="vm">__qualname__</span><span class="p">:</span> <span class="mi">3</span><span class="p">,</span>
-<span class="p">}</span>
-</pre></div>
-</div>
-</div>
-</section>
 <section id="attr">
 <span id="config-tag-attr"></span><h3><code class="docutils literal notranslate"><span class="pre">&lt;attr&gt;</span></code><a class="headerlink" href="#attr" title="Link to this heading">#</a></h3>
 <p>This tag will replace the value by the its attribute. A tag like <code class="docutils literal notranslate"><span class="pre">&lt;attr=attr1.attr2&gt;</span></code> is equivalent to the pseudo code <code class="docutils literal notranslate"><span class="pre">value.attr1.attr2</span></code>.</p>
@@ -891,6 +864,35 @@
 <li><p><code class="docutils literal notranslate"><span class="pre">&lt;ref=copy&gt;</span></code>: replace the value by a <a class="reference external" href="https://docs.python.org/3/library/copy.html#copy.copy" title="(in Python v3.13)"><code class="xref py py-func docutils literal notranslate"><span class="pre">copy()</span></code></a> of the variable.</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">&lt;ref=deepcopy&gt;</span></code>: replace the value by a <a class="reference external" href="https://docs.python.org/3/library/copy.html#copy.deepcopy" title="(in Python v3.13)"><code class="xref py py-func docutils literal notranslate"><span class="pre">deepcopy()</span></code></a> of the variable.</p></li>
 </ul>
+</div>
+</section>
+<section id="map">
+<span id="config-tag-map"></span><h3><code class="docutils literal notranslate"><span class="pre">&lt;map&gt;</span></code><a class="headerlink" href="#map" title="Link to this heading">#</a></h3>
+<p>This tag converts a list of key-value pairs into a dictionary, which makes it possible to apply the tags that only work with values to the keys.</p>
+<div class="guide-config-value admonition">
+<p class="admonition-title">value</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">list</span></code>: a list of dictionaries with keys <code class="docutils literal notranslate"><span class="pre">key</span></code> and <code class="docutils literal notranslate"><span class="pre">val</span></code>.</p></li>
+</ul>
+</div>
+<div class="guide-config-example dropdown admonition">
+<p class="admonition-title">example</p>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">parent &lt;map&gt;</span><span class="p">:</span>
+<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">key &lt;type=tuple&gt;</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[[</span><span class="s">&quot;child&quot;</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">1</span><span class="p p-Indicator">]]</span>
+<span class="w">    </span><span class="nt">val</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">value1</span>
+<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">key &lt;type=tuple&gt;</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[[</span><span class="s">&quot;child&quot;</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">2</span><span class="p p-Indicator">]]</span>
+<span class="w">    </span><span class="nt">val</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">value2</span>
+</pre></div>
+</div>
+<p>will be parsed into</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="p">{</span>
+  <span class="s2">&quot;parent&quot;</span><span class="p">:</span> <span class="p">{</span>
+    <span class="p">(</span><span class="s2">&quot;child&quot;</span><span class="p">,</span> <span class="mi">1</span><span class="p">):</span> <span class="s2">&quot;value1&quot;</span><span class="p">,</span>
+    <span class="p">(</span><span class="s2">&quot;child&quot;</span><span class="p">,</span> <span class="mi">2</span><span class="p">):</span> <span class="s2">&quot;value2&quot;</span>
+  <span class="p">}</span>
+<span class="p">}</span>
+</pre></div>
+</div>
 </div>
 </section>
 </section>
@@ -1028,11 +1030,11 @@
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#comment"><code class="docutils literal notranslate"><span class="pre">&lt;comment&gt;</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#file"><code class="docutils literal notranslate"><span class="pre">&lt;file&gt;</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#type"><code class="docutils literal notranslate"><span class="pre">&lt;type&gt;</span></code></a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#key-type"><code class="docutils literal notranslate"><span class="pre">&lt;key-type&gt;</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#attr"><code class="docutils literal notranslate"><span class="pre">&lt;attr&gt;</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#extend"><code class="docutils literal notranslate"><span class="pre">&lt;extend&gt;</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#var"><code class="docutils literal notranslate"><span class="pre">&lt;var&gt;</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#ref"><code class="docutils literal notranslate"><span class="pre">&lt;ref&gt;</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#map"><code class="docutils literal notranslate"><span class="pre">&lt;map&gt;</span></code></a></li>
 </ul>
 </li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#support">Support</a><ul class="nav section-nav flex-column">

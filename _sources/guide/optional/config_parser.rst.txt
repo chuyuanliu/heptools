@@ -12,7 +12,7 @@ Write configs
 
 A config is any file that can be deserialized into a python dictionary. Common formats including ``.yaml`` (``.yml``), ``.json`` and ``.toml`` are supported out of the box. Other formats may require a :ref:`config-custom-deserializer`. 
 
-:ref:`config-tag` syntax extends the existing serialization languages to support complicated control flows or python specific features, e.g. include directive, variable definition, python object initialization, etc. An example is available in `advanced-yaml-config <https://github.com/chuyuanliu/heptools/tree/master/examples/advanced-yaml-config>`_
+:ref:`config-tag` syntax extends the existing serialization languages to support complicated control flows or python specific features, e.g. include directive, variable definition, python object initialization, etc. An example is available in `advanced-yaml-config <https://github.com/chuyuanliu/heptools/tree/master/examples/advanced-yaml-config>`_.
 
 Load configs
 -------------
@@ -455,37 +455,6 @@ This tag can be used to import a module/attribute, create an instance of a class
     logging.info("message")
     print("message1", "message2", "message3", sep="\n")
 
-
-``<key-type>``
-----------------
-
-.. admonition:: tag
-  :class: guide-config-tag
-
-  * ``<key-type>``: similar to :ref:`config-tag-type`, but applied to the key instead.
-
-.. admonition:: example
-  :class: guide-config-example, dropdown
-
-  .. code-block:: yaml
-
-    list <key-type> <type=float>: 1
-    100 <key-type=float>: 2
-    json::loads.__qualname__ <key-type> <literal>: 3 # use literal to escape the dot
-  
-  will be parsed into
-
-  .. code-block:: python
-
-    import json
-
-    {
-      list: 1.0,
-      100.0: 2,
-      json.loads.__qualname__: 3,
-    }
-
-
 .. _config-tag-attr:
 
 ``<attr>``
@@ -613,6 +582,39 @@ This tag can be used to access the variables defined with :ref:`config-tag-var`.
   * ``<ref=copy>``: replace the value by a :func:`~copy.copy` of the variable.
   * ``<ref=deepcopy>``: replace the value by a :func:`~copy.deepcopy` of the variable.
 
+.. _config-tag-map:
+
+``<map>``
+----------------
+
+This tag converts a list of key-value pairs into a dictionary, which makes it possible to apply the tags that only work with values to the keys.
+
+.. admonition:: value
+  :class: guide-config-value
+
+  * ``list``: a list of dictionaries with keys ``key`` and ``val``.
+
+.. admonition:: example
+  :class: guide-config-example, dropdown
+
+  .. code-block:: yaml
+
+    parent <map>:
+      - key <type=tuple>: [["child", 1]]
+        val: value1
+      - key <type=tuple>: [["child", 2]]
+        val: value2
+
+  will be parsed into 
+
+  .. code-block:: python
+
+    {
+      "parent": {
+        ("child", 1): "value1",
+        ("child", 2): "value2"
+      }
+    }
 
 Support
 ========
