@@ -72,9 +72,6 @@ the following exception occurred:
 
 
 class _ReservedTag(StrEnum):
-    def _generate_next_value_(name, *_):
-        return name.lower().replace("_", "-")
-
     code = auto()
 
     include = auto()
@@ -86,11 +83,11 @@ class _ReservedTag(StrEnum):
 
     file = auto()
     type = auto()
-    key_type = auto()
     attr = auto()
     extend = auto()
     var = auto()
     ref = auto()
+    map = auto()
 
 
 class _NoTag:
@@ -515,6 +512,12 @@ class FileParser:  # tag: <file>
         return key, obj
 
 
+class MapParser:  # tag: <map>
+    @_tag_parser
+    def __call__(self, key, value: list[dict]):
+        return key, {v["key"]: v["val"] for v in value}
+
+
 class _Parser:
     re_match = re.compile(r"(?P<key>.*?)\s*(?P<tags>(\<[^><]*\>\s*)*)\s*")
     re_split = re.compile(r"\<(?P<tag>[^><]*)\>")
@@ -641,8 +644,8 @@ class _ParserInitializer:
         _ReservedTag.comment: None,
         _ReservedTag.file: FileParser(),
         _ReservedTag.type: TypeParser(),
-        _ReservedTag.key_type: KeyTypeParser(),
         _ReservedTag.attr: AttrParser(),
+        _ReservedTag.map: MapParser(),
     }
 
     def __init__(self, parser: ConfigParser):

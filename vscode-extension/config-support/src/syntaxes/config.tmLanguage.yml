@@ -31,7 +31,7 @@ repository:
   tag:
     patterns:
       # built-in tags
-      - match: '(?<=\<)(code|literal|discard)(\=[^>=]*)?(?=\>)' # <code> <literal> <discard>
+      - match: '(?<=\<)(code|literal|discard|map)(\=[^>=]*)?(?=\>)' # <code> <literal> <discard> <map>
         captures:
           "1":
             name: keyword.control.tag.heptools-config
@@ -119,7 +119,7 @@ repository:
             name: punctuation.definition.tag.comment.heptools-config
           "3":
             name: comment.line.tag.heptools-config
-      - match: '(?<=\<)(type|key-type)(\=([^>=]+)?)?(?=\>)' # <type(=...)> <key-type(=...)>
+      - match: '(?<=\<)(type)(\=([^>=]+)?)?(?=\>)' # <type(=...)>
         captures:
           "1":
             name: keyword.control.tag.heptools-config
