@@ -635,15 +635,15 @@ This tag converts a list of key-value pairs into a dictionary, which makes it po
 ``<select>``
 -------------
 
-This tag implements a conditional statement to evaluate each case and insert the selected ones into the current position. Each case is a dictionary where the keys with :ref:`config-tag-case` (case-keys) will be interpreted as booleans and contribute to the decision, while others (non-case-keys) will be added to the parent dictionary if the decision is ``True``.
+This tag implements a conditional statement to select the keys from a list of cases and replace itself by the selected keys. Each case is a dictionary where the keys with :ref:`config-tag-case` (case-keys) will be interpreted as booleans and only contribute to the decision, while others (non-case-keys) will be selected if the final decision is ``True``.
 
-Unlike other tags, only the necessary branches under ``<select>`` will be parsed. When ``<select=all>``, the non-case-keys that failed the selection will not be parsed. When ``<select=first>``, besides the failed non-case-keys, everything after the first selected case will not be parsed. The selected non-case-keys are parsed under the same context as ``<select>``.
+Unlike other tags, only the necessary branches under ``<select>`` will be parsed. When ``<select=all>``, the non-case-keys that failed the selection will not be parsed. When ``<select=first>``, besides the failed non-case-keys, everything after the first selected case will not be parsed. 
 
 .. admonition:: tag
   :class: guide-config-tag
 
-  * ``<select>``, ``<select=first>``: only insert the first selected case.
-  * ``<select=all>``: insert all selected cases.
+  * ``<select>``, ``<select=first>``: only keep the first selected case.
+  * ``<select=all>``: keep all selected cases.
 
 .. admonition:: value
   :class: guide-config-value
@@ -694,7 +694,7 @@ Unlike other tags, only the necessary branches under ``<select>`` will be parsed
 ``<case>``
 -------------
 
-This tag will only be parsed when used inside :ref:`config-tag-select` to modify the decision. Each case will start with a ``False`` decision and the keys with ``<case>`` will update the decision based on the value and the operation specified by the tag value.
+This tag can only be used inside :ref:`config-tag-select` to modify the decision. Each case will start with a ``False`` decision and the keys with ``<case>`` will update the decision based on the value and the operation specified by the tag value.
 
 .. admonition:: tag
   :class: guide-config-tag

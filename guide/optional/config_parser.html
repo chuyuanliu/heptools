@@ -910,13 +910,13 @@
 </section>
 <section id="select">
 <span id="config-tag-select"></span><h3><code class="docutils literal notranslate"><span class="pre">&lt;select&gt;</span></code><a class="headerlink" href="#select" title="Link to this heading">#</a></h3>
-<p>This tag implements a conditional statement to evaluate each case and insert the selected ones into the current position. Each case is a dictionary where the keys with <a class="reference internal" href="#config-tag-case"><span class="std std-ref">&lt;case&gt;</span></a> (case-keys) will be interpreted as booleans and contribute to the decision, while others (non-case-keys) will be added to the parent dictionary if the decision is <code class="docutils literal notranslate"><span class="pre">True</span></code>.</p>
-<p>Unlike other tags, only the necessary branches under <code class="docutils literal notranslate"><span class="pre">&lt;select&gt;</span></code> will be parsed. When <code class="docutils literal notranslate"><span class="pre">&lt;select=all&gt;</span></code>, the non-case-keys that failed the selection will not be parsed. When <code class="docutils literal notranslate"><span class="pre">&lt;select=first&gt;</span></code>, besides the failed non-case-keys, everything after the first selected case will not be parsed. The selected non-case-keys are parsed under the same context as <code class="docutils literal notranslate"><span class="pre">&lt;select&gt;</span></code>.</p>
+<p>This tag implements a conditional statement to select the keys from a list of cases and replace itself by the selected keys. Each case is a dictionary where the keys with <a class="reference internal" href="#config-tag-case"><span class="std std-ref">&lt;case&gt;</span></a> (case-keys) will be interpreted as booleans and only contribute to the decision, while others (non-case-keys) will be selected if the final decision is <code class="docutils literal notranslate"><span class="pre">True</span></code>.</p>
+<p>Unlike other tags, only the necessary branches under <code class="docutils literal notranslate"><span class="pre">&lt;select&gt;</span></code> will be parsed. When <code class="docutils literal notranslate"><span class="pre">&lt;select=all&gt;</span></code>, the non-case-keys that failed the selection will not be parsed. When <code class="docutils literal notranslate"><span class="pre">&lt;select=first&gt;</span></code>, besides the failed non-case-keys, everything after the first selected case will not be parsed.</p>
 <div class="guide-config-tag admonition">
 <p class="admonition-title">tag</p>
 <ul class="simple">
-<li><p><code class="docutils literal notranslate"><span class="pre">&lt;select&gt;</span></code>, <code class="docutils literal notranslate"><span class="pre">&lt;select=first&gt;</span></code>: only insert the first selected case.</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">&lt;select=all&gt;</span></code>: insert all selected cases.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">&lt;select&gt;</span></code>, <code class="docutils literal notranslate"><span class="pre">&lt;select=first&gt;</span></code>: only keep the first selected case.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">&lt;select=all&gt;</span></code>: keep all selected cases.</p></li>
 </ul>
 </div>
 <div class="guide-config-value admonition">
@@ -963,7 +963,7 @@
 </section>
 <section id="case">
 <span id="config-tag-case"></span><h3><code class="docutils literal notranslate"><span class="pre">&lt;case&gt;</span></code><a class="headerlink" href="#case" title="Link to this heading">#</a></h3>
-<p>This tag will only be parsed when used inside <a class="reference internal" href="#config-tag-select"><span class="std std-ref">&lt;select&gt;</span></a> to modify the decision. Each case will start with a <code class="docutils literal notranslate"><span class="pre">False</span></code> decision and the keys with <code class="docutils literal notranslate"><span class="pre">&lt;case&gt;</span></code> will update the decision based on the value and the operation specified by the tag value.</p>
+<p>This tag can only be used inside <a class="reference internal" href="#config-tag-select"><span class="std std-ref">&lt;select&gt;</span></a> to modify the decision. Each case will start with a <code class="docutils literal notranslate"><span class="pre">False</span></code> decision and the keys with <code class="docutils literal notranslate"><span class="pre">&lt;case&gt;</span></code> will update the decision based on the value and the operation specified by the tag value.</p>
 <div class="guide-config-tag admonition">
 <p class="admonition-title">tag</p>
 <ul class="simple">
