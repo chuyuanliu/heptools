@@ -381,6 +381,15 @@
 <li><p>Apply the tags.</p></li>
 </ul>
 <p>The order of the paths provided to <a class="reference internal" href="../../api/config.html#heptools.config.ConfigParser.__call__" title="heptools.config.ConfigParser.__call__"><code class="xref py py-meth docutils literal notranslate"><span class="pre">__call__()</span></code></a> and the order of keys and items from the first pass are preserved to the final output. The tags are parsed recursively from innermost to outermost.</p>
+<div class="guide-config-example dropdown admonition">
+<p class="admonition-title">example</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">heptools.config</span><span class="w"> </span><span class="kn">import</span> <span class="n">ConfigParser</span>
+
+<span class="n">parser</span> <span class="o">=</span> <span class="n">ConfigParser</span><span class="p">()</span>
+<span class="n">configs</span> <span class="o">=</span> <span class="n">parser</span><span class="p">(</span><span class="s2">&quot;config1.yml&quot;</span><span class="p">,</span> <span class="s2">&quot;config2.yml&quot;</span><span class="p">,</span> <span class="o">...</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
 </section>
 </section>
 <section id="tag">
@@ -419,6 +428,7 @@
 <li><p><a class="reference internal" href="#config-tag-code"><span class="std std-ref">&lt;code&gt;</span></a> have the highest precedence and will only be parsed once.</p></li>
 <li><p>The following tags will not trigger any parser.</p>
 <ul>
+<li><p><a class="reference internal" href="#config-tag-case"><span class="std std-ref">&lt;case&gt;</span></a></p></li>
 <li><p><a class="reference internal" href="#config-tag-literal"><span class="std std-ref">&lt;literal&gt;</span></a></p></li>
 <li><p><a class="reference internal" href="#config-tag-discard"><span class="std std-ref">&lt;discard&gt;</span></a></p></li>
 <li><p><a class="reference internal" href="#config-tag-comment"><span class="std std-ref">&lt;comment&gt;</span></a></p></li>
@@ -426,6 +436,7 @@
 </li>
 <li><p>The order of the following tags are ill-defined, as they are not supposed to simply modify the key-value pairs. As a result, they cannot be directly chained with other regular tags, unless through <a class="reference internal" href="#config-tag-code"><span class="std std-ref">&lt;code&gt;</span></a>. See <a class="reference internal" href="#config-tips-include"><span class="std std-ref">Dynamic &lt;include&gt;</span></a>.</p>
 <ul>
+<li><p><a class="reference internal" href="#config-tag-select"><span class="std std-ref">&lt;select&gt;</span></a></p></li>
 <li><p><a class="reference internal" href="#config-tag-include"><span class="std std-ref">&lt;include&gt;</span></a></p></li>
 <li><p><a class="reference internal" href="#config-tag-patch"><span class="std std-ref">&lt;patch&gt;</span></a></p></li>
 </ul>
@@ -727,12 +738,13 @@
 <span class="nt">key2 &lt;type&gt;</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">json::.</span><span class="w"> </span><span class="c1"># the same as key1</span>
 <span class="nt">key3 &lt;type&gt;</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">json::loads</span><span class="w"> </span><span class="c1"># import a function</span>
 <span class="nt">key4 &lt;type&gt;</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">json::loads.__qualname__</span><span class="w"> </span><span class="c1"># import a nested attribute</span>
-<span class="nt">key5 &lt;type=range&gt;</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">0</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">100</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">10</span><span class="p p-Indicator">]</span><span class="w"> </span><span class="c1"># positional arguments</span>
+<span class="nt">key5 &lt;type=range&gt;</span><span class="p">:</span><span class="w"> </span><span class="c1"># create an instance of a built-in class</span>
+<span class="w">  </span><span class="p p-Indicator">[</span><span class="nv">0</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">100</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">10</span><span class="p p-Indicator">]</span><span class="w"> </span><span class="c1"># positional arguments</span>
 <span class="nt">&lt;discard&gt;</span><span class="p">:</span>
 <span class="w">  </span><span class="nt">&lt;type=logging::basicConfig&gt;</span><span class="p">:</span>
 <span class="w">    </span><span class="nt">level &lt;type&gt;</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">logging::INFO</span><span class="w"> </span><span class="c1"># import an object</span>
 <span class="w">  </span><span class="nt">&lt;type=logging::info&gt;</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">message</span><span class="w">  </span><span class="c1"># call a function with one argument</span>
-<span class="nt">&lt;discard&gt;&lt;type=print&gt;</span><span class="p">:</span><span class="w"> </span><span class="c1"># create an instance of a built-in class</span>
+<span class="nt">&lt;discard&gt;&lt;type=print&gt;</span><span class="p">:</span><span class="w"> </span><span class="c1"># call a built-in function</span>
 <span class="w">  </span><span class="nt">~</span><span class="p">:</span><span class="w"> </span><span class="c1"># positional arguments</span>
 <span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">message1</span>
 <span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">message2</span>
@@ -744,15 +756,16 @@
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">json</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">logging</span>
 
-<span class="p">{</span>
+<span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;message&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;message1&quot;</span><span class="p">,</span> <span class="s2">&quot;message2&quot;</span><span class="p">,</span> <span class="s2">&quot;message3&quot;</span><span class="p">,</span> <span class="n">sep</span><span class="o">=</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
+
+<span class="k">return</span> <span class="p">{</span>
   <span class="s2">&quot;key1&quot;</span><span class="p">:</span> <span class="n">json</span><span class="p">,</span>
   <span class="s2">&quot;key2&quot;</span><span class="p">:</span> <span class="n">json</span><span class="p">,</span>
   <span class="s2">&quot;key3&quot;</span><span class="p">:</span> <span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">,</span>
   <span class="s2">&quot;key4&quot;</span><span class="p">:</span> <span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="o">.</span><span class="vm">__qualname__</span><span class="p">,</span>
   <span class="s2">&quot;key5&quot;</span><span class="p">:</span> <span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">100</span><span class="p">,</span> <span class="mi">10</span><span class="p">),</span>
 <span class="p">}</span>
-<span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;message&quot;</span><span class="p">)</span>
-<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;message1&quot;</span><span class="p">,</span> <span class="s2">&quot;message2&quot;</span><span class="p">,</span> <span class="s2">&quot;message3&quot;</span><span class="p">,</span> <span class="n">sep</span><span class="o">=</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
 </pre></div>
 </div>
 </div>
@@ -895,6 +908,66 @@
 </div>
 </div>
 </section>
+<section id="select">
+<span id="config-tag-select"></span><h3><code class="docutils literal notranslate"><span class="pre">&lt;select&gt;</span></code><a class="headerlink" href="#select" title="Link to this heading">#</a></h3>
+<p>This tag implements a conditional statement to evaluate each case and insert the selected ones into the current position. Each case is a dictionary where the keys with <a class="reference internal" href="#config-tag-case"><span class="std std-ref">&lt;case&gt;</span></a> (case-keys) will be interpreted as booleans and contribute to the decision, while others (non-case-keys) will be used to construct the parent dictionary if the final decision is <code class="docutils literal notranslate"><span class="pre">True</span></code>.</p>
+<p>When <code class="docutils literal notranslate"><span class="pre">&lt;select=all&gt;</span></code>, all case-keys and the selected non-case-keys will be parsed. When <code class="docutils literal notranslate"><span class="pre">&lt;select=first&gt;</span></code>, everything after the first selected case will not be parsed. The selected non-case-keys are parsed under the same context as <code class="docutils literal notranslate"><span class="pre">&lt;select&gt;</span></code>.</p>
+<div class="guide-config-tag admonition">
+<p class="admonition-title">tag</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">&lt;select&gt;</span></code>, <code class="docutils literal notranslate"><span class="pre">&lt;select=first&gt;</span></code>: insert the first selected case only.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">&lt;select=all&gt;</span></code>: insert all selected cases.</p></li>
+</ul>
+</div>
+<div class="guide-config-value admonition">
+<p class="admonition-title">value</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">list</span></code>: a list of dictionaries with <a class="reference internal" href="#config-tag-case"><span class="std std-ref">&lt;case&gt;</span></a> keys.</p></li>
+</ul>
+</div>
+<div class="guide-config-example dropdown admonition">
+<p class="admonition-title">example</p>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">count &lt;var&gt;</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">10</span>
+<span class="nt">selected</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">before</span><span class="p p-Indicator">]</span>
+<span class="nt">&lt;select=all&gt;</span><span class="p">:</span>
+<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">&lt;case&gt; &lt;code&gt;</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">count % 2 == 0</span>
+<span class="w">    </span><span class="nt">selected &lt;extend&gt;</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">A</span><span class="p p-Indicator">]</span>
+<span class="w">    </span><span class="nt">&lt;discard&gt; &lt;type=print&gt;</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">count is even</span>
+<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">&lt;case&gt; &lt;code&gt;</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">count % 2 == 1</span>
+<span class="w">    </span><span class="nt">selected &lt;extend&gt;</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">B</span><span class="p p-Indicator">]</span>
+<span class="w">    </span><span class="nt">&lt;discard&gt; &lt;type=print&gt;</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">count is odd</span><span class="w"> </span><span class="c1"># will not print</span>
+<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">&lt;case&gt; &lt;code&gt;</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">count &gt; 5</span>
+<span class="w">    </span><span class="nt">selected &lt;extend&gt;</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">C</span><span class="p p-Indicator">]</span>
+<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">&lt;case&gt; &lt;code&gt;</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">count &gt; 5</span>
+<span class="w">    </span><span class="nt">&lt;case=xor&gt;</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span><span class="w"> </span><span class="c1"># count &lt;= 5</span>
+<span class="w">    </span><span class="nt">selected &lt;extend&gt;</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">D</span><span class="p p-Indicator">]</span>
+<span class="nt">selected &lt;extend&gt;</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">after</span><span class="p p-Indicator">]</span>
+</pre></div>
+</div>
+<p>will be parsed into</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="nb">print</span><span class="p">(</span><span class="s2">&quot;count is even&quot;</span><span class="p">)</span>
+
+<span class="k">return</span> <span class="p">{</span>
+  <span class="s2">&quot;count&quot;</span><span class="p">:</span> <span class="mi">10</span><span class="p">,</span>
+  <span class="s2">&quot;selected&quot;</span><span class="p">:</span> <span class="p">[</span><span class="s2">&quot;before&quot;</span><span class="p">,</span> <span class="s2">&quot;A&quot;</span><span class="p">,</span> <span class="s2">&quot;C&quot;</span><span class="p">,</span> <span class="s2">&quot;after&quot;</span><span class="p">]</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+</div>
+</section>
+<section id="case">
+<span id="config-tag-case"></span><h3><code class="docutils literal notranslate"><span class="pre">&lt;case&gt;</span></code><a class="headerlink" href="#case" title="Link to this heading">#</a></h3>
+<p>This tag will only be parsed when used inside <a class="reference internal" href="#config-tag-select"><span class="std std-ref">&lt;select&gt;</span></a> to modify the decision. Each case will start with the decision set to <code class="docutils literal notranslate"><span class="pre">False</span></code> and the keys with <code class="docutils literal notranslate"><span class="pre">&lt;case&gt;</span></code> will update the decision based on the value using the operation specified by the tag value.</p>
+<div class="guide-config-tag admonition">
+<p class="admonition-title">tag</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">&lt;case&gt;</span></code>: set the decision to the value.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">&lt;case=or&gt;</span></code>: update the decision by <code class="docutils literal notranslate"><span class="pre">|</span></code> with the value.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">&lt;case=and&gt;</span></code>: update the decision by <code class="docutils literal notranslate"><span class="pre">&amp;</span></code> the value.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">&lt;case=xor&gt;</span></code>: update the decision by <code class="docutils literal notranslate"><span class="pre">^</span></code> the value.</p></li>
+</ul>
+</div>
+</section>
 </section>
 <section id="support">
 <h2>Support<a class="headerlink" href="#support" title="Link to this heading">#</a></h2>
@@ -1035,6 +1108,8 @@
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#var"><code class="docutils literal notranslate"><span class="pre">&lt;var&gt;</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#ref"><code class="docutils literal notranslate"><span class="pre">&lt;ref&gt;</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#map"><code class="docutils literal notranslate"><span class="pre">&lt;map&gt;</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#select"><code class="docutils literal notranslate"><span class="pre">&lt;select&gt;</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#case"><code class="docutils literal notranslate"><span class="pre">&lt;case&gt;</span></code></a></li>
 </ul>
 </li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#support">Support</a><ul class="nav section-nav flex-column">
