@@ -1,6 +1,6 @@
 mass:
   <discard>:
-    data <code><var>: '"data/particles.json.lz4#boson.{}.mass".format'
+    data <attr=format><var>: data/particles.json.lz4#boson.{}.mass
   H <code><file>: data("H0")
   Z <code><file>: data("Z0")
   W <code><file>: data("W+")
@@ -14,3 +14,5 @@ labels <map>:
     val: SemiLeptonic
   - key <type=tuple>: [[0, 0, 2]]
     val: Invisible
+
+output <code>: workdir / username / f"{jobname}-{timestamp}/"

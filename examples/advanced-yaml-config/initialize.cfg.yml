@@ -1,0 +1,26 @@
+<discard>:
+  os <type><var>: os::.
+  is_singularity <code><var>: os.path.exists("/.singularity.d")
+
+  workdir <type=pathlib::PurePosixPath> <var>: /path/to/workdir
+  username <var>: user
+  timestamp <type=datetime::datetime.strftime> <var>:
+    - <type=datetime::datetime.now>:
+    - "%Y-%m-%dT%H:%M:%S"
+
+  <type=logging::basicConfig>:
+    level <type>: logging::INFO
+    format: "[%(asctime)s][%(levelname)s] %(message)s"
+    datefmt: "%m-%d %H:%M:%S"
+  <type=warnings::filterwarnings>: ignore
+  <select=all>:
+    - <case> <code>: os.name == "nt"
+      <type=logging::info>: Running on Windows
+    - <case> <code>: os.name == "posix"
+      <type=logging::info>: Running on Linux
+    - <case> <ref>: is_singularity
+      <type=logging::info>: Running in Singularity container
+    - <case> <code>: not is_singularity
+      <type=logging::info>: Running on the host.
+
+  <type=logging::info>: Initialization complete.

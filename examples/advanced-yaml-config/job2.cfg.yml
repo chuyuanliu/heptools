@@ -1,0 +1,16 @@
+<discard>:
+  RGB <code><var>: "lambda x: tuple(int(x[i:i+2], 16) for i in (0, 2, 4))"
+
+jobs <extend>:
+  - name <var=jobname>: plot
+    <include>:
+      - base.cfg.yml
+    plot.label."unit.mass": GeV
+    plot.bin.pt <code>: "[*range(50, 200, 50), *range(200, 1000, 100), *range(1000, 2200, 200)]"
+    plot.palette.pastel:
+      - <code>: RGB("fea3aa")
+      - <code>: RGB("f8b88b")
+      - <code>: RGB("faf884")
+      - <code>: RGB("baed91")
+      - <code>: RGB("b2cefe")
+      - <code>: RGB("f2a2e8")
