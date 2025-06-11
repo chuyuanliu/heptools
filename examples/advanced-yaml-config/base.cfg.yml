@@ -1,0 +1,16 @@
+mass:
+  <discard>:
+    data <code><var>: '"data/particles.json.lz4#boson.{}.mass".format'
+  H <code><file>: data("H0")
+  Z <code><file>: data("Z0")
+  W <code><file>: data("W+")
+
+labels <map>:
+  - key <type=tuple>: [[2, 0, 0]]
+    val: Hadronic
+  - key <type=tuple>: [[0, 2, 0]]
+    val: Leptonic
+  - key <type=tuple>: [[0, 1, 1]]
+    val: SemiLeptonic
+  - key <type=tuple>: [[0, 0, 2]]
+    val: Invisible

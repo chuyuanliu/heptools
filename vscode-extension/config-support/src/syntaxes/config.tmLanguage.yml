@@ -37,6 +37,30 @@ repository:
             name: keyword.control.tag.heptools-config
           "2":
             name: invalid.illegal.tag.heptools-config
+      - match: '(?<=\<)(select)(\=([^>=]+)?)?(?=\>)' # <select(=[first|all])>
+        captures:
+          "1":
+            name: keyword.control.tag.heptools-config
+          "2":
+            name: keyword.operator.tag.heptools-config
+          "3":
+            patterns:
+              - match: '(?<=\=)(first|all)(?!.)'
+                name: variable.other.enummember.tag.heptools-config
+              - match: "[^>=]+"
+                name: invalid.illegal.tag.heptools-config
+      - match: '(?<=\<)(case)(\=([^>=]+)?)?(?=\>)' # <case(=[or|and|xor])>
+        captures:
+          "1":
+            name: keyword.control.tag.heptools-config
+          "2":
+            name: keyword.operator.tag.heptools-config
+          "3":
+            patterns:
+              - match: '(?<=\=)(or|and|xor)(?!.)'
+                name: variable.other.enummember.tag.heptools-config
+              - match: "[^>=]+"
+                name: invalid.illegal.tag.heptools-config
       - match: '(?<=\<)(include)(\=([^>=]+)?)?(?=\>)' # <include(=[absolute|relative])>
         captures:
           "1":

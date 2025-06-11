@@ -26,6 +26,16 @@ The parsing is performed in two passes:
 
 The order of the paths provided to :meth:`~heptools.config.ConfigParser.__call__` and the order of keys and items from the first pass are preserved to the final output. The tags are parsed recursively from innermost to outermost.
 
+.. admonition:: example
+  :class: guide-config-example, dropdown
+
+  .. code-block:: python
+
+    from heptools.config import ConfigParser
+
+    parser = ConfigParser()
+    configs = parser("config1.yml", "config2.yml", ...)
+
 
 .. _config-tag:
 
@@ -69,12 +79,14 @@ Precedence
   * :ref:`config-tag-code` have the highest precedence and will only be parsed once.
   * The following tags will not trigger any parser.
 
+    * :ref:`config-tag-case`
     * :ref:`config-tag-literal`
     * :ref:`config-tag-discard`
     * :ref:`config-tag-comment`
 
   * The order of the following tags are ill-defined, as they are not supposed to simply modify the key-value pairs. As a result, they cannot be directly chained with other regular tags, unless through :ref:`config-tag-code`. See :ref:`config-tips-include`.
 
+    * :ref:`config-tag-select`
     * :ref:`config-tag-include`
     * :ref:`config-tag-patch`
 
@@ -426,12 +438,13 @@ This tag can be used to import a module/attribute, create an instance of a class
     key2 <type>: json::. # the same as key1
     key3 <type>: json::loads # import a function
     key4 <type>: json::loads.__qualname__ # import a nested attribute
-    key5 <type=range>: [0, 100, 10] # positional arguments
+    key5 <type=range>: # create an instance of a built-in class
+      [0, 100, 10] # positional arguments
     <discard>:
       <type=logging::basicConfig>:
         level <type>: logging::INFO # import an object
       <type=logging::info>: message  # call a function with one argument
-    <discard><type=print>: # create an instance of a built-in class
+    <discard><type=print>: # call a built-in function
       ~: # positional arguments
         - message1
         - message2
@@ -445,15 +458,16 @@ This tag can be used to import a module/attribute, create an instance of a class
     import json
     import logging
 
-    {
+    logging.info("message")
+    print("message1", "message2", "message3", sep="\n")
+
+    return {
       "key1": json,
       "key2": json,
       "key3": json.loads,
       "key4": json.loads.__qualname__,
       "key5": range(0, 100, 10),
     }
-    logging.info("message")
-    print("message1", "message2", "message3", sep="\n")
 
 .. _config-tag-attr:
 
@@ -615,6 +629,74 @@ This tag converts a list of key-value pairs into a dictionary, which makes it po
         ("child", 2): "value2"
       }
     }
+
+.. _config-tag-select:
+
+``<select>``
+-------------
+
+This tag implements a conditional statement to evaluate each case and insert the selected ones into the current position. Each case is a dictionary where the keys with :ref:`config-tag-case` (case-keys) will be interpreted as booleans and contribute to the decision, while others (non-case-keys) will be used to construct the parent dictionary if the final decision is ``True``.
+
+When ``<select=all>``, all case-keys and the selected non-case-keys will be parsed. When ``<select=first>``, everything after the first selected case will not be parsed. The selected non-case-keys are parsed under the same context as ``<select>``.
+
+.. admonition:: tag
+  :class: guide-config-tag
+
+  * ``<select>``, ``<select=first>``: insert the first selected case only.
+  * ``<select=all>``: insert all selected cases.
+
+.. admonition:: value
+  :class: guide-config-value
+
+  * ``list``: a list of dictionaries with :ref:`config-tag-case` keys.
+
+.. admonition:: example
+  :class: guide-config-example, dropdown
+
+  .. code-block:: yaml
+
+    count <var>: 10
+    selected: [before]
+    <select=all>:
+      - <case> <code>: count % 2 == 0
+        selected <extend>: [A]
+        <discard> <type=print>: count is even
+      - <case> <code>: count % 2 == 1
+        selected <extend>: [B]
+        <discard> <type=print>: count is odd # will not print
+      - <case> <code>: count > 5
+        selected <extend>: [C]
+      - <case> <code>: count > 5
+        <case=xor>: true # count <= 5
+        selected <extend>: [D]
+    selected <extend>: [after]
+
+  will be parsed into
+
+  .. code-block:: python
+
+    print("count is even")
+
+    return {
+      "count": 10,
+      "selected": ["before", "A", "C", "after"]
+    }
+
+
+.. _config-tag-case:
+
+``<case>``
+-------------
+
+This tag will only be parsed when used inside :ref:`config-tag-select` to modify the decision. Each case will start with the decision set to ``False`` and the keys with ``<case>`` will update the decision based on the value using the operation specified by the tag value.
+
+.. admonition:: tag
+  :class: guide-config-tag
+
+  * ``<case>``: set the decision to the value.
+  * ``<case=or>``: update the decision by ``|`` with the value.
+  * ``<case=and>``: update the decision by ``&`` the value.
+  * ``<case=xor>``: update the decision by ``^`` the value.
 
 Support
 ========
