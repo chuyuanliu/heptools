@@ -635,14 +635,14 @@ This tag converts a list of key-value pairs into a dictionary, which makes it po
 ``<select>``
 -------------
 
-This tag implements a conditional statement to evaluate each case and insert the selected ones into the current position. Each case is a dictionary where the keys with :ref:`config-tag-case` (case-keys) will be interpreted as booleans and contribute to the decision, while others (non-case-keys) will be used to construct the parent dictionary if the final decision is ``True``.
+This tag implements a conditional statement to evaluate each case and insert the selected ones into the current position. Each case is a dictionary where the keys with :ref:`config-tag-case` (case-keys) will be interpreted as booleans and contribute to the decision, while others (non-case-keys) will be added to the parent dictionary if the decision is ``True``.
 
-When ``<select=all>``, all case-keys and the selected non-case-keys will be parsed. When ``<select=first>``, everything after the first selected case will not be parsed. The selected non-case-keys are parsed under the same context as ``<select>``.
+Unlike other tags, only the necessary branches under ``<select>`` will be parsed. When ``<select=all>``, the non-case-keys that failed the selection will not be parsed. When ``<select=first>``, besides the failed non-case-keys, everything after the first selected case will not be parsed. The selected non-case-keys are parsed under the same context as ``<select>``.
 
 .. admonition:: tag
   :class: guide-config-tag
 
-  * ``<select>``, ``<select=first>``: insert the first selected case only.
+  * ``<select>``, ``<select=first>``: only insert the first selected case.
   * ``<select=all>``: insert all selected cases.
 
 .. admonition:: value
@@ -656,6 +656,11 @@ When ``<select=all>``, all case-keys and the selected non-case-keys will be pars
   .. code-block:: yaml
 
     count <var>: 10
+    <select>:
+      - <case>: true
+        <discard> <type=print>: first case
+      - <case>: true
+        <discard> <type=print>: second case
     selected: [before]
     <select=all>:
       - <case> <code>: count % 2 == 0
@@ -675,6 +680,7 @@ When ``<select=all>``, all case-keys and the selected non-case-keys will be pars
 
   .. code-block:: python
 
+    print("first case")
     print("count is even")
 
     return {
@@ -688,15 +694,15 @@ When ``<select=all>``, all case-keys and the selected non-case-keys will be pars
 ``<case>``
 -------------
 
-This tag will only be parsed when used inside :ref:`config-tag-select` to modify the decision. Each case will start with the decision set to ``False`` and the keys with ``<case>`` will update the decision based on the value using the operation specified by the tag value.
+This tag will only be parsed when used inside :ref:`config-tag-select` to modify the decision. Each case will start with a ``False`` decision and the keys with ``<case>`` will update the decision based on the value and the operation specified by the tag value.
 
 .. admonition:: tag
   :class: guide-config-tag
 
-  * ``<case>``: set the decision to the value.
-  * ``<case=or>``: update the decision by ``|`` with the value.
-  * ``<case=and>``: update the decision by ``&`` the value.
-  * ``<case=xor>``: update the decision by ``^`` the value.
+  * ``<case>``: ``decision = value``
+  * ``<case=or>``: ``decision |= value``
+  * ``<case=and>``: ``decision &= value``
+  * ``<case=xor>``: ``decision ^= value``
 
 Support
 ========
