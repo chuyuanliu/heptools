@@ -635,7 +635,7 @@ This tag converts a list of key-value pairs into a dictionary, which makes it po
 ``<select>``
 -------------
 
-This tag implements a conditional statement to select the keys from a list of cases and replace itself by the selected keys. Each case is a dictionary where the keys with :ref:`config-tag-case` (case-keys) will be interpreted as booleans and only contribute to the decision, while others (non-case-keys) will be selected if the final decision is ``True``.
+This tag implements a conditional statement to select keys from a list of cases and replace itself by the selected keys. Each case is a dictionary where the keys with :ref:`config-tag-case` (case-keys) will be interpreted as booleans and only contribute to the decision, while others (non-case-keys) will be merged into the current dictionary if the final decision is ``True``.
 
 Unlike other tags, only the necessary branches under ``<select>`` will be parsed. When ``<select=all>``, the non-case-keys that failed the selection will not be parsed. When ``<select=first>``, besides the failed non-case-keys, everything after the first selected case will not be parsed. 
 
