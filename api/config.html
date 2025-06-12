@@ -368,13 +368,13 @@
 <h2>Parsers<a class="headerlink" href="#parsers" title="Link to this heading">#</a></h2>
 <dl class="py class">
 <dt class="sig sig-object py" id="heptools.config.ConfigParser">
-<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">heptools.config.</span></span><span class="sig-name descname"><span class="pre">ConfigParser</span></span><a class="reference external" href="https://github.com/chuyuanliu/heptools/tree/master/heptools/config/_parser.py#L752-L797"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#heptools.config.ConfigParser" title="Link to this definition">#</a></dt>
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">heptools.config.</span></span><span class="sig-name descname"><span class="pre">ConfigParser</span></span><a class="reference external" href="https://github.com/chuyuanliu/heptools/tree/master/heptools/config/_parser.py#L757-L802"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#heptools.config.ConfigParser" title="Link to this definition">#</a></dt>
 <dd><p>A customizable config parser.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>nested</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.13)"><em>bool</em></a><em>, </em><em>optional</em><em>, </em><em>default=True</em>) – Parse dot-separated keys into nested dicts.</p></li>
-<li><p><strong>custom_tags</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.13)"><em>dict</em></a><em>[</em><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><em>str</em></a><em>, </em><em>Optional</em><em>[</em><em>TagParser</em><em>]</em><em>]</em><em>, </em><em>optional</em>) – Customized tags.</p></li>
+<li><p><strong>tag_parsers</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.13)"><em>dict</em></a><em>[</em><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><em>str</em></a><em>, </em><em>Optional</em><em>[</em><a class="reference internal" href="#heptools.config.TagParser" title="heptools.config.TagParser"><em>TagParser</em></a><em>]</em><em>]</em><em>, </em><em>optional</em>) – Customized tags.</p></li>
 <li><p><strong>extend_methods</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.13)"><em>dict</em></a><em>[</em><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><em>str</em></a><em>, </em><em>ExtendMethod</em><em>]</em><em>, </em><em>optional</em>) – Customized &lt;extend&gt; methods.</p></li>
 <li><p><strong>patch_actions</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.13)"><em>dict</em></a><em>[</em><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><em>str</em></a><em>, </em><em>PatchAction</em><em>]</em><em>, </em><em>optional</em>) – Customized patch actions.</p></li>
 </ul>
@@ -393,7 +393,7 @@
 
 <dl class="py method">
 <dt class="sig sig-object py" id="heptools.config.ConfigParser.__call__">
-<span class="sig-name descname"><span class="pre">__call__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">path_or_dict</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">result</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/chuyuanliu/heptools/tree/master/heptools/config/_parser.py#L779-L797"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#heptools.config.ConfigParser.__call__" title="Link to this definition">#</a></dt>
+<span class="sig-name descname"><span class="pre">__call__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">path_or_dict</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">result</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/chuyuanliu/heptools/tree/master/heptools/config/_parser.py#L784-L802"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#heptools.config.ConfigParser.__call__" title="Link to this definition">#</a></dt>
 <dd><p>Load configs from multiple sources.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -433,6 +433,32 @@
 <dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Callable" title="(in Python v3.13)"><em>Callable</em></a>[[Any, Any], Any]</p>
 </dd>
 </dl>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="heptools.config.TagParser">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">heptools.config.</span></span><span class="sig-name descname"><span class="pre">TagParser</span></span><a class="reference external" href="https://github.com/chuyuanliu/heptools/tree/master/heptools/config/_parser.py#L285-L321"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#heptools.config.TagParser" title="Link to this definition">#</a></dt>
+<dd><p>Tag parser protocol.</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="heptools.config.TagParser.__call__">
+<span class="sig-name descname"><span class="pre">__call__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">key</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">value</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tag</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tags</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">local</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">path</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/chuyuanliu/heptools/tree/master/heptools/config/_parser.py#L290-L321"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#heptools.config.TagParser.__call__" title="Link to this definition">#</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>key</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><em>str</em></a><em>, </em><em>optional</em>) – The current key.</p></li>
+<li><p><strong>value</strong> (<em>Any</em><em>, </em><em>optional</em>) – The current value .</p></li>
+<li><p><strong>tag</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><em>str</em></a><em>, </em><em>optional</em>) – The value of the current tag.</p></li>
+<li><p><strong>tags</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.13)"><em>dict</em></a><em>[</em><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><em>str</em></a><em>, </em><em>Optional</em><em>[</em><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><em>str</em></a><em>]</em><em>]</em><em>, </em><em>optional</em>) – All parsed tags of the current key.</p></li>
+<li><p><strong>local</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.13)"><em>dict</em></a><em>, </em><em>optional</em>) – All parsed items in the current dictionary.</p></li>
+<li><p><strong>path</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><em>str</em></a><em> or </em><em>None</em><em>, </em><em>optional</em>) – The path to the current config file.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><em>tuple[str, Any]</em> – The key and value after parsing.</p>
+</dd>
+</dl>
+</dd></dl>
+
 </dd></dl>
 
 </section>
@@ -522,6 +548,10 @@
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#protocols">Protocols</a><ul class="nav section-nav flex-column">
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#heptools.config.ConfigSource"><code class="docutils literal notranslate"><span class="pre">ConfigSource</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#heptools.config.ExtendMethod"><code class="docutils literal notranslate"><span class="pre">ExtendMethod</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#heptools.config.TagParser"><code class="docutils literal notranslate"><span class="pre">TagParser</span></code></a><ul class="nav section-nav flex-column">
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#heptools.config.TagParser.__call__"><code class="docutils literal notranslate"><span class="pre">TagParser.__call__()</span></code></a></li>
+</ul>
+</li>
 </ul>
 </li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#customization">Customization</a><ul class="nav section-nav flex-column">
