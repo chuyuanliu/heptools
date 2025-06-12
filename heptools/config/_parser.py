@@ -24,7 +24,7 @@ from typing import (
 
 from ._io import FileLoader, _split_path, load_url, resolve_path
 from ._patch import PatchAction, PatchedLoader
-from ._utils import SimpleTree, block_divider, block_indent, format_repr
+from ._utils import SimpleTree, block_divider, block_indent, check_reserved, format_repr
 
 P = ParamSpec("P")
 T = TypeVar("T")
@@ -444,8 +444,10 @@ class ExtendParser:  # tag: <extend>
         "and": op.and_,
         "or": op.or_,
     }
+    reserved_methods = check_reserved("extend methods", methods)
 
     def __init__(self, methods: dict[str, ExtendMethod]):
+        self.reserved_methods(methods)
         if methods:
             self.methods = methods | self.methods
 
@@ -701,20 +703,23 @@ class _ParserInitializer:
         _ReservedTag.attr: AttrParser(),
         _ReservedTag.map: MapParser(),
     }
+    reserved_tags = check_reserved("tags", _ReservedTag.__members__)
 
     def __init__(self, parser: ConfigParser):
+        self.reserved_tags(parser.tag_parsers)
+        extend_parser = ExtendParser(parser.extend_methods)
+
         self.nested = parser.nested
         self.vars = VariableParser()
         self.patches = PatchedLoader(parser)
         self.parsers = (
             {
                 k: v if v is None else _tag_parser(v)
-                for k, v in parser.custom_tags.items()
-                if k not in _ReservedTag.__members__
+                for k, v in parser.tag_parsers.items()
             }
             | self.static_parsers
             | {
-                _ReservedTag.extend: ExtendParser(parser.extend_methods),
+                _ReservedTag.extend: extend_parser,
                 _ReservedTag.var: self.vars.var,
                 _ReservedTag.ref: self.vars.ref,
             }
@@ -748,7 +753,7 @@ class _ParserInitializer:
         return result
 
 
-@dataclass
+@dataclass(kw_only=True)
 class ConfigParser:
     """
     A customizable config parser.
@@ -757,7 +762,7 @@ class ConfigParser:
     ----------
     nested : bool, optional, default=True
         Parse dot-separated keys into nested dicts.
-    custom_tags : dict[str, Optional[TagParser]], optional
+    tag_parsers : dict[str, Optional[TagParser]], optional
         Customized tags.
     extend_methods : dict[str, ExtendMethod], optional
         Customized <extend> methods.
@@ -767,7 +772,7 @@ class ConfigParser:
     """
 
     nested: bool = True
-    custom_tags: dict[str, Optional[TagParser]] = field(default_factory=dict)
+    tag_parsers: dict[str, Optional[TagParser]] = field(default_factory=dict)
     extend_methods: dict[str, ExtendMethod] = field(default_factory=dict)
     patch_actions: dict[str, PatchAction] = field(default_factory=dict)
 

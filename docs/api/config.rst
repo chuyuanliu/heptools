@@ -16,13 +16,11 @@ Protocols
 
 .. autoapidata:: heptools.config.ExtendMethod
 
-.. autoapiclass:: heptools.config.FlagParser
+.. autoapiclass:: heptools.config.TagParser
     :special-members: __call__
 
 Customization
 -------------
-
-.. autoapifunction:: heptools.config.as_flag_parser
 
 .. autoapiclass:: heptools.config.FileLoader
     :members:

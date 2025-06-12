@@ -84,7 +84,7 @@ Precedence
     * :ref:`config-tag-discard`
     * :ref:`config-tag-comment`
 
-  * The order of the following tags are ill-defined, as they are not supposed to simply modify the key-value pairs. As a result, they cannot be directly chained with other regular tags, unless through :ref:`config-tag-code`. See :ref:`config-tips-include`.
+  * The order of the following tags are ill-defined, as they are not supposed to simply modify the key-value pairs. As a result, they cannot be directly chained with other regular tags, unless through :ref:`config-tag-code`.
 
     * :ref:`config-tag-select`
     * :ref:`config-tag-include`
@@ -232,6 +232,8 @@ When the element is a dictionary and the only key is ``None``, the element will 
     ]
 
 
+.. _config-builtin-tags:
+
 Built-in tags
 ===============
 
@@ -264,9 +266,9 @@ This tag allows to merge dictionaries from other config files into the given lev
 .. admonition:: tag
   :class: guide-config-tag
 
-  * ``<include>``: the type of the path will be inferred.
-  * ``<include=absolute>``: resolve as an absolute path.
-  * ``<include=relative>``: resolve as an path relative to the current config file.
+  * ``<include>``: the type of the paths will be inferred.
+  * ``<include=absolute>``: resolve as absolute paths.
+  * ``<include=relative>``: resolve as paths relative to the current config file.
 
 .. admonition:: value
   :class: guide-config-value
@@ -486,16 +488,16 @@ This tag will replace the value by the its attribute. A tag like ``<attr=attr1.a
 ``<extend>``
 ------------
 
-This tag will try to extend the existing value of the same key by the value, in a way given by the pseudo code:
+This tag will try to extend the existing value of the same key by the value in a way given by the pseudo code:
 
 .. code-block:: python
   
   if key in local:
-    return extend(local[key], value)
+    return extend_method(local[key], value)
   else:
     return value
 
-where the ``extend`` function is a binary operation specified by the tag value.
+where the ``extend_method()`` is a binary operation specified by the tag value.
 
 .. admonition:: tag
   :class: guide-config-tag
@@ -544,7 +546,7 @@ where the ``extend`` function is a binary operation specified by the tag value.
 ``<var>``
 ----------
 
-This tag can be used to create a variable from the value. The variable has a lifecycle spans the entire parser :meth:`~heptools.config.ConfigParser.__call__` and is shared by all files within the same call. The variable can be accessed using :ref:`config-tag-ref` and is also available as ``locals`` in :ref:`config-tag-code`.
+This tag can be used to create a variable from the value. The lifecycle of the variables spans the entire parser :meth:`~heptools.config.ConfigParser.__call__` and is shared by all files within the same call. The variable can be accessed using :ref:`config-tag-ref` and is also available as ``locals`` in :ref:`config-tag-code`.
 
 .. admonition:: tag
   :class: guide-config-tag
@@ -744,25 +746,121 @@ Customization
 Tag parser
 ------------
 
+A tag parser is a function that returns a key-value pair. The signature is given by the protocol :class:`~heptools.config.TagParser` where the arguments are keyword only and can be omitted if unnecessary.  Custom parsers can be registered through the ``tag_parsers`` argument of :class:`~heptools.config.ConfigParser`. :ref:`config-builtin-tags` cannot be overridden.
+
+.. admonition:: example
+  :class: guide-config-example, dropdown
+
+  The following example defines two custom tags: one to repeat the value by given times and another to control how the copy is made.
+
+  .. code-block:: python
+
+    import copy
+
+    def repeat_parser(tags: dict[str], tag: str, key: str, value):
+        tag = int(tag or 1)
+        if mode := tags.get("repeat.mode"):
+            match mode:
+              case "copy":
+                method = copy.copy
+              case "deepcopy":
+                method = copy.deepcopy
+              case _:
+                raise ValueError(f"unknown repeat mode {mode}")
+            return key,[value] + [method(value) for _ in range(tag-1)]
+        return key, [value] * tag
+
+    parser = ConfigParser(tag_parsers={"repeat": repeat_parser, "repeat.mode": None})
+
+  Then the following config
+
+  .. code-block:: yaml
+
+    key1 <var=value1><repeat=3>: []
+    key2 <var=value2><repeat.mode=deepcopy><repeat=3>: []
+    <discard>:
+      <code> <comment=key1>: value1.append(1)
+      <code> <comment=key2>: value2.append(1)
+
+
+  will be parsed into
+
+  .. code-block:: python
+
+    return {
+      "key1": [[1], [1], [1]],
+      "key2": [[1], [], []]
+    }
+
 .. _config-custom-extend:
 
 ``<extend>`` operation
 ------------------------
+
+Custom ``extend_method()`` for :ref:`config-tag-extend` can be registered through the ``extend_methods`` argument of :class:`~heptools.config.ConfigParser`. The built-in extend methods cannot be overridden.
+
+.. admonition:: example
+  :class: guide-config-example, dropdown
+
+  The following example defines a custom operation to concat paths.
+
+  .. code-block:: python
+
+    from pathlib import PurePosixPath
+
+    def extend_paths(base: str, value: str):
+        return PurePosixPath(base) / value
+
+    parser = ConfigParser(extend_methods={"path": extend_paths})
+
+  Then the following config
+
+  .. code-block:: yaml
+
+    key: base
+    key <extend=path>: file
+
+  will be parsed into
+
+  .. code-block:: python
+
+    return {
+      "key": PurePosixPath("base") / "file"
+    }
+
 .. _config-custom-deserializer:
 
 File deserializer
 ------------------------
 
-Tips & Tricks
-==============
+A deserializer is a function that takes a read-only :class:`io.BytesIO` stream as input and returns a deserialized object. Custom deserializers can be registered using the decorator :meth:`~heptools.config.FileLoader.register` of :data:`ConfigParser.io <heptools.config.ConfigParser.io>`. 
 
-.. _config-tips-include:
 
-Dynamic ``<include>``
-----------------------
+.. admonition:: example
+  :class: guide-config-example, dropdown
 
-Keyword tag values
--------------------
+  The following example defines a custom deserializer to load comma-separated CSV files.
+
+  .. code-block:: python
+
+    @ConfigParser.io.register("csv")
+    def csv_loader(stream: BytesIO):
+        headers = stream.readline().decode().strip().split(",")
+        lineno = 1
+        data = [[] for _ in range(len(headers))]
+        while row := stream.readline():
+            lineno += 1
+            row = row.decode().strip()
+            if not row:
+                continue
+            row = row.split(",")
+            if len(row) != len(headers):
+                raise ValueError(f"line {lineno}: length mismatch.")
+            for i, value in enumerate(row):
+                data[i].append(value)
+        return dict(zip(headers, data))
+
+  Then, the ``.csv`` files in :ref:`config-tag-include` and :ref:`config-tag-file` can be properly loaded.
 
 Advanced
 ========
@@ -773,10 +871,69 @@ The following tags are not recommended for general usage and may lead to unexpec
 
 ``<patch>``
 -------------
-# TODO patch
 
-.. _config-custom-patch:
+This tag adds a patch layer on top of other config files before :ref:`config-tag-include` to modify the raw content. The patches are evaluated lazily after the deserialization but before the tag parsing, so it is supposed to work as a preprocessor with minimal semantic support other than a regular tag. A patch layer consists of a list of patches, each of which is a dictionary with the following structure:
 
-Customized ``<patch>`` action
-------------------------------
+.. code-block:: yaml
 
+  path: "[scheme://netloc/]path[#fragment]" # the file to patch
+  actions: # actions applied to the file
+    - action: name # the name of the action
+      ... # other keyword arguments provided to the action
+
+where the ``path`` can be either absolute or relative. The following built-in ``actions`` are available:
+
+.. list-table:: patch actions
+  :widths: 40, 20, 40
+  :header-rows: 1
+
+  * - Name
+    - Target
+    - Arguments
+  * - ``mkdir``: create a nested dict.
+    - ``dict``
+    - - ``target``: a dot-separated path to a dict.
+  * - ``update``: update the target dict by the value.
+    - ``dict`` 
+    - - ``target``: a dot-separated path to a dict.
+      - ``value``: a dict.
+  * - ``pop``: remove the target key/item from a dict/list.
+    - ``dict`` ``list``
+    - - ``target``: a dot-separated path to a key/item.
+  * - ``set``: set the target key/item to the value.
+    - ``dict`` ``list``
+    - - ``target``: a dot-separated path to a key/item.
+      - ``value``: any value.
+  * - ``insert``: insert the value before the target item.
+    - ``list``
+    - - ``target``: a dot-separated path to an item.
+      - ``value``: any value.
+  * - ``append``: append the value to the end of the target list.
+    - ``list``
+    - - ``target``: a dot-separated path to a list.
+      - ``value``: any value.
+  * - ``extend``: extend the target list by the value.
+    - ``list``
+    - - ``target``: a dot-separated path to a list.
+      - ``value``: a list.
+
+A custom patch action can be registered through the ``patch_actions`` argument of :class:`~heptools.config.ConfigParser`. The built-in actions cannot be overridden.
+
+Once a patch layer is created, it will be immediately installed and in effect across all the configs within the same parser :meth:`~heptools.config.ConfigParser.__call__`. If a key is provided, it will be used as the patch name. A named patch can be installed or uninstalled multiple times.
+
+.. admonition:: tag
+  :class: guide-config-tag
+
+  Create and install a patch layer:
+  * ``<patch>``:  The type of the paths will be inferred.
+  * ``<patch=absolute>``: Resolve as absolute paths.
+  * ``<patch=relative>``: Resolve as relative paths.
+  Modify the patch layers:
+  * ``<patch=install>``: install patch layers.
+  * ``<patch=uninstall>``: uninstall patch layers.
+
+.. admonition:: value
+  :class: guide-config-value
+
+  * ``<patch>``, ``<patch=absolute>``, ``<patch=relative>``: a patch of a list of patches.
+  * ``<patch=install>``, ``<patch=uninstall>``: a patch name or a list of patch names.

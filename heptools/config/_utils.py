@@ -3,6 +3,7 @@ from __future__ import annotations
 import re
 from os import get_terminal_size
 from textwrap import indent
+from typing import Iterable
 
 
 def block_divider(size: int = 50):
@@ -54,6 +55,18 @@ def format_repr(value, maxlines: int = None) -> str:
             lines[maxlines - 1] = f"+ {len(lines) - maxlines + 1} more lines"
         text = "\n".join(lines[:maxlines])
     return text
+
+
+class check_reserved:
+    def __init__(self, name: str, reserved: Iterable[str]):
+        self.name = name
+        self.reserved = set(reserved)
+
+    def __call__(self, custom: Iterable[str]):
+        if reserved := self.reserved.intersection(custom):
+            raise ValueError(
+                f"reserved {self.name} cannot be overridden: {', '.join(reserved)}"
+            )
 
 
 class SimpleTree:

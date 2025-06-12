@@ -6,7 +6,7 @@ from dataclasses import dataclass
 from typing import TYPE_CHECKING, Any, Callable, Iterable, Optional, Protocol, cast
 
 from ._io import _enter_path, _parse_url, _split_path
-from ._utils import block_divider, block_indent, format_repr
+from ._utils import block_divider, block_indent, check_reserved, format_repr
 
 if TYPE_CHECKING:
     from ._parser import ConfigParser
@@ -61,11 +61,11 @@ class PatchAction(Protocol):
 
 
 @dataclass
-class _PathAction:
-    path: str
+class _TargetAction:
+    target: str
 
     def __post_init__(self):
-        self.parts = [*_split_path(self.path)]
+        self.parts = [*_split_path(self.target)]
 
     def _enter_parent(self, data: dict) -> tuple[dict, str] | tuple[list, int]:
         data = _enter_path(data, self.parts[:-1])
@@ -76,11 +76,11 @@ class _PathAction:
 
 
 @dataclass
-class _PathValueAction(_PathAction):
+class _TargetValueAction(_TargetAction):
     value: Any
 
 
-class MkdirAction(_PathAction):
+class MkdirAction(_TargetAction):
     def __call__(self, data: dict):
         for part in self.parts:
             if part not in data:
@@ -88,37 +88,37 @@ class MkdirAction(_PathAction):
             data = data[part]
 
 
-class PopAction(_PathAction):
+class UpdateAction(_TargetValueAction):
+    def __call__(self, data: dict):
+        _enter_path(data, self.parts).update(self.value)
+
+
+class PopAction(_TargetAction):
     def __call__(self, data: dict):
         current, key = self._enter_parent(data)
         current.pop(key)
 
 
-class SetAction(_PathValueAction):
+class SetAction(_TargetValueAction):
     def __call__(self, data: dict):
         current, key = self._enter_parent(data)
         current[key] = self.value
 
 
-class InsertAction(_PathValueAction):
+class InsertAction(_TargetValueAction):
     def __call__(self, data: dict):
         current, idx = self._enter_parent(data)
         current.insert(idx, self.value)
 
 
-class AppendAction(_PathValueAction):
+class AppendAction(_TargetValueAction):
     def __call__(self, data: dict):
         _enter_path(data, self.parts).append(self.value)
 
 
-class ExtendAction(_PathValueAction):
+class ExtendAction(_TargetValueAction):
     def __call__(self, data: dict):
         _enter_path(data, self.parts).extend(self.value)
-
-
-class UpdateAction(_PathValueAction):
-    def __call__(self, data: dict):
-        _enter_path(data, self.parts).update(self.value)
 
 
 class _PatchLayer:
@@ -175,15 +175,17 @@ class _PatchLayer:
 class PatchedLoader:
     static_actions = {
         "mkdir": MkdirAction,  # dict
+        "update": UpdateAction,  # dict
         "pop": PopAction,  # dict, list
         "set": SetAction,  # dict, list
         "insert": InsertAction,  # list
         "append": AppendAction,  # list
         "extend": ExtendAction,  # list
-        "update": UpdateAction,  # dict
     }
+    reserved_actions = check_reserved("patch actions", static_actions)
 
     def __init__(self, parser: ConfigParser):
+        self.reserved_actions(parser.patch_actions)
         self.actions = parser.patch_actions | self.static_actions
         self.loader = parser.io.load
 
