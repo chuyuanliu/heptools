@@ -1075,7 +1075,7 @@
 </section>
 <section id="file-deserializer">
 <span id="config-custom-deserializer"></span><h3>File deserializer<a class="headerlink" href="#file-deserializer" title="Link to this heading">#</a></h3>
-<p>A deserializer is a function that takes a read-only <a class="reference external" href="https://docs.python.org/3/library/io.html#io.BytesIO" title="(in Python v3.13)"><code class="xref py py-class docutils literal notranslate"><span class="pre">BytesIO</span></code></a> stream as input and returns a deserialized object. Deserializers can be registered using the decorator <a class="reference internal" href="../../api/config.html#heptools.config.FileLoader.register" title="heptools.config.FileLoader.register"><code class="xref py py-meth docutils literal notranslate"><span class="pre">register()</span></code></a> of <a class="reference internal" href="../../api/config.html#heptools.config.ConfigParser.io" title="heptools.config.ConfigParser.io"><code class="xref py py-data docutils literal notranslate"><span class="pre">ConfigParser.io</span></code></a>.</p>
+<p>A deserializer is a function that takes a read-only <a class="reference external" href="https://docs.python.org/3/library/io.html#io.BytesIO" title="(in Python v3.13)"><code class="xref py py-class docutils literal notranslate"><span class="pre">BytesIO</span></code></a> stream as input and returns a deserialized object. Custom deserializers can be registered using the decorator <a class="reference internal" href="../../api/config.html#heptools.config.FileLoader.register" title="heptools.config.FileLoader.register"><code class="xref py py-meth docutils literal notranslate"><span class="pre">register()</span></code></a> of <a class="reference internal" href="../../api/config.html#heptools.config.ConfigParser.io" title="heptools.config.ConfigParser.io"><code class="xref py py-data docutils literal notranslate"><span class="pre">ConfigParser.io</span></code></a>.</p>
 <div class="guide-config-example dropdown admonition">
 <p class="admonition-title">example</p>
 <p>The following example implements a deserializer to load <code class="docutils literal notranslate"><span class="pre">CSV</span></code> files.</p>
@@ -1108,21 +1108,20 @@
 <span id="config-tag-patch"></span><h3><code class="docutils literal notranslate"><span class="pre">&lt;patch&gt;</span></code><a class="headerlink" href="#patch" title="Link to this heading">#</a></h3>
 <p>Patch layers can be attached on top of config files to modify the raw content before <a class="reference internal" href="#config-tag-include"><span class="std std-ref">&lt;include&gt;</span></a>. A patch layer consists of a list of patches, each of which is a dictionary with the following structure:</p>
 <div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">path</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;[scheme://netloc/]path[#fragment]&quot;</span><span class="w"> </span><span class="c1"># the file to patch</span>
-<span class="nt">actions</span><span class="p">:</span><span class="w"> </span><span class="c1"># actions applied to the file</span>
+<span class="nt">actions</span><span class="p">:</span><span class="w"> </span><span class="c1"># actions to apply</span>
 <span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">action</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">name</span><span class="w"> </span><span class="c1"># the name of the action</span>
 <span class="w">    </span><span class="l l-Scalar l-Scalar-Plain">...</span><span class="w"> </span><span class="c1"># other keyword arguments provided to the action</span>
 </pre></div>
 </div>
-<p>where the <code class="docutils literal notranslate"><span class="pre">path</span></code> can be either absolute or relative. The <code class="docutils literal notranslate"><span class="pre">action</span></code> is one of the following:</p>
-<div class="pst-scrollable-table-container"><table class="table" id="id2">
-<caption><span class="caption-text">Patch actions</span><a class="headerlink" href="#id2" title="Link to this table">#</a></caption>
+<p>where the <code class="docutils literal notranslate"><span class="pre">path</span></code> can be either absolute or relative and the <code class="docutils literal notranslate"><span class="pre">action</span></code> is one of the following:</p>
+<div class="pst-scrollable-table-container"><table class="table">
 <colgroup>
 <col style="width: 35.0%" />
 <col style="width: 10.0%" />
 <col style="width: 55.0%" />
 </colgroup>
 <thead>
-<tr class="row-odd"><th class="head"><p>Name</p></th>
+<tr class="row-odd"><th class="head"><p>Action</p></th>
 <th class="head"><p>Type</p></th>
 <th class="head"><p>Arguments</p></th>
 </tr>
@@ -1207,6 +1206,60 @@
 <li><p><code class="docutils literal notranslate"><span class="pre">&lt;patch&gt;</span></code>, <code class="docutils literal notranslate"><span class="pre">&lt;patch=absolute&gt;</span></code>, <code class="docutils literal notranslate"><span class="pre">&lt;patch=relative&gt;</span></code>: a patch or a list of patches.</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">&lt;patch=install&gt;</span></code>, <code class="docutils literal notranslate"><span class="pre">&lt;patch=uninstall&gt;</span></code>: a patch name or a list of patch names.</p></li>
 </ul>
+</div>
+<div class="guide-config-example dropdown admonition">
+<p class="admonition-title">example</p>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nn">---</span><span class="w"> </span><span class="c1"># file1.yml</span>
+<span class="nt">key1 &lt;type=os::path.join&gt;</span><span class="p">:</span>
+<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">path</span>
+<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">to</span>
+<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">file</span>
+
+<span class="nn">---</span><span class="w"> </span><span class="c1"># file2.yml</span>
+<span class="nt">key2 &lt;type=datetime::datetime&gt;</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">year</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">2025</span>
+<span class="w">  </span><span class="nt">month</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">1</span>
+<span class="w">  </span><span class="nt">day</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">1</span>
+
+<span class="nn">---</span><span class="w"> </span><span class="c1"># patched.yml</span>
+<span class="nt">patch1 &lt;patch&gt;</span><span class="p">:</span>
+<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">path</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">file1.yml</span>
+<span class="w">    </span><span class="nt">actions</span><span class="p">:</span>
+<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">action</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">insert</span>
+<span class="w">        </span><span class="nt">target</span><span class="p">:</span><span class="w"> </span><span class="s">&#39;&quot;key1</span><span class="nv"> </span><span class="s">&lt;type=os::path.join&gt;&quot;.2&#39;</span>
+<span class="w">        </span><span class="nt">value</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">new</span>
+<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">path</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">file2.yml</span>
+<span class="w">    </span><span class="nt">actions</span><span class="p">:</span>
+<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">action</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">update</span>
+<span class="w">        </span><span class="nt">target</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;key2</span><span class="nv"> </span><span class="s">&lt;type=datetime::datetime&gt;&quot;</span>
+<span class="w">        </span><span class="nt">value</span><span class="p">:</span>
+<span class="w">          </span><span class="nt">month</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">12</span>
+<span class="w">          </span><span class="nt">day</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">31</span>
+
+<span class="nt">patched</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">&lt;include&gt;</span><span class="p">:</span>
+<span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">file1.yml</span>
+<span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">file2.yml</span>
+<span class="nt">unpatched</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">&lt;patch=uninstall&gt;</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">patch1</span>
+<span class="w">  </span><span class="nt">&lt;include&gt;</span><span class="p">:</span>
+<span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">file1.yml</span>
+<span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">file2.yml</span>
+</pre></div>
+</div>
+<p>The example above will be parsed into</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="p">{</span>
+  <span class="s2">&quot;patched&quot;</span><span class="p">:</span> <span class="p">{</span>
+    <span class="s2">&quot;key1&quot;</span><span class="p">:</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="s2">&quot;path&quot;</span><span class="p">,</span> <span class="s2">&quot;to&quot;</span><span class="p">,</span> <span class="s2">&quot;new&quot;</span><span class="p">,</span> <span class="s2">&quot;file&quot;</span><span class="p">),</span>
+    <span class="s2">&quot;key2&quot;</span><span class="p">:</span> <span class="n">datetime</span><span class="o">.</span><span class="n">datetime</span><span class="p">(</span><span class="mi">2025</span><span class="p">,</span> <span class="mi">12</span><span class="p">,</span> <span class="mi">31</span><span class="p">),</span>
+  <span class="p">},</span>
+  <span class="s2">&quot;unpatched&quot;</span><span class="p">:</span> <span class="p">{</span>
+    <span class="s2">&quot;key1&quot;</span><span class="p">:</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="s2">&quot;path&quot;</span><span class="p">,</span> <span class="s2">&quot;to&quot;</span><span class="p">,</span> <span class="s2">&quot;file&quot;</span><span class="p">),</span>
+    <span class="s2">&quot;key2&quot;</span><span class="p">:</span> <span class="n">datetime</span><span class="o">.</span><span class="n">datetime</span><span class="p">(</span><span class="mi">2025</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">),</span>
+  <span class="p">},</span>
+<span class="p">}</span>
+</pre></div>
+</div>
 </div>
 </section>
 </section>
