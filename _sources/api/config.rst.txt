@@ -23,4 +23,5 @@ Customization
 -------------
 
 .. autoapiclass:: heptools.config.FileLoader
+    :inherited-members:
     :members:

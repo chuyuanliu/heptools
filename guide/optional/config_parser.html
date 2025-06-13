@@ -422,7 +422,7 @@
 <ul class="simple">
 <li><p>The tags are parsed from left to right based on the order of appearance.</p></li>
 <li><p>The same tag can be applied multiple times.</p></li>
-<li><p>The parsing result is order dependent. See <a class="reference internal" href="#config-custom-tag"><span class="std std-ref">Tag parser</span></a>.</p></li>
+<li><p>The parsing result is order dependent.</p></li>
 <li><p>Some of the built-in tags follow special rules:</p>
 <ul>
 <li><p><a class="reference internal" href="#config-tag-code"><span class="std std-ref">&lt;code&gt;</span></a> have the highest precedence and will only be parsed once.</p></li>
@@ -782,7 +782,7 @@
 </section>
 <section id="extend">
 <span id="config-tag-extend"></span><h3><code class="docutils literal notranslate"><span class="pre">&lt;extend&gt;</span></code><a class="headerlink" href="#extend" title="Link to this heading">#</a></h3>
-<p>This tag will try to extend the existing value of the same key by the value in a way given by the pseudo code:</p>
+<p>This tag will try to extend the existing key by the new value in a way given by the pseudo code:</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">if</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">local</span><span class="p">:</span>
   <span class="k">return</span> <span class="n">extend_method</span><span class="p">(</span><span class="n">local</span><span class="p">[</span><span class="n">key</span><span class="p">],</span> <span class="n">value</span><span class="p">)</span>
 <span class="k">else</span><span class="p">:</span>
@@ -831,7 +831,7 @@
 </section>
 <section id="var">
 <span id="config-tag-var"></span><h3><code class="docutils literal notranslate"><span class="pre">&lt;var&gt;</span></code><a class="headerlink" href="#var" title="Link to this heading">#</a></h3>
-<p>This tag can be used to create a variable from the value. The lifecycle of the variables spans the entire parser <a class="reference internal" href="../../api/config.html#heptools.config.ConfigParser.__call__" title="heptools.config.ConfigParser.__call__"><code class="xref py py-meth docutils literal notranslate"><span class="pre">__call__()</span></code></a> and is shared by all files within the same call. The variable can be accessed using <a class="reference internal" href="#config-tag-ref"><span class="std std-ref">&lt;ref&gt;</span></a> and is also available as <code class="docutils literal notranslate"><span class="pre">locals</span></code> in <a class="reference internal" href="#config-tag-code"><span class="std std-ref">&lt;code&gt;</span></a>.</p>
+<p>This tag can be used to create a variable from the value. The variable lifecycle spans the entire parser <a class="reference internal" href="../../api/config.html#heptools.config.ConfigParser.__call__" title="heptools.config.ConfigParser.__call__"><code class="xref py py-meth docutils literal notranslate"><span class="pre">__call__()</span></code></a> and is shared by all files within the same call. The variable can be accessed using <a class="reference internal" href="#config-tag-ref"><span class="std std-ref">&lt;ref&gt;</span></a> and is also available as <code class="docutils literal notranslate"><span class="pre">locals</span></code> in <a class="reference internal" href="#config-tag-code"><span class="std std-ref">&lt;code&gt;</span></a>.</p>
 <div class="guide-config-tag admonition">
 <p class="admonition-title">tag</p>
 <ul class="simple">
@@ -1010,26 +1010,26 @@
 <p>A tag parser is a function that returns a key-value pair. The signature is given by the protocol <a class="reference internal" href="../../api/config.html#heptools.config.TagParser" title="heptools.config.TagParser"><code class="xref py py-class docutils literal notranslate"><span class="pre">TagParser</span></code></a> where the arguments are keyword only and can be omitted if unnecessary.  Custom parsers can be registered through the <code class="docutils literal notranslate"><span class="pre">tag_parsers</span></code> argument of <a class="reference internal" href="../../api/config.html#heptools.config.ConfigParser" title="heptools.config.ConfigParser"><code class="xref py py-class docutils literal notranslate"><span class="pre">ConfigParser</span></code></a>. <a class="reference internal" href="#config-builtin-tags"><span class="std std-ref">Built-in tags</span></a> cannot be overridden.</p>
 <div class="guide-config-example dropdown admonition">
 <p class="admonition-title">example</p>
-<p>The following example defines two custom tags: one to repeat the value by given times and another to control how the copy is made.</p>
+<p>The following example defines two custom tags: one repeats the value by a given number of times and the other controls how the copy is made.</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">copy</span>
 
 <span class="k">def</span><span class="w"> </span><span class="nf">repeat_parser</span><span class="p">(</span><span class="n">tags</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span> <span class="n">tag</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">key</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">value</span><span class="p">):</span>
     <span class="n">tag</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">tag</span> <span class="ow">or</span> <span class="mi">1</span><span class="p">)</span>
     <span class="k">if</span> <span class="n">mode</span> <span class="o">:=</span> <span class="n">tags</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;repeat.mode&quot;</span><span class="p">):</span>
         <span class="k">match</span> <span class="n">mode</span><span class="p">:</span>
-          <span class="k">case</span> <span class="s2">&quot;copy&quot;</span><span class="p">:</span>
-            <span class="n">method</span> <span class="o">=</span> <span class="n">copy</span><span class="o">.</span><span class="n">copy</span>
-          <span class="k">case</span> <span class="s2">&quot;deepcopy&quot;</span><span class="p">:</span>
-            <span class="n">method</span> <span class="o">=</span> <span class="n">copy</span><span class="o">.</span><span class="n">deepcopy</span>
-          <span class="k">case</span><span class="w"> </span><span class="k">_</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;unknown repeat mode </span><span class="si">{</span><span class="n">mode</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
-        <span class="k">return</span> <span class="n">key</span><span class="p">,[</span><span class="n">value</span><span class="p">]</span> <span class="o">+</span> <span class="p">[</span><span class="n">method</span><span class="p">(</span><span class="n">value</span><span class="p">)</span> <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">tag</span><span class="o">-</span><span class="mi">1</span><span class="p">)]</span>
+            <span class="k">case</span> <span class="s2">&quot;copy&quot;</span><span class="p">:</span>
+                <span class="n">method</span> <span class="o">=</span> <span class="n">copy</span><span class="o">.</span><span class="n">copy</span>
+            <span class="k">case</span> <span class="s2">&quot;deepcopy&quot;</span><span class="p">:</span>
+                <span class="n">method</span> <span class="o">=</span> <span class="n">copy</span><span class="o">.</span><span class="n">deepcopy</span>
+            <span class="k">case</span><span class="w"> </span><span class="k">_</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;unknown repeat mode </span><span class="si">{</span><span class="n">mode</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">key</span><span class="p">,</span> <span class="p">[</span><span class="n">value</span><span class="p">]</span> <span class="o">+</span> <span class="p">[</span><span class="n">method</span><span class="p">(</span><span class="n">value</span><span class="p">)</span> <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">tag</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)]</span>
     <span class="k">return</span> <span class="n">key</span><span class="p">,</span> <span class="p">[</span><span class="n">value</span><span class="p">]</span> <span class="o">*</span> <span class="n">tag</span>
 
 <span class="n">parser</span> <span class="o">=</span> <span class="n">ConfigParser</span><span class="p">(</span><span class="n">tag_parsers</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;repeat&quot;</span><span class="p">:</span> <span class="n">repeat_parser</span><span class="p">,</span> <span class="s2">&quot;repeat.mode&quot;</span><span class="p">:</span> <span class="kc">None</span><span class="p">})</span>
 </pre></div>
 </div>
-<p>Then the following config</p>
+<p>Then, the following config</p>
 <div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">key1 &lt;var=value1&gt;&lt;repeat=3&gt;</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[]</span>
 <span class="nt">key2 &lt;var=value2&gt;&lt;repeat.mode=deepcopy&gt;&lt;repeat=3&gt;</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[]</span>
 <span class="nt">&lt;discard&gt;</span><span class="p">:</span>
@@ -1038,7 +1038,7 @@
 </pre></div>
 </div>
 <p>will be parsed into</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">return</span> <span class="p">{</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="p">{</span>
   <span class="s2">&quot;key1&quot;</span><span class="p">:</span> <span class="p">[[</span><span class="mi">1</span><span class="p">],</span> <span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="p">[</span><span class="mi">1</span><span class="p">]],</span>
   <span class="s2">&quot;key2&quot;</span><span class="p">:</span> <span class="p">[[</span><span class="mi">1</span><span class="p">],</span> <span class="p">[],</span> <span class="p">[]]</span>
 <span class="p">}</span>
@@ -1054,19 +1054,19 @@
 <p>The following example defines a custom operation to concat paths.</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">PurePosixPath</span>
 
-<span class="k">def</span><span class="w"> </span><span class="nf">extend_paths</span><span class="p">(</span><span class="n">base</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">value</span><span class="p">:</span> <span class="nb">str</span><span class="p">):</span>
-    <span class="k">return</span> <span class="n">PurePosixPath</span><span class="p">(</span><span class="n">base</span><span class="p">)</span> <span class="o">/</span> <span class="n">value</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">extend_paths</span><span class="p">(</span><span class="n">old_value</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">new_value</span><span class="p">:</span> <span class="nb">str</span><span class="p">):</span>
+    <span class="k">return</span> <span class="n">PurePosixPath</span><span class="p">(</span><span class="n">old_value</span><span class="p">)</span> <span class="o">/</span> <span class="n">new_value</span>
 
 <span class="n">parser</span> <span class="o">=</span> <span class="n">ConfigParser</span><span class="p">(</span><span class="n">extend_methods</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;path&quot;</span><span class="p">:</span> <span class="n">extend_paths</span><span class="p">})</span>
 </pre></div>
 </div>
-<p>Then the following config</p>
+<p>Then, the following config</p>
 <div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">key</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">base</span>
 <span class="nt">key &lt;extend=path&gt;</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">file</span>
 </pre></div>
 </div>
 <p>will be parsed into</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">return</span> <span class="p">{</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="p">{</span>
   <span class="s2">&quot;key&quot;</span><span class="p">:</span> <span class="n">PurePosixPath</span><span class="p">(</span><span class="s2">&quot;base&quot;</span><span class="p">)</span> <span class="o">/</span> <span class="s2">&quot;file&quot;</span>
 <span class="p">}</span>
 </pre></div>
@@ -1075,10 +1075,10 @@
 </section>
 <section id="file-deserializer">
 <span id="config-custom-deserializer"></span><h3>File deserializer<a class="headerlink" href="#file-deserializer" title="Link to this heading">#</a></h3>
-<p>A deserializer is a function that takes a read-only <a class="reference external" href="https://docs.python.org/3/library/io.html#io.BytesIO" title="(in Python v3.13)"><code class="xref py py-class docutils literal notranslate"><span class="pre">io.BytesIO</span></code></a> stream as input and returns a deserialized object. Custom deserializers can be registered using the decorator <code class="xref py py-meth docutils literal notranslate"><span class="pre">register()</span></code> of <a class="reference internal" href="../../api/config.html#heptools.config.ConfigParser.io" title="heptools.config.ConfigParser.io"><code class="xref py py-data docutils literal notranslate"><span class="pre">ConfigParser.io</span></code></a>.</p>
+<p>A deserializer is a function that takes a read-only <a class="reference external" href="https://docs.python.org/3/library/io.html#io.BytesIO" title="(in Python v3.13)"><code class="xref py py-class docutils literal notranslate"><span class="pre">BytesIO</span></code></a> stream as input and returns a deserialized object. Deserializers can be registered using the decorator <a class="reference internal" href="../../api/config.html#heptools.config.FileLoader.register" title="heptools.config.FileLoader.register"><code class="xref py py-meth docutils literal notranslate"><span class="pre">register()</span></code></a> of <a class="reference internal" href="../../api/config.html#heptools.config.ConfigParser.io" title="heptools.config.ConfigParser.io"><code class="xref py py-data docutils literal notranslate"><span class="pre">ConfigParser.io</span></code></a>.</p>
 <div class="guide-config-example dropdown admonition">
 <p class="admonition-title">example</p>
-<p>The following example defines a custom deserializer to load comma-separated CSV files.</p>
+<p>The following example implements a deserializer to load <code class="docutils literal notranslate"><span class="pre">CSV</span></code> files.</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="nd">@ConfigParser</span><span class="o">.</span><span class="n">io</span><span class="o">.</span><span class="n">register</span><span class="p">(</span><span class="s2">&quot;csv&quot;</span><span class="p">)</span>
 <span class="k">def</span><span class="w"> </span><span class="nf">csv_loader</span><span class="p">(</span><span class="n">stream</span><span class="p">:</span> <span class="n">BytesIO</span><span class="p">):</span>
     <span class="n">headers</span> <span class="o">=</span> <span class="n">stream</span><span class="o">.</span><span class="n">readline</span><span class="p">()</span><span class="o">.</span><span class="n">decode</span><span class="p">()</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;,&quot;</span><span class="p">)</span>
@@ -1106,24 +1106,24 @@
 <p>The following tags are not recommended for general usage and may lead to unexpected results or significantly increase the maintenance complexity.</p>
 <section id="patch">
 <span id="config-tag-patch"></span><h3><code class="docutils literal notranslate"><span class="pre">&lt;patch&gt;</span></code><a class="headerlink" href="#patch" title="Link to this heading">#</a></h3>
-<p>This tag adds a patch layer on top of other config files before <a class="reference internal" href="#config-tag-include"><span class="std std-ref">&lt;include&gt;</span></a> to modify the raw content. The patches are evaluated lazily after the deserialization but before the tag parsing, so it is supposed to work as a preprocessor with minimal semantic support other than a regular tag. A patch layer consists of a list of patches, each of which is a dictionary with the following structure:</p>
+<p>Patch layers can be attached on top of config files to modify the raw content before <a class="reference internal" href="#config-tag-include"><span class="std std-ref">&lt;include&gt;</span></a>. A patch layer consists of a list of patches, each of which is a dictionary with the following structure:</p>
 <div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">path</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;[scheme://netloc/]path[#fragment]&quot;</span><span class="w"> </span><span class="c1"># the file to patch</span>
 <span class="nt">actions</span><span class="p">:</span><span class="w"> </span><span class="c1"># actions applied to the file</span>
 <span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">action</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">name</span><span class="w"> </span><span class="c1"># the name of the action</span>
 <span class="w">    </span><span class="l l-Scalar l-Scalar-Plain">...</span><span class="w"> </span><span class="c1"># other keyword arguments provided to the action</span>
 </pre></div>
 </div>
-<p>where the <code class="docutils literal notranslate"><span class="pre">path</span></code> can be either absolute or relative. The following built-in <code class="docutils literal notranslate"><span class="pre">actions</span></code> are available:</p>
+<p>where the <code class="docutils literal notranslate"><span class="pre">path</span></code> can be either absolute or relative. The <code class="docutils literal notranslate"><span class="pre">action</span></code> is one of the following:</p>
 <div class="pst-scrollable-table-container"><table class="table" id="id2">
-<caption><span class="caption-text">patch actions</span><a class="headerlink" href="#id2" title="Link to this table">#</a></caption>
+<caption><span class="caption-text">Patch actions</span><a class="headerlink" href="#id2" title="Link to this table">#</a></caption>
 <colgroup>
-<col style="width: 40.0%" />
-<col style="width: 20.0%" />
-<col style="width: 40.0%" />
+<col style="width: 35.0%" />
+<col style="width: 10.0%" />
+<col style="width: 55.0%" />
 </colgroup>
 <thead>
 <tr class="row-odd"><th class="head"><p>Name</p></th>
-<th class="head"><p>Target</p></th>
+<th class="head"><p>Type</p></th>
 <th class="head"><p>Arguments</p></th>
 </tr>
 </thead>
@@ -1143,7 +1143,7 @@
 </ul>
 </td>
 </tr>
-<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">pop</span></code>: remove the target key/item from a dict/list.</p></td>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">pop</span></code>: remove the target key/item from the dict/list.</p></td>
 <td><p><code class="docutils literal notranslate"><span class="pre">dict</span></code> <code class="docutils literal notranslate"><span class="pre">list</span></code></p></td>
 <td><ul class="simple">
 <li><p><code class="docutils literal notranslate"><span class="pre">target</span></code>: a dot-separated path to a key/item.</p></li>
@@ -1154,7 +1154,7 @@
 <td><p><code class="docutils literal notranslate"><span class="pre">dict</span></code> <code class="docutils literal notranslate"><span class="pre">list</span></code></p></td>
 <td><ul class="simple">
 <li><p><code class="docutils literal notranslate"><span class="pre">target</span></code>: a dot-separated path to a key/item.</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">value</span></code>: any value.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">value</span></code>: any object.</p></li>
 </ul>
 </td>
 </tr>
@@ -1162,7 +1162,7 @@
 <td><p><code class="docutils literal notranslate"><span class="pre">list</span></code></p></td>
 <td><ul class="simple">
 <li><p><code class="docutils literal notranslate"><span class="pre">target</span></code>: a dot-separated path to an item.</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">value</span></code>: any value.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">value</span></code>: any object.</p></li>
 </ul>
 </td>
 </tr>
@@ -1170,7 +1170,7 @@
 <td><p><code class="docutils literal notranslate"><span class="pre">list</span></code></p></td>
 <td><ul class="simple">
 <li><p><code class="docutils literal notranslate"><span class="pre">target</span></code>: a dot-separated path to a list.</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">value</span></code>: any value.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">value</span></code>: any object.</p></li>
 </ul>
 </td>
 </tr>
@@ -1185,22 +1185,26 @@
 </tbody>
 </table>
 </div>
-<p>A custom patch action can be registered through the <code class="docutils literal notranslate"><span class="pre">patch_actions</span></code> argument of <a class="reference internal" href="../../api/config.html#heptools.config.ConfigParser" title="heptools.config.ConfigParser"><code class="xref py py-class docutils literal notranslate"><span class="pre">ConfigParser</span></code></a>. The built-in actions cannot be overridden.</p>
-<p>Once a patch layer is created, it will be immediately installed and in effect across all the configs within the same parser <a class="reference internal" href="../../api/config.html#heptools.config.ConfigParser.__call__" title="heptools.config.ConfigParser.__call__"><code class="xref py py-meth docutils literal notranslate"><span class="pre">__call__()</span></code></a>. If a key is provided, it will be used as the patch name. A named patch can be installed or uninstalled multiple times.</p>
+<p>or a custom one registered through the <code class="docutils literal notranslate"><span class="pre">patch_actions</span></code> argument of <a class="reference internal" href="../../api/config.html#heptools.config.ConfigParser" title="heptools.config.ConfigParser"><code class="xref py py-class docutils literal notranslate"><span class="pre">ConfigParser</span></code></a>. The built-in actions cannot be overridden.</p>
+<p>This tag can be used to register a new patch layer. The layer will be installed right after the registration and in effect across all the configs within the same parser <a class="reference internal" href="../../api/config.html#heptools.config.ConfigParser.__call__" title="heptools.config.ConfigParser.__call__"><code class="xref py py-meth docutils literal notranslate"><span class="pre">__call__()</span></code></a>. If a key is provided, it will be used as the patch name. A named patch can be installed or uninstalled multiple times. The patches are evaluated lazily after the deserialization but before the tag parsing, so it is supposed to work as a preprocessor with minimal semantic support other than a regular tag.</p>
 <div class="guide-config-tag admonition">
 <p class="admonition-title">tag</p>
-<p>Create and install a patch layer:
-* <code class="docutils literal notranslate"><span class="pre">&lt;patch&gt;</span></code>:  The type of the paths will be inferred.
-* <code class="docutils literal notranslate"><span class="pre">&lt;patch=absolute&gt;</span></code>: Resolve as absolute paths.
-* <code class="docutils literal notranslate"><span class="pre">&lt;patch=relative&gt;</span></code>: Resolve as relative paths.
-Modify the patch layers:
-* <code class="docutils literal notranslate"><span class="pre">&lt;patch=install&gt;</span></code>: install patch layers.
-* <code class="docutils literal notranslate"><span class="pre">&lt;patch=uninstall&gt;</span></code>: uninstall patch layers.</p>
+<p>Register and install a patch layer:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">&lt;patch&gt;</span></code>:  The type of the paths will be inferred.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">&lt;patch=absolute&gt;</span></code>: Resolve as absolute paths.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">&lt;patch=relative&gt;</span></code>: Resolve as relative paths.</p></li>
+</ul>
+<p>Modify the patch layers:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">&lt;patch=install&gt;</span></code>: install patch layers.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">&lt;patch=uninstall&gt;</span></code>: uninstall patch layers.</p></li>
+</ul>
 </div>
 <div class="guide-config-value admonition">
 <p class="admonition-title">value</p>
 <ul class="simple">
-<li><p><code class="docutils literal notranslate"><span class="pre">&lt;patch&gt;</span></code>, <code class="docutils literal notranslate"><span class="pre">&lt;patch=absolute&gt;</span></code>, <code class="docutils literal notranslate"><span class="pre">&lt;patch=relative&gt;</span></code>: a patch of a list of patches.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">&lt;patch&gt;</span></code>, <code class="docutils literal notranslate"><span class="pre">&lt;patch=absolute&gt;</span></code>, <code class="docutils literal notranslate"><span class="pre">&lt;patch=relative&gt;</span></code>: a patch or a list of patches.</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">&lt;patch=install&gt;</span></code>, <code class="docutils literal notranslate"><span class="pre">&lt;patch=uninstall&gt;</span></code>: a patch name or a list of patch names.</p></li>
 </ul>
 </div>

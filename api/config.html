@@ -494,6 +494,38 @@
 <dd><p>Clear all cache.</p>
 </dd></dl>
 
+<dl class="py method">
+<dt class="sig sig-object py" id="heptools.config.FileLoader.register">
+<em class="property"><span class="k"><span class="pre">classmethod</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">register</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">handler</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">extensions</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/chuyuanliu/heptools/tree/master/heptools/config/_io.py#L189-L189"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#heptools.config.FileLoader.register" title="Link to this definition">#</a></dt>
+<dd><p>Register a handler for file extensions.
+This method can be used as a decorator.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>handler</strong> (<em>Callable</em><em>, </em><em>optional</em>) – Handler function. If not provided, will return a decorator.</p></li>
+<li><p><strong>*extensions</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><em>str</em></a>) – File extensions to register.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="heptools.config.FileLoader.unregister">
+<span class="sig-name descname"><span class="pre">unregister</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">extensions</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/chuyuanliu/heptools/tree/master/heptools/config/_io.py#L219-L231"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#heptools.config.FileLoader.unregister" title="Link to this definition">#</a></dt>
+<dd><p>Unregister handlers for file extensions.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>*extensions</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><em>str</em></a>) – File extensions to unregister.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="heptools.config.FileLoader.registered">
+<span class="sig-name descname"><span class="pre">registered</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference external" href="https://github.com/chuyuanliu/heptools/tree/master/heptools/config/_io.py#L234-L240"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#heptools.config.FileLoader.registered" title="Link to this definition">#</a></dt>
+<dd><p>List all registered file extensions.</p>
+</dd></dl>
+
 </dd></dl>
 
 </section>
@@ -558,6 +590,9 @@
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#heptools.config.FileLoader"><code class="docutils literal notranslate"><span class="pre">FileLoader</span></code></a><ul class="nav section-nav flex-column">
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#heptools.config.FileLoader.load"><code class="docutils literal notranslate"><span class="pre">FileLoader.load()</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#heptools.config.FileLoader.clear_cache"><code class="docutils literal notranslate"><span class="pre">FileLoader.clear_cache()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#heptools.config.FileLoader.register"><code class="docutils literal notranslate"><span class="pre">FileLoader.register()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#heptools.config.FileLoader.unregister"><code class="docutils literal notranslate"><span class="pre">FileLoader.unregister()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#heptools.config.FileLoader.registered"><code class="docutils literal notranslate"><span class="pre">FileLoader.registered()</span></code></a></li>
 </ul>
 </li>
 </ul>
