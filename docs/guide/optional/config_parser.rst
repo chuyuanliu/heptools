@@ -833,7 +833,7 @@ Custom ``extend_method()`` for :ref:`config-tag-extend` can be registered throug
 File deserializer
 ------------------------
 
-A deserializer is a function that takes a read-only :class:`~io.BytesIO` stream as input and returns a deserialized object. Deserializers can be registered using the decorator :meth:`~heptools.config.FileLoader.register` of :data:`ConfigParser.io <heptools.config.ConfigParser.io>`. 
+A deserializer is a function that takes a read-only :class:`~io.BytesIO` stream as input and returns a deserialized object. Custom deserializers can be registered using the decorator :meth:`~heptools.config.FileLoader.register` of :data:`ConfigParser.io <heptools.config.ConfigParser.io>`. 
 
 
 .. admonition:: example
@@ -877,17 +877,17 @@ Patch layers can be attached on top of config files to modify the raw content be
 .. code-block:: yaml
 
   path: "[scheme://netloc/]path[#fragment]" # the file to patch
-  actions: # actions applied to the file
+  actions: # actions to apply
     - action: name # the name of the action
       ... # other keyword arguments provided to the action
 
-where the ``path`` can be either absolute or relative. The ``action`` is one of the following:
+where the ``path`` can be either absolute or relative and the ``action`` is one of the following:
 
-.. list-table:: Patch actions
+.. list-table::
   :widths: 35, 10, 55
   :header-rows: 1
 
-  * - Name
+  * - Action
     - Type
     - Arguments
   * - ``mkdir``: create a nested dict.
@@ -940,3 +940,60 @@ This tag can be used to register a new patch layer. The layer will be installed 
 
   * ``<patch>``, ``<patch=absolute>``, ``<patch=relative>``: a patch or a list of patches.
   * ``<patch=install>``, ``<patch=uninstall>``: a patch name or a list of patch names.
+
+.. admonition:: example
+  :class: guide-config-example, dropdown
+
+  .. code-block:: yaml
+
+    --- # file1.yml
+    key1 <type=os::path.join>:
+      - path
+      - to
+      - file
+
+    --- # file2.yml
+    key2 <type=datetime::datetime>:
+      year: 2025
+      month: 1
+      day: 1
+
+    --- # patched.yml
+    patch1 <patch>:
+      - path: file1.yml
+        actions:
+          - action: insert
+            target: '"key1 <type=os::path.join>".2'
+            value: new
+      - path: file2.yml
+        actions:
+          - action: update
+            target: "key2 <type=datetime::datetime>"
+            value:
+              month: 12
+              day: 31
+
+    patched:
+      <include>:
+        - file1.yml
+        - file2.yml
+    unpatched:
+      <patch=uninstall>: patch1
+      <include>:
+        - file1.yml
+        - file2.yml
+
+  The example above will be parsed into
+
+  .. code-block:: python
+
+    {
+      "patched": {
+        "key1": os.path.join("path", "to", "new", "file"),
+        "key2": datetime.datetime(2025, 12, 31),
+      },
+      "unpatched": {
+        "key1": os.path.join("path", "to", "file"),
+        "key2": datetime.datetime(2025, 1, 1),
+      },
+    }
