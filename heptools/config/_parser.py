@@ -337,7 +337,10 @@ class _TagParserWrapper:
 
 def _tag_parser(func: Callable[P, T]) -> Callable[P, T]:
     kwargs = set()
-    sig = inspect.signature(func)
+    try:
+        sig = inspect.signature(func)
+    except ValueError:
+        return func
     for k, v in sig.parameters.items():
         match v.kind:
             case ParKind.POSITIONAL_OR_KEYWORD | ParKind.KEYWORD_ONLY:
