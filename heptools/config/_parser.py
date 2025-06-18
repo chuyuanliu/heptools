@@ -5,6 +5,7 @@ import importlib
 import inspect
 import operator as op
 import re
+import traceback
 from dataclasses import dataclass, field
 from enum import StrEnum, auto
 from functools import partial
@@ -67,7 +68,12 @@ class _error_msg:
 {info}{block_end}
 the following exception occurred:
   {type(error).__name__}:
-{block_indent(error_msg, "    ")}"""
+{block_indent(error_msg, "    ")}
+{block_start}
+Traceback:
+{block_indent("".join(traceback.format_tb(error.__traceback__)), "    ")}
+{block_end} 
+"""
         )
 
 

@@ -48,7 +48,7 @@ def format_repr(value, maxlines: int = None) -> str:
     elif isinstance(value, (str, int, float, bool, type(None))):
         text = str(value)
     else:
-        text = format_repr(value)
+        text = repr(value)
     if maxlines is not None:
         lines = text.split("\n")
         if len(lines) > maxlines:
