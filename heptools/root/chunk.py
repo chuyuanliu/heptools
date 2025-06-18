@@ -87,7 +87,7 @@ class Chunk(metaclass=_ChunkMeta):
 
     def __init__(
         self,
-        source: PathLike | tuple[PathLike, UUID],
+        source: PathLike | tuple[PathLike, UUID] = None,
         name: str = "Events",
         branches: Iterable[str] = ...,
         num_entries: int = ...,
@@ -111,6 +111,8 @@ class Chunk(metaclass=_ChunkMeta):
         elif check_type(source, tuple[PathLike, UUID]):
             self.path = EOS(source[0])
             self._uuid = source[1]
+        elif source is None:
+            self.path = source
 
         if fetch:
             self._fetch()
