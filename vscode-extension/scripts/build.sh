@@ -12,6 +12,12 @@ convert_tmLanguage_yaml() {
     done
 }
 
+run_setup_script() {
+    if [ -f "src/setup.sh" ]; then
+        bash src/setup.sh
+    fi
+}
+
 if [ "$#" -gt 0 ]; then
     extensions=("$@")
 else
@@ -30,6 +36,7 @@ for extension in "${extensions[@]}"; do
     cd "$extension"
     initialize
     convert_tmLanguage_yaml
+    run_setup_script
     npx @vscode/vsce package
     mv *.vsix ../dist/
     cd ..
