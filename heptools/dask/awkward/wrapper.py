@@ -50,6 +50,9 @@ class _PartitionMappingWrapper(Generic[P, T]):
         if self.label is None:
             self.label = self.func.__name__
 
+    def typetracer(self, func: Callable[P, ak.Array]):
+        self.meta = func
+
     def __call__(self, *args: P.args, **kwargs: P.kwargs) -> T | dak.Array:
         arg_col, arg_repack = unpack_collections(args, traverse=self.traverse)
         kwarg_col, kwarg_repack = unpack_collections(kwargs, traverse=self.traverse)

@@ -22,8 +22,8 @@ FillLike = _h.LazyFill | RealNumber | bool | dak.Array
 
 
 def _np_repeat_meta(a, repeats, axis=None):
-    a = maybe_typetracer(a)
-    repeats = maybe_typetracer(repeats)
+    maybe_typetracer(a)
+    maybe_typetracer(repeats)
     return a
 
 
