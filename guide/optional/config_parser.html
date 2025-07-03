@@ -723,6 +723,7 @@
 </li>
 <li><p><code class="docutils literal notranslate"><span class="pre">&lt;type={module::attribute}&gt;</span></code>:</p>
 <ul>
+<li><p><code class="docutils literal notranslate"><span class="pre">module.attribute()</span></code>: if the value is <code class="docutils literal notranslate"><span class="pre">None</span></code>, no arguments will be passed.</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">module.attribute(*value)</span></code>: if the value is a list, it will be used as positional arguments.</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">module.attribute(**value)</span></code>: If the value is a dict and only contains string keys, the string keys will be used as keyword arguments.</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">module.attribute(*value[None],</span> <span class="pre">**value[others])</span></code>: If the value is a dict and the <code class="docutils literal notranslate"><span class="pre">None</span></code> key is a list, the <code class="docutils literal notranslate"><span class="pre">None</span></code> key will be used as positional arguments.</p></li>

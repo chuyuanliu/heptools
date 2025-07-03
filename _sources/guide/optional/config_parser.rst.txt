@@ -425,6 +425,7 @@ This tag can be used to import a module/attribute, create an instance of a class
 
   * ``<type={module::attribute}>``:
 
+    * ``module.attribute()``: if the value is ``None``, no arguments will be passed.
     * ``module.attribute(*value)``: if the value is a list, it will be used as positional arguments.
     * ``module.attribute(**value)``: If the value is a dict and only contains string keys, the string keys will be used as keyword arguments.
     * ``module.attribute(*value[None], **value[others])``: If the value is a dict and the ``None`` key is a list, the ``None`` key will be used as positional arguments.
