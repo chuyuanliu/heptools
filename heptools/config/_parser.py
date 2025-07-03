@@ -394,7 +394,10 @@ class TypeParser:  # tag: <type>
             return obj
 
         # parse args and kwargs
-        if isinstance(value, dict):
+        if value is None:
+            kwargs = {}
+            args = []
+        elif isinstance(value, dict):
             kwargs = value.copy()
             args = kwargs.pop(None, [])
         else:
