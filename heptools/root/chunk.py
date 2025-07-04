@@ -1,12 +1,12 @@
 from __future__ import annotations
 
 import logging
-import math
 from concurrent.futures import Executor
 from functools import partial
 from typing import Iterable, Optional
 from uuid import UUID
 
+from ..math.utils import balance_split
 from ..system.eos import EOS, PathLike
 from ..typetools import check_type
 from ..utils import map_executor
@@ -399,28 +399,10 @@ class Chunk(metaclass=_ChunkMeta):
             chunks = cls.common(*chunks)
         for chunk in chunks:
             total = len(chunk)
-            if total <= size:
-                yield chunk
-            else:
-                n = total // size
-                diff, n_chunks, n_entries, n_remain = math.inf, None, None, None
-                for _chunks in range(n, n + 2):
-                    _entries = total // _chunks
-                    _remain = total % _chunks
-                    _diff = abs(_entries + 1 - size) * _remain
-                    _diff += abs(_entries - size) * (_chunks - _remain)
-                    if _diff < diff:
-                        diff = _diff
-                        n_chunks = _chunks
-                        n_entries = _entries
-                        n_remain = _remain
-                start = 0
-                for i in range(n_chunks):
-                    stop = start + n_entries
-                    if i < n_remain:
-                        stop += 1
-                    yield chunk.slice(start, stop)
-                    start = stop
+            start = 0
+            for step in balance_split(total, size):
+                yield chunk.slice(start, start + step)
+                start += step
 
     def to_json(self):
         """
