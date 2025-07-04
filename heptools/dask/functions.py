@@ -18,11 +18,11 @@ def reduction(
 ):
     aggregate = dask.delayed(partial(reduce, func))
     if split_every is None:
-        return aggregate(*tasks)
+        return aggregate(tasks)
     while steps := balance_split(len(tasks), split_every):
         start, reduced = 0, []
         for step in steps:
-            reduced.append(aggregate(*tasks[start : start + step]))
+            reduced.append(aggregate(tasks[start : start + step]))
             start += step
         if len(reduced) == 1:
             return reduced[0]
