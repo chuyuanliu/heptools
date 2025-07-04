@@ -2,8 +2,10 @@ from itertools import chain, repeat
 
 
 def balance_split(total: int, target: int) -> list[int]:
-    if total <= target:
+    if target is None or total <= target:
         return [total]
+    if target <= 1:
+        raise ValueError("target size must greater than 1")
     groups = total // target
     diffs = []
     for i in (0, 1):
