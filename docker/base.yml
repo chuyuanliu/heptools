@@ -6,6 +6,7 @@ dependencies:
   - pip
   - pycurl
   - readchar
+  - fsspec
   # numerical
   - numpy
   - scipy
@@ -19,8 +20,8 @@ dependencies:
   - bokeh
   - graphviz
   - pip:
-    - graphviz
-    - pyvis
+      - graphviz
+      - pyvis
   - rich
   # parallel
   - dask
