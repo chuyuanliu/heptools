@@ -585,7 +585,7 @@ class _Parser:
             pairs = [*pairs.items()]
         while pairs:
             k, v = pairs.pop(0)
-            if isinstance(k, str):
+            if k is None or isinstance(k, str):
                 k = self.extract_tags(k)
             key, tags = k
             value = self.eval(tags, v)
