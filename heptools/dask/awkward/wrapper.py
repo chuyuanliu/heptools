@@ -2,7 +2,17 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from functools import partial, wraps
-from typing import Callable, Generic, Optional, ParamSpec, Protocol, TypeVar, overload
+from typing import (
+    Any,
+    Callable,
+    Concatenate,
+    Generic,
+    Optional,
+    ParamSpec,
+    Protocol,
+    TypeVar,
+    overload,
+)
 
 import awkward as ak
 import dask_awkward as dak
@@ -13,6 +23,9 @@ from ._utils import is_typetracer
 
 T = TypeVar("T")
 P = ParamSpec("P")
+
+T2 = TypeVar("T2")
+P2 = ParamSpec("P2")
 
 
 @dataclass
@@ -53,6 +66,12 @@ class _PartitionMappingWrapper(Generic[P, T]):
     def typetracer(self, func: Callable[P, ak.Array]):
         self.meta = func
 
+    @overload
+    def __get__(self, instance: None, owner) -> _PartitionMappingWrapper[P, T]: ...
+    @overload
+    def __get__(
+        self: Callable[Concatenate[Any, P2], T2], instance: Any, owner
+    ) -> Callable[P2, T2]: ...
     def __get__(self, instance, owner):
         if instance is None:
             return self
