@@ -26,7 +26,7 @@ dependencies:
   # parallel
   - dask
   - dask-jobqueue
-  - dask-awkward
+  - dask-awkward >=2025.5.0
   - dask-histogram
   # benchmarks
   - scalene

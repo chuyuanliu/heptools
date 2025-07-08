@@ -3,7 +3,8 @@ channels:
   - conda-forge
 dependencies:
   # grid certificate
-  - ca-policy-lcg 
+  - ca-certificates <=2025.4.26
+  - ca-policy-lcg
   # HTCondor
   - htcondor
   # XRootD
@@ -13,5 +14,5 @@ dependencies:
   - tini
   # DB
   - pip:
-    - dbs3-client
-    - rucio-clients
+      - dbs3-client
+      - rucio-clients
