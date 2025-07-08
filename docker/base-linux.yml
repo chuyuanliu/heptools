@@ -2,6 +2,8 @@ name: hep
 channels:
   - conda-forge
 dependencies:
+  - python=3.11
+  - pip
   # grid certificate
   - ca-certificates <=2025.4.26
   - ca-policy-lcg
