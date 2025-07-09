@@ -5,7 +5,7 @@ dependencies:
   - python=3.11
   - pip
   # grid certificate
-  - ca-policy-lcg <=1.135
+  - ca-policy-lcg
   # HTCondor
   - htcondor
   # XRootD
