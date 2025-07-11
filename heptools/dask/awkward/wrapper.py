@@ -19,7 +19,7 @@ import dask_awkward as dak
 import dask_awkward.lib.core as dakcore
 from dask.base import unpack_collections
 
-from ._utils import is_typetracer
+from ._utils import is_typetracer, to_typetracer
 
 T = TypeVar("T")
 P = ParamSpec("P")
@@ -37,13 +37,14 @@ class _RepackWrapper:
     meta: Optional[Callable]
 
     def __call__(self, *collections):
-        fn = self.fn
-        if self.meta is not None and any(is_typetracer(c) for c in collections):
-            fn = self.meta
-        return fn(
+        typetracing = any(is_typetracer(c) for c in collections)
+        result = (self.meta if typetracing and self.meta is not None else self.fn)(
             *self.args(collections[: self.division])[0],
             **self.kwargs(collections[self.division :])[0],
         )
+        if typetracing and not is_typetracer(result):
+            result = to_typetracer(result)
+        return result
 
 
 class _PartitionMappingDecorator(Protocol):
