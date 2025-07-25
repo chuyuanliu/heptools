@@ -31,7 +31,7 @@ dependencies:
   # benchmarks
   - scalene
   # Scikit-HEP
-  - coffea
+  - coffea >=2025.7.1
   - uproot
   - awkward
   - awkward-pandas
