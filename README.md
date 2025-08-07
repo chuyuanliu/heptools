@@ -106,6 +106,7 @@ singularity exec -B .:/srv -B /run/shm --nvccli --pwd /srv ${HEPTOOLS_DOCKER_IMA
 ### New feature
 
 - lightweight local database for `xs`, `dataset`
+- add a tool to broadcast and flat arbitrary depth nested jagged arrays
 
 ### General
 
