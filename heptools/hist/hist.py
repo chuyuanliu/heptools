@@ -152,11 +152,10 @@ class _MissingFillValue: ...
 
 class _Fill(Generic[HistType], Configurable, namespace="hist.Fill"):
     class __backend__:
+        ak: ak
         check_empty_mask: bool
-        akarray: type
         anyarray: type
-        repeat: Callable
-        broadcast: Callable[..., dict[str]] = None
+        broadcast_all: Callable[..., dict[str]] = None
 
         allow_str_array: bool = Version(ak.__version__) >= Version("2.0.0")
 
@@ -204,15 +203,13 @@ class _Fill(Generic[HistType], Configurable, namespace="hist.Fill"):
                 return _MissingFillValue
             raise
 
-    def _is_jagged(self, obj):
-        return isinstance(obj, self.__backend__.akarray) and akext.is_jagged(obj)
-
     def fill(
         self,
         events: ak.Array,
         hists: _Collection[HistType, Self] = ...,
         **fill_args: FillLike,
     ):
+        _ak = self.__backend__.ak
         if hists is ...:
             if (hists := _Collection.current) is None:
                 raise FillError("No histogram collection is specified")
@@ -263,27 +260,31 @@ class _Fill(Generic[HistType], Configurable, namespace="hist.Fill"):
                 }
                 if any(fill_values[v] is _MissingFillValue for v in fills.values()):
                     continue
-                shape = None
+                arrays = {}
+                depths = {}
                 for v in fills.values():
                     fill = fill_values[v]
-                    if self._is_jagged(fill):
-                        shape = ak.num(fill)
-                        break
+                    if isinstance(fill, self.__backend__.anyarray):
+                        arrays[v] = fill
+                        depths[v] = akext.max_depth(fill)
+                depths_set = set(depths.values())
+                if len(depths_set) > 1:
+                    arrays = dict(
+                        zip(arrays.keys(), _ak.broadcast_arrays(*arrays.values()))
+                    )
+                if max(depths_set) > 1:
+                    for k in arrays:
+                        arrays[k] = _ak.ravel(arrays[k])
                 hist_args = {}
                 for k, v in fills.items():
-                    fill = fill_values[v]
-                    if shape is None:
-                        ...
-                    elif self._is_jagged(fill):
-                        fill = ak.flatten(fill)
-                    elif isinstance(fill, self.__backend__.anyarray):
-                        fill = self.__backend__.repeat(fill, shape)
+                    if (fill := arrays.get(v)) is None:
+                        fill = fill_values[v]
                     hist_args[k] = fill
                 # https://github.com/scikit-hep/boost-histogram/issues/452 #
-                if (self.__backend__.broadcast is not None) and all(
+                if (self.__backend__.broadcast_all is not None) and all(
                     [isinstance(axis, StrCategory) for axis in hists._hists[name].axes]
                 ):
-                    hist_args = self.__backend__.broadcast(**hist_args)
+                    hist_args = self.__backend__.broadcast_all(**hist_args)
                 ############################################################
                 hists._hists[name].fill(**hist_args)
                 hists._filled.add(name)
@@ -370,7 +371,7 @@ class _Collection(Generic[HistType, FillType]):
         return self.to_dict()
 
 
-def _broadcast(weight: FillLike, **kwargs: FillLike):
+def _broadcast_all(weight: FillLike, **kwargs: FillLike):
     tobroadcast = None
     for k, v in kwargs.items():
         tobroadcast = k
@@ -385,11 +386,10 @@ def _broadcast(weight: FillLike, **kwargs: FillLike):
 
 class Fill(_Fill[Hist]):
     class __backend__(_Fill.__backend__):
+        ak = ak
         check_empty_mask = True
-        akarray = ak.Array
-        anyarray = ak.Array | npt.NDArray
-        repeat = np.repeat
-        broadcast = _broadcast
+        anyarray = ak.Array | np.ndarray
+        broadcast_all = _broadcast_all
 
 
 class Collection(_Collection[Hist, Fill]):
