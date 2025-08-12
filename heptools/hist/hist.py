@@ -37,6 +37,8 @@ from ..aktools import (
 from ..config import Configurable, config
 from ..typetools import check_type, find_subclass
 from . import template as _t
+from rich.pretty import pretty_repr
+from textwrap import indent
 
 HistAxis = Boolean | IntCategory | Integer | Regular | StrCategory | Variable
 
@@ -250,44 +252,56 @@ class _Fill(Generic[HistType], Configurable, namespace="hist.Fill"):
                 else:
                     raise FillError(f'cannot fill "{k}" with "{v}"')
             for name in self._fills:
-                fills = {
-                    k: (
-                        special
-                        if (special := _fill_special(name, k)) in fill_values
-                        else k
-                    )
-                    for k in self._fills[name]
-                }
-                if any(fill_values[v] is _MissingFillValue for v in fills.values()):
-                    continue
-                arrays = {}
-                depths = {}
-                for v in fills.values():
-                    fill = fill_values[v]
-                    if isinstance(fill, self.__backend__.anyarray):
-                        arrays[v] = fill
-                        depths[v] = akext.max_depth(fill)
-                depths_set = set(depths.values())
-                if len(depths_set) > 1:
-                    arrays = dict(
-                        zip(arrays.keys(), _ak.broadcast_arrays(*arrays.values()))
-                    )
-                if max(depths_set) > 1:
-                    for k in arrays:
-                        arrays[k] = _ak.ravel(arrays[k])
                 hist_args = {}
-                for k, v in fills.items():
-                    if (fill := arrays.get(v)) is None:
+                try:
+                    fills = {
+                        k: (
+                            special
+                            if (special := _fill_special(name, k)) in fill_values
+                            else k
+                        )
+                        for k in self._fills[name]
+                    }
+                    if any(fill_values[v] is _MissingFillValue for v in fills.values()):
+                        continue
+                    arrays = {}
+                    depths = {}
+                    for v in fills.values():
                         fill = fill_values[v]
-                    hist_args[k] = fill
-                # https://github.com/scikit-hep/boost-histogram/issues/452 #
-                if (self.__backend__.broadcast_all is not None) and all(
-                    [isinstance(axis, StrCategory) for axis in hists._hists[name].axes]
-                ):
-                    hist_args = self.__backend__.broadcast_all(**hist_args)
-                ############################################################
-                hists._hists[name].fill(**hist_args)
-                hists._filled.add(name)
+                        if isinstance(fill, self.__backend__.anyarray):
+                            arrays[v] = fill
+                            depths[v] = akext.max_depth(fill)
+                    depths_set = set(depths.values())
+                    if len(depths_set) > 1:
+                        arrays = dict(
+                            zip(arrays.keys(), _ak.broadcast_arrays(*arrays.values()))
+                        )
+                    if max(depths_set) > 1:
+                        for k in arrays:
+                            arrays[k] = _ak.ravel(arrays[k])
+                    for k, v in fills.items():
+                        if (fill := arrays.get(v)) is None:
+                            fill = fill_values[v]
+                        hist_args[k] = fill
+                    # https://github.com/scikit-hep/boost-histogram/issues/452 #
+                    if (self.__backend__.broadcast_all is not None) and all(
+                        [
+                            isinstance(axis, StrCategory)
+                            for axis in hists._hists[name].axes
+                        ]
+                    ):
+                        hist_args = self.__backend__.broadcast_all(**hist_args)
+                    ############################################################
+                    hists._hists[name].fill(**hist_args)
+                    hists._filled.add(name)
+                except Exception as e:
+                    if hist_args:
+                        msg = f'filling histogram "{name}", with\n" + {indent(pretty_repr(hist_args))}'
+                    else:
+                        msg = f'preparing the arguments for histogram "{name}"'
+                    raise ValueError(
+                        f"While {msg}\n the above exception occurred."
+                    ) from e
 
 
 class CollectionOutput(Generic[HistType], TypedDict):
