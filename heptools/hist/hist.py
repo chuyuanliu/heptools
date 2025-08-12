@@ -71,6 +71,14 @@ def _fill_special(hist: str, axis: str):
     return f"{hist} \x00 {axis}"
 
 
+def _fill_repr(fill: str):
+    fills = fill.split(" \x00 ")
+    if len(fills) == 1:
+        return fills[0]
+    else:
+        return f'{fills[1]} (hist "{fills[0]}")'
+
+
 def _create_axis(args: AxisLike) -> HistAxis:
     if isinstance(args, AxesMixin):
         return deepcopy(args)
@@ -254,7 +262,7 @@ class _Fill(Generic[HistType], Configurable, namespace="hist.Fill"):
                         raise TypeError("Unsupported fill value.")
                 except Exception:
                     raise FillError(
-                        f'\nWhile preparing fill value "{k}" from\n  {type(v)}\n{indent(pretty_repr(v), "    ")}\n the above error occurred.'
+                        f'\nWhile preparing fill value "{_fill_repr(k)}" from\n  {type(v)}\n{indent(pretty_repr(v), "    ")}\n the above error occurred.'
                     )
             for name in self._fills:
                 hist_args = {}
