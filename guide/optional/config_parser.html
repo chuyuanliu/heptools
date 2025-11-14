@@ -374,13 +374,13 @@
 </section>
 <section id="load-configs">
 <h3>Load configs<a class="headerlink" href="#load-configs" title="Link to this heading">#</a></h3>
-<p>An instance of <a class="reference internal" href="../../api/config.html#heptools.config.ConfigParser" title="heptools.config.ConfigParser"><code class="xref py py-class docutils literal notranslate"><span class="pre">ConfigParser</span></code></a> is used to load config files and parse the tags. The default setup is sufficient for most use cases, while <a class="reference internal" href="#config-customization"><span class="std std-ref">Customization</span></a> is possible through the arguments of <a class="reference internal" href="../../api/config.html#heptools.config.ConfigParser" title="heptools.config.ConfigParser"><code class="xref py py-class docutils literal notranslate"><span class="pre">__init__()</span></code></a>. Each <a class="reference internal" href="../../api/config.html#heptools.config.ConfigParser.__call__" title="heptools.config.ConfigParser.__call__"><code class="xref py py-meth docutils literal notranslate"><span class="pre">__call__()</span></code></a>  will create a new context to maintain local variables and return the parsed configs in a single dictionary.</p>
+<p>An instance of <code class="xref py py-class docutils literal notranslate"><span class="pre">ConfigParser</span></code> is used to load config files and parse the tags. The default setup is sufficient for most use cases, while <a class="reference internal" href="#config-customization"><span class="std std-ref">Customization</span></a> is possible through the arguments of <code class="xref py py-class docutils literal notranslate"><span class="pre">__init__()</span></code>. Each <code class="xref py py-meth docutils literal notranslate"><span class="pre">__call__()</span></code>  will create a new context to maintain local variables and return the parsed configs in a single dictionary.</p>
 <p>The parsing is performed in two passes:</p>
 <ul class="simple">
 <li><p>Deserialize the files into dictionaries.</p></li>
 <li><p>Apply the tags.</p></li>
 </ul>
-<p>The order of the paths provided to <a class="reference internal" href="../../api/config.html#heptools.config.ConfigParser.__call__" title="heptools.config.ConfigParser.__call__"><code class="xref py py-meth docutils literal notranslate"><span class="pre">__call__()</span></code></a> and the order of keys and items from the first pass are preserved to the final output. The tags are parsed recursively from innermost to outermost.</p>
+<p>The order of the paths provided to <code class="xref py py-meth docutils literal notranslate"><span class="pre">__call__()</span></code> and the order of keys and items from the first pass are preserved to the final output. The tags are parsed recursively from innermost to outermost.</p>
 <div class="guide-config-example dropdown admonition">
 <p class="admonition-title">example</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">heptools.config</span><span class="w"> </span><span class="kn">import</span> <span class="n">ConfigParser</span>
@@ -447,8 +447,8 @@
 </section>
 <section id="url-and-io">
 <span id="config-rule-url"></span><h3>URL and IO<a class="headerlink" href="#url-and-io" title="Link to this heading">#</a></h3>
-<p>Both the <a class="reference internal" href="../../api/config.html#heptools.config.ConfigParser" title="heptools.config.ConfigParser"><code class="xref py py-class docutils literal notranslate"><span class="pre">ConfigParser</span></code></a> and built-in tags <a class="reference internal" href="#config-tag-include"><span class="std std-ref">&lt;include&gt;</span></a>, <a class="reference internal" href="#config-tag-file"><span class="std std-ref">&lt;file&gt;</span></a> shares the same IO mechanism.</p>
-<p>The file path is described by a standard URL accepted by <a class="reference external" href="https://docs.python.org/3/library/urllib.parse.html#urllib.parse.urlparse" title="(in Python v3.13)"><code class="xref py py-func docutils literal notranslate"><span class="pre">urlparse()</span></code></a> with the format:</p>
+<p>Both the <code class="xref py py-class docutils literal notranslate"><span class="pre">ConfigParser</span></code> and built-in tags <a class="reference internal" href="#config-tag-include"><span class="std std-ref">&lt;include&gt;</span></a>, <a class="reference internal" href="#config-tag-file"><span class="std std-ref">&lt;file&gt;</span></a> shares the same IO mechanism.</p>
+<p>The file path is described by a standard URL accepted by <a class="reference external" href="https://docs.python.org/3/library/urllib.parse.html#urllib.parse.urlparse" title="(in Python v3.14)"><code class="xref py py-func docutils literal notranslate"><span class="pre">urlparse()</span></code></a> with the format:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span>[scheme://netloc/]path[;parameters][?query][#fragment]
 </pre></div>
 </div>
@@ -486,17 +486,17 @@
 </pre></div>
 </div>
 </div>
-<p>File IO is handled by <a class="reference external" href="https://filesystem-spec.readthedocs.io/en/latest/api.html#fsspec.open" title="(in fsspec v2025.5.1.post0+g66340a1.d20250524)"><code class="xref py py-func docutils literal notranslate"><span class="pre">fsspec.open()</span></code></a> and the deserialization is handled by <a class="reference internal" href="../../api/config.html#heptools.config.ConfigParser.io" title="heptools.config.ConfigParser.io"><code class="xref py py-data docutils literal notranslate"><span class="pre">ConfigParser.io</span></code></a>, an instance of <a class="reference internal" href="../../api/config.html#heptools.config.FileLoader" title="heptools.config.FileLoader"><code class="xref py py-class docutils literal notranslate"><span class="pre">FileLoader</span></code></a>.</p>
+<p>File IO is handled by <a class="reference external" href="https://filesystem-spec.readthedocs.io/en/latest/api.html#fsspec.open" title="(in fsspec v2025.10.0.post0+gdcb167e8f.d20251030)"><code class="xref py py-func docutils literal notranslate"><span class="pre">fsspec.open()</span></code></a> and the deserialization is handled by <code class="xref py py-data docutils literal notranslate"><span class="pre">ConfigParser.io</span></code>, an instance of <code class="xref py py-class docutils literal notranslate"><span class="pre">FileLoader</span></code>.</p>
 <ul class="simple">
 <li><p>The compression format is inferred from the last extension, see <code class="xref py py-data docutils literal notranslate"><span class="pre">fsspec.utils.compressions</span></code>.</p></li>
 <li><p>The deserializer is inferred from the longest registered extension that does not match any compression format.</p></li>
-<li><p>The deserialized objects will be catched, and can be cleared by <a class="reference internal" href="../../api/config.html#heptools.config.FileLoader.clear_cache" title="heptools.config.FileLoader.clear_cache"><code class="xref py py-meth docutils literal notranslate"><span class="pre">ConfigParser.io.clear_cache</span></code></a>.</p></li>
+<li><p>The deserialized objects will be catched, and can be cleared by <code class="xref py py-meth docutils literal notranslate"><span class="pre">ConfigParser.io.clear_cache</span></code>.</p></li>
 </ul>
 </section>
 <section id="special">
 <h3>Special<a class="headerlink" href="#special" title="Link to this heading">#</a></h3>
 <section id="nested-true-in-configparser">
-<span id="config-special-nested"></span><h4><code class="docutils literal notranslate"><span class="pre">nested=True</span></code> in <a class="reference internal" href="../../api/config.html#heptools.config.ConfigParser" title="heptools.config.ConfigParser"><code class="xref py py-class docutils literal notranslate"><span class="pre">ConfigParser</span></code></a><a class="headerlink" href="#nested-true-in-configparser" title="Link to this heading">#</a></h4>
+<span id="config-special-nested"></span><h4><code class="docutils literal notranslate"><span class="pre">nested=True</span></code> in <code class="xref py py-class docutils literal notranslate"><span class="pre">ConfigParser</span></code><a class="headerlink" href="#nested-true-in-configparser" title="Link to this heading">#</a></h4>
 <p>The <code class="docutils literal notranslate"><span class="pre">nested=True</span></code> (default) option enables a behavior similar to <code class="docutils literal notranslate"><span class="pre">TOML</span></code>’s <a class="reference external" href="https://toml.io/en/v1.0.0#table">table</a>, where the dot-separated keys will be interpreted as accessing a nested dictionary and the parents will not be overriden. Use double quotes or <a class="reference internal" href="#config-tag-literal"><span class="std std-ref">&lt;literal&gt;</span></a> to escape the keys with dot.</p>
 <div class="guide-config-example dropdown admonition">
 <p class="admonition-title">example</p>
@@ -565,7 +565,7 @@
 <span id="config-builtin-tags"></span><h2>Built-in tags<a class="headerlink" href="#built-in-tags" title="Link to this heading">#</a></h2>
 <section id="code">
 <span id="config-tag-code"></span><h3><code class="docutils literal notranslate"><span class="pre">&lt;code&gt;</span></code><a class="headerlink" href="#code" title="Link to this heading">#</a></h3>
-<p>This tag will replace the value by the result of <a class="reference external" href="https://docs.python.org/3/library/functions.html#eval" title="(in Python v3.13)"><code class="xref py py-func docutils literal notranslate"><span class="pre">eval()</span></code></a>. The variables defined with <a class="reference internal" href="#config-tag-var"><span class="std std-ref">&lt;var&gt;</span></a> are available as <code class="docutils literal notranslate"><span class="pre">locals</span></code>.</p>
+<p>This tag will replace the value by the result of <a class="reference external" href="https://docs.python.org/3/library/functions.html#eval" title="(in Python v3.14)"><code class="xref py py-func docutils literal notranslate"><span class="pre">eval()</span></code></a>. The variables defined with <a class="reference internal" href="#config-tag-var"><span class="std std-ref">&lt;var&gt;</span></a> are available as <code class="docutils literal notranslate"><span class="pre">locals</span></code>.</p>
 <div class="guide-config-value admonition">
 <p class="admonition-title">value</p>
 <ul class="simple">
@@ -704,7 +704,7 @@
 <ul class="simple">
 <li><p>An import path is defined as <code class="docutils literal notranslate"><span class="pre">{module}::{attribute}</span></code>, which is roughly equivalent to the python statement <code class="docutils literal notranslate"><span class="pre">from</span> <span class="pre">{module}</span> <span class="pre">import</span> <span class="pre">{attribute}</span></code>.</p>
 <ul>
-<li><p><code class="docutils literal notranslate"><span class="pre">{module}::</span></code> can be omitted for <a class="reference external" href="https://docs.python.org/3/library/functions.html" title="(in Python v3.13)"><span>Built-in Functions</span></a>.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">{module}::</span></code> can be omitted for <a class="reference external" href="https://docs.python.org/3/library/functions.html" title="(in Python v3.14)"><span>Built-in Functions</span></a>.</p></li>
 <li><p>If <code class="docutils literal notranslate"><span class="pre">{attribute}</span></code> is not provided or only contains dots, the whole module will be returned.</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">{attribute}</span></code> can be a dot separated string to get a similar effect as <a class="reference internal" href="#config-tag-attr"><span class="std std-ref">&lt;attr&gt;</span></a>.</p></li>
 </ul>
@@ -832,7 +832,7 @@
 </section>
 <section id="var">
 <span id="config-tag-var"></span><h3><code class="docutils literal notranslate"><span class="pre">&lt;var&gt;</span></code><a class="headerlink" href="#var" title="Link to this heading">#</a></h3>
-<p>This tag can be used to create a variable from the value. The variable lifecycle spans the entire parser <a class="reference internal" href="../../api/config.html#heptools.config.ConfigParser.__call__" title="heptools.config.ConfigParser.__call__"><code class="xref py py-meth docutils literal notranslate"><span class="pre">__call__()</span></code></a> and is shared by all files within the same call. The variable can be accessed using <a class="reference internal" href="#config-tag-ref"><span class="std std-ref">&lt;ref&gt;</span></a> and is also available as <code class="docutils literal notranslate"><span class="pre">locals</span></code> in <a class="reference internal" href="#config-tag-code"><span class="std std-ref">&lt;code&gt;</span></a>.</p>
+<p>This tag can be used to create a variable from the value. The variable lifecycle spans the entire parser <code class="xref py py-meth docutils literal notranslate"><span class="pre">__call__()</span></code> and is shared by all files within the same call. The variable can be accessed using <a class="reference internal" href="#config-tag-ref"><span class="std std-ref">&lt;ref&gt;</span></a> and is also available as <code class="docutils literal notranslate"><span class="pre">locals</span></code> in <a class="reference internal" href="#config-tag-code"><span class="std std-ref">&lt;code&gt;</span></a>.</p>
 <div class="guide-config-tag admonition">
 <p class="admonition-title">tag</p>
 <ul class="simple">
@@ -875,8 +875,8 @@
 <ul class="simple">
 <li><p>If the value is a string, it will be used as the variable name. Otherwise, the key will be used.</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">&lt;ref&gt;</span></code>: replace the value by a reference to the variable.</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">&lt;ref=copy&gt;</span></code>: replace the value by a <a class="reference external" href="https://docs.python.org/3/library/copy.html#copy.copy" title="(in Python v3.13)"><code class="xref py py-func docutils literal notranslate"><span class="pre">copy()</span></code></a> of the variable.</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">&lt;ref=deepcopy&gt;</span></code>: replace the value by a <a class="reference external" href="https://docs.python.org/3/library/copy.html#copy.deepcopy" title="(in Python v3.13)"><code class="xref py py-func docutils literal notranslate"><span class="pre">deepcopy()</span></code></a> of the variable.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">&lt;ref=copy&gt;</span></code>: replace the value by a <a class="reference external" href="https://docs.python.org/3/library/copy.html#copy.copy" title="(in Python v3.14)"><code class="xref py py-func docutils literal notranslate"><span class="pre">copy()</span></code></a> of the variable.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">&lt;ref=deepcopy&gt;</span></code>: replace the value by a <a class="reference external" href="https://docs.python.org/3/library/copy.html#copy.deepcopy" title="(in Python v3.14)"><code class="xref py py-func docutils literal notranslate"><span class="pre">deepcopy()</span></code></a> of the variable.</p></li>
 </ul>
 </div>
 </section>
@@ -1008,7 +1008,7 @@
 <span id="config-customization"></span><h2>Customization<a class="headerlink" href="#customization" title="Link to this heading">#</a></h2>
 <section id="tag-parser">
 <span id="config-custom-tag"></span><h3>Tag parser<a class="headerlink" href="#tag-parser" title="Link to this heading">#</a></h3>
-<p>A tag parser is a function that returns a key-value pair. The signature is given by the protocol <a class="reference internal" href="../../api/config.html#heptools.config.TagParser" title="heptools.config.TagParser"><code class="xref py py-class docutils literal notranslate"><span class="pre">TagParser</span></code></a> where the arguments are keyword only and can be omitted if unnecessary.  Custom parsers can be registered through the <code class="docutils literal notranslate"><span class="pre">tag_parsers</span></code> argument of <a class="reference internal" href="../../api/config.html#heptools.config.ConfigParser" title="heptools.config.ConfigParser"><code class="xref py py-class docutils literal notranslate"><span class="pre">ConfigParser</span></code></a>. <a class="reference internal" href="#config-builtin-tags"><span class="std std-ref">Built-in tags</span></a> cannot be overridden.</p>
+<p>A tag parser is a function that returns a key-value pair. The signature is given by the protocol <code class="xref py py-class docutils literal notranslate"><span class="pre">TagParser</span></code> where the arguments are keyword only and can be omitted if unnecessary.  Custom parsers can be registered through the <code class="docutils literal notranslate"><span class="pre">tag_parsers</span></code> argument of <code class="xref py py-class docutils literal notranslate"><span class="pre">ConfigParser</span></code>. <a class="reference internal" href="#config-builtin-tags"><span class="std std-ref">Built-in tags</span></a> cannot be overridden.</p>
 <div class="guide-config-example dropdown admonition">
 <p class="admonition-title">example</p>
 <p>The following example defines two custom tags: one repeats the value by a given number of times and the other controls how the copy is made.</p>
@@ -1049,7 +1049,7 @@
 </section>
 <section id="extend-operation">
 <span id="config-custom-extend"></span><h3><code class="docutils literal notranslate"><span class="pre">&lt;extend&gt;</span></code> operation<a class="headerlink" href="#extend-operation" title="Link to this heading">#</a></h3>
-<p>Custom <code class="docutils literal notranslate"><span class="pre">extend_method()</span></code> for <a class="reference internal" href="#config-tag-extend"><span class="std std-ref">&lt;extend&gt;</span></a> can be registered through the <code class="docutils literal notranslate"><span class="pre">extend_methods</span></code> argument of <a class="reference internal" href="../../api/config.html#heptools.config.ConfigParser" title="heptools.config.ConfigParser"><code class="xref py py-class docutils literal notranslate"><span class="pre">ConfigParser</span></code></a>. The built-in extend methods cannot be overridden.</p>
+<p>Custom <code class="docutils literal notranslate"><span class="pre">extend_method()</span></code> for <a class="reference internal" href="#config-tag-extend"><span class="std std-ref">&lt;extend&gt;</span></a> can be registered through the <code class="docutils literal notranslate"><span class="pre">extend_methods</span></code> argument of <code class="xref py py-class docutils literal notranslate"><span class="pre">ConfigParser</span></code>. The built-in extend methods cannot be overridden.</p>
 <div class="guide-config-example dropdown admonition">
 <p class="admonition-title">example</p>
 <p>The following example defines a custom operation to concat paths.</p>
@@ -1076,7 +1076,7 @@
 </section>
 <section id="file-deserializer">
 <span id="config-custom-deserializer"></span><h3>File deserializer<a class="headerlink" href="#file-deserializer" title="Link to this heading">#</a></h3>
-<p>A deserializer is a function that takes a read-only <a class="reference external" href="https://docs.python.org/3/library/io.html#io.BytesIO" title="(in Python v3.13)"><code class="xref py py-class docutils literal notranslate"><span class="pre">BytesIO</span></code></a> stream as input and returns a deserialized object. Custom deserializers can be registered using the decorator <a class="reference internal" href="../../api/config.html#heptools.config.FileLoader.register" title="heptools.config.FileLoader.register"><code class="xref py py-meth docutils literal notranslate"><span class="pre">register()</span></code></a> of <a class="reference internal" href="../../api/config.html#heptools.config.ConfigParser.io" title="heptools.config.ConfigParser.io"><code class="xref py py-data docutils literal notranslate"><span class="pre">ConfigParser.io</span></code></a>.</p>
+<p>A deserializer is a function that takes a read-only <a class="reference external" href="https://docs.python.org/3/library/io.html#io.BytesIO" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">BytesIO</span></code></a> stream as input and returns a deserialized object. Custom deserializers can be registered using the decorator <code class="xref py py-meth docutils literal notranslate"><span class="pre">register()</span></code> of <code class="xref py py-data docutils literal notranslate"><span class="pre">ConfigParser.io</span></code>.</p>
 <div class="guide-config-example dropdown admonition">
 <p class="admonition-title">example</p>
 <p>The following example implements a deserializer to load <code class="docutils literal notranslate"><span class="pre">CSV</span></code> files.</p>
@@ -1185,8 +1185,8 @@
 </tbody>
 </table>
 </div>
-<p>or a custom one registered through the <code class="docutils literal notranslate"><span class="pre">patch_actions</span></code> argument of <a class="reference internal" href="../../api/config.html#heptools.config.ConfigParser" title="heptools.config.ConfigParser"><code class="xref py py-class docutils literal notranslate"><span class="pre">ConfigParser</span></code></a>. The built-in actions cannot be overridden.</p>
-<p>This tag can be used to register a new patch layer. The layer will be installed right after the registration and in effect across all the configs within the same parser <a class="reference internal" href="../../api/config.html#heptools.config.ConfigParser.__call__" title="heptools.config.ConfigParser.__call__"><code class="xref py py-meth docutils literal notranslate"><span class="pre">__call__()</span></code></a>. If a key is provided, it will be used as the patch name. A named patch can be installed or uninstalled multiple times. The patches are evaluated lazily after the deserialization but before the tag parsing, so it is supposed to work as a preprocessor with minimal semantic support other than a regular tag.</p>
+<p>or a custom one registered through the <code class="docutils literal notranslate"><span class="pre">patch_actions</span></code> argument of <code class="xref py py-class docutils literal notranslate"><span class="pre">ConfigParser</span></code>. The built-in actions cannot be overridden.</p>
+<p>This tag can be used to register a new patch layer. The layer will be installed right after the registration and in effect across all the configs within the same parser <code class="xref py py-meth docutils literal notranslate"><span class="pre">__call__()</span></code>. If a key is provided, it will be used as the patch name. A named patch can be installed or uninstalled multiple times. The patches are evaluated lazily after the deserialization but before the tag parsing, so it is supposed to work as a preprocessor with minimal semantic support other than a regular tag.</p>
 <div class="guide-config-tag admonition">
 <p class="admonition-title">tag</p>
 <p>Register and install a patch layer:</p>
