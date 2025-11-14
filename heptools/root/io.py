@@ -127,11 +127,10 @@ class TreeWriter:
         Size of :class:`TBasket`. If not given, a new :class:`TBasket` will be created for each :meth:`extend` call.
     **options: dict, optional
         Additional options passed to :func:`uproot.recreate`.
-    Attributes
-    ----------
-    tree : ~heptools.root.chunk.Chunk or list[~heptools.root.chunk.Chunk]
-        Created :class:`TTree`.
     """
+
+    tree: Chunk | list[Chunk]
+    """~heptools.root.Chunk or list[~heptools.root.Chunk]: Created :class:`TTree`."""
 
     def __init__(
         self,

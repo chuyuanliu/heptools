@@ -51,8 +51,8 @@ intersphinx_mapping = {
     "dask_awkward": ("https://dask-awkward.readthedocs.io/en/stable/", None),
     "uproot": ("https://uproot.readthedocs.io/en/stable/", None),
     "awkward": ("https://awkward-array.org/doc/stable/", None),
-    "coffea": ("https://coffeateam.github.io/coffea/", None),
-    "XRootD": ("https://xrootd.slac.stanford.edu/doc/doxygen/5.6.4/python/", None),
+    "coffea": ("https://coffea-hep.readthedocs.io/en/latest/", None),
+    "XRootD": ("https://xrootd.web.cern.ch/doc/python/latest/", None),
     "fsspec": ("https://filesystem-spec.readthedocs.io/en/latest/", None),
 }
 
