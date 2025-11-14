@@ -5,9 +5,9 @@ import importlib
 import inspect
 import operator as op
 import re
+import sys
 import traceback
 from dataclasses import dataclass, field
-from enum import StrEnum, auto
 from functools import partial
 from inspect import _ParameterKind as ParKind
 from os import PathLike, fspath, get_terminal_size
@@ -77,25 +77,55 @@ Traceback:
         )
 
 
-class _ReservedTag(StrEnum):
-    code = auto()
+if sys.version_info < (3, 11):
 
-    select = auto()
-    case = auto()
-    include = auto()
-    patch = auto()
+    class _ReservedTag:
+        code = "code"
 
-    literal = auto()
-    discard = auto()
-    comment = auto()
+        select = "select"
+        case = "case"
+        include = "include"
+        patch = "patch"
 
-    file = auto()
-    type = auto()
-    attr = auto()
-    extend = auto()
-    var = auto()
-    ref = auto()
-    map = auto()
+        literal = "literal"
+        discard = "discard"
+        comment = "comment"
+
+        file = "file"
+        type = "type"
+        attr = "attr"
+        extend = "extend"
+        var = "var"
+        ref = "ref"
+        map = "map"
+
+    _ReservedTag.__members__ = list(
+        k for k in vars(_ReservedTag) if not k.startswith("_")
+    )
+
+
+else:
+    from enum import StrEnum, auto
+
+    class _ReservedTag(StrEnum):
+        code = auto()
+
+        select = auto()
+        case = auto()
+        include = auto()
+        patch = auto()
+
+        literal = auto()
+        discard = auto()
+        comment = auto()
+
+        file = auto()
+        type = auto()
+        attr = auto()
+        extend = auto()
+        var = auto()
+        ref = auto()
+        map = auto()
 
 
 class _NoTag:
