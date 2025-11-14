@@ -366,13 +366,358 @@
 <div id="searchbox"></div>
                 <article class="bd-article">
                   
-  <section id="basic-i-o">
-<h1>Basic I/O<a class="headerlink" href="#basic-i-o" title="Link to this heading">#</a></h1>
+  <section id="module-heptools.root.io">
+<span id="basic-i-o"></span><h1>Basic I/O<a class="headerlink" href="#module-heptools.root.io" title="Link to this heading">#</a></h1>
+<p>A wrapper for ROOT file I/O <a class="reference external" href="https://uproot.readthedocs.io/en/stable/uproot.reading.open.html#uproot.reading.open" title="(in Uproot)"><code class="xref py py-func docutils literal notranslate"><span class="pre">uproot.reading.open()</span></code></a>, <a class="reference external" href="https://uproot.readthedocs.io/en/stable/uproot._dask.dask.html#uproot._dask.dask" title="(in Uproot)"><code class="xref py py-func docutils literal notranslate"><span class="pre">uproot._dask.dask()</span></code></a> and <a class="reference external" href="https://uproot.readthedocs.io/en/stable/uproot.writing.writable.recreate.html#uproot.writing.writable.recreate" title="(in Uproot)"><code class="xref py py-func docutils literal notranslate"><span class="pre">uproot.writing.writable.recreate()</span></code></a>.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>Readers will use the following default options for <code class="xref py py-func docutils literal notranslate"><span class="pre">uproot.open()</span></code>:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">object_cache</span> <span class="o">=</span> <span class="kc">None</span>
+<span class="n">array_cache</span> <span class="o">=</span> <span class="kc">None</span>
+</pre></div>
+</div>
+<p>for <code class="xref py py-func docutils literal notranslate"><span class="pre">uproot.dask()</span></code>:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">open_files</span> <span class="o">=</span> <span class="kc">False</span>
+</pre></div>
+</div>
+<p>and for both:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">timeout</span> <span class="o">=</span> <span class="mi">180</span>
+</pre></div>
+</div>
+</div>
+<div class="admonition warning">
+<p class="admonition-title">Warning</p>
+<p>Writers will always overwrite the output file if it exists.</p>
+</div>
+<div class="admonition-todo admonition" id="id1">
+<p class="admonition-title">Todo</p>
+<p>Use <code class="xref py py-func docutils literal notranslate"><span class="pre">dask_awkward.new_scalar_object()</span></code> to return object.</p>
+</div>
 <section id="ttree">
 <h2><code class="xref py py-class docutils literal notranslate"><span class="pre">TTree</span></code><a class="headerlink" href="#ttree" title="Link to this heading">#</a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="heptools.root.TreeWriter">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">heptools.root.</span></span><span class="sig-name descname"><span class="pre">TreeWriter</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'Events'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">parents</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">basket_size</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">...</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">options</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/chuyuanliu/heptools/tree/master/heptools/root/io.py#L116-L360"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#heptools.root.TreeWriter" title="Link to this definition">#</a></dt>
+<dd><p><code class="xref py py-func docutils literal notranslate"><span class="pre">uproot.recreate()</span></code> with remote file support and <code class="xref py py-class docutils literal notranslate"><span class="pre">TBasket</span></code> size control.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>name</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a><em>, </em><em>optional</em><em>, </em><em>default='Events'</em>) – Default name of tree.</p></li>
+<li><p><strong>parents</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.14)"><em>bool</em></a><em>, </em><em>optional</em><em>, </em><em>default=True</em>) – Create parent directories if not exist.</p></li>
+<li><p><strong>basket_size</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><em>int</em></a><em>, </em><em>optional</em>) – Size of <code class="xref py py-class docutils literal notranslate"><span class="pre">TBasket</span></code>. If not given, a new <code class="xref py py-class docutils literal notranslate"><span class="pre">TBasket</span></code> will be created for each <a class="reference internal" href="#heptools.root.TreeWriter.extend" title="heptools.root.TreeWriter.extend"><code class="xref py py-meth docutils literal notranslate"><span class="pre">extend()</span></code></a> call.</p></li>
+<li><p><strong>**options</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.14)"><em>dict</em></a><em>, </em><em>optional</em>) – Additional options passed to <code class="xref py py-func docutils literal notranslate"><span class="pre">uproot.recreate()</span></code>.</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="heptools.root.TreeWriter.tree">
+<span class="sig-name descname"><span class="pre">tree</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">heptools.root.chunk.Chunk</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.14)"><span class="pre">list</span></a><span class="p"><span class="pre">[</span></span><span class="pre">heptools.root.chunk.Chunk</span><span class="p"><span class="pre">]</span></span></em><a class="headerlink" href="#heptools.root.TreeWriter.tree" title="Link to this definition">#</a></dt>
+<dd><p>Created <code class="xref py py-class docutils literal notranslate"><span class="pre">TTree</span></code>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference internal" href="tree.html#heptools.root.Chunk" title="heptools.root.Chunk"><em>Chunk</em></a> or <a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.14)">list</a>[<a class="reference internal" href="tree.html#heptools.root.Chunk" title="heptools.root.Chunk"><em>Chunk</em></a>]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="heptools.root.TreeWriter.__call__">
+<span class="sig-name descname"><span class="pre">__call__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">name</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/chuyuanliu/heptools/tree/master/heptools/root/io.py#L150-L167"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#heptools.root.TreeWriter.__call__" title="Link to this definition">#</a></dt>
+<dd><p>Set output path.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>path</strong> (<em>PathLike</em>) – Path to output ROOT file.</p></li>
+<li><p><strong>name</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a><em>, </em><em>optional</em>) – Name of tree. If given, it will temporarily override the tree name.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>self</strong> (<em>TreeWriter</em>)</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="heptools.root.TreeWriter.__enter__">
+<span class="sig-name descname"><span class="pre">__enter__</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference external" href="https://github.com/chuyuanliu/heptools/tree/master/heptools/root/io.py#L169-L181"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#heptools.root.TreeWriter.__enter__" title="Link to this definition">#</a></dt>
+<dd><p>Open a temporary local ROOT file for writing.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>self</strong> (<em>TreeWriter</em>)</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="heptools.root.TreeWriter.__exit__">
+<span class="sig-name descname"><span class="pre">__exit__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">exc</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/chuyuanliu/heptools/tree/master/heptools/root/io.py#L183-L212"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#heptools.root.TreeWriter.__exit__" title="Link to this definition">#</a></dt>
+<dd><p>If no exception is raised, move the temporary file to the output path and store <code class="xref py py-class docutils literal notranslate"><span class="pre">Chunk</span></code> information to <a class="reference internal" href="#heptools.root.TreeWriter.tree" title="heptools.root.TreeWriter.tree"><code class="xref py py-data docutils literal notranslate"><span class="pre">tree</span></code></a>.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="heptools.root.TreeWriter.extend">
+<span class="sig-name descname"><span class="pre">extend</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/chuyuanliu/heptools/tree/master/heptools/root/io.py#L245-L295"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#heptools.root.TreeWriter.extend" title="Link to this definition">#</a></dt>
+<dd><p>Extend the <code class="xref py py-class docutils literal notranslate"><span class="pre">TTree</span></code> with <code class="docutils literal notranslate"><span class="pre">data</span></code> using <a class="reference external" href="https://uproot.readthedocs.io/en/stable/uproot.writing.writable.WritableTree.html#uproot.writing.writable.WritableTree.extend" title="(in Uproot)"><code class="xref py py-meth docutils literal notranslate"><span class="pre">uproot.writing.writable.WritableTree.extend()</span></code></a>.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>The <cite>VirtualArray</cite> in <cite>awkward &lt; 2.0</cite> will be materialized.</p>
+</div>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>data</strong> (<em>RecordLike</em>) – Data to extend.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>self</strong> (<em>TreeWriter</em>)</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="heptools.root.TreeWriter.switch">
+<span class="sig-name descname"><span class="pre">switch</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/chuyuanliu/heptools/tree/master/heptools/root/io.py#L297-L322"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#heptools.root.TreeWriter.switch" title="Link to this definition">#</a></dt>
+<dd><p>Switch to another tree in the same ROOT file.</p>
+<div class="admonition warning">
+<p class="admonition-title">Warning</p>
+<p>The buffer will be immediately flushed regardless of the basket size.
+It is recommended to finish the current tree before switching.</p>
+</div>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>name</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a>) – Name of tree.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>self</strong> (<em>TreeWriter</em>)</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="heptools.root.TreeWriter.save_metadata">
+<span class="sig-name descname"><span class="pre">save_metadata</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">metadata</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/chuyuanliu/heptools/tree/master/heptools/root/io.py#L324-L360"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#heptools.root.TreeWriter.save_metadata" title="Link to this definition">#</a></dt>
+<dd><p>Save metadata to ROOT file.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>name</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a>) – Name of metadata.</p></li>
+<li><p><strong>metadata</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.14)"><em>dict</em></a><em>[</em><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a><em>, </em><em>UprootSupportedDtypes</em><em>]</em>) – A dictionary of metadata.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>self</strong> (<em>TreeWriter</em>)</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="heptools.root.TreeReader">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">heptools.root.</span></span><span class="sig-name descname"><span class="pre">TreeReader</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">branch_filter</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">transform</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">options</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/chuyuanliu/heptools/tree/master/heptools/root/io.py#L363-L696"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#heptools.root.TreeReader" title="Link to this definition">#</a></dt>
+<dd><p>Read data from <code class="xref py py-class docutils literal notranslate"><span class="pre">Chunk</span></code>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>branch_filter</strong> (<a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Callable" title="(in Python v3.14)"><em>Callable</em></a><em>[</em><em>[</em><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#set" title="(in Python v3.14)"><em>set</em></a><em>[</em><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a><em>]</em><em>]</em><em>, </em><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#set" title="(in Python v3.14)"><em>set</em></a><em>[</em><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a><em>]</em><em>]</em><em>, </em><em>optional</em>) – A function to select branches. If not given, all branches will be read.</p></li>
+<li><p><strong>transform</strong> (<a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Callable" title="(in Python v3.14)"><em>Callable</em></a><em>[</em><em>[</em><em>RecordLike</em><em>]</em><em>, </em><em>RecordLike</em><em>]</em><em>, </em><em>optional</em>) – A function to transform the data after reading. If not given, no transformation will be applied.</p></li>
+<li><p><strong>**options</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.14)"><em>dict</em></a><em>, </em><em>optional</em>) – Additional options passed to <code class="xref py py-func docutils literal notranslate"><span class="pre">uproot.open()</span></code>.</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="heptools.root.TreeReader.arrays">
+<span class="sig-name descname"><span class="pre">arrays</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">source</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">library</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'ak'</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">options</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/chuyuanliu/heptools/tree/master/heptools/root/io.py#L388-L393"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#heptools.root.TreeReader.arrays" title="Link to this definition">#</a></dt>
+<dd><p>Read <code class="docutils literal notranslate"><span class="pre">source</span></code> into array.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>source</strong> (<em>Chunk</em>) – Chunk of <code class="xref py py-class docutils literal notranslate"><span class="pre">TTree</span></code>.</p></li>
+<li><p><strong>library</strong> (<a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Literal" title="(in Python v3.14)"><em>Literal</em></a><em>[</em><em>'ak'</em><em>, </em><em>'np'</em><em>, </em><em>'pd'</em><em>]</em><em>, </em><em>optional</em><em>, </em><em>default='ak'</em>) – <p>The library used to represent arrays.</p>
+<ul>
+<li><p><code class="docutils literal notranslate"><span class="pre">library='ak'</span></code>: return <a class="reference external" href="https://awkward-array.org/doc/stable/reference/generated/ak.Array.html#ak.Array" title="(in Awkward Array v2.8)"><code class="xref py py-class docutils literal notranslate"><span class="pre">ak.Array</span></code></a>.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">library='pd'</span></code>: return <a class="reference external" href="https://pandas.pydata.org/docs/reference/api/pandas.DataFrame.html#pandas.DataFrame" title="(in pandas v2.3.3)"><code class="xref py py-class docutils literal notranslate"><span class="pre">pandas.DataFrame</span></code></a>.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">library='np'</span></code>: return <a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">dict</span></code></a> of <a class="reference external" href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v2.3)"><code class="xref py py-class docutils literal notranslate"><span class="pre">numpy.ndarray</span></code></a>.</p></li>
+</ul>
+</p></li>
+<li><p><strong>**options</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.14)"><em>dict</em></a><em>, </em><em>optional</em>) – Additional options passed to <a class="reference external" href="https://uproot.readthedocs.io/en/stable/uproot.behaviors.TBranch.HasBranches.html#uproot.behaviors.TBranch.HasBranches.arrays" title="(in Uproot)"><code class="xref py py-meth docutils literal notranslate"><span class="pre">uproot.behaviors.TBranch.HasBranches.arrays()</span></code></a>.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><em>RecordLike</em> – Data from <code class="xref py py-class docutils literal notranslate"><span class="pre">TTree</span></code>.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="heptools.root.TreeReader.concat">
+<span class="sig-name descname"><span class="pre">concat</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">sources</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">library</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'ak'</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">options</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/chuyuanliu/heptools/tree/master/heptools/root/io.py#L457-L462"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#heptools.root.TreeReader.concat" title="Link to this definition">#</a></dt>
+<dd><p>Read <code class="docutils literal notranslate"><span class="pre">sources</span></code> into one array. The branches of <code class="docutils literal notranslate"><span class="pre">sources</span></code> must be the same after filtering.</p>
+<div class="admonition-todo admonition" id="id2">
+<p class="admonition-title">Todo</p>
+<p>Add <a class="reference external" href="https://docs.python.org/3/library/multiprocessing.html#module-multiprocessing" title="(in Python v3.14)"><code class="xref py py-mod docutils literal notranslate"><span class="pre">multiprocessing</span></code></a> support.</p>
+</div>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>sources</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#tuple" title="(in Python v3.14)"><em>tuple</em></a><em>[</em><em>Chunk</em><em>]</em>) – One or more chunks of <code class="xref py py-class docutils literal notranslate"><span class="pre">TTree</span></code>.</p></li>
+<li><p><strong>library</strong> (<a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Literal" title="(in Python v3.14)"><em>Literal</em></a><em>[</em><em>'ak'</em><em>, </em><em>'np'</em><em>, </em><em>'pd'</em><em>]</em><em>, </em><em>optional</em><em>, </em><em>default='ak'</em>) – The library used to represent arrays.</p></li>
+<li><p><strong>**options</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.14)"><em>dict</em></a><em>, </em><em>optional</em>) – Additional options passed to <a class="reference internal" href="#heptools.root.TreeReader.arrays" title="heptools.root.TreeReader.arrays"><code class="xref py py-meth docutils literal notranslate"><span class="pre">arrays()</span></code></a>.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><em>RecordLike</em> – Concatenated data from <code class="xref py py-class docutils literal notranslate"><span class="pre">TTree</span></code>.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="heptools.root.TreeReader.iterate">
+<span class="sig-name descname"><span class="pre">iterate</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">sources</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">step</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">...</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">library</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'ak'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mode</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'partition'</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">options</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/chuyuanliu/heptools/tree/master/heptools/root/io.py#L515-L522"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#heptools.root.TreeReader.iterate" title="Link to this definition">#</a></dt>
+<dd><p>Iterate over <code class="docutils literal notranslate"><span class="pre">sources</span></code>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>sources</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#tuple" title="(in Python v3.14)"><em>tuple</em></a><em>[</em><em>Chunk</em><em>]</em>) – One or more chunks of <code class="xref py py-class docutils literal notranslate"><span class="pre">TTree</span></code>.</p></li>
+<li><p><strong>step</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><em>int</em></a><em>, </em><em>optional</em>) – Number of entries to read in each iteration step. If not given, the chunk size will be used and the <code class="docutils literal notranslate"><span class="pre">mode</span></code> will be ignored.</p></li>
+<li><p><strong>library</strong> (<a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Literal" title="(in Python v3.14)"><em>Literal</em></a><em>[</em><em>'ak'</em><em>, </em><em>'np'</em><em>, </em><em>'pd'</em><em>]</em><em>, </em><em>optional</em><em>, </em><em>default='ak'</em>) – The library used to represent arrays.</p></li>
+<li><p><strong>mode</strong> (<a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Literal" title="(in Python v3.14)"><em>Literal</em></a><em>[</em><em>'balance'</em><em>, </em><em>'partition'</em><em>]</em><em>, </em><em>optional</em><em>, </em><em>default='partition'</em>) – <p>The mode to generate iteration steps.</p>
+<ul>
+<li><p><code class="docutils literal notranslate"><span class="pre">mode='balance'</span></code>: use <code class="xref py py-meth docutils literal notranslate"><span class="pre">balance()</span></code>. The length of output arrays is not guaranteed to be <code class="docutils literal notranslate"><span class="pre">step</span></code> but no need to concatenate.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">mode='partition'</span></code>: use <code class="xref py py-meth docutils literal notranslate"><span class="pre">partition()</span></code>. The length of output arrays is guaranteed to be <code class="docutils literal notranslate"><span class="pre">step</span></code> except for the last one but need to concatenate.</p></li>
+</ul>
+</p></li>
+<li><p><strong>**options</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.14)"><em>dict</em></a><em>, </em><em>optional</em>) – Additional options passed to <a class="reference internal" href="#heptools.root.TreeReader.arrays" title="heptools.root.TreeReader.arrays"><code class="xref py py-meth docutils literal notranslate"><span class="pre">arrays()</span></code></a>.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Yields<span class="colon">:</span></dt>
+<dd class="field-even"><p><em>RecordLike</em> – A chunk of data from <code class="xref py py-class docutils literal notranslate"><span class="pre">TTree</span></code>.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="heptools.root.TreeReader.dask">
+<span class="sig-name descname"><span class="pre">dask</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">sources</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">partition</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">...</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">library</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'ak'</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/chuyuanliu/heptools/tree/master/heptools/root/io.py#L588-L593"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#heptools.root.TreeReader.dask" title="Link to this definition">#</a></dt>
+<dd><p>Read <code class="docutils literal notranslate"><span class="pre">sources</span></code> into delayed arrays.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>sources</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#tuple" title="(in Python v3.14)"><em>tuple</em></a><em>[</em><em>Chunk</em><em>]</em>) – One or more chunks of <code class="xref py py-class docutils literal notranslate"><span class="pre">TTree</span></code>.</p></li>
+<li><p><strong>partition</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><em>int</em></a><em>, </em><em>optional</em>) – If given, the <code class="docutils literal notranslate"><span class="pre">sources</span></code> will be splitted into smaller chunks targeting <code class="docutils literal notranslate"><span class="pre">partition</span></code> entries.</p></li>
+<li><p><strong>library</strong> (<a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Literal" title="(in Python v3.14)"><em>Literal</em></a><em>[</em><em>'ak'</em><em>, </em><em>'np'</em><em>]</em><em>, </em><em>optional</em><em>, </em><em>default='ak'</em>) – The library used to represent arrays.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><em>DelayedRecordLike</em> – Delayed data from <code class="xref py py-class docutils literal notranslate"><span class="pre">TTree</span></code>.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="heptools.root.TreeReader.load_metadata">
+<span class="sig-name descname"><span class="pre">load_metadata</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">source</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">builtin_types</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/chuyuanliu/heptools/tree/master/heptools/root/io.py#L644-L696"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#heptools.root.TreeReader.load_metadata" title="Link to this definition">#</a></dt>
+<dd><p>Load metadata from ROOT file.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>name</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a>) – Name of the metadata.</p></li>
+<li><p><strong>source</strong> (<a class="reference internal" href="tree.html#heptools.root.Chunk" title="heptools.root.Chunk"><em>Chunk</em></a>) – The ROOT file source.</p></li>
+<li><p><strong>builtin_types</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.14)"><em>bool</em></a><em>, </em><em>optional</em><em>, </em><em>default=False</em>) – Convert numpy dtypes to builtin types.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><em>dict[str, UprootSupportedDtypes]</em> – A dictionary of metadata.</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
 </section>
 <section id="dask">
 <h2><code class="xref py py-mod docutils literal notranslate"><span class="pre">dask</span></code><a class="headerlink" href="#dask" title="Link to this heading">#</a></h2>
+<dl class="py function">
+<dt class="sig sig-object py" id="heptools.root.merge.resize">
+<span class="sig-prename descclassname"><span class="pre">heptools.root.merge.</span></span><span class="sig-name descname"><span class="pre">resize</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">path</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">sources</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">step</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">chunk_size</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">...</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">writer_options</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">reader_options</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">clean_source</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">transform</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dask</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/chuyuanliu/heptools/tree/master/heptools/root/merge.py#L122-L201"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#heptools.root.merge.resize" title="Link to this definition">#</a></dt>
+<dd><p><a class="reference internal" href="#heptools.root.merge.merge" title="heptools.root.merge.merge"><code class="xref py py-func docutils literal notranslate"><span class="pre">merge()</span></code></a> <code class="docutils literal notranslate"><span class="pre">sources</span></code> into <code class="xref py py-class docutils literal notranslate"><span class="pre">Chunk</span></code> and <a class="reference internal" href="#heptools.root.merge.clean" title="heptools.root.merge.clean"><code class="xref py py-func docutils literal notranslate"><span class="pre">clean()</span></code></a> <code class="docutils literal notranslate"><span class="pre">sources</span></code> after merging.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>path</strong> (<em>PathLike</em>) – Path to output ROOT file.</p></li>
+<li><p><strong>sources</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#tuple" title="(in Python v3.14)"><em>tuple</em></a><em>[</em><em>Chunk</em><em>]</em>) – Chunks to merge.</p></li>
+<li><p><strong>step</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><em>int</em></a>) – Number of entries to read and write in each iteration step.</p></li>
+<li><p><strong>chunk_size</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><em>int</em></a><em>, </em><em>optional</em>) – Number of entries in each chunk. If not given, all entries will be merged into one chunk.</p></li>
+<li><p><strong>writer_options</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.14)"><em>dict</em></a><em>, </em><em>optional</em>) – Additional options passed to <code class="xref py py-class docutils literal notranslate"><span class="pre">TreeWriter</span></code>.</p></li>
+<li><p><strong>reader_options</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.14)"><em>dict</em></a><em>, </em><em>optional</em>) – Additional options passed to <code class="xref py py-class docutils literal notranslate"><span class="pre">TreeReader</span></code>.</p></li>
+<li><p><strong>clean_source</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.14)"><em>bool</em></a><em>, </em><em>optional</em><em>, </em><em>default=True</em>) – If <code class="docutils literal notranslate"><span class="pre">True</span></code>, remove the source chunk after moving.</p></li>
+<li><p><strong>transform</strong> (<a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Callable" title="(in Python v3.14)"><em>Callable</em></a><em>[</em><em>[</em><a class="reference external" href="https://awkward-array.org/doc/stable/reference/generated/ak.Array.html#ak.Array" title="(in Awkward Array v2.8)"><em>ak.Array</em></a><em>]</em><em>, </em><a class="reference external" href="https://awkward-array.org/doc/stable/reference/generated/ak.Array.html#ak.Array" title="(in Awkward Array v2.8)"><em>ak.Array</em></a><em>]</em><em>, </em><em>optional</em>) – A function to transform the array before writing.</p></li>
+<li><p><strong>dask</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.14)"><em>bool</em></a><em>, </em><em>optional</em><em>, </em><em>default=False</em>) – If <code class="docutils literal notranslate"><span class="pre">True</span></code>, return a <a class="reference external" href="https://docs.dask.org/en/latest/delayed-api.html#dask.delayed.Delayed" title="(in Dask)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Delayed</span></code></a> object.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><em>list[Chunk] or Delayed</em> – Merged chunks.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="heptools.root.merge.merge">
+<span class="sig-prename descclassname"><span class="pre">heptools.root.merge.</span></span><span class="sig-name descname"><span class="pre">merge</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">path</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">sources</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">step</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">writer_options</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">reader_options</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">transform</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dask</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/chuyuanliu/heptools/tree/master/heptools/root/merge.py#L48-L89"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#heptools.root.merge.merge" title="Link to this definition">#</a></dt>
+<dd><p>Merge <code class="docutils literal notranslate"><span class="pre">sources</span></code> into one <code class="xref py py-class docutils literal notranslate"><span class="pre">Chunk</span></code>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>path</strong> (<em>PathLike</em>) – Path to output ROOT file.</p></li>
+<li><p><strong>sources</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#tuple" title="(in Python v3.14)"><em>tuple</em></a><em>[</em><em>Chunk</em><em>]</em>) – Chunks to merge.</p></li>
+<li><p><strong>step</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><em>int</em></a>) – Number of entries to read and write in each iteration step.</p></li>
+<li><p><strong>writer_options</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.14)"><em>dict</em></a><em>, </em><em>optional</em>) – Additional options passed to <code class="xref py py-class docutils literal notranslate"><span class="pre">TreeWriter</span></code>.</p></li>
+<li><p><strong>reader_options</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.14)"><em>dict</em></a><em>, </em><em>optional</em>) – Additional options passed to <code class="xref py py-class docutils literal notranslate"><span class="pre">TreeReader</span></code>.</p></li>
+<li><p><strong>transform</strong> (<a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Callable" title="(in Python v3.14)"><em>Callable</em></a><em>[</em><em>[</em><a class="reference external" href="https://awkward-array.org/doc/stable/reference/generated/ak.Array.html#ak.Array" title="(in Awkward Array v2.8)"><em>ak.Array</em></a><em>]</em><em>, </em><a class="reference external" href="https://awkward-array.org/doc/stable/reference/generated/ak.Array.html#ak.Array" title="(in Awkward Array v2.8)"><em>ak.Array</em></a><em>]</em><em>, </em><em>optional</em>) – A function to transform the array before writing.</p></li>
+<li><p><strong>dask</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.14)"><em>bool</em></a><em>, </em><em>optional</em><em>, </em><em>default=False</em>) – If <code class="docutils literal notranslate"><span class="pre">True</span></code>, return a <a class="reference external" href="https://docs.dask.org/en/latest/delayed-api.html#dask.delayed.Delayed" title="(in Dask)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Delayed</span></code></a> object.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><em>Chunk or Delayed</em> – Merged chunk.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="heptools.root.merge.clean">
+<span class="sig-prename descclassname"><span class="pre">heptools.root.merge.</span></span><span class="sig-name descname"><span class="pre">clean</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">source</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">merged</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dask</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/chuyuanliu/heptools/tree/master/heptools/root/merge.py#L93-L119"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#heptools.root.merge.clean" title="Link to this definition">#</a></dt>
+<dd><p>Clean <code class="docutils literal notranslate"><span class="pre">source</span></code> after merging.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>source</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.14)"><em>list</em></a><em>[</em><em>Chunk</em><em>]</em>) – Source chunks to be cleaned.</p></li>
+<li><p><strong>merged</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.14)"><em>list</em></a><em>[</em><em>Chunk</em><em>]</em>) – Merged chunks.</p></li>
+<li><p><strong>dask</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.14)"><em>bool</em></a><em>, </em><em>optional</em><em>, </em><em>default=False</em>) – If <code class="docutils literal notranslate"><span class="pre">True</span></code>, return a <a class="reference external" href="https://docs.dask.org/en/latest/delayed-api.html#dask.delayed.Delayed" title="(in Dask)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Delayed</span></code></a> object.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>merged</strong> (<em>list[Chunk] or Delayed</em>)</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="heptools.root.merge.move">
+<span class="sig-prename descclassname"><span class="pre">heptools.root.merge.</span></span><span class="sig-name descname"><span class="pre">move</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">source</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">clean_source</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dask</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/chuyuanliu/heptools/tree/master/heptools/root/merge.py#L15-L44"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#heptools.root.merge.move" title="Link to this definition">#</a></dt>
+<dd><p>Move <code class="docutils literal notranslate"><span class="pre">source</span></code> to <code class="docutils literal notranslate"><span class="pre">path</span></code>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>path</strong> (<em>PathLike</em>) – Path to output ROOT file.</p></li>
+<li><p><strong>source</strong> (<em>Chunk</em>) – Source chunk to move.</p></li>
+<li><p><strong>clean_source</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.14)"><em>bool</em></a><em>, </em><em>optional</em><em>, </em><em>default=True</em>) – If <code class="docutils literal notranslate"><span class="pre">True</span></code>, remove the source chunk after moving.</p></li>
+<li><p><strong>dask</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.14)"><em>bool</em></a><em>, </em><em>optional</em><em>, </em><em>default=False</em>) – If <code class="docutils literal notranslate"><span class="pre">True</span></code>, return a <a class="reference external" href="https://docs.dask.org/en/latest/delayed-api.html#dask.delayed.Delayed" title="(in Dask)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Delayed</span></code></a> object.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><em>Chunk or Delayed</em> – Moved chunk.</p>
+</dd>
+</dl>
+</dd></dl>
+
 </section>
 </section>
 
@@ -423,8 +768,34 @@
   </div>
   <nav class="bd-toc-nav page-toc" aria-labelledby="pst-page-navigation-heading-2">
     <ul class="visible nav section-nav flex-column">
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#ttree"><code class="xref py py-class docutils literal notranslate"><span class="pre">TTree</span></code></a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#dask"><code class="xref py py-mod docutils literal notranslate"><span class="pre">dask</span></code></a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#ttree"><code class="xref py py-class docutils literal notranslate"><span class="pre">TTree</span></code></a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#heptools.root.TreeWriter"><code class="docutils literal notranslate"><span class="pre">TreeWriter</span></code></a><ul class="nav section-nav flex-column">
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#heptools.root.TreeWriter.tree"><code class="docutils literal notranslate"><span class="pre">TreeWriter.tree</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#heptools.root.TreeWriter.__call__"><code class="docutils literal notranslate"><span class="pre">TreeWriter.__call__()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#heptools.root.TreeWriter.__enter__"><code class="docutils literal notranslate"><span class="pre">TreeWriter.__enter__()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#heptools.root.TreeWriter.__exit__"><code class="docutils literal notranslate"><span class="pre">TreeWriter.__exit__()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#heptools.root.TreeWriter.extend"><code class="docutils literal notranslate"><span class="pre">TreeWriter.extend()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#heptools.root.TreeWriter.switch"><code class="docutils literal notranslate"><span class="pre">TreeWriter.switch()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#heptools.root.TreeWriter.save_metadata"><code class="docutils literal notranslate"><span class="pre">TreeWriter.save_metadata()</span></code></a></li>
+</ul>
+</li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#heptools.root.TreeReader"><code class="docutils literal notranslate"><span class="pre">TreeReader</span></code></a><ul class="nav section-nav flex-column">
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#heptools.root.TreeReader.arrays"><code class="docutils literal notranslate"><span class="pre">TreeReader.arrays()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#heptools.root.TreeReader.concat"><code class="docutils literal notranslate"><span class="pre">TreeReader.concat()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#heptools.root.TreeReader.iterate"><code class="docutils literal notranslate"><span class="pre">TreeReader.iterate()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#heptools.root.TreeReader.dask"><code class="docutils literal notranslate"><span class="pre">TreeReader.dask()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#heptools.root.TreeReader.load_metadata"><code class="docutils literal notranslate"><span class="pre">TreeReader.load_metadata()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#dask"><code class="xref py py-mod docutils literal notranslate"><span class="pre">dask</span></code></a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#heptools.root.merge.resize"><code class="docutils literal notranslate"><span class="pre">resize()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#heptools.root.merge.merge"><code class="docutils literal notranslate"><span class="pre">merge()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#heptools.root.merge.clean"><code class="docutils literal notranslate"><span class="pre">clean()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#heptools.root.merge.move"><code class="docutils literal notranslate"><span class="pre">move()</span></code></a></li>
+</ul>
+</li>
 </ul>
   </nav></div>
 

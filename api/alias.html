@@ -365,6 +365,50 @@
                   
   <section id="type-alias">
 <h1>Type Alias<a class="headerlink" href="#type-alias" title="Link to this heading">#</a></h1>
+<dl class="py data">
+<dt class="sig sig-object py" id="heptools.root.io.RecordLike">
+<span class="sig-prename descclassname"><span class="pre">heptools.root.io.</span></span><span class="sig-name descname"><span class="pre">RecordLike</span></span><a class="reference external" href="https://github.com/chuyuanliu/heptools/tree/master/heptools/root/io.py#L60-L60"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#heptools.root.io.RecordLike" title="Link to this definition">#</a></dt>
+<dd><p>A mapping from string to array-like object. All arrays must have same lengths.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference external" href="https://awkward-array.org/doc/stable/reference/generated/ak.Array.html#ak.Array" title="(in Awkward Array v2.8)">ak.Array</a>, <a class="reference external" href="https://pandas.pydata.org/docs/reference/api/pandas.DataFrame.html#pandas.DataFrame" title="(in pandas v2.3.3)">pandas.DataFrame</a>, <a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.14)">dict</a>[<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)">str</a>, <a class="reference external" href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v2.3)">numpy.ndarray</a>]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="heptools.root.io.DelayedRecordLike">
+<span class="sig-prename descclassname"><span class="pre">heptools.root.io.</span></span><span class="sig-name descname"><span class="pre">DelayedRecordLike</span></span><a class="reference external" href="https://github.com/chuyuanliu/heptools/tree/master/heptools/root/io.py#L66-L66"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#heptools.root.io.DelayedRecordLike" title="Link to this definition">#</a></dt>
+<dd><p>A mapping from string to array-like delayed object.  All arrays must have same lengths and partitions.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference external" href="https://dask-awkward.readthedocs.io/en/stable/api/generated/dask_awkward.Array.html#dask_awkward.Array" title="(in dask-awkward v2025.9.0)">dask_awkward.Array</a>, <a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.14)">dict</a>[<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)">str</a>, <a class="reference external" href="https://docs.dask.org/en/latest/generated/dask.array.Array.html#dask.array.Array" title="(in Dask)">dask.array.Array</a>]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="heptools.root.io.UprootSupportedDtypes">
+<span class="sig-prename descclassname"><span class="pre">heptools.root.io.</span></span><span class="sig-name descname"><span class="pre">UprootSupportedDtypes</span></span><a class="reference external" href="https://github.com/chuyuanliu/heptools/tree/master/heptools/root/io.py#L72-L72"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#heptools.root.io.UprootSupportedDtypes" title="Link to this definition">#</a></dt>
+<dd><p>dtypes supported by <a class="reference external" href="https://uproot.readthedocs.io/en/stable/uproot.html#module-uproot" title="(in Uproot)"><code class="xref py py-mod docutils literal notranslate"><span class="pre">uproot</span></code></a></p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)">str</a>, Number, <em>ArrayLike</em></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="heptools.system.eos.PathLike">
+<span class="sig-prename descclassname"><span class="pre">heptools.system.eos.</span></span><span class="sig-name descname"><span class="pre">PathLike</span></span><a class="reference external" href="https://github.com/chuyuanliu/heptools/tree/master/heptools/system/eos.py#L395-L395"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#heptools.system.eos.PathLike" title="Link to this definition">#</a></dt>
+<dd><p>A str or path-like object with <code class="xref py py-meth docutils literal notranslate"><span class="pre">__fspath__()</span></code> method.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)">str</a>, <a class="reference internal" href="eos.html#heptools.system.eos.EOS" title="heptools.system.eos.EOS"><em>EOS</em></a>, <a class="reference external" href="https://docs.python.org/3/library/os.html#os.PathLike" title="(in Python v3.14)"><em>PathLike</em></a></p>
+</dd>
+</dl>
+</dd></dl>
+
 </section>
 
 
@@ -405,6 +449,21 @@
                 <dialog id="pst-secondary-sidebar-modal"></dialog>
                 <div id="pst-secondary-sidebar" class="bd-sidebar-secondary bd-toc"><div class="sidebar-secondary-items sidebar-secondary__inner">
 
+
+  <div class="sidebar-secondary-item">
+<div
+    id="pst-page-navigation-heading-2"
+    class="page-toc tocsection onthispage">
+    <i class="fa-solid fa-list"></i> On this page
+  </div>
+  <nav class="bd-toc-nav page-toc" aria-labelledby="pst-page-navigation-heading-2">
+    <ul class="visible nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#heptools.root.io.RecordLike"><code class="docutils literal notranslate"><span class="pre">RecordLike</span></code></a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#heptools.root.io.DelayedRecordLike"><code class="docutils literal notranslate"><span class="pre">DelayedRecordLike</span></code></a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#heptools.root.io.UprootSupportedDtypes"><code class="docutils literal notranslate"><span class="pre">UprootSupportedDtypes</span></code></a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#heptools.system.eos.PathLike"><code class="docutils literal notranslate"><span class="pre">PathLike</span></code></a></li>
+</ul>
+  </nav></div>
 
   <div class="sidebar-secondary-item">
 
