@@ -110,6 +110,7 @@ singularity exec -B .:/srv -B /run/shm --nvccli --pwd /srv ${HEPTOOLS_DOCKER_IMA
 ### Performance
 
 - `dask.hist` automatically merge nodes based on total partition and max workers?
+- try [`dask-on-ray`](https://docs.ray.io/en/latest/ray-more-libs/dask-on-ray.html) for local cluster
 
 ### Deprecated
 
