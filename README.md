@@ -107,6 +107,10 @@ singularity exec -B .:/srv -B /run/shm --nvccli --pwd /srv ${HEPTOOLS_DOCKER_IMA
 
 - lightweight local database for `xs`, `dataset`
 
+### Performance
+
+- `dask.hist` automatically merge nodes based on total partition and max workers?
+
 ### Deprecated
 
 - replace `EOS` with `universal-pathlib` + `fsspec`
