@@ -12,7 +12,6 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
   bash-completion \
   && apt-get clean && rm -rf /var/lib/apt/lists/*
 # voms https://twiki.cern.ch/twiki/bin/view/LCG/VOMSLSCfileConfiguration
-## Deprecated:
 ## voms2.cern.ch
 ## lcg-voms2.cern.ch
 COPY <<EOF /etc/vomses
