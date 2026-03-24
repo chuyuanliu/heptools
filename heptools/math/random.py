@@ -58,19 +58,15 @@ class CBRNG(ABC, Generic[_KeyT]):
 
     def __init__(self, *seed: SeedLike):
         self._seed = _seed(seed)
-        self._keys: dict[int, _KeyT] = {}
+        self._keys: dict[Optional[int], _KeyT] = {}
         self._offset: int = None
 
     # bit generator
     @abstractmethod
-    def bit32(
-        self, counters: npt.NDArray[np.uint64], key: _KeyT
-    ) -> npt.NDArray[np.uint32]: ...
+    def bit32(self, counters: npt.NDArray[np.uint64]) -> npt.NDArray[np.uint32]: ...
 
     @abstractmethod
-    def bit64(
-        self, counters: npt.NDArray[np.uint64], key: _KeyT
-    ) -> npt.NDArray[np.uint64]: ...
+    def bit64(self, counters: npt.NDArray[np.uint64]) -> npt.NDArray[np.uint64]: ...
 
     @abstractmethod
     def key(self, generator: np.random.Generator) -> _KeyT: ...
@@ -286,8 +282,8 @@ class Squares(CBRNG[np.uint64]):
         lr |= l
         yield lr
 
-    def bit32(self, ctrs: npt.NDArray[np.uint64]) -> npt.NDArray[np.uint32]:
-        x = ctrs * self._key
+    def bit32(self, counters: npt.NDArray[np.uint64]) -> npt.NDArray[np.uint32]:
+        x = counters * self._key
         y = x.copy()
         z = y + self._key
         # round 1-3
@@ -299,8 +295,8 @@ class Squares(CBRNG[np.uint64]):
         x >>= _UINT64_32
         return x.astype(np.uint32)
 
-    def bit64(self, ctrs: npt.NDArray[np.uint64]) -> npt.NDArray[np.uint64]:
-        x = ctrs * self._key
+    def bit64(self, counters: npt.NDArray[np.uint64]) -> npt.NDArray[np.uint64]:
+        x = counters * self._key
         y = x.copy()
         z = y + self._key
         # round 1-3
