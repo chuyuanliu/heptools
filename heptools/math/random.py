@@ -28,7 +28,9 @@ _BIT52_COUNT = np.float64(1 << 53)
 
 
 def _str_to_entropy(__str: str) -> list[np.uint64]:
-    return np.frombuffer(hashlib.md5(__str.encode()).digest(), dtype=np.uint64).tolist()
+    return np.frombuffer(
+        hashlib.md5(__str.encode()).digest(), dtype=np.dtype("<u8")
+    ).tolist()
 
 
 def _seed(*entropy: SeedLike) -> tuple[int, ...]:
@@ -49,6 +51,18 @@ _KeyT = TypeVar("_KeyT")
 class CBRNG(ABC, Generic[_KeyT]):
     """
     Counter-based random number generator (CBRNG).
+
+    ..note::
+        Rejection-based algorithms (e.g., the Ziggurat algorithm or Rejection Sampling) are computationally
+        more expensive when implemented with CBRNGs—which typically rely on simplified cryptographic
+        block ciphers—compared to traditional PRNGs.
+
+    ··warning::
+        In a CBRNG, each independent random sequence is defined by a unique key.
+        Unlike traditional PRNGs where a single global instance is often reused, CBRNGs favor a stateless paradigm.
+        When handling multiple independent streams, you should explicitly create a new generator instance for each,
+        ensuring each is initialized with a distinct seed to avoid sequence overlap.
+        It is recommended to use semantically meaningful seeds for better traceability.
 
     Parameters
     ----------
@@ -93,14 +107,14 @@ class CBRNG(ABC, Generic[_KeyT]):
     # basic types
     @overload
     def uint(
-        self, counters: npt.ArrayLike, bits: Literal[64] = 64
+        self, counters: npt.NDArray[np.uint64], bits: Literal[64] = 64
     ) -> npt.NDArray[np.uint64]: ...
     @overload
     def uint(
-        self, counters: npt.ArrayLike, bits: Literal[32] = 32
+        self, counters: npt.NDArray[np.uint64], bits: Literal[32] = 32
     ) -> npt.NDArray[np.uint32]: ...
     def uint(
-        self, counters: npt.ArrayLike, bits: Literal[32, 64] = 64
+        self, counters: npt.NDArray[np.uint64], bits: Literal[32, 64] = 64
     ) -> npt.NDArray[np.uint]:
         counters = np.asarray(counters, dtype=np.uint64)
         match bits:
@@ -111,7 +125,7 @@ class CBRNG(ABC, Generic[_KeyT]):
             case _:
                 raise NotImplementedError
 
-    def uint64(self, counters: npt.ArrayLike) -> npt.NDArray[np.uint64]:
+    def uint64(self, counters: npt.NDArray[np.uint64]) -> npt.NDArray[np.uint64]:
         """
         Generate a random sequence by reducing the last dimension of the counters.
         """
@@ -133,7 +147,7 @@ class CBRNG(ABC, Generic[_KeyT]):
                     axis=-1,
                 )
 
-    def float64(self, counters: npt.ArrayLike) -> npt.NDArray[np.float64]:
+    def float64(self, counters: npt.NDArray[np.uint64]) -> npt.NDArray[np.float64]:
         """
         [0, 1) Based on `numpy.random._common.uint64_to_double`.
         """
@@ -142,7 +156,9 @@ class CBRNG(ABC, Generic[_KeyT]):
         return x / _BIT52_COUNT
 
     # distributions
-    def uniform(self, counters: npt.ArrayLike, low: float = 0.0, high: float = 1.0):
+    def uniform(
+        self, counters: npt.NDArray[np.uint64], low: float = 0.0, high: float = 1.0
+    ):
         """
         Generates from uniform distribution.
 
@@ -165,7 +181,9 @@ class CBRNG(ABC, Generic[_KeyT]):
         x += low
         return x
 
-    def normal(self, counters: npt.ArrayLike, loc: float = 0.0, scale: float = 1.0):
+    def normal(
+        self, counters: npt.NDArray[np.uint64], loc: float = 0.0, scale: float = 1.0
+    ):
         """
         Generates from normal distribution using Box-Muller transform [1]_.
 
@@ -191,7 +209,7 @@ class CBRNG(ABC, Generic[_KeyT]):
         .. [1] `Box–Muller transform - Wikipedia <https://en.wikipedia.org/wiki/Box%E2%80%93Muller_transform>`_
         """
         o = self._offset
-        o = 0 if o is None else o + 1
+        o = 0 if o is None else o + 1  # use (None, 0) or (o, o+1)
         x = self.float64(counters)
         y = self.shift(o).float64(counters)
         x = np.sqrt(-2.0 * np.log(x)) * np.cos(_2_PI * y)
@@ -201,7 +219,7 @@ class CBRNG(ABC, Generic[_KeyT]):
 
     def choice(
         self,
-        counters: npt.ArrayLike,
+        counters: npt.NDArray[np.uint64],
         a: npt.ArrayLike | int,
         p: Optional[npt.ArrayLike] = None,
     ) -> npt.NDArray:
