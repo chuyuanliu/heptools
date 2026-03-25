@@ -10,4 +10,4 @@ Counter-based
 .. autoapidata:: heptools.math.random.SeedLike
 
 .. autoapiclass:: heptools.math.random.CBRNG
-    :members: uniform, normal, choice
+    :members: uniform, normal, choice, is_sequence_unique
