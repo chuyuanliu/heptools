@@ -52,17 +52,20 @@ class CBRNG(ABC, Generic[_KeyT]):
     """
     Counter-based random number generator (CBRNG).
 
-    ..note::
-        Rejection-based algorithms (e.g., the Ziggurat algorithm or Rejection Sampling) are computationally
-        more expensive when implemented with CBRNGs—which typically rely on simplified cryptographic
-        block ciphers—compared to traditional PRNGs.
+    Notes
+    -----
+    Rejection-based algorithms (e.g., the Ziggurat algorithm or Rejection Sampling) are computationally more expensive when implemented with CBRNGs—which typically rely on simplified cryptographic block ciphers—compared to traditional PRNGs.
 
-    ··warning::
-        In a CBRNG, each independent random sequence is defined by a unique key.
-        Unlike traditional PRNGs where a single global instance is often reused, CBRNGs favor a stateless paradigm.
-        When handling multiple independent streams, you should explicitly create a new generator instance for each,
-        ensuring each is initialized with a distinct seed to avoid sequence overlap.
-        It is recommended to use semantically meaningful seeds for better traceability.
+    In a CBRNG, each independent random sequence is defined by a unique key.
+    .. math::
+
+        value_n = f(key, counter_n)
+
+    A seed is used to generate a valid key.
+    For better traceability, it is recommended to use semantically meaningful seeds.
+    Unlike traditional PRNGs where a single global instance is often reused, CBRNGs favor a stateless paradigm.
+    When handling multiple independent streams, you should explicitly create a new generator instance for each, initialized with a distinct seed to avoid sequence overlap.
+    The uniqueness of the sequence can be checked by using :meth:`is_sequence_unique`.
 
     Parameters
     ----------
@@ -268,6 +271,13 @@ class CBRNG(ABC, Generic[_KeyT]):
             return a[self.uint64(counters) % length]
         else:
             return a[np.searchsorted(p, self.float64(counters))]
+
+    @staticmethod
+    def is_sequence_unique(*generators: CBRNG) -> bool:
+        """
+        Checks if all CBRNGs produce unique sequences.
+        """
+        return len(generators) == len(set(((type(g), g._key) for g in generators)))
 
 
 class Squares(CBRNG[np.uint64]):
