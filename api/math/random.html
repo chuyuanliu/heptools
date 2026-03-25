@@ -384,20 +384,20 @@
 
 <dl class="py class">
 <dt class="sig sig-object py" id="heptools.math.random.CBRNG">
-<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">heptools.math.random.</span></span><span class="sig-name descname"><span class="pre">CBRNG</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">seed</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/chuyuanliu/heptools/tree/master/heptools/math/random.py#L51-L270"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#heptools.math.random.CBRNG" title="Link to this definition">#</a></dt>
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">heptools.math.random.</span></span><span class="sig-name descname"><span class="pre">CBRNG</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">seed</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/chuyuanliu/heptools/tree/master/heptools/math/random.py#L51-L280"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#heptools.math.random.CBRNG" title="Link to this definition">#</a></dt>
 <dd><p>Counter-based random number generator (CBRNG).</p>
-<dl class="simple">
-<dt>..note::</dt><dd><p>Rejection-based algorithms (e.g., the Ziggurat algorithm or Rejection Sampling) are computationally
-more expensive when implemented with CBRNGs—which typically rely on simplified cryptographic
-block ciphers—compared to traditional PRNGs.</p>
-</dd>
-<dt>··warning::</dt><dd><p>In a CBRNG, each independent random sequence is defined by a unique key.
+<p class="rubric">Notes</p>
+<p>Rejection-based algorithms (e.g., the Ziggurat algorithm or Rejection Sampling) are computationally more expensive when implemented with CBRNGs—which typically rely on simplified cryptographic block ciphers—compared to traditional PRNGs.</p>
+<p>In a CBRNG, each independent random sequence is defined by a unique key.
+.. math:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">value_n</span> <span class="o">=</span> <span class="n">f</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="n">counter_n</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>A seed is used to generate a valid key.
+For better traceability, it is recommended to use semantically meaningful seeds.
 Unlike traditional PRNGs where a single global instance is often reused, CBRNGs favor a stateless paradigm.
-When handling multiple independent streams, you should explicitly create a new generator instance for each,
-ensuring each is initialized with a distinct seed to avoid sequence overlap.
-It is recommended to use semantically meaningful seeds for better traceability.</p>
-</dd>
-</dl>
+When handling multiple independent streams, you should explicitly create a new generator instance for each, initialized with a distinct seed to avoid sequence overlap.
+The uniqueness of the sequence can be checked by using <code class="xref py py-meth docutils literal notranslate"><span class="pre">is_sequence_unique()</span></code>.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><p><strong>seed</strong> (<em>SeedLike</em>) – The seed used to generate the key.</p>
@@ -405,7 +405,7 @@ It is recommended to use semantically meaningful seeds for better traceability.<
 </dl>
 <dl class="py method">
 <dt class="sig sig-object py" id="heptools.math.random.CBRNG.uniform">
-<span class="sig-name descname"><span class="pre">uniform</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">counters</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">low</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">high</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1.0</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/chuyuanliu/heptools/tree/master/heptools/math/random.py#L159-L182"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#heptools.math.random.CBRNG.uniform" title="Link to this definition">#</a></dt>
+<span class="sig-name descname"><span class="pre">uniform</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">counters</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">low</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">high</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1.0</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/chuyuanliu/heptools/tree/master/heptools/math/random.py#L162-L185"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#heptools.math.random.CBRNG.uniform" title="Link to this definition">#</a></dt>
 <dd><p>Generates from uniform distribution.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -423,7 +423,7 @@ It is recommended to use semantically meaningful seeds for better traceability.<
 
 <dl class="py method">
 <dt class="sig sig-object py" id="heptools.math.random.CBRNG.normal">
-<span class="sig-name descname"><span class="pre">normal</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">counters</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">loc</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">scale</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1.0</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/chuyuanliu/heptools/tree/master/heptools/math/random.py#L184-L218"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#heptools.math.random.CBRNG.normal" title="Link to this definition">#</a></dt>
+<span class="sig-name descname"><span class="pre">normal</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">counters</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">loc</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">scale</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1.0</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/chuyuanliu/heptools/tree/master/heptools/math/random.py#L187-L221"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#heptools.math.random.CBRNG.normal" title="Link to this definition">#</a></dt>
 <dd><p>Generates from normal distribution using Box-Muller transform <a class="footnote-reference brackets" href="#id2" id="id1" role="doc-noteref"><span class="fn-bracket">[</span>1<span class="fn-bracket">]</span></a>.</p>
 <div class="admonition warning">
 <p class="admonition-title">Warning</p>
@@ -452,7 +452,7 @@ It is recommended to use semantically meaningful seeds for better traceability.<
 
 <dl class="py method">
 <dt class="sig sig-object py" id="heptools.math.random.CBRNG.choice">
-<span class="sig-name descname"><span class="pre">choice</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">counters</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">a</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">p</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/chuyuanliu/heptools/tree/master/heptools/math/random.py#L220-L270"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#heptools.math.random.CBRNG.choice" title="Link to this definition">#</a></dt>
+<span class="sig-name descname"><span class="pre">choice</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">counters</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">a</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">p</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/chuyuanliu/heptools/tree/master/heptools/math/random.py#L223-L273"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#heptools.math.random.CBRNG.choice" title="Link to this definition">#</a></dt>
 <dd><p>Generates a random sample from a given array.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
