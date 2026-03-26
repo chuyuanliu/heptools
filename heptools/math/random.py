@@ -310,20 +310,14 @@ class Squares(CBRNG[np.uint64]):
         return np.sum(lower8 << offsets) + (np.sum(higher8 << offsets) << _UINT64_32)
 
     @staticmethod
-    def _round(
-        lr: npt.NDArray,
-        shift: npt.NDArray,
-        buffer: npt.NDArray,
-        last: bool = False,
-    ):
+    def _round(lr: npt.NDArray, shift: npt.NDArray, buffer: npt.NDArray, last=False):
         lr *= lr
         lr += shift
-        if last:
-            yield lr.copy()
-        np.right_shift(lr, _UINT64_32, buffer)
+        t = lr.copy() if last else None
+        np.right_shift(lr, _UINT64_32, out=buffer)
         lr <<= _UINT64_32
         lr |= buffer
-        yield lr
+        return t
 
     def bit32(self, counters: npt.NDArray[np.uint64]) -> npt.NDArray[np.uint32]:
         x = counters * self._key
@@ -331,8 +325,8 @@ class Squares(CBRNG[np.uint64]):
         z = y + self._key
         buffer = np.empty_like(x)
         # round 1-3
-        for i in [y, z, y]:
-            (_,) = self._round(x, i, buffer)
+        for i in (y, z, y):
+            self._round(x, i, buffer)
         del buffer
         # round 4
         x *= x
@@ -346,10 +340,10 @@ class Squares(CBRNG[np.uint64]):
         z = y + self._key
         buffer = np.empty_like(x)
         # round 1-3
-        for i in [y, z, y]:
-            (_,) = self._round(x, i, buffer)
+        for i in (y, z, y):
+            self._round(x, i, buffer)
         # round 4
-        (t, _) = self._round(x, z, buffer, last=True)
+        t = self._round(x, z, buffer, last=True)
         del buffer
         # round 5
         x *= x
