@@ -3,7 +3,7 @@ channels:
   - conda-forge
 dependencies:
   # machine learning
-  - pytorch
+  - pytorch-gpu
   - scikit-learn
   # GPU
   - cupy
