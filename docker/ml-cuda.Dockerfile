@@ -1,6 +1,8 @@
 FROM chuyuanliu/heptools:base
 
-ENV CONDA_OVERRIDE_CUDA="13.1"
+ARG CUDA_VERSION
+
+ENV CONDA_OVERRIDE_CUDA=${CUDA_VERSION}
 
 RUN mamba env update -n hep -f https://raw.githubusercontent.com/chuyuanliu/heptools/master/docker/ml.yml \
     && mamba clean --all --yes

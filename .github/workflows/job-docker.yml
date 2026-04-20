@@ -6,6 +6,14 @@ on:
       tag:
         type: string
         required: true
+      args:
+        type: string
+        required: false
+        default: ""
+      file:
+        type: string
+        required: false
+        default: ""
     secrets:
       DOCKERHUB_USERNAME:
         required: true
@@ -35,6 +43,7 @@ jobs:
         uses: docker/build-push-action@v6
         with:
           context: .
-          file: ./docker/${{ inputs.tag }}.Dockerfile
+          file: ./docker/${{ inputs.file || inputs.tag }}.Dockerfile
           push: true
           tags: ${{ secrets.DOCKERHUB_USERNAME }}/heptools:${{ inputs.tag }}
+          build-args: ${{ inputs.args }}
