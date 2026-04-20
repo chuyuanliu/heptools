@@ -1,18 +1,83 @@
-name: Build Docker image with heptools
+name: Build Docker Images
 
 on:
   push:
     branches:
       - master
     paths:
-      - "docker/exp.*"
+      - "docker/**"
       - "heptools/**"
       - "setup.cfg"
       - "pyproject.toml"
 
 jobs:
+  detect-changes:
+    runs-on: ubuntu-latest
+    outputs:
+      base: ${{ steps.filter.outputs.base }}
+      exp: ${{ steps.filter.outputs.exp }}
+      ml_cpu: ${{ steps.filter.outputs.ml_cpu }}
+      ml_cuda: ${{ steps.filter.outputs.ml_cuda }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dorny/paths-filter@v3
+        id: filter
+        with:
+          filters: |
+            base:
+              - 'docker/base*'
+            exp:
+              - 'docker/exp.*'
+              - 'heptools/**'
+              - 'setup.cfg'
+              - 'pyproject.toml'
+            ml_cpu:
+              - 'docker/ml-cpu.*'
+            ml_cuda:
+              - 'docker/ml-cuda.*'
+
+  docker-image-base:
+    needs: detect-changes
+    if: ${{ needs.detect-changes.outputs.base == 'true' }}
+    uses: ./.github/workflows/job-docker.yml
+    with:
+      tag: base
+    secrets: inherit
+
   docker-image-exp:
+    needs: [detect-changes, docker-image-base]
+    if: |
+      always() && 
+      (needs.detect-changes.outputs.exp == 'true' || needs.detect-changes.outputs.base == 'true') &&
+      (needs.docker-image-base.result == 'success' || needs.docker-image-base.result == 'skipped')
     uses: ./.github/workflows/job-docker.yml
     with:
       tag: exp
+    secrets: inherit
+
+  docker-image-ml-cpu:
+    needs: [detect-changes, docker-image-base]
+    if: |
+      always() && 
+      (needs.detect-changes.outputs.ml_cpu == 'true' || needs.detect-changes.outputs.base == 'true') &&
+      (needs.docker-image-base.result == 'success' || needs.docker-image-base.result == 'skipped')
+    uses: ./.github/workflows/job-docker.yml
+    with:
+      tag: ml-cpu
+    secrets: inherit
+
+  docker-image-ml-cuda:
+    needs: [detect-changes, docker-image-base]
+    if: |
+      always() && 
+      (needs.detect-changes.outputs.ml_cuda == 'true' || needs.detect-changes.outputs.base == 'true') &&
+      (needs.docker-image-base.result == 'success' || needs.docker-image-base.result == 'skipped')
+    strategy:
+      matrix:
+        cuda-version: ["13.1"]
+    uses: ./.github/workflows/job-docker.yml
+    with:
+      file: ml-cuda
+      tag: ml-cuda-${{ matrix.cuda-version }}
+      args: CUDA_VERSION=${{ matrix.cuda-version }}
     secrets: inherit
