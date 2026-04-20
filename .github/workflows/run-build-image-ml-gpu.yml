@@ -11,5 +11,5 @@ jobs:
   docker-image-ml:
     uses: ./.github/workflows/job-docker.yml
     with:
-      tag: ml
+      tag: ml-gpu
     secrets: inherit
