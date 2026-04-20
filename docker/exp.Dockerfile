@@ -1,4 +1,5 @@
 FROM chuyuanliu/heptools:base
 
-RUN conda run -n hep pip install --no-cache-dir --no-dependencies git+https://github.com/chuyuanliu/heptools.git@master
+RUN --mount=type=bind,target=/src \
+    conda run -n hep pip install --no-cache-dir --no-dependencies /src
 ENTRYPOINT ["tini", "-g", "--"]
