@@ -42,5 +42,7 @@ if ! shopt -oq posix; then
   fi
 fi
 EOF
+RUN chmod +x /entrypoint.sh
+
 ENTRYPOINT ["tini", "-g", "--"]
 CMD ["bash", "--init-file", "/entrypoint.sh"]
