@@ -1,11 +1,11 @@
-name: Build Docker image for machine learning
+name: Build Docker image for machine learning with GPU
 
 on:
   push:
     branches:
       - master
     paths:
-      - "docker/ml.*"
+      - "docker/ml-gpu.*"
 
 jobs:
   docker-image-ml:

@@ -1,4 +1,4 @@
-name: Build Docker image for machine learning
+name: Build Docker image for machine learning with CPU
 
 on:
   push:
