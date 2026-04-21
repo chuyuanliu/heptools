@@ -71,7 +71,7 @@ jobs:
       (needs.docker-image-base.result == 'success' || needs.docker-image-base.result == 'skipped')
     strategy:
       matrix:
-        cuda-version: ["12.6", "13.1"]
+        cuda-version: ["12.9", "13.0"]
     uses: ./.github/workflows/job-docker.yml
     with:
       file: ml-cuda
