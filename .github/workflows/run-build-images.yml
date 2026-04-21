@@ -4,11 +4,6 @@ on:
   push:
     branches:
       - master
-    paths:
-      - "docker/**"
-      - "heptools/**"
-      - "setup.cfg"
-      - "pyproject.toml"
 
 jobs:
   detect-changes:
@@ -26,6 +21,8 @@ jobs:
           filters: |
             base:
               - 'docker/base*'
+              - '.github/workflows/job-docker.yml'
+              - '.github/workflows/run-build-images.yml'
             exp:
               - 'docker/exp.*'
               - 'heptools/**'
