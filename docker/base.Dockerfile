@@ -1,4 +1,4 @@
-FROM condaforge/mambaforge:22.11.1-4
+FROM condaforge/miniforge3:latest
 
 RUN --mount=type=bind,source=docker/base.yml,target=/tmp/base.yml \
   mamba env create -f /tmp/base.yml \
