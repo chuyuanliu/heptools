@@ -14,11 +14,12 @@ dependencies:
   - pandas
   - pyarrow
   - numba
-  - networkx
+  - jax
   # visualization
   - nodejs
   - matplotlib
   - bokeh
+  - networkx
   - graphviz
   - pip:
       - graphviz
