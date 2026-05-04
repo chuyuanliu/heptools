@@ -131,3 +131,5 @@ singularity exec -B .:/srv -B /run/shm --nvccli --pwd /srv ${HEPTOOLS_DOCKER_IMA
   - use TYPE_CHECKING if possible
   - remove typing_extensions, 3.10 compatibility
 - Python 3.12: new generic type and typealias syntax
+
+- `uproot>=5.7.0`: [chore: switch to writing RNTuples by default](https://github.com/scikit-hep/uproot5/pull/1556)
